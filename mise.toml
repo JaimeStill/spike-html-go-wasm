@@ -8,11 +8,12 @@
 [settings]
 task.run_auto_install = false
 
-# The SDK's toolchain at its latest pins, with Go for the GOOS=js builds and TinyGo for the
-# comparison build.
+# The SDK's toolchain at its latest pins, with Go for the GOOS=js builds, golangci-lint for their
+# lint, and TinyGo for the comparison build.
 [tools]
 actionlint = "1.7.12"
 go = "1.27.4"
+golangci-lint = "2.15.0"
 node = "26.13.0"
 pnpm = "12.19.0"
 shellcheck = "0.11.0"
@@ -36,8 +37,8 @@ run = "scripts/preflight.sh"
 dir = "{{config_root}}"
 
 [tasks.lint]
-description = "Run the linters: ESLint (the leftover check on dist/ included), Prettier, shellcheck, and actionlint; reads no network, writes dist/"
-depends = ["lint:eslint", "lint:format", "lint:shell", "lint:workflows"]
+description = "Run the linters: ESLint (the leftover check on dist/ included), Prettier, shellcheck, actionlint, and the Go lint; reads no network, writes dist/"
+depends = ["lint:eslint", "lint:format", "lint:go", "lint:shell", "lint:workflows"]
 
 # The leftover check reads the build, so the lint follows it: with no dist/, it would pass on
 # nothing.
@@ -51,6 +52,12 @@ dir = "{{config_root}}"
 description = "Check the code, JSON, and CSS format with Prettier (the SDK's configuration, .prettierignore); reads no network, writes nothing"
 depends = ["preflight"]
 run = "pnpm exec prettier --check ."
+dir = "{{config_root}}"
+
+[tasks."lint:go"]
+description = "Lint the Go module under GOOS=js GOARCH=wasm (gofmt, go vet, go fix, go mod tidy, golangci-lint), check web/runtime/wasm_exec.js against the pinned Go's, and fail on any tracked .wasm; reads no network, writes nothing outside Go's caches"
+depends = ["preflight"]
+run = "scripts/check-go.sh"
 dir = "{{config_root}}"
 
 [tasks."lint:shell"]
@@ -85,9 +92,10 @@ run = "tsc -p tsconfig.test.json"
 dir = "{{config_root}}"
 
 [tasks.build]
-description = "Build the site with Vite (vite.config.ts): the hand index, index.html, and the foundation modules it loads into dist/, under the Pages base; reads no network, writes dist/"
+description = "Build the site with Vite (vite.config.ts): the hand index, index.html, and the foundation modules it loads into dist/, under the Pages base; then the Go entrypoints for GOOS=js GOARCH=wasm into dist/go/, beside wasm_exec.js (scripts/build-go.sh); reads no network, writes dist/"
 depends = ["preflight"]
-run = "pnpm exec vite build"
+# Vite empties dist/ first, so the Go step follows it.
+run = ["pnpm exec vite build", "scripts/build-go.sh"]
 dir = "{{config_root}}"
 
 [tasks."test:unit"]
@@ -120,8 +128,8 @@ run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) pnpm exec spike-ht
 dir = "{{config_root}}"
 
 [tasks.install]
-description = "Install every mise.toml pin and node_modules from pnpm-lock.yaml; reads the network, writes node_modules/"
-run = ["mise install", "pnpm install --frozen-lockfile"]
+description = "Install every mise.toml pin, node_modules from pnpm-lock.yaml, and go.mod's requirements into the Go module cache; reads the network, writes node_modules/ and the module cache"
+run = ["mise install", "pnpm install --frozen-lockfile", "go mod download"]
 dir = "{{config_root}}"
 
 # The SDK's currency bin, which a pnpm install links into node_modules/.bin; it replaces

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Fails naming mise run install when a tool a task needs is missing: the node_modules tooling, and
-# typescript-go's tsc, the pinned mise tool; and with `browser`, the pinned chrome-headless-shell.
+# typescript-go's tsc, the pinned mise tool; Go and golangci-lint, and go.mod's requirements in the
+# module cache; and with `browser`, the pinned chrome-headless-shell.
 # Adapted from spike-html-apps-foundation (d5037b4): scripts/preflight.sh, without the browser
 # check.
 # Adapted from spike-html-apps-foundation (d5037b4): scripts/preflight.sh, with vite among the
@@ -22,6 +23,11 @@ for bin in eslint prettier vite spike-html-apps-screenshots; do
   [[ -x node_modules/.bin/$bin ]] || fail "$bin (devDependencies)"
 done
 mise which tsc > /dev/null 2>&1 || fail "tsc (typescript-go, mise.toml)"
+mise which go > /dev/null 2>&1 || fail "go (mise.toml)"
+mise which golangci-lint > /dev/null 2>&1 || fail "golangci-lint (mise.toml)"
+# With the proxy off, a requirement missing from the module cache fails rather than downloads.
+GOPROXY=off GOTOOLCHAIN=local GOWORK=off go mod download > /dev/null 2>&1 \
+  || fail "go.mod's requirements (the Go module cache)"
 
 [[ "${1:-}" == browser ]] || exit 0
 shell=$(mise which chrome-headless-shell 2>/dev/null) || fail "chrome-headless-shell"

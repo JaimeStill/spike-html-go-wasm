@@ -1,0 +1,16 @@
+# golangci-lint v2 configuration, run by mise run lint:go under GOOS=js GOARCH=wasm.
+# From go-core (f1686fb): .golangci.yml.
+version: "2"
+
+linters:
+  # The standard set (errcheck, govet, ineffassign, staticcheck, unused),
+  # plus testpackage, which keeps tests black-box. Its skip regexp is
+  # narrowed to export_test.go: tests live in <pkg>_test and drive the
+  # exported API, and the one white-box file allowed is export_test.go,
+  # which only exports a clock or probe hook the API cannot reach.
+  default: standard
+  enable:
+    - testpackage
+  settings:
+    testpackage:
+      skip-regexp: export_test\.go

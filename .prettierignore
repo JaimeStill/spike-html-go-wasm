@@ -5,10 +5,12 @@
 # Adapted from spike-html-apps-foundation (d5037b4): .prettierignore, without its fixtures.
 # From spike-html-hosting (cb0511c): .prettierignore.
 # From spike-html-hosting-architecture (27d70e1): .prettierignore.
-# From spike-html-hosting-sdk (v0.6.1): template/.prettierignore.
+# Adapted from spike-html-hosting-sdk (v0.6.1): template/.prettierignore, with the copied
+# wasm_exec.js, the pinned Go's own file, which lint:go checks byte for byte.
 *
 !*/
 !*.js
 !*.ts
 !*.json
 !*.css
+web/runtime/wasm_exec.js
