@@ -1,0 +1,16 @@
+// mise run types:src: tsc type-checks eslint.config.js as JSDoc-checked JavaScript, and
+// vite.config.ts, under Vite's resolution, without emitting. The SDK's base holds the options both
+// configurations share. The suite isn't included: tsconfig.test.json checks it.
+// Adapted from spike-html-apps (529ec52): tsconfig.json, its inputs the site's configs.
+// Adapted from spike-html-hosting-architecture (27d70e1): tsconfig.json, its options the SDK's
+// base.
+// From spike-html-hosting-sdk (v0.6.1): template/tsconfig.json.
+{
+  "extends": "@jaimestill/spike-html-hosting-sdk/tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "checkJs": true
+  },
+  "include": ["eslint.config.js", "vite.config.ts"]
+}

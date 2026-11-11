@@ -44,6 +44,8 @@ budget.
 ## Capabilities
 
 One repository, one Go module, one Pages site, in Elemental layers; dependencies flow downward.
+The check holds the direction: `eslint.config.js` for the web tiers and `test/unit/go-module.ts`
+for the Go packages.
 
 - **Go bridge** (`bridge/`, infrastructure): the Go-to-JS bridge every scenario composes on.
 - **Scenarios** (`internal/<scenario>`, composition roots; `cmd/<scenario>`, entrypoints, one
@@ -55,8 +57,8 @@ One repository, one Go module, one Pages site, in Elemental layers; dependencies
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-run-controls, sl-timings, and sl-go-demo composing them over a
   runner the page passes in.
-- **Pages** (the apps tier): hand pages and rendered Markdown, embedding `<sl-go-demo>` around
-  a go fence.
+- **Pages** (`web/pages`, the apps tier, for the scripts a page loads): hand pages and rendered
+  Markdown, embedding `<sl-go-demo>` around a go fence.
 
 ## Path
 

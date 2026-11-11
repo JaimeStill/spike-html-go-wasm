@@ -15,10 +15,8 @@ The architecture pages that apply, in the architecture repository:
 
 ## Layers
 
-- Dependencies flow downward: components never import the runtime, the runtime never imports a
-  page, and the Go bridge never imports a scenario.
-- `cmd/<scenario>` is the entrypoint only and imports only `internal/<scenario>`; each
-  `internal/<scenario>` is that scenario's composition root, composed on the bridge.
+- `cmd/<scenario>` holds only the entrypoint; each `internal/<scenario>` is that scenario's
+  composition root, composed on the bridge.
 - A component takes properties and sends events, holds no service, and fetches nothing; the page
   passes go-demo its runner.
 - A piece used by one scenario stays in that scenario; it moves down a layer only once a second
