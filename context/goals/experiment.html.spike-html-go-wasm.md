@@ -403,6 +403,7 @@ slices 0/9 committed · standards — · spec — · editor —
 - components: the editor and tabs are the spike's own. Rejected: CodeMirror (@codemirror/view
   6.43.15) and Monaco (@shikijs/monaco 4.6.0), which bring their own model and theming; Web
   Awesome 3.14.0, Shoelace 2.20.1, and Material Web 2.5.0 tabs, which bring their own tokens.
+
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
