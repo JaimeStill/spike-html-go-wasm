@@ -1,8 +1,7 @@
-// The runtime's dedicated worker, which the runner starts on the first run, one at a time per
-// page, and again after each Stop: it fetches and compiles a scenario's module, holds the compiled
-// WebAssembly.Module, and runs
-// instances of it through wasm_exec.js over the in-memory fs, posting each output, exit, and
-// timing event and each request's answer to the runner (protocol.ts).
+// The runtime's dedicated worker, which the runner starts on the first run, one at a time per page,
+// and again after each Stop: it fetches and compiles a scenario's module, holds the compiled
+// WebAssembly.Module, and runs instances of it through wasm_exec.js over the in-memory fs, posting
+// each output, exit, and timing event and each request's answer to the runner (protocol.ts).
 //
 // The in-memory fs installs first (install-fs.ts), then the runtime's committed wasm_exec.js
 // evaluates, finds an fs, and never installs its stub. The build bundles both into the worker's

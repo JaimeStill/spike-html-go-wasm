@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Fails naming mise run install when a tool a task needs is missing: the node_modules tooling, and
 # typescript-go's tsc, the pinned mise tool; Go, node, golangci-lint, shellcheck, and actionlint,
-# and go.mod's requirements in the module cache; and with `browser`, the pinned chrome-headless-shell.
+# and go.mod's requirements in the module cache; and with `browser`, the pinned
+# chrome-headless-shell.
 # Adapted from spike-html-apps-foundation (d5037b4): scripts/preflight.sh, without the browser
 # check.
 # Adapted from spike-html-apps-foundation (d5037b4): scripts/preflight.sh, with vite among the

@@ -5,7 +5,7 @@
 // and no site-nav.js loaded, which defines it; the build bundles the module, so the registry
 // rather than a request names it. The crawl, from the index, checks every copied page, none here,
 // and loads each hand page it reaches: it reaches exactly the index and, by the index's link, the
-// runtime page. Neither page holds no highlighted code yet, so the SDK's palette check
+// runtime page. Neither page holds highlighted code yet, so the SDK's palette check
 // has nothing to run on. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.

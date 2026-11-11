@@ -9,10 +9,10 @@
 // than one live worker.
 //
 // The worker fetches the modules itself, and the page's own Network domain never sees a worker's
-// requests, so each page auto-attaches to its workers through the page's session, in the
-// protocol's non-flat mode, whose messages travel inside Target events on that session: each
-// worker attached is counted, live until it detaches, waits for the debugger until its Network
-// domain is on, and reports every request it sends. Nothing here names the site: its base is package.json's name.
+// requests, so each page auto-attaches to its workers through the page's session, in the protocol's
+// non-flat mode, whose messages travel inside Target events on that session: each worker attached
+// is counted, live until it detaches, waits for the debugger until its Network domain is on, and
+// reports every request it sends. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
