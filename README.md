@@ -6,10 +6,10 @@
 The GitHub Pages site of spike-html-go-wasm, made from the template of
 [spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.2. Its index,
 `index.html`, is a hand page served under `/spike-html-go-wasm/`, beside one more hand page,
-`components.html`, the components page, which shows the components in `web/components/` in each
-of their states, its Go demos running Go through the runtime in `web/runtime/`. The site copies no
-Markdown tree: `content.json` records none, and `content/` holds nothing. The spike's question, evidence,
-and path are in `context/README.md`.
+`components.html`, the components page, which shows each component in `web/components/` in each
+of its states; its Go demos run Go through the runtime in `web/runtime/`. The site copies no
+Markdown tree: `content.json` records none, and `content/` holds nothing. The spike's question,
+evidence, and path are in `context/README.md`.
 
 ## Tasks
 
@@ -21,28 +21,42 @@ and path are in `context/README.md`.
   `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` is tracked. It runs the
   Go tests as wasm under node twice: on node's fs, and on the runtime's in-memory fs, where
   `test/memfs` drives it through package `os`. It type-checks the configs, the web tiers, and the
-  suite with tsc and runs `mise run build`. The unit tier checks `content/` against
-  `content.json`, both layer directions, go.mod's by-tag rule, the currency and live commands'
-  logic, the in-memory fs's error codes, and each program demo's go fence on the components page
-  against its scenario's source, byte for byte. The browser tier, in the pinned
-  chrome-headless-shell, runs the SDK's checks on every hand page and the crawl, and holds the
-  code editor on the components page: its colors to the SDK's fences in every palette and scheme, its accessibility tree, its
-  gutter, and its loading; and the file tabs there: their accessibility tree, keyboard, control
-  by the page's file set, modified marker, overflow, and subscription; and the timings there:
-  their table in the accessibility tree, only the run's phases in order with their total, the
-  times' format and alignment, the empty state, a new run replacing the last, and subscription;
-  and the controls there: their toolbar in the accessibility tree, keyboard, availability
-  following the models, requests that change nothing, the New file and Rename forms' validation
-  and focus return, the status's transitions, target sizes, the 20rem column, motion, and
-  subscription; and the Go demo there, running real Go over the page's one runner: no Go before
-  a Run, a handler's run and a program's, Ctrl+Enter from inside a demo alone, the authoring
-  error, Stop, two demos sharing the runner, editable files and focus after a delete, Reset, its
-  accessibility tree, its fences with and without script, and the 20rem column; and through the
-  Go demos, the runtime: hello and the probe's handlers in one worker, a held module reused and
-  scenarios switched in place with no fetch, Stop ending the probe's spin with the next call
-  fetching nothing new and one worker live, and the probe's crash, a panic outside any handler,
-  printing to stderr and exiting 2. The unit tier also holds the file set's, the run timings',
-  and the run state's operations, refusals, and change events.
+  suite with tsc and runs `mise run build`.
+  - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
+    by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
+    tests the components' five models (`EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`,
+    and `RunState`): their operations, refusals, and change events. It holds each program demo's
+    go fence on the components page to its scenario's source, byte for byte. It fails if a module
+    under `web/components` or `web/pages` registers a page shortcut through the foundation's
+    `keys.js`.
+  - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
+    and the crawl, and proves each component on the components page:
+    - the code editor: its colors against the SDK's fences in every palette and scheme, its
+      accessibility tree, its gutter, its loading, its editing keys and events, its settings,
+      paste, and read-only;
+    - the file tabs: their accessibility tree, keyboard, control by the page's file set, modified
+      marker, sideways overflow with no row overflowing up or down, and subscription;
+    - the console: its quiet log in the accessibility tree, stderr's cue and its contrast in every
+      palette and scheme, entries in arrival order, exits and results, the 10,000-entry limit and
+      the dropped count, tail following, Copy and Clear, throughput, focus, motion, and
+      subscription;
+    - the timings: their table in the accessibility tree, only the run's phases in order with
+      their total, the times' format and alignment, the empty state, a new run replacing the
+      last, and subscription;
+    - the controls: their toolbar in the accessibility tree, keyboard, availability following the
+      models, requests that change nothing, the New file and Rename forms' validation and focus
+      return, the status's transitions, target sizes, the 20rem column, motion, and subscription;
+    - the Go demo, running real Go over the page's one runner: no Go before a Run, a handler's run
+      and a program's, Ctrl or Cmd+Enter from inside a demo alone, Alt or Shift with Enter running
+      nothing, Help listing no Run, the authoring error, Stop, two demos sharing the runner,
+      editable files and focus after a delete, Reset, its accessibility tree, its fences with and
+      without script, the 20rem column, and every part inside the demo at wide widths and at the
+      side-by-side threshold;
+    - the runtime, through the Go demos: hello and the probe's handlers in one worker, a held
+      module reused and scenarios switched in place with no fetch, Stop ending the probe's spin
+      with the next call fetching nothing new and one worker live, a Run while another run or a
+      load is pending stopping it first, and the probe's crash, a panic outside any handler,
+      printing to stderr and exiting 2.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
   (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`. A bare `vite build`
@@ -63,7 +77,9 @@ module defines its element when it is imported and exports its tag name as `tagN
 element's shadow root adopts the foundation's reset and elements sheets, then its own, a CSS
 module script beside it. A page imports a component's module, and the build bundles it.
 `components.html` shows each component's states, labelled, again at 20rem, and focused by the
-keyboard.
+keyboard. The directory's other modules are the components' internals, each documented in its own
+comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-themes.ts`, and
+`tokenizer.ts`.
 
 - `./code-editor.js`: `sl-code-editor`, a plain-text source editor: a `contenteditable` element
   in plaintext-only mode, exposed as a multiline textbox, beside a gutter of line numbers. Its Go
@@ -79,12 +95,12 @@ keyboard.
   paints into the document's one set of highlights, and one removed leaves the others painted.
   Long lines scroll sideways inside the frame by default, one row a line, the gutter held in place
   beside them, and wrap when its settings say so; either way each number stays beside its line's
-  first row at every width and profile. The gutter is hidden from assistive technology and holds no text: its numbers are generated
-  content, outside the editable element. The editor grows with its text; a page that holds it to
-  a block size gets a frame that scrolls inside. Its editing keys make each edit through
-  `document.execCommand`, a line break as `insertLineBreak` and the rest as `insertText`, so each
-  is one step of the browser's own undo history. A paste takes the clipboard's plain text through
-  the same path, and a drop is refused.
+  first row at every width and profile. The gutter is hidden from assistive technology and holds
+  no text: its numbers are generated content, outside the editable element. The editor grows
+  with its text; a page that holds it to a block size gets a frame that scrolls inside. Its
+  editing keys make each edit through `document.execCommand`, a line break as `insertLineBreak`
+  and the rest as `insertText`, so each is one step of the browser's own undo history. A paste
+  takes the clipboard's plain text through the same path, and a drop is refused.
   - Attributes: `language` (`go` or `json`; any other shows plain; reflected), `label` (the
     textbox's accessible name, "Code" by default), `readonly` (reflected), and `aria-labelledby`
     (ids in the host's tree whose elements name the textbox, taking precedence over `label`).
@@ -268,9 +284,10 @@ keyboard.
   follows each change the set sends, listening only to the set it holds while it is in the
   document, and never writes it: choosing a tab sends a request, and the selection changes only
   when the set's owner applies it. A modified file's tab shows a dot after its name and is named
-  "name, modified"; a read-only file's is described as read-only. When the tabs overflow their
-  row, it scrolls sideways inside itself, never the page, bringing the tab focus reaches, and the
-  active tab as it changes, into view; it scrolls smoothly only when the reader allows motion.
+  "name, modified"; a read-only file's is described as read-only. The tabs stay inside their row,
+  so it never scrolls up or down; when they overflow it, it scrolls sideways inside itself, never
+  the page, bringing the tab focus reaches, and the active tab as it changes, into view. It
+  scrolls smoothly only when the reader allows motion.
   - Attributes: `label` (the tablist's accessible name, "Files" by default) and `panel` (the id,
     in the host's tree, of the panel each tab controls, set on each tab across the shadow root as
     an element reference, `ariaControlsElements`).
@@ -286,8 +303,9 @@ keyboard.
     last, each requesting that tab's selection: activation follows focus. Enter, Space, and a
     click request the focused tab's selection.
 - `./glyphs.js`: the glyphs the components draw in their shadow roots, Octicons' copy, trash,
-  check-circle, x-circle, play, square-fill, undo, file-added, and pencil from the icons layer, written out as Lit templates with the same
-  paths: the build fills the icons layer into a page's own markup, and no tier imports it.
+  check-circle, x-circle, play, square-fill, undo, file-added, and pencil from the icons layer,
+  written out as Lit templates with the same paths: the build fills the icons layer into a page's
+  own markup, and no tier imports it.
 - `./go-demo.js`: `sl-go-demo`, live Go: the element composing `sl-controls`, `sl-file-tabs`,
   `sl-code-editor`, `sl-console`, and `sl-timings` over the page's runner, and the one owner of
   their models. It builds a `FileSet` from its fences, an `EditorSettings` from its attributes,
@@ -342,10 +360,13 @@ keyboard.
     a program demo, the editor, named by the active file's name, the log, and the timings.
   - Keyboard: each part's own, in order: the toolbar, the tabs on a program demo, the editor, and
     the console. Ctrl or Cmd+Enter, from anywhere inside the demo, the editor included, runs it,
-    as Run's `aria-keyshortcuts` declares; from outside every demo it runs none, and the
-    foundation's shortcut registry holds no entry for it.
-  - Layout: one column, the toolbar, the files, then the console and the timings, which share a
-    row once the demo is 44rem wide; it fits a 20rem column. Nothing moves.
+    as Run's `aria-keyshortcuts` declares; with Alt or Shift also held, Enter runs nothing. From
+    outside every demo the shortcut runs none, and the foundation's shortcut registry holds no
+    entry for it.
+  - Layout: one column: the toolbar, the files, then the console and the timings. Once the demo
+    is 44rem wide, the console and the timings share a row, the timings in a 16rem column and the
+    console taking the rest. Every part stays inside the demo at every width, and the demo fits a
+    20rem column. Nothing moves.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the

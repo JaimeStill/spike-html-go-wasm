@@ -184,7 +184,7 @@ Door          two-way: the components stay in this repository unreleased, the ru
 
 ## Progress
 
-slices 10/10 committed · standards ✓ · spec ✓ · editor —
+slices 10/10 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
@@ -447,6 +447,47 @@ slices 10/10 committed · standards ✓ · spec ✓ · editor —
   "stderr: " for assistive technology, because red text falls below 4.5:1 in some palettes.
 - components: Octicons glyphs are copied into the components tier, since no tier may import the
   icons layer and the boundaries table gains only shiki.
+- components: sl-go-demo reads each `pre` child as one file, its text the pre's text content, so
+  marked's plain fence and the SDK's Shiki markup read alike. A file's name is `data-file` on the
+  pre or its code, else the pre's `title`, else its language's default (`main.go`, `input.json`,
+  `input.txt`), and its grammar follows the name's extension.
+- components: an authoring error (no scenario, no fence, two fences on a handler demo, a name the
+  file set refuses, a tab size the settings refuse) shows its reason in the demo and its region's
+  description, slots the fences back as written, and never runs; mending the attribute rebuilds
+  the demo.
+- components: each Run clears the console and begins the timings afresh, so both show that run
+  alone.
+- components: after New file, sl-go-demo selects the new file and focuses the editor; the session
+  accepted this over behavior 11's focus return. Rejected: focus staying on New file.
+- components: Delete removes the active file with no confirmation.
+- components: Run stays available while a run is pending, since a new run stops the pending one;
+  Stop is available only then.
+- components: RunState numbers each run; `start` returns the number, and `finish` for any run but
+  the pending one changes nothing, so a superseded run settling late can't overwrite the newer
+  run's state. A superseded run is recorded as stopped.
+- components: a read-only editor marks a character key handled, so the foundation's keys fire no
+  single-key shortcut from it; Ctrl or Cmd+A selects its text alone, and Escape is the page's at
+  once.
+- components: in scroll mode the editor's gutter is sticky at the frame's inline start, and the
+  frame's scroll padding is the gutter's width, so a caret revealed at a line's start stops clear
+  of it.
+- components: the editor refuses a drop, since the browser's own inserts a block per line; text
+  enters by paste.
+- components: the components page's files and crash demos take plain-text fences ("hello, files",
+  "boom"), named `input.txt`.
+- components: the fence-equality unit test reads components.html with a small reader held to the
+  HTML parser's rules for a fence's text (comments, the newline after `<pre>`, character
+  references), and fails on anything it can't read. Rejected: an HTML parser dependency.
+- components: the components tier shares three internal modules: `subscription.ts`, a Lit
+  reactive controller listening to a held model only while the host is connected; `aria.ts`, id
+  references across the shadow boundary and the roving focus keys; and `reasons.ts`, how a
+  model's refusal names a value. Rejected: each component repeating them.
+- components: side by side, from the demo's 44rem container query, the timings take a fixed 16rem
+  track and the console the rest. Rejected: an auto track, which measured the inline-size-contained
+  timings as 0 and let the table run past the demo.
+- components: the file tabs' rule is the row's background, which the selected tab's bar paints
+  over, so every tab stays inside the row. Rejected: a border overlapped by each tab's negative
+  margin, which overflowed the row by a line and drew a vertical scrollbar.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
@@ -454,28 +495,36 @@ slices 10/10 committed · standards ✓ · spec ✓ · editor —
 - spike-html-hosting-sdk's markdownPages has no hook for marked extensions; an intake candidate.
 - A browser running a wasm build is another runtime layer; this spike's answer bears on the
   `elemental-runtime-layers` backlog goal.
-- `GOOS=js` go test under node needs a trimmed environment: wasm_exec.js caps argv+env at 12 KB,
-  and mise's environment overflows it.
+- wasm_exec.js caps argv and the environment together at 12 KB; `GOOS=js` go test under node
+  needs a trimmed environment, and the playground's compile and link argv must fit too.
 - SDK v0.6.1's site.css places header-actions at the inline end only beside a site nav; an
   intake candidate.
 - Vite's preview doesn't gzip, so the live command alone proves the gzip assertion, against the
   deployed site.
-- After Stop, a handler call's timings are instantiate, start, and call; a program's are
-  instantiate and run.
-- Switching back to a scenario refetches it over the HTTP cache, because the worker holds only the
-  current module.
-- The page's CDP Network domain doesn't see the worker's requests, so the browser tests auto-attach
-  to workers through CDP to count them.
-- When Go exits during a call, wasm_exec.js deletes the instance, so the worker races the exit's
-  rejection ahead of the call.
 - The SDK's Release workflow tags a release itself, on a release commit above the merge; pushing
   the tag by hand is rejected as already existing.
 - The SDK removes the focus outline on Help's heading, which isn't a control; spike-html-hosting-
   sqlate's STANDARDS.md says "Focus is always visible", so its next review may raise it.
-- staticcheck SA5002 flags an empty `for {}`; the probe's spin loops on a counter.
 
 - The state-outside-components principle is a native web principle for the intake's web
   standard; the answer section carries it.
+- Chrome exposes an editing host as editable whatever aria-readonly says; a read-only textbox must
+  not be contenteditable.
+- In a plaintext-only contenteditable, execCommand insertText of "\n" splits the text into a div
+  per line; insertLineBreak writes "\n" as text.
+- A scroller laid out as a flex item lays out every row again on each append (~50 ms against
+  ~3 ms at 10,000 rows); a block with its own max block size doesn't.
+- Visually hidden text placed `position: absolute` inside a scroller needs a positioned ancestor
+  inside the scroller; otherwise its containing block is the page's, and it grows the page.
+- An element with `contain: inline-size` measures 0 in an auto grid track; size the track.
+- The foundation's elements layer veils `::backdrop`, which a popover in the top layer has too; a
+  popover that veils nothing sets its backdrop transparent.
+- The foundation's keys.js passes over a keydown whose default is prevented, so a component keeps
+  a key from firing a page shortcut by preventing its default.
+- node --test sets no timeout by default, so a browser-tier wait that never resolves hangs the
+  check; every wait needs its own bound.
+- CDP Fetch enabled on the page intercepts the worker's .wasm fetch, which the page's Network
+  domain doesn't see; a paused request of a terminated worker may be gone when continued.
 
 ## Pending edits
 
@@ -485,4 +534,4 @@ slices 10/10 committed · standards ✓ · spec ✓ · editor —
   holds the state, its rules, and its validation. Evidence: this spike's FileSet and
   EditorSettings.
 - coordinator · roadmap.toml: in the components task's summary, "sl-run-controls" becomes
-  "sl-controls".
+  "sl-controls", and "with a specimen page" becomes "with a components page".

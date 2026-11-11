@@ -4,9 +4,9 @@
  * tokens, which a shadow root takes by inheritance from the page's entry. Unlayered, it sits above
  * the adopted layers in the root.
  *
- * The tablist is one row of tabs over a rule, as wide as the host's container. Tabs keep their names whole on one line, so when they
- * outnumber the row's width the row scrolls sideways, inside itself, and the script scrolls the
- * focused or newly active tab into view. The selected tab stands out by more than color: a bar in
+ * The tablist is one row of tabs over a rule, as wide as the host's container. Tabs keep their
+ * names whole on one line, so when they outnumber the row's width the row scrolls sideways, inside
+ * itself, and the script scrolls the focused or newly active tab into view. The selected tab stands out by more than color: a bar in
  * the interaction color under it, over the rule, and its name in the page's full text color where
  * the others are quieter. A modified file's dot follows its name.
  *
