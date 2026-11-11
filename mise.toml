@@ -55,7 +55,7 @@ run = "pnpm exec prettier --check ."
 dir = "{{config_root}}"
 
 [tasks."lint:go"]
-description = "Lint the Go module under GOOS=js GOARCH=wasm (gofmt, go vet, go fix, go mod tidy, golangci-lint), check web/runtime/wasm_exec.js against the pinned Go's, and fail on any tracked .wasm; reads no network, writes nothing outside Go's caches"
+description = "Lint the Go module under GOOS=js GOARCH=wasm (gofmt, go vet, go fix, go mod tidy, golangci-lint), check web/runtime/wasm_exec.js against the pinned Go's, fail on any tracked .wasm, and run the Go tests as wasm under node in a trimmed environment; reads no network, writes nothing outside Go's caches and TMPDIR"
 depends = ["preflight"]
 run = "scripts/check-go.sh"
 dir = "{{config_root}}"

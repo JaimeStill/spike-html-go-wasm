@@ -4,9 +4,10 @@
 # finds, without -race, which js/wasm doesn't support. Then the runtime's wasm_exec.js, which must
 # be the pinned Go's lib/wasm/wasm_exec.js byte for byte below its one provenance line, so a Go
 # bump fails here until it's recopied; and no .wasm tracked in git, the build's output alone.
-# Reads no network (GOPROXY=off, GOTOOLCHAIN=local); writes nothing outside Go's caches.
+# Then the module's Go tests, run as wasm under node by the pinned Go's lib/wasm/go_js_wasm_exec.
+# Reads no network (GOPROXY=off, GOTOOLCHAIN=local); writes nothing outside Go's caches and TMPDIR.
 # Adapted from go-core (f1686fb): mise.toml, its check task, for one module, under GOOS=js, with
-# no build or test.
+# no build.
 set -euo pipefail
 
 export GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off GOTOOLCHAIN=local
@@ -31,6 +32,17 @@ if [[ "$(head -n 1 "$runtime")" != "$provenance" ]] \
   echo "recopy it from \$(go env GOROOT)/lib/wasm/wasm_exec.js" >&2
   exit 1
 fi
+
+# wasm_exec.js caps the test binary's argv and environment together at 12 KB, and the go command
+# passes its whole environment on, so the tests run under env -i with only what go and node need:
+# PATH to the pinned go and node and the system's tools, HOME, Go's caches, and TMPDIR. A handler
+# that blocks the event loop deadlocks the instance rather than failing a test, so -timeout bounds
+# the run.
+path="$(dirname "$(command -v go)"):$(dirname "$(command -v node)"):/usr/bin:/bin"
+env -i PATH="$path" HOME="$HOME" TMPDIR="${TMPDIR:-/tmp}" \
+  GOCACHE="$(go env GOCACHE)" GOMODCACHE="$(go env GOMODCACHE)" \
+  GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off GOTOOLCHAIN=local \
+  go test -timeout=1m -exec "$(go env GOROOT)/lib/wasm/go_js_wasm_exec" ./...
 
 tracked=$(git ls-files '*.wasm')
 if [[ -n "$tracked" ]]; then

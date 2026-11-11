@@ -15,9 +15,10 @@ and path are in `context/README.md`.
   the network.
 - `mise run check`: run every check, reading no network. It lints with ESLint (the web tiers'
   import direction, and the check that the build left no CSS module script), Prettier,
-  shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm` and fails unless
-  `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` is tracked. It
-  type-checks with tsc and runs `mise run build`. The unit tier checks `content/` against
+  shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm`, fails unless
+  `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` is tracked, and runs the
+  Go tests as wasm under node, the bridge's and the probe's among them. It type-checks with tsc
+  and runs `mise run build`. The unit tier checks `content/` against
   `content.json`, both layer directions, go.mod's by-tag rule, and the currency and live
   commands' logic; the browser tier runs the SDK's checks on the build and runs the Go module in
   the pinned chrome-headless-shell.
