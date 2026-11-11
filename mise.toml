@@ -99,7 +99,7 @@ run = ["pnpm exec vite build", "scripts/build-go.sh"]
 dir = "{{config_root}}"
 
 [tasks."test:unit"]
-description = "Run the unit tier under node --test: content/ against content.json, which records no tree, with the SDK's content check; the web tiers' import table over a fixture tree; and the Go module's layer direction (go list under GOOS=js GOARCH=wasm) and its go.mod, no replace directive or local-path requirement, on the module and on fixture modules; reads no network, writes nothing outside TMPDIR and Go's caches"
+description = "Run the unit tier under node --test: content/ against content.json, which records no tree, with the SDK's content check; the web tiers' import table over a fixture tree; and the Go module's layer direction (go list under GOOS=js GOARCH=wasm) and its go.mod, no replace directive or local-path requirement, on the module and on fixture modules; and mise run currency's go.mod part over recorded go list output; reads no network, writes nothing outside TMPDIR and Go's caches"
 depends = ["preflight"]
 run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
@@ -133,11 +133,17 @@ run = ["mise install", "pnpm install --frozen-lockfile", "go mod download"]
 dir = "{{config_root}}"
 
 # The SDK's currency bin, which a pnpm install links into node_modules/.bin; it replaces
-# scripts/currency.sh, whose mise tool report it holds, and go.mod's requirements join it with the
-# module.
+# scripts/currency.sh, whose mise tool report it holds. Then go.mod's direct requirements,
+# scripts/go-currency.ts. Both parts run whatever the first reports, and the task fails if either
+# does.
 [tasks.currency]
-description = "Report every mise tool, package.json pin (a registry version or a github: tag), and workflow action or reusable workflow pin behind its latest, one line each, exiting nonzero if any; reads the network, writes nothing"
-run = "pnpm exec spike-html-hosting-currency"
+description = "Report every mise tool, package.json pin (a registry version or a github: tag), workflow action or reusable workflow pin, and go.mod direct requirement behind its latest, one line each, exiting nonzero if any; reads the network, writes nothing outside TMPDIR and Go's caches"
+run = '''
+status=0
+pnpm exec spike-html-hosting-currency || status=$?
+node scripts/go-currency.ts || status=$?
+exit "$status"
+'''
 # Without mise's own command echo, so a current tree prints nothing at all.
 quiet = true
 dir = "{{config_root}}"
