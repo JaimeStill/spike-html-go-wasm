@@ -3,25 +3,31 @@
      labelled in its figure's caption, then every state again in a column 20rem wide, and, for a
      component that takes focus, one instance reached by the keyboard, its focus shown. Its script,
      web/pages/components.ts, defines the components and builds the states into each list; nothing
-     here runs Go, and nothing loads Go. sl-code-editor: Go and JSON highlighted, another language
-     plain, read-only, long lines scrolled sideways (the default) and wrapped, a tab two columns
-     wide, empty and named by its caption through aria-labelledby, two editors sharing the
+     runs Go, or loads it, until a Go demo's Run. sl-code-editor: Go and JSON highlighted, another
+     language plain, read-only, long lines scrolled sideways (the default) and wrapped, a tab two
+     columns wide, empty and named by its caption through aria-labelledby, two editors sharing the
      document's highlights, an editable editor for the keyboard model, and an editor whose events a
-     readout counts, a specimen aid. The script creates each editor's settings and owns them.
-     sl-file-tabs: several files, one modified, one read-only, sixteen overflowing the row, and one
+     readout counts, a specimen aid. The script creates each editor's settings and owns them. sl-
+     file-tabs: several files, one modified, one read-only, sixteen overflowing the row, and one
      alone, each over an editor showing the active file, the script owning each file set and
      applying the tabs' requests and the editor's edits to it. sl-console: interleaved streams,
-     exits of 0 and 2, a handler's answer and error, ANSI escapes, long lines, a log past its
-     limit, empty, and one streaming on a button's press, each log the script's own, written from
-     scripted events, its clear requests applied by the script. sl-timings: a cold load, a held
-     instance's call, a program's run, the call after Stop, and no run yet, each run's timings the
-     script's own, recorded from scripted events, and one whose specimen aid begins a new run in
-     place of the last on a button's press. sl-controls: idle with nothing modified, a file
-     modified, a run pending, a run that fails, the files group, New file's form refusing a name
-     on a specimen aid's press, and the last file, each over the file tabs and an editor, the
-     script owning each file set and run state and applying the toolbar's requests, a run ending
-     on its own after a moment. The shell is the index's, the same header, dialogs, and
-     unlayered header-actions rule; see index.html for each. -->
+     exits of 0 and 2, a handler's answer and error, ANSI escapes, long lines, a log past its limit,
+     empty, and one streaming on a button's press, each log the script's own, written from scripted
+     events, its clear requests applied by the script. sl-timings: a cold load, a held instance's
+     call, a program's run, the call after Stop, and no run yet, each run's timings the script's
+     own, recorded from scripted events, and one whose specimen aid begins a new run in place of the
+     last on a button's press. sl-controls: idle with nothing modified, a file modified, a run
+     pending, a run that fails, the files group, New file's form refusing a name on a specimen aid's
+     press, and the last file, each over the file tabs and an editor, the script owning each file
+     set and run state and applying the toolbar's requests, a run ending on its own after a moment.
+     sl-go-demo: written here, not by the script, each demo's files the fences inside it, which read
+     as the page's code before the element upgrades and without script: a handler demo, format's
+     JSON input; a program demo, hello's main.go as cmd/hello/main.go holds it; a program demo with
+     editable files; a handler demo whose fence is the SDK's Shiki markup, as a Markdown page
+     renders it; a handler demo with two fences, an authoring error; and two demos, spin and format,
+     sharing the runner. The script copies them into the 20rem list and gives every demo the page's
+     one runner, which loads Go only on a Run. The shell is the index's, the same header, dialogs,
+     and unlayered header-actions rule; see index.html for each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -190,6 +196,108 @@
         <p>The toolbar, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>
         <div class="focus"></div>
+      </section>
+      <section id="go-demo" aria-labelledby="go-demo-heading">
+        <h2 id="go-demo-heading">Go demo</h2>
+        <p>
+          <code>sl-go-demo</code>, live Go composed from the parts above over the page's one
+          runner: its files are the fences written inside it, which read as the page's code before
+          it upgrades. Nothing runs, and no Go loads, until a Run.
+        </p>
+        <h3 id="go-demo-states">States</h3>
+        <div class="states">
+          <figure class="state" data-state="handler">
+            <figcaption>A handler demo: Run calls probe's format with the JSON below</figcaption>
+            <sl-go-demo scenario="probe" handler="format" label="format demo">
+<pre><code class="language-json">{"name": "probe", "handlers": ["format", "files", "spin", "crash"]}
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="program">
+            <figcaption>A program demo: Run runs hello's main, its source read-only</figcaption>
+            <sl-go-demo scenario="hello" label="hello demo">
+<pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
+// standard library and prints one line. It is a program scenario: the runtime page runs its main
+// to completion in the runtime's worker, which reports the line as stdout output and the exit
+// code 0. It stays the standard-library baseline.
+package main
+
+import (
+	"fmt"
+	"runtime"
+)
+
+func main() {
+	fmt.Printf("hello from Go %s on %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+}
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="editable-files">
+            <figcaption>Editable files: New file, Rename, and Delete on a program demo</figcaption>
+            <sl-go-demo scenario="hello" editable-files label="hello demo, editable files">
+<pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
+// standard library and prints one line. It is a program scenario: the runtime page runs its main
+// to completion in the runtime's worker, which reports the line as stdout output and the exit
+// code 0. It stays the standard-library baseline.
+package main
+
+import (
+	"fmt"
+	"runtime"
+)
+
+func main() {
+	fmt.Printf("hello from Go %s on %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+}
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="markdown">
+            <figcaption>A fence as the SDK's Markdown renders it, highlighted at build</figcaption>
+            <sl-go-demo scenario="probe" handler="format" label="format demo, rendered fence">
+<pre class="shiki shiki-themes flexoki primer catppuccin everforest" tabindex="0"><code><span class="line"><span class="__shiki_rhvcs7">{</span><span class="__shiki_y6j4i8"> "</span><span class="__shiki_1cgxug">shiki</span><span class="__shiki_y6j4i8">"</span><span class="__shiki_45ki97">:</span><span class="__shiki_1ahg5l"> true</span><span class="__shiki_45ki97">,</span><span class="__shiki_y6j4i8"> "</span><span class="__shiki_1cgxug">list</span><span class="__shiki_y6j4i8">"</span><span class="__shiki_45ki97">:</span><span class="__shiki_rhvcs7"> [</span><span class="__shiki_swpwtl">3</span><span class="__shiki_45ki97">,</span><span class="__shiki_swpwtl"> 1</span><span class="__shiki_45ki97">,</span><span class="__shiki_swpwtl"> 2</span><span class="__shiki_rhvcs7">]</span><span class="__shiki_rhvcs7"> }</span></span>
+<span class="line"></span></code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="authoring-error">
+            <figcaption>An authoring error: a handler demo holding two fences, which doesn't run</figcaption>
+            <sl-go-demo scenario="probe" handler="format" label="format demo, two fences">
+<pre><code class="language-json">[1, 2]
+</code></pre>
+<pre><code class="language-json">[3, 4]
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="shared">
+            <figcaption>
+              Two demos, one runner: a Run in one stops the other's pending run, and each console
+              holds only its own output
+            </figcaption>
+            <sl-go-demo scenario="probe" handler="spin" label="spin demo">
+<pre><code class="language-text">spin until stopped
+</code></pre>
+            </sl-go-demo>
+            <sl-go-demo scenario="probe" handler="format" label="format demo, sharing the runner">
+<pre><code class="language-json">[5]
+</code></pre>
+            </sl-go-demo>
+          </figure>
+        </div>
+        <h3 id="go-demo-narrow">States at 20rem</h3>
+        <div class="states narrow"></div>
+        <h3 id="go-demo-focus">Focus visible</h3>
+        <p>The demo's toolbar, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus">
+          <figure class="state" data-state="focus">
+            <figcaption>Focused by Tab</figcaption>
+            <sl-go-demo scenario="probe" handler="format" label="format demo, focused">
+<pre><code class="language-json">[1]
+</code></pre>
+            </sl-go-demo>
+          </figure>
+        </div>
       </section>
     </main>
     <dialog id="help" aria-labelledby="help-title">

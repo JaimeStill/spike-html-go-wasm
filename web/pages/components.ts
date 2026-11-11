@@ -4,7 +4,8 @@
 // screenshot command captures each section alone, the others hidden, and focuses its mark, then
 // the page's first, before pressing Tab to reach it, and the browser tier each. Each state is a
 // figure, its label the caption, built fresh for each list, so no element is shared between them.
-// Nothing here loads Go: the components page runs nothing yet.
+// Nothing here loads Go on load: the page's one runner starts its worker and fetches a module only
+// on a demo's Run.
 //
 // The code editor's states (sl-code-editor): Go and JSON highlighted, another language plain,
 // read-only, long lines scrolled sideways (the default) and wrapped, a tab two columns wide, empty
@@ -47,6 +48,16 @@
 // Rename, and Delete change the set, a new file made active. The refusing state's specimen aid, a
 // button, opens New file's form, types a name the set holds, and submits it, so a capture of the
 // page opens it in one step, and a page loaded shows every form closed.
+//
+// The Go demo's states (sl-go-demo) are written in components.html, each demo's files the fences
+// inside it, so they read as the page's code before the element upgrades and without script: a
+// handler demo, format's JSON input; a program demo, hello's main.go as cmd/hello/main.go holds
+// it; a program demo with editable files; a handler demo whose fence is the SDK's Shiki markup, as
+// a Markdown page renders it; a handler demo holding two fences, an authoring error; and two
+// demos, spin and format, sharing the runner. The page copies the states list into the 20rem list,
+// the fences with it, and gives every demo the page's one runner, the runtime's Runner, which
+// TypeScript checks against the demo's declared subset, DemoRunner, where the page creates it.
+// Nothing runs until a Run is pressed, so a capture of the page is the same every time.
 
 import "../components/code-editor.ts";
 import "../components/console.ts";
@@ -60,6 +71,9 @@ import type { DeleteDetail, NewDetail, RenameDetail } from "../components/contro
 import { type Outcome, RunState } from "../components/run-state.ts";
 import { type Phase, RunTimings } from "../components/run-timings.ts";
 import "../components/timings.ts";
+import "../components/go-demo.ts";
+import type { DemoRunner } from "../components/go-demo.ts";
+import { Runner } from "../runtime/runner.ts";
 
 /** A state: its key, its label, and a function that builds it, fresh for each list, given an id
  * unique to the list, for an element that names another. */
@@ -775,3 +789,20 @@ specimens(
       }),
   },
 );
+
+/** The page's one runner, every demo's: the runtime's Runner, checked here, at compile time,
+ * against the subset sl-go-demo declares, its events included, since the demo imports nothing
+ * from the runtime. It starts no worker and fetches nothing until a demo's Run. */
+const runner = new Runner() satisfies DemoRunner;
+
+/** The Go demo's states, written in the page: copied into the 20rem list, fences and all, and
+ * every demo given the runner. */
+function goDemos(): void {
+  const section = document.querySelector("#go-demo");
+  if (!section) throw new Error("components.html has no #go-demo");
+  const [states, narrow] = section.querySelectorAll(".states");
+  narrow.append(...[...states.children].map((state) => state.cloneNode(true)));
+  for (const demo of section.querySelectorAll("sl-go-demo")) demo.runner = runner;
+}
+
+goDemos();

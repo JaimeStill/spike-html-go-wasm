@@ -3,9 +3,10 @@
 // whole at 390px, 1120px, and 1376px, and the index also with Help open and with Settings open at
 // each; and the components page as one capture name per component, --page components/<component>,
 // each the page whole at 1280×800 with every other component's section hidden, and the controls'
-// with New file's form open on its refusal. The SDK's three widths over the whole components page
-// grew with every component, 68 images for the editor alone, so each component is captured alone,
-// at one width. The description's facets, --all's profiles, the registry's profiles, and its
+// with New file's form open on its refusal; the Go demo's presses nothing, so every demo shows as
+// before a Run, and no Go loads. The SDK's three widths over the whole components page grew with
+// every component, 68 images for the editor alone, so each component is captured alone, at one
+// width. The description's facets, --all's profiles, the registry's profiles, and its
 // server, which serves the site as the browser tier serves it, by the SDK's served(), under the
 // base, are the SDK's.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
@@ -23,7 +24,14 @@ import { description } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 const root = join(import.meta.dirname, "..");
 
 /** The components page's sections, by id, each a component's, in the page's order. */
-export const COMPONENTS = ["code-editor", "file-tabs", "console", "timings", "controls"] as const;
+export const COMPONENTS = [
+  "code-editor",
+  "file-tabs",
+  "console",
+  "timings",
+  "controls",
+  "go-demo",
+] as const;
 
 /** Shows the component's section alone: every other section of the page's main is hidden, and its
  * focus-start mark dropped, so the mark the bin focuses, the page's first, is the component's.

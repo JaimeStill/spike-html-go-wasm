@@ -34,7 +34,10 @@ and path are in `context/README.md`.
   and the controls there: their toolbar in the accessibility tree, keyboard, availability
   following the models, requests that change nothing, the New file and Rename forms' validation
   and focus return, the status's transitions, target sizes, the 20rem column, motion, and
-  subscription. The unit tier also holds the file set's, the run timings', and the run state's
+  subscription; and the Go demo there, running real Go over the page's one runner: no Go before
+  a Run, a handler's run and a program's, Ctrl+Enter from inside a demo alone, the authoring
+  error, Stop, two demos sharing the runner, editable files and focus after a delete, Reset, its
+  accessibility tree, its fences with and without script, and the 20rem column. The unit tier also holds the file set's, the run timings', and the run state's
   operations, refusals, and change events. The browser tier proves that Stop ends the probe's spin and the next call fetches
   nothing new, and that the probe's crash, a panic outside any handler, prints to stderr and
   exits 2.
@@ -270,7 +273,8 @@ keyboard.
     in the host's tree, of the panel each tab controls, set on each tab across the shadow root as
     an element reference, `ariaControlsElements`).
   - Properties: `files`, the `FileSet` its owner creates and writes; `null`, the default, shows
-    no tablist; and `label` and `panel`, as their attributes.
+    no tablist; and `label` and `panel`, as their attributes. `focus()` focuses the selected tab,
+    so an owner moving focus to the tabs, as `sl-go-demo` does after a delete, lands on it.
   - Events: `select`, a `CustomEvent` whose `detail.name` names the file, bubbling and not
     composed, when a tab other than the selected one is clicked or reached by the keyboard. The
     owner applies it with `files.select(detail.name)`.
@@ -282,6 +286,64 @@ keyboard.
 - `./glyphs.js`: the glyphs the components draw in their shadow roots, Octicons' copy, trash,
   check-circle, x-circle, play, square-fill, undo, file-added, and pencil from the icons layer, written out as Lit templates with the same
   paths: the build fills the icons layer into a page's own markup, and no tier imports it.
+- `./go-demo.js`: `sl-go-demo`, live Go: the element composing `sl-controls`, `sl-file-tabs`,
+  `sl-code-editor`, `sl-console`, and `sl-timings` over the page's runner, and the one owner of
+  their models. It builds a `FileSet` from its fences, an `EditorSettings` from its attributes,
+  and a `ConsoleLog`, a `RunTimings`, and a `RunState` of its own; it is the only writer of each,
+  and applies every request its parts send. It imports nothing from the runtime and fetches
+  nothing: it reads `DemoRunner`, the runtime's `Runner`'s structural subset, `load`, `run`,
+  `stop`, and `listen`, with the output, exit, and timing events re-declared (`DemoEvent`), and
+  the page that passes it the runtime's `Runner` has TypeScript check the one against the other
+  there (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
+  - Modes: with `handler` named, Run loads the scenario and calls that handler with the one file's
+    text, editable; its answer, a string as it is or anything else as indented JSON, or its error,
+    shows as the console's result block. With none, Run runs the prebuilt program's main: the
+    fences are read-only, the file tabs show over the editor, a tabpanel they control, and the
+    exit shows as the console's status line. Each Run clears the console and begins the timings
+    afresh; the toolbar's status says how it ended.
+  - Runs on one runner: the runner runs one request at a time, a new one stopping the pending
+    one. A demo takes the runner's events only while a request of its own is pending, from its
+    load to its run's settling, so each console holds only its own demo's output, and a demo
+    whose run another demo's Run stops records it as stopped. Stop stops the runner only while
+    the demo's own run is pending.
+  - Attributes: `scenario` (required: the Go scenario Run loads), `handler` (the handler Run
+    calls; absent, Run runs the program's main), `editable-files` (a boolean: New file, Rename,
+    and Delete on a program demo; a handler demo, holding its one input, ignores it), `wrap` (a
+    boolean: long lines wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), and
+    `label` (the demo's accessible name, "<scenario> <handler> demo" by default). A change to
+    `handler` rebuilds the files from the fences; `wrap` and `tab-size` change the settings in
+    place; while an authoring error shows, a change to `scenario`, `wrap`, or `tab-size` builds
+    the demo again, so a mended attribute mends it.
+  - Properties: `runner`, a `DemoRunner`, the page's one runner, `null` by default, which runs
+    nothing; `problem`, read-only, the authoring error's reason, or `null`; and the attributes'.
+  - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
+    the pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
+    Shiki-rendered `<pre class="shiki">` read alike. A file's name is the pre's or its code's
+    `data-file`, else the pre's `title`, else a default from the fence's language, a
+    `data-language` or a `language-<name>` class on either: `main.go` for go, `input.json` for
+    json, `input.txt` for any other; with no language, as Shiki's markup carries none, `main.go`
+    on a program demo and `input.json` on a handler demo. Each file's grammar follows its name's
+    extension. The fences are read once the document has parsed them, and stay in the light DOM
+    unchanged: before the element upgrades, and without script, they render as the page's code;
+    once upgraded they are no part of the flat tree, neither rendered nor in the accessibility
+    tree, and the editor alone shows their text.
+  - Authoring errors: no scenario, no fence, more than one fence on a handler demo, a name the
+    file set refuses (two fences both defaulting to `main.go` among them), or a tab size the
+    settings refuse. The demo shows "Authoring error:" and the reason, on the page's red mixed
+    into its surface, describes its region with it, slots the fences back as written, and
+    doesn't run.
+  - Files: New file adds the file, selects it, and focuses the editor; Rename renames the active
+    file, focus staying on Rename; Delete removes the active file, unless the last, and focuses
+    the tab now active; Reset restores every file's text as given.
+  - Events: none of its own; its parts' requests stop at it. Slots: none, but the fences above.
+  - Accessibility: a region named by `label`, holding the toolbar, the tabs and their tabpanel on
+    a program demo, the editor, named by the active file's name, the log, and the timings.
+  - Keyboard: each part's own, in order: the toolbar, the tabs on a program demo, the editor, and
+    the console. Ctrl or Cmd+Enter, from anywhere inside the demo, the editor included, runs it,
+    as Run's `aria-keyshortcuts` declares; from outside every demo it runs none, and the
+    foundation's shortcut registry holds no entry for it.
+  - Layout: one column, the toolbar, the files, then the console and the timings, which share a
+    row once the demo is 44rem wide; it fits a 20rem column. Nothing moves.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the

@@ -46,6 +46,8 @@ export interface SelectDetail {
  * tab other than the selected one is clicked or reached by the keyboard: a request, which changes
  * nothing until the owner applies it to the set.
  *
+ * `focus()` focuses the selected tab, so an owner moving focus to the tabs lands on it.
+ *
  * Keyboard: Tab reaches the selected tab alone. Left and Right move focus to the previous and the
  * next tab, wrapping, and Home and End to the first and the last, each requesting that tab's
  * selection. Enter and Space, and a click, request the selection of the focused tab.
@@ -100,6 +102,13 @@ export class FileTabs extends LitElement {
     this.#heard?.removeEventListener("change", this.#changed);
     next?.addEventListener("change", this.#changed);
     this.#heard = next;
+  }
+
+  /** Focuses the selected tab, the tablist's one tab stop, as rendered last: the host itself takes
+   * no focus, so an owner moving focus to the tabs, as after a delete, lands on the active file's
+   * tab. With no set, nothing is focused. */
+  override focus(options?: FocusOptions): void {
+    this.#tabs.find((tab) => tab.ariaSelected === "true")?.focus(options);
   }
 
   /** The tab elements, in order. */

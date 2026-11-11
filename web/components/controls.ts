@@ -355,8 +355,11 @@ export class Controls extends LitElement {
     const problem = this.#problem(form, value);
     this.problems = { ...this.problems, [form]: problem };
     if (problem) return;
-    this.#restore[form] = false;
+    // Closing notes focus in the form, which would return focus to the button once the toggle
+    // event comes, a task later, after the owner may have moved it on, as to the editor of a new
+    // file: the submit returns focus itself, so the note is cleared after the close.
     this.#popover(form)?.hidePopover();
+    this.#restore[form] = false;
     this.#button(form)?.focus();
     if (form === "new") {
       this.#request("new", { name: value } satisfies NewDetail);
