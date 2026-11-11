@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** site
+- **Branch:** site
 
 ## Tasks
 
@@ -16,6 +16,68 @@
 8. [ ] measure
 9. [ ] review
 10. [ ] answer
+
+## Task brief · site
+
+Problem       No site, Go module, or build yet. Every later task needs a Pages project site on
+              spike-html-hosting-sdk v0.6.1, the Elemental layers with both direction checks, Go
+              built for GOOS=js in the check and the Pages workflow, and wasm_exec.js with its
+              provenance (evidence 1, 6).
+Behaviors     1. Scaffolded from SDK v0.6.1; template files carry a provenance line ending in the
+                 SDK tag. SDK, foundation v0.3.0, tooling v0.3.0, components v0.5.0, icons v0.1.0
+                 pinned by tag; everything else at latest (vite 8.3.8, prettier 3.10.0, eslint
+                 10.14.0, boundaries 7.4.2, import-x 4.18.1, typescript-go 7.0.2, actionlint
+                 1.7.12, golangci-lint 2.15.0, chrome-headless-shell 157.0.8103.50).
+              2. `mise run check` reads no network and runs ESLint (incl. the SDK's leftover check),
+                 Prettier, shellcheck, actionlint; gofmt, vet, go fix -diff, go mod tidy -diff,
+                 golangci-lint under GOOS=js GOARCH=wasm; types; Go + site builds; unit + browser
+                 tiers. A missing tool/module fails naming `mise run install`, which fetches both.
+              3. The build writes the site under /spike-html-go-wasm/: hand index, plus a stdlib
+                 hello built by the pinned Go for js/wasm at a stable path beside wasm_exec.js. No
+                 .wasm is tracked; the check fails if one is.
+              4. The hand index passes every SDK shell check, the crawl reaches it, and it requests
+                 no Go module.
+              5. Under the SDK preview, hello answers 200 with application/wasm and, run in
+                 chrome-headless-shell through the committed wasm_exec.js, prints its line.
+              6. wasm_exec.js is byte-for-byte the pinned Go's lib/wasm copy below one provenance
+                 line naming the release; the check fails when they differ; Prettier/ESLint skip it.
+              7. An ESLint boundaries table holds the web direction (components ↛ runtime/pages;
+                 runtime ↛ pages/components; pages → both; each tier only its listed packages); a
+                 unit test lints a fixture tree, exact rules per forbidden case, none per allowed.
+              8. A `go list` test under GOOS=js holds the Go direction (cmd/<s> → only
+                 internal/<s>; internal/<s> ↛ other scenarios or cmd/; bridge ↛ internal/, cmd/);
+                 passes on the module and names each planted violation in a fixture module.
+              9. The check fails on any replace directive or local-path requirement in go.mod.
+              10. `mise run currency` reports what the SDK bin reports plus each go.mod requirement
+                  behind latest as `go.mod: MODULE PIN -> LATEST`; silent and exit 0 when current.
+              11. PRs run the SDK site CI; a push to main runs the SDK Pages deploy; the site is live
+                  at https://jaimestill.github.io/spike-html-go-wasm/.
+              12. A live command (network, outside the check) asserts the index 200 and hello 200
+                  application/wasm under the base, gzip-encoded when asked.
+              13. The header carries no site nav, only its header-actions group; the SDK shell
+                  checks pass without one.
+              14. `mise run screenshots` captures the index at the SDK widths, light and dark, and
+                  leaves no capture file; the browser tier proves it.
+Test seams    `mise run check` (unit + browser tiers over the built site under its base) for 1–11,
+              13, 14; the live command for 12.
+Slices        1. Site scaffold: template over the repo, hand index, no site nav, pins at latest, CI
+                 and Pages callers, JS-side check green.
+              2. Go for js: module, hello, wasm_exec.js + byte check, Go lints, build into the site;
+                 browser tier proves application/wasm and the printed line.
+              3. Direction checks: boundaries table + fixture tree, go list test + fixture module,
+                 by-tag go.mod check.
+              4. Currency over go.mod.
+              5. Pages live: enable Pages (Actions source), first merge deploys, live command passes.
+              (No upgrade slice: the repo is current.)
+Out of scope  bridge, loader, worker, in-memory fs, Stop; components and specimen page; playground;
+              any workspace module demo or requirement; TinyGo and all size/timing measurement;
+              any change to the SDK, components' site list, or any reference repository.
+Door          two-way — enabling Pages and the first deploy publish a public site, which can be
+              unpublished; nothing tagged.
+
+## Progress
+
+slices 0/5 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -78,6 +140,17 @@
   spike-html-hosting-sdk v0.6.1, -components v0.5.0, -icons v0.1.0, spike-html-apps-foundation
   v0.3.0, spike-html-apps-tooling v0.3.0, spike-html-hosting at 421254d, and spike-html-apps at
   dae9a77.
+- site: the session enables GitHub Pages with GitHub Actions as its source, before the first merge
+  to main.
+- site: the first GOOS=js program is a standard-library hello, the measure task's baseline; the
+  by-tag rule on go.mod is enforced now, and the sqlate task is the first to require a workspace
+  module.
+- site: golangci-lint 2.15.0 with go-core's standard set, beside vet, gofmt, go fix -diff, and go
+  mod tidy -diff, all under GOOS=js GOARCH=wasm; no -race, which js doesn't support.
+- site: the index is a hand page holding the spike's question and evidence, markdownPages on an
+  empty tree list; the Markdown shell arrives with the sqlate task.
+- site: no header site nav. The SDK v0.6.1 shell checks treat sl-site-nav as optional, and this
+  site isn't in components v0.5.0's built list. Rejected: a sites list served under the base.
 
 ## Notes
 
@@ -86,6 +159,8 @@
 - spike-html-hosting-sdk's markdownPages has no hook for marked extensions; an intake candidate.
 - A browser running a wasm build is another runtime layer; this spike's answer bears on the
   `elemental-runtime-layers` backlog goal.
+- `GOOS=js` go test under node needs a trimmed environment: wasm_exec.js caps argv+env at 12 KB,
+  and mise's environment overflows it.
 
 ## Pending edits
 
