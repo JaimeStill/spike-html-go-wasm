@@ -4,7 +4,9 @@
 # finds, without -race, which js/wasm doesn't support. Then the runtime's wasm_exec.js, which must
 # be the pinned Go's lib/wasm/wasm_exec.js byte for byte below its one provenance line, so a Go
 # bump fails here until it's recopied; and no .wasm tracked in git, the build's output alone.
-# Then the module's Go tests, run as wasm under node by the pinned Go's lib/wasm/go_js_wasm_exec.
+# Then the module's Go tests, run as wasm under node twice: on node's fs, by the pinned Go's
+# lib/wasm/go_js_wasm_exec, all but test/memfs, which refuses any fs but the runtime's; and on the
+# runtime's in-memory fs, web/runtime/fs.ts, by scripts/go-memfs-exec.sh, every package.
 # Reads no network (GOPROXY=off, GOTOOLCHAIN=local); writes nothing outside Go's caches and TMPDIR.
 # Adapted from go-core (f1686fb): mise.toml, its check task, for one module, under GOOS=js, with
 # no build.
@@ -38,11 +40,16 @@ fi
 # PATH to the pinned go and node and the system's tools, HOME, Go's caches, and TMPDIR. A handler
 # that blocks the event loop deadlocks the instance rather than failing a test, so -timeout bounds
 # the run.
+# The in-memory run never takes a cached result (-count=1), which go test might otherwise reuse
+# from the run on node's fs.
 path="$(dirname "$(command -v go)"):$(dirname "$(command -v node)"):/usr/bin:/bin"
-env -i PATH="$path" HOME="$HOME" TMPDIR="${TMPDIR:-/tmp}" \
-  GOCACHE="$(go env GOCACHE)" GOMODCACHE="$(go env GOMODCACHE)" \
-  GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off GOTOOLCHAIN=local \
-  go test -timeout=1m -exec "$(go env GOROOT)/lib/wasm/go_js_wasm_exec" ./...
+trimmed=(env -i PATH="$path" HOME="$HOME" TMPDIR="${TMPDIR:-/tmp}"
+  GOCACHE="$(go env GOCACHE)" GOMODCACHE="$(go env GOMODCACHE)"
+  GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off GOTOOLCHAIN=local)
+module=$(go list -m)
+mapfile -t on_node < <(go list ./... | grep -vx "$module/test/memfs")
+"${trimmed[@]}" go test -timeout=1m -exec "$(go env GOROOT)/lib/wasm/go_js_wasm_exec" "${on_node[@]}"
+"${trimmed[@]}" go test -count=1 -timeout=1m -exec "$PWD/scripts/go-memfs-exec.sh" ./...
 
 tracked=$(git ls-files '*.wasm')
 if [[ -n "$tracked" ]]; then

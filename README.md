@@ -17,10 +17,11 @@ and path are in `context/README.md`.
   import direction, and the check that the build left no CSS module script), Prettier,
   shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm`, fails unless
   `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` is tracked, and runs the
-  Go tests as wasm under node, the bridge's and the probe's among them. It type-checks with tsc
-  and runs `mise run build`. The unit tier checks `content/` against
-  `content.json`, both layer directions, go.mod's by-tag rule, and the currency and live
-  commands' logic; the browser tier runs the SDK's checks on the build and runs the Go module in
+  Go tests as wasm under node, the bridge's and the probe's among them, on node's fs and again on
+  the runtime's in-memory fs, where `test/memfs` drives it through package `os`. It type-checks
+  with tsc and runs `mise run build`. The unit tier checks `content/` against `content.json`,
+  both layer directions, go.mod's by-tag rule, the currency and live commands' logic, and the
+  in-memory fs's error codes; the browser tier runs the SDK's checks on the build and runs the Go module in
   the pinned chrome-headless-shell.
 - `mise run build`: build the site with Vite into `dist/`, then the Go entrypoints into
   `dist/go/` beside `wasm_exec.js`. A bare `vite build` omits the wasm.

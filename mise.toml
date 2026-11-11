@@ -55,7 +55,7 @@ run = "pnpm exec prettier --check ."
 dir = "{{config_root}}"
 
 [tasks."lint:go"]
-description = "Lint the Go module under GOOS=js GOARCH=wasm (gofmt, go vet, go fix, go mod tidy, golangci-lint), check web/runtime/wasm_exec.js against the pinned Go's, fail on any tracked .wasm, and run the Go tests as wasm under node in a trimmed environment; reads no network, writes nothing outside Go's caches and TMPDIR"
+description = "Lint the Go module under GOOS=js GOARCH=wasm (gofmt, go vet, go fix, go mod tidy, golangci-lint), check web/runtime/wasm_exec.js against the pinned Go's, fail on any tracked .wasm, and run the Go tests as wasm under node in a trimmed environment, on node's fs and again on the runtime's in-memory fs (scripts/go-memfs-exec.sh), test/memfs's program among them; reads no network, writes nothing outside Go's caches and TMPDIR"
 depends = ["preflight"]
 run = "scripts/check-go.sh"
 dir = "{{config_root}}"
@@ -88,7 +88,7 @@ run = "tsc -p ."
 dir = "{{config_root}}"
 
 [tasks."types:test"]
-description = "Type-check the suite, test/'s TypeScript that node --test runs under type stripping, and the capture file, scripts/screenshots.config.ts, with tsc against tsconfig.test.json; reads no network, writes nothing"
+description = "Type-check the suite, test/'s TypeScript that node --test runs under type stripping, and scripts/'s TypeScript, the capture file and the in-memory fs's Go test host among it, with what they import from web/runtime, with tsc against tsconfig.test.json; reads no network, writes nothing"
 depends = ["preflight"]
 run = "tsc -p tsconfig.test.json"
 dir = "{{config_root}}"
@@ -101,7 +101,7 @@ run = ["pnpm exec vite build", "scripts/build-go.sh"]
 dir = "{{config_root}}"
 
 [tasks."test:unit"]
-description = "Run the unit tier under node --test: content/ against content.json, which records no tree, with the SDK's content check; the web tiers' import table over a fixture tree; and the Go module's layer direction (go list under GOOS=js GOARCH=wasm) and its go.mod, no replace directive or local-path requirement, on the module and on fixture modules; mise run currency's go.mod part over recorded go list output; and mise run live's assertions against local servers on 127.0.0.1, a failing one among them; reads no network, writes nothing outside TMPDIR and Go's caches"
+description = "Run the unit tier under node --test: content/ against content.json, which records no tree, with the SDK's content check; the web tiers' import table over a fixture tree; and the Go module's layer direction (go list under GOOS=js GOARCH=wasm) and its go.mod, no replace directive or local-path requirement, on the module and on fixture modules; mise run currency's go.mod part over recorded go list output; mise run live's assertions against local servers on 127.0.0.1, a failing one among them; and the runtime's in-memory fs, its calls' error codes and edges, its output routing, and its install; reads no network, writes nothing outside TMPDIR and Go's caches"
 depends = ["preflight"]
 run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
