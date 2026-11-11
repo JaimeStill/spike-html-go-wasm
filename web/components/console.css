@@ -67,6 +67,10 @@
 
 .frame {
   --gutter: 3.5ch;
+  /* The containing block of the visually hidden cues (.hidden), which are absolutely placed: so
+     they scroll and clip with the log, rather than lie at their place in it on the page's own
+     block, growing the page by the log's height. */
+  position: relative;
   max-block-size: var(--sl-console-max-block-size, 24rem);
   min-block-size: 3lh;
   overflow-x: hidden;

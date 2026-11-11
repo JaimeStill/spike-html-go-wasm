@@ -7,9 +7,10 @@
 // region. Rendering: entries in arrival order, partial lines joined, Go's line breaks and blank
 // lines kept, long lines wrapped, ANSI escapes shown as text; stderr's cue seen and its text
 // readable on its tint in every palette and scheme; exits and results told apart beyond color; the
-// limit's 10,000 rows and the count dropped. Following: the tail followed, held once the reader
-// scrolls up by the keyboard, followed again at the end. Copy puts the log's text on the clipboard
-// and confirms it; Clear sends a request, and nothing changes until the owner applies it.
+// limit's 10,000 rows and the count dropped, the rows' hidden cues held inside the frame, not the
+// page. Following: the tail followed, held once the reader scrolls up by the keyboard, followed
+// again at the end. Copy puts the log's text on the clipboard and confirms it; Clear sends a
+// request, and nothing changes until the owner applies it.
 // Throughput: 10,000 writes, each its own task, render in a few frames, never one render a write.
 // The console listens only to the log it holds, only while in the document; focus shows, and
 // nothing moves. Nothing here names the site: its base is package.json's name.
@@ -547,6 +548,21 @@ describe("the limit", () => {
         await page.evaluate(`${console}.shadowRoot.querySelector(".dropped").textContent`),
         "501 earlier lines dropped",
       );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("a log past its limit stays inside its frame: its hidden stderr cues grow the page no taller", async () => {
+    const page = await open();
+    try {
+      // The page's scroll height against the height of its root's box, which holds the body's
+      // content: a cue outside the frame's scroller would reach below it, by the log's height.
+      const { scroll, box } = await page.evaluate(`(() => ({
+        scroll: document.documentElement.scrollHeight,
+        box: document.documentElement.getBoundingClientRect().height,
+      }))()`);
+      assert.ok(scroll <= Math.ceil(box), `the page scrolls ${scroll}px, its content ${box}px`);
     } finally {
       await page.close();
     }
