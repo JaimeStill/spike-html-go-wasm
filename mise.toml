@@ -99,7 +99,7 @@ run = ["pnpm exec vite build", "scripts/build-go.sh"]
 dir = "{{config_root}}"
 
 [tasks."test:unit"]
-description = "Run the unit tier under node --test: content/ against content.json, which records no tree, with the SDK's content check; the web tiers' import table over a fixture tree; and the Go module's layer direction (go list under GOOS=js GOARCH=wasm) and its go.mod, no replace directive or local-path requirement, on the module and on fixture modules; and mise run currency's go.mod part over recorded go list output; reads no network, writes nothing outside TMPDIR and Go's caches"
+description = "Run the unit tier under node --test: content/ against content.json, which records no tree, with the SDK's content check; the web tiers' import table over a fixture tree; and the Go module's layer direction (go list under GOOS=js GOARCH=wasm) and its go.mod, no replace directive or local-path requirement, on the module and on fixture modules; mise run currency's go.mod part over recorded go list output; and mise run live's assertions against local servers on 127.0.0.1, a failing one among them; reads no network, writes nothing outside TMPDIR and Go's caches"
 depends = ["preflight"]
 run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
@@ -146,4 +146,12 @@ exit "$status"
 '''
 # Without mise's own command echo, so a current tree prints nothing at all.
 quiet = true
+dir = "{{config_root}}"
+
+# Never a dependency of check: it reads the deployed site. test/unit/live.test.ts runs its
+# assertions against local servers.
+[tasks.live]
+description = "Hold the deployed site, https://jaimestill.github.io/spike-html-go-wasm/ or the base URL given: the index 200 as text/html, and go/hello.wasm 200 as application/wasm and gzip-encoded when gzip is accepted, one line each, exiting nonzero naming each failed one; reads the network, writes nothing"
+# Its one argument, the base URL, follows the description.
+run = "node scripts/live.ts"
 dir = "{{config_root}}"

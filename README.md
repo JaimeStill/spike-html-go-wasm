@@ -19,7 +19,11 @@ The spike's question, evidence, and path are in `context/README.md`.
   against `content.json`; and the browser tier, the SDK's checks on the build in the pinned
   chrome-headless-shell. It reads no network.
 - `mise run screenshots`: capture the pages, light and dark, at 390px, 1120px, and 1376px.
-- `mise run currency`: every pin behind its latest, the SDK's tag among them.
+- `mise run currency`: every pin behind its latest, the SDK's tag and go.mod's direct
+  requirements among them.
+- `mise run live [base URL]`: the deployed site, at its Pages URL or the base given: the index
+  answers as HTML, and `go/hello.wasm` as `application/wasm`, gzip-encoded; reads the network,
+  and isn't part of the check.
 
 ## Keeping pace with the SDK
 
