@@ -24,10 +24,14 @@ const hostingComponents = "@jaimestill/spike-html-hosting-components";
  * the hosting components, which index.html loads. */
 export const packages = ["lit", foundation, hostingComponents];
 
+/** Shiki, which the code editor's tokenizer imports, lazily, at its subpaths (its core, its
+ * JavaScript regex engine, and its grammars): the components tier's alone. */
+export const shiki = "shiki";
+
 // The web tiers' table, top down: the pages (the apps tier), the modules a hand or rendered page
 // loads, which may import both tiers below them and the shell's packages; the components (the
-// component tier, Lit elements prefixed sl-), which may import lit and the shell's packages, and
-// never the runtime, whose runner a page passes in; and the runtime (the SDK tier: the loader, the
+// component tier, Lit elements prefixed sl-), which may import lit, the shell's packages, and
+// shiki, and never the runtime, whose runner a page passes in; and the runtime (the SDK tier: the loader, the
 // worker, the in-memory filesystem, and wasm_exec.js), which imports nothing beyond its own files.
 // Each tier may import its own files; nothing imports upward.
 const layers = [
@@ -36,7 +40,7 @@ const layers = [
     path: "web/pages",
     may: ["pages", "components", "runtime", foundation, hostingComponents],
   },
-  { name: "components", path: "web/components", may: ["components", ...packages] },
+  { name: "components", path: "web/components", may: ["components", ...packages, shiki] },
   { name: "runtime", path: "web/runtime", may: ["runtime"] },
 ];
 

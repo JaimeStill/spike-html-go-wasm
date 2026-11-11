@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 
 import type { ESLint } from "eslint";
 
-import { packages } from "../../eslint.config.js";
+import { packages, shiki } from "../../eslint.config.js";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -80,6 +80,11 @@ export const violations: Cases = {
     [`${runtime}/hosting-components.ts`]: `import "${hostingComponents}/settings.js";`,
     // A page imports lit only through a component, never by its name.
     [`${pages}/lit.ts`]: `import "${lit}";`,
+    // Shiki is the components' alone: neither a page nor the runtime imports it, at any subpath,
+    // and a component imports none of Shiki's own packages by name.
+    [`${pages}/shiki.ts`]: `import "${shiki}/core";`,
+    [`${runtime}/shiki.ts`]: `await import("${shiki}/engine/javascript");`,
+    [`${components}/shikijs.ts`]: `import "@shikijs/core";`,
     // A package no row names: lit-html, which lit re-exports, its name beginning with lit's,
     // which the table's names must not prefix; the SDK and the icons; a devDependency; and a
     // package whose name begins with the foundation's.
@@ -114,7 +119,7 @@ export const sources = (cases: Cases): Files =>
 // Every import a tier may make, in each form, with names that hold dots, which a rule must tell
 // from . and .. segments: a page imports the runtime, the components, the shell's packages at a
 // subpath, and its own files; a component lit by its name and at a subpath, the shell's packages,
-// and its own files; the runtime its own files and wasm_exec.js.
+// shiki at its subpaths, and its own files; the runtime its own files and wasm_exec.js.
 export const allowed: Files = {
   ...forms(`${pages}/forms/runtime`, "../../runtime/loader.js"),
   ...forms(`${pages}/forms/component`, "../../components/demo.js"),
@@ -140,6 +145,8 @@ export const allowed: Files = {
     `export const x = define;`,
   ].join("\n"),
   [`${components}/a/b/editor.ts`]: `import type { X } from "../../demo.js";`,
+  ...forms(`${components}/forms/shiki`, `${shiki}/core`),
+  [`${components}/tokenizer.ts`]: `import go from "${shiki}/langs/go.mjs";\nexport { go };`,
   ...forms(`${runtime}/forms/worker`, "../worker.js"),
   [`${runtime}/loader.ts`]: `import "./wasm_exec.js";\nexport * from "./fs/memory.js";`,
   [`${runtime}/fs/memory.ts`]: `import type { X } from "../loader.js";`,
@@ -155,10 +162,19 @@ const targets: Files = {
   "vite.config.ts": "export {};",
 };
 
-/** The packages the cases name, as stubs in node_modules/: the table's, lit-html, the SDK, the
- * icons, typescript, and the foundation's namesake, each a module and its types at every
- * subpath. */
-const externals = [...packages, "lit-html", sdk, icons, "typescript", `${foundation}x`];
+/** The packages the cases name, as stubs in node_modules/: the table's, shiki and its core
+ * package, lit-html, the SDK, the icons, typescript, and the foundation's namesake, each a module
+ * and its types at every subpath. */
+const externals = [
+  ...packages,
+  shiki,
+  "@shikijs/core",
+  "lit-html",
+  sdk,
+  icons,
+  "typescript",
+  `${foundation}x`,
+];
 const stub = (name: string): Files => ({
   "package.json": JSON.stringify({
     name,

@@ -1,0 +1,105 @@
+/*
+ * The code editor's layout in a shadow root: code-editor.ts adopts this sheet after the
+ * foundation's reset and elements sheets (baseline/reset.css and elements.css), and the shared
+ * ::highlight() rules after it (highlights.ts). It reads only the foundation's tokens, which a
+ * shadow root takes by inheritance from the page's entry. Unlayered, it sits above the adopted
+ * layers in the root.
+ *
+ * The editor is one frame, a text field's outline, holding a two-column grid: the gutter's numbers
+ * and the lines. Each line of the value is a row: its number, drawn by a counter, and the line
+ * again, invisible, which wraps exactly as the editable element wraps the same line, since both
+ * sit in the second column with the same font, tab size, and wrapping. The editable element lies
+ * over that column across every row (--lines, the row count, is set on the frame) and adds nothing
+ * to the rows' heights (contain: size), so each row is as tall as its line, and each number sits
+ * beside its line's first row at any width, wrapped or not, in every space and type profile. Long
+ * lines wrap, anywhere if they must, so the editor never scrolls sideways.
+ *
+ * The frame grows with the text. A page that holds the host to a block size gets a frame that
+ * fills it and scrolls inside, the gutter scrolling with its lines. Nothing moves, so reduced
+ * motion has nothing to stop.
+ */
+
+:host {
+  display: block;
+}
+
+.editor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-xs);
+  box-sizing: border-box;
+  block-size: 100%;
+  overflow: auto;
+  padding: var(--space-3xs) var(--space-2xs);
+  border: var(--line-s) solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-code);
+  line-height: var(--leading-code);
+  counter-reset: line;
+  cursor: text;
+}
+
+/* Hovered, the frame's boundary takes the interaction color, as a text field's does. */
+.editor:hover {
+  border-color: var(--interaction-color, var(--blue));
+}
+
+/* Focus is the frame's: the editable element is only the text column, so the frame draws the
+   outline the foundation gives a focused control, and the element draws none. */
+.editor:has(.text:focus-visible) {
+  outline: var(--line-m) solid var(--interaction-color, var(--blue));
+  outline-offset: 2px;
+}
+.text:focus-visible {
+  outline: none;
+}
+
+/* Read-only, the frame sits on the first elevated surface, as a field that takes no edit. */
+:host([readonly]) .editor {
+  background-color: var(--bg-1);
+}
+
+/* The number: the row's counter, quiet, at the gutter's inline end, beside its line's first row.
+   It is generated content, so no selection or copy reaches it. */
+.number {
+  grid-column: 1;
+  counter-increment: line;
+  color: var(--fg-3);
+  text-align: end;
+  user-select: none;
+}
+.number::before {
+  content: counter(line);
+}
+
+/* The line's copy and the text: the same box, font, and wrapping, so they break alike. */
+.ghost,
+.text {
+  grid-column: 2;
+  min-inline-size: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 4;
+}
+
+/* An empty line is still a row one line tall. */
+.ghost {
+  min-block-size: 1lh;
+  visibility: hidden;
+  user-select: none;
+}
+
+.text {
+  grid-row: 1 / span var(--lines);
+  contain: size;
+  caret-color: var(--interaction-color, var(--blue));
+}
+
+/* A value ending in a line break ends on an empty line, which a block lays out only when something
+   follows the break: a zero-width space after the text, never part of it, gives that line its
+   box, matching the gutter's last row. */
+.text::after {
+  content: "\200b";
+}

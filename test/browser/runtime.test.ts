@@ -1,8 +1,9 @@
 // The runtime in the browser: the build as Pages serves it, dist/ under the base by the SDK's
 // served(), Vite's preview, in the pinned chrome-headless-shell. The modules answer as
-// application/wasm; neither page requests Go on load; and on the runtime page, its Run buttons
-// drive the runner, whose events the page writes out (web/pages/runtime.ts): hello's line and
-// exit, format's answer, its line, and its parse error, files' steps, each run's timings by phase,
+// application/wasm; no page, the components page among them, requests Go on load; and on the
+// runtime page, its Run buttons drive the runner, whose events the page writes out
+// (web/pages/runtime.ts): hello's line and exit, format's answer, its line, and its parse error,
+// files' steps, each run's timings by phase,
 // a held module reused without a fetch, and scenarios switched in place in one worker. Then Stop:
 // it ends spin's busy loop, and after it, or after crash's panic ends the instance, the next call
 // answers from the module the runner kept, with no new .wasm request, and the page never has more
@@ -196,6 +197,7 @@ describe("the Go modules under the base", () => {
   for (const [name, path] of [
     ["the index", ""],
     ["the runtime page", "runtime.html"],
+    ["the components page", "components.html"],
   ]) {
     test(`${name} requests no .wasm and no worker on load`, async () => {
       const watched = await watch(path);

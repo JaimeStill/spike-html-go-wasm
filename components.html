@@ -1,0 +1,149 @@
+<!doctype html>
+<!-- The components page, a hand page: each of the spike's components in every state, each state
+     labelled in its figure's caption, then every state again in a column 20rem wide, and one
+     instance reached by the keyboard, its focus shown. Its script, web/pages/components.ts, defines
+     the components and builds the states into each list; nothing here runs Go, and nothing loads
+     Go. sl-code-editor: Go and JSON highlighted, another language plain, read-only, long lines
+     wrapped beside the gutter, empty and named by its caption through aria-labelledby, and two
+     editors sharing the document's highlights. The shell is the index's, the same header, dialogs,
+     and unlayered header-actions rule; see index.html for each. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Components · spike-html-go-wasm</title>
+    <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
+    <style>
+      /* With no site nav to take the header's row, site.css leaves the header-actions group at the
+         row's inline start; the group goes to the inline end at every width, where the SDK's
+         header check holds the buttons when the header has no nav. Unlayered: the build writes this
+         sheet before the linked ones, so an @layer here would declare its layer ahead of the
+         foundation's and reorder every layer on the page. */
+      body > header > .header-actions {
+        margin-inline-start: auto;
+      }
+      /* A component's states, one figure each, stacked; the narrow list holds every state again,
+         held to a narrow column's width. */
+      .states {
+        display: grid;
+        gap: var(--space-m);
+        margin-block-start: var(--space-s);
+      }
+      .narrow {
+        max-inline-size: 20rem;
+      }
+      .state {
+        margin: 0;
+      }
+      .state > figcaption {
+        margin-block-end: var(--space-2xs);
+      }
+      /* A state of several instances sets them apart. */
+      .state > * + :not(figcaption) {
+        margin-block-start: var(--space-s);
+      }
+    </style>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/shortcuts.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/settings.js"></script>
+    <script type="module" blocking="render" src="./web/pages/components.ts"></script>
+  </head>
+  <body>
+    <header>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="show-modal"
+          aria-label="Help"
+          data-keys="?"
+          interestfor="help-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/question-16"></svg>
+          <span aria-hidden="true"><kbd>?</kbd></span>
+        </button>
+        <div id="help-hint" class="glyph-hint" popover="hint" aria-hidden="true">Help</div>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="show-modal"
+          aria-label="Settings"
+          data-keys="s"
+          interestfor="settings-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/gear-16"></svg>
+          <span aria-hidden="true"><kbd>S</kbd></span>
+        </button>
+        <div id="settings-hint" class="glyph-hint" popover="hint" aria-hidden="true">Settings</div>
+      </div>
+    </header>
+    <main>
+      <h1>Components</h1>
+      <p>
+        The spike's components, each in every state it has, then again in a column 20rem wide, and
+        reached by the keyboard. <a href="./">The spike's question and evidence</a>.
+      </p>
+      <section id="code-editor" aria-labelledby="code-editor-heading">
+        <h2 id="code-editor-heading">Code editor</h2>
+        <p>
+          <code>sl-code-editor</code>, a plain-text editor whose Go and JSON are highlighted in the
+          page's palette and scheme, beside a gutter of line numbers.
+        </p>
+        <h3 id="code-editor-states">States</h3>
+        <div class="states"></div>
+        <h3 id="code-editor-narrow">States at 20rem</h3>
+        <div class="states narrow"></div>
+        <h3 id="code-editor-focus">Focus visible</h3>
+        <p>The editor, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus"></div>
+      </section>
+    </main>
+    <dialog id="help" aria-labelledby="help-title">
+      <header class="dialog-header">
+        <h2 id="help-title" tabindex="-1" autofocus>Keyboard shortcuts</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="close"
+          aria-label="Close"
+          interestfor="help-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="help-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-shortcuts></sl-shortcuts>
+    </dialog>
+    <dialog id="settings" aria-labelledby="settings-title">
+      <header class="dialog-header">
+        <h2 id="settings-title">Settings</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="close"
+          aria-label="Close"
+          interestfor="settings-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="settings-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-settings></sl-settings>
+    </dialog>
+  </body>
+</html>

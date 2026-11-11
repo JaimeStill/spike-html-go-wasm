@@ -1,14 +1,15 @@
 // mise run types:web: tsc type-checks the web tiers, web/'s TypeScript that Vite bundles for the
 // browser, under Vite's resolution, without emitting: the DOM's types, which a worker's script
-// shares, typing only the members of its global scope it uses, and Vite's client types for
-// import.meta.env, in place of node's.
+// shares, typing only the members of its global scope it uses, Vite's client types for
+// import.meta.env, in place of node's, and the foundation's declaration of a CSS module script, a
+// component's `import sheet from "./x.css" with { type: "css" }`, as one CSSStyleSheet.
 {
   "extends": "@jaimestill/spike-html-hosting-sdk/tsconfig.json",
   "compilerOptions": {
     "module": "esnext",
     "moduleResolution": "bundler",
     "lib": ["es2024", "dom", "dom.iterable"],
-    "types": ["vite/client"]
+    "types": ["vite/client", "@jaimestill/spike-html-apps-foundation/css"]
   },
   "include": ["web/**/*.ts"]
 }
