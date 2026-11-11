@@ -2,32 +2,48 @@
 // the base by the SDK's served(), Vite's preview, in the pinned chrome-headless-shell, the page's
 // one runner shared by every demo.
 //
-// No Go is requested until a Run. A handler demo's Run calls format with its file's text, its
-// output line, its answer as the console's result block, and its timings by phase; a program
-// demo's Run runs hello's main, its line and its exit 0. Ctrl+Enter from inside a demo's editor
+// No Go is requested, and no worker started, until a Run. A handler demo's Run calls format with
+// its file's text, its output line, its answer as the console's result block, and its timings by
+// phase, each a duration; a program demo's Run runs hello's main, its line as stdout and its exit
+// 0, in the one worker the Run starts. A handler's error shows as the console's error block, and
+// the instance outlives it: the next call answers on it. Ctrl+Enter from inside a demo's editor
 // runs that demo, and from outside any demo runs none. A handler demo with two fences shows its
 // authoring error, in the page and in the accessibility tree, the fences as written, and doesn't
 // run. Stop ends spin. Two demos on the runner: format's Run while spin's is pending stops spin,
-// whose demo records it stopped, and each console holds only its own output. Editable files: New
-// file, Rename, and Delete change the set, a new file selected with the editor focused, focus on
-// the tab now active after a delete, and the last file kept. Reset restores an edited file. A tab
-// size the settings refuse is an authoring error a valid one mends, and a handler's change
-// rebuilds the files in its mode. A
+// whose demo records it stopped, each console holds only its own output, and the module goes to
+// the fresh worker unfetched, one worker live. Editable files: New file, Rename, and Delete change
+// the set, a new file selected with the editor focused, focus on the tab now active after a
+// delete, and the last file kept. Reset restores an edited file. A tab size the settings refuse is
+// an authoring error a valid one mends, and a handler's change rebuilds the files in its mode. A
 // demo's accessibility tree: a region named by its label, the toolbar, the tabs and the panel on
 // a program demo, the editor, the log, and the timings, its fences no part of it. The fences: the
 // SDK's Shiki markup read as plain text and run, and without script, every fence shows as the
-// page's code. At 20rem each demo fits its column. Every wait is bounded. Nothing here names the
-// site: its base is package.json's name.
+// page's code. At 20rem each demo fits its column. The rest of the runtime's proofs, through the
+// same demos, are go-runs.test.ts's; the page's watch and helpers are go-demos.ts's. Every wait is
+// bounded. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 
-import { launch, SETTLED, until } from "@jaimestill/spike-html-apps-tooling/browser.js";
+import { launch, until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
+
+import {
+  demo,
+  goRequests,
+  open as openPage,
+  pressControl,
+  says,
+  settle,
+  settles,
+  shown,
+  spin,
+  wasmRequests,
+} from "./go-demos.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -43,141 +59,8 @@ after(async () => {
   await server?.stop();
 });
 
-/** How long a run of real Go may take to settle, a cold fetch and compile included. */
-const RUN = 20_000;
-
-/** The page's helpers, installed on window.demos once the page has loaded:
- *
- * - at(state, index, list): the index'th sl-go-demo, the first by default, in the figure the
- *   state names in the list'th states list of #go-demo, the first by default, or in its .focus
- *   when list is "focus".
- * - part(demo, selector): the element in the demo's shadow root.
- * - status(demo): the toolbar's status; button(demo, control): the toolbar's button.
- * - rows(demo): the console's rows as shown, each { kind, text }, kind its class.
- * - phases(demo): the timings' phases as shown, by their row headers.
- * - editor(demo): the demo's sl-code-editor; tab(demo): the selected tab's name.
- * - focusPath(): the active element's tags down through every shadow root, as "tag.class" or
- *   "tag[data-…]" where they tell it apart.
- */
-const HELPERS = `(() => {
-  const scope = (list) =>
-    document.querySelector("#go-demo")
-      .querySelectorAll(list === "focus" ? ".focus" : ".states")[list === "focus" ? 0 : (list ?? 0)];
-  const at = (state, index = 0, list) =>
-    scope(list).querySelector(\`figure[data-state="\${state}"]\`)
-      .querySelectorAll("sl-go-demo")[index];
-  const part = (demo, selector) => demo.shadowRoot.querySelector(selector);
-  const controls = (demo) => part(demo, "sl-controls");
-  window.demos = {
-    at,
-    part,
-    status: (demo) => controls(demo).shadowRoot.querySelector('[role="status"]').textContent,
-    button: (demo, control) =>
-      controls(demo).shadowRoot.querySelector(\`[data-control="\${control}"]\`),
-    rows: (demo) =>
-      [...part(demo, "sl-console").shadowRoot.querySelector(".lines").children].map((row) => ({
-        kind: row.className,
-        text: row.textContent.replace(/\\s+/g, " ").trim(),
-      })),
-    phases: (demo) =>
-      [...part(demo, "sl-timings").shadowRoot.querySelectorAll("tbody th")].map(
-        (cell) => cell.textContent.trim()),
-    editor: (demo) => part(demo, "sl-code-editor"),
-    tab: (demo) =>
-      part(demo, "sl-file-tabs").shadowRoot.querySelector('[aria-selected="true"]')?.dataset.name,
-    focusPath() {
-      const path = [];
-      let at = document.activeElement;
-      while (at) {
-        path.push(at.dataset?.control ? \`button[\${at.dataset.control}]\`
-          : at.dataset?.name ? \`tab[\${at.dataset.name}]\`
-          : at.className && typeof at.className === "string" ? \`\${at.localName}.\${at.className}\`
-          : at.localName);
-        at = at.shadowRoot?.activeElement ?? null;
-      }
-      return path;
-    },
-  };
-})()`;
-
-/** A page under watch: every request it and its workers send, by URL. */
-interface Watched {
-  page: Page;
-  requests: string[];
-}
-
-/** Opens the components page with its and its workers' requests watched from before it loads, as
- * runtime.test.ts does, focus emulated, every element rendered, and the helpers installed. */
-async function open(): Promise<Watched> {
-  const page = await browser.open("about:blank");
-  const watched: Watched = { page, requests: [] };
-  let lastId = 0;
-  page.on("Target.attachedToTarget", ({ sessionId }) => {
-    const send = (method: string) =>
-      page.cdp("Target.sendMessageToTarget", {
-        sessionId,
-        message: JSON.stringify({ id: ++lastId, method, params: {} }),
-      });
-    // A worker Stop terminates may go before these answer: its requests no longer matter.
-    send("Network.enable")
-      .then(() => send("Runtime.runIfWaitingForDebugger"))
-      .catch(() => {});
-  });
-  page.on("Target.receivedMessageFromTarget", ({ message }) => {
-    const { method, params } = JSON.parse(message);
-    if (method === "Network.requestWillBeSent") watched.requests.push(params.request.url);
-  });
-  page.on("Network.requestWillBeSent", ({ request }) => watched.requests.push(request.url));
-  await page.cdp("Network.enable");
-  await page.cdp("Target.setAutoAttach", {
-    autoAttach: true,
-    waitForDebuggerOnStart: true,
-    flatten: false,
-  });
-  await page.goto(`${server.origin}components.html`);
-  await page.cdp("Emulation.setFocusEmulationEnabled", { enabled: true });
-  await page.evaluate(SETTLED);
-  await page.evaluate(HELPERS);
-  return watched;
-}
-
-/** The Go the page requested, a worker's script or a .wasm module, by path under the base. */
-const goRequests = ({ requests }: Watched) =>
-  requests
-    .filter((url) => /\.wasm$|\/worker-[^/]*\.js$/.test(new URL(url).pathname))
-    .map((url) => url.slice(server.origin.length).replace(/-[\w-]+\.js$/, ".js"));
-
-/** A demo by its state, as the helpers' at() takes it. */
-const demo = (state: string, index = 0, list?: number | "focus") =>
-  `window.demos.at(${JSON.stringify(state)}, ${index}${list === undefined ? "" : `, ${JSON.stringify(list)}`})`;
-
-/** Presses the demo's control by a click, as the toolbar's own click handler takes it. */
-const pressControl = (page: Page, target: string, control: string) =>
-  page.evaluate(`window.demos.button(${target}, ${JSON.stringify(control)}).click()`);
-
-/** Resolves once the demo's status says the text, within the bound. */
-const says = (page: Page, target: string, text: string, timeout = RUN) =>
-  until(page, `window.demos.status(${target}) === ${JSON.stringify(text)}`, timeout);
-
-/** Resolves once every task the page queued by now, a popover's toggle event among them, has
- * run: two frames and a task after them. */
-const settle = (page: Page) =>
-  page.evaluate(`new Promise((resolve) => requestAnimationFrame(() =>
-    requestAnimationFrame(() => setTimeout(resolve, 50))))`);
-
-/** What the demo shows: its status, its console's rows, and its timings' phases, once the
- * console has rendered its last change, which it does in an animation frame. */
-const shown = async (
-  page: Page,
-  target: string,
-): Promise<{ status: string; rows: { kind: string; text: string }[]; phases: string[] }> =>
-  settle(page).then(() =>
-    page.evaluate(`({
-    status: window.demos.status(${target}),
-    rows: window.demos.rows(${target}),
-    phases: window.demos.phases(${target}),
-  })`),
-  );
+/** Opens the components page, watched, its helpers installed (go-demos.ts). */
+const open = () => openPage(browser, server.origin);
 
 /** Enter pressed and released on the focused element, carrying its text as a keyboard's does,
  * with the modifiers (2 is Ctrl). */
@@ -228,8 +111,9 @@ describe("loading", () => {
     const watched = await open();
     try {
       const { page } = watched;
-      assert.equal(await page.evaluate(`document.querySelectorAll("sl-go-demo").length`), 15);
+      assert.equal(await page.evaluate(`document.querySelectorAll("sl-go-demo").length`), 19);
       assert.deepEqual(goRequests(watched), []);
+      assert.deepEqual(watched.workers, []);
       await pressControl(page, demo("program"), "run");
       await says(page, demo("program"), "Finished hello, exit code 0");
       assert.deepEqual(goRequests(watched), ["assets/worker.js", "go/hello.wasm"]);
@@ -258,13 +142,18 @@ describe("Run", () => {
         { kind: "result", text: `Result ${answer.replace(/\s+/g, " ")}` },
       ]);
       assert.deepEqual(result.phases, ["Fetch", "Compile", "Instantiate", "Start", "Call"]);
+      assert.ok(
+        result.times.length === 5 && result.times.every((ms) => Number.isFinite(ms) && ms >= 0),
+        `each phase's time is a duration: ${result.times}`,
+      );
     } finally {
       await page.close();
     }
   });
 
-  test("a program demo runs hello's main: its line and its exit 0", async () => {
-    const { page } = await open();
+  test("a program demo runs hello's main: its line as stdout and its exit 0, in the one worker its Run starts", async () => {
+    const watched = await open();
+    const { page } = watched;
     try {
       const target = demo("program");
       await pressControl(page, target, "run");
@@ -273,8 +162,17 @@ describe("Run", () => {
       assert.equal(result.rows.length, 2, JSON.stringify(result.rows));
       assert.equal(result.rows[0].kind, "line");
       assert.match(result.rows[0].text, helloLine);
+      assert.deepEqual(
+        result.lines.map(({ stream }) => stream),
+        ["stdout"],
+      );
       assert.deepEqual(result.rows[1], { kind: "exit", text: "hello exited with code 0" });
       assert.deepEqual(result.phases, ["Fetch", "Compile", "Instantiate", "Run"]);
+      assert.ok(
+        result.times.length === 4 && result.times.every((ms) => Number.isFinite(ms) && ms >= 0),
+        `each phase's time is a duration: ${result.times}`,
+      );
+      assert.equal(watched.workers.length, 1, `one worker: ${watched.workers}`);
     } finally {
       await page.close();
     }
@@ -296,6 +194,13 @@ describe("Run", () => {
       assert.deepEqual((await shown(page, target)).rows, [
         { kind: "result", text: "Error format: unexpected end of JSON input" },
       ]);
+      // The instance outlives the error: the next call, the file reset, answers on it.
+      await pressControl(page, target, "reset");
+      await pressControl(page, target, "run");
+      await says(page, target, "Finished format");
+      const next = await shown(page, target);
+      assert.equal(next.result?.ok, true, JSON.stringify(next.result));
+      assert.deepEqual(next.phases, ["Call"]);
     } finally {
       await page.close();
     }
@@ -441,16 +346,6 @@ describe("attributes after the first render", () => {
 });
 
 describe("Stop and the shared runner", () => {
-  /** Runs the spin demo and waits until its loop holds the worker. */
-  async function spin(page: Page, target: string) {
-    await pressControl(page, target, "run");
-    await until(
-      page,
-      `window.demos.rows(${target}).some((row) => row.text === "spin: looping until Stop")`,
-      RUN,
-    );
-  }
-
   test("Stop ends spin, its demo's status saying so", async () => {
     const { page } = await open();
     try {
@@ -468,7 +363,8 @@ describe("Stop and the shared runner", () => {
   });
 
   test("format's Run while spin is pending stops spin, and each console holds only its own output", async () => {
-    const { page } = await open();
+    const watched = await open();
+    const { page } = watched;
     try {
       const spinner = demo("shared", 0);
       const formatter = demo("shared", 1);
@@ -486,6 +382,10 @@ describe("Stop and the shared runner", () => {
       ]);
       // Format's own run: a fresh instance of the module spin held, its timings alone.
       assert.deepEqual(format.phases, ["Instantiate", "Start", "Call"]);
+      // The module was reposted to the fresh worker, not fetched again; the stopped worker is gone.
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm"]);
+      assert.equal(watched.workers.length, 2, `two workers: ${watched.workers}`);
+      await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
       // Stop in the stopped demo, idle now, stops nothing of the other's.
       assert.equal(
         await page.evaluate(
@@ -709,12 +609,12 @@ describe("the fences", () => {
           pre.textContent,
         ]))`);
       // The states list and the focus state: the 20rem copy is the script's.
-      assert.equal(fences.length, 8);
+      assert.equal(fences.length, 10);
       for (const demoFences of fences) {
         for (const [visible, tall] of demoFences) assert.ok(visible && tall);
       }
       assert.equal(fences[1][0][2], helloSource);
-      assert.equal(fences[3][0][2], '{ "shiki": true, "list": [3, 1, 2] }\n');
+      assert.equal(fences[5][0][2], '{ "shiki": true, "list": [3, 1, 2] }\n');
     } finally {
       await page.close();
     }

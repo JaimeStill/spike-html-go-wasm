@@ -1,14 +1,12 @@
 // The site's build, as Pages serves it: dist/ under the base, by the SDK's served(), Vite's
 // preview, loaded in the pinned chrome-headless-shell. Each of the SDK's shell checks is a test on
-// a fresh page of each hand page, the index, the runtime page, and the components page, whose
-// headers have no site nav,
-// which the checks allow, and which a test of its own holds on each: no sl-site-nav in the header,
-// and no site-nav.js loaded, which defines it; the build bundles the module, so the registry
-// rather than a request names it. The crawl, from the index, checks every copied page, none here,
-// and loads each hand page it reaches: it reaches exactly the index and, by the index's links, the
-// runtime page and the components page. No page holds an SDK fence, so the SDK's palette check has
-// nothing to run on; the components page's editors are held to its colors by
-// code-editor.test.ts. Nothing here names the site: its base is package.json's name.
+// a fresh page of each hand page, the index and the components page, whose headers have no site
+// nav, which the checks allow, and which a test of its own holds on each: no sl-site-nav in the
+// header, and no site-nav.js loaded, which defines it; the build bundles the module, so the
+// registry rather than a request names it. The crawl, from the index, checks every copied page,
+// none here, and loads each hand page it reaches: it reaches exactly the index and, by the index's
+// link, the components page. No page holds an SDK fence, so the SDK's palette check has nothing to
+// run on; the components page's editors are held to its colors by code-editor.test.ts. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/test/browser/site.test.ts, its checks
@@ -40,7 +38,7 @@ after(async () => {
 });
 
 /** The hand pages, each by its path under the base. */
-const hand = ["", "runtime.html", "components.html"];
+const hand = ["", "components.html"];
 
 describe("the site under its base", () => {
   for (const path of hand) {

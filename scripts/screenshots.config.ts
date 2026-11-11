@@ -1,7 +1,6 @@
 // mise run screenshots' capture file, which the tooling's spike-html-apps-screenshots bin runs: the
-// SDK's description of the index and the runtime page, --page index and --page runtime, captured
-// whole at 390px, 1120px, and 1376px, and the index also with Help open and with Settings open at
-// each; and the components page as one capture name per component, --page components/<component>,
+// SDK's description of the index, --page index, captured whole at 390px, 1120px, and 1376px, and
+// also with Help open and with Settings open at each; and the components page as one capture name per component, --page components/<component>,
 // each the page whole at 1280×800 with every other component's section hidden, and the controls'
 // with New file's form open on its refusal; the Go demo's presses nothing, so every demo shows as
 // before a Run, and no Go loads. The SDK's three widths over the whole components page grew with
@@ -66,7 +65,7 @@ const opened =
     if (step) await page.evaluate(step);
   };
 
-const described = description({ root, pages: ["index.html", "runtime.html", "components.html"] });
+const described = description({ root, pages: ["index.html", "components.html"] });
 
 /** The components page as a page per component: its path, one state whole at 1280×800 with the
  * component's section alone, the state's name its files', with no slash. */

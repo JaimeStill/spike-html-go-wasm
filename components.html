@@ -23,9 +23,9 @@
      sl-go-demo: written here, not by the script, each demo's files the fences inside it, which read
      as the page's code before the element upgrades and without script: a handler demo, format's
      JSON input; a program demo, hello's main.go as cmd/hello/main.go holds it; a program demo with
-     editable files; a handler demo whose fence is the SDK's Shiki markup, as a Markdown page
-     renders it; a handler demo with two fences, an authoring error; and two demos, spin and format,
-     sharing the runner. The script copies them into the 20rem list and gives every demo the page's
+     editable files; handler demos for files, its text input, and for crash, which panics; a
+     handler demo whose fence is the SDK's Shiki markup, as a Markdown page renders it; a handler
+     demo with two fences, an authoring error; and two demos, spin and format, sharing the runner. The script copies them into the 20rem list and gives every demo the page's
      one runner, which loads Go only on a Run. The shell is the index's, the same header, dialogs,
      and unlayered header-actions rule; see index.html for each. -->
 <html lang="en">
@@ -217,9 +217,9 @@
             <figcaption>A program demo: Run runs hello's main, its source read-only</figcaption>
             <sl-go-demo scenario="hello" label="hello demo">
 <pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
-// standard library and prints one line. It is a program scenario: the runtime page runs its main
-// to completion in the runtime's worker, which reports the line as stdout output and the exit
-// code 0. It stays the standard-library baseline.
+// standard library and prints one line. It is a program scenario: the components page's Go demo
+// runs its main to completion in the runtime's worker, which reports the line as stdout output
+// and the exit code 0. It stays the standard-library baseline.
 package main
 
 import (
@@ -237,9 +237,9 @@ func main() {
             <figcaption>Editable files: New file, Rename, and Delete on a program demo</figcaption>
             <sl-go-demo scenario="hello" editable-files label="hello demo, editable files">
 <pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
-// standard library and prints one line. It is a program scenario: the runtime page runs its main
-// to completion in the runtime's worker, which reports the line as stdout output and the exit
-// code 0. It stays the standard-library baseline.
+// standard library and prints one line. It is a program scenario: the components page's Go demo
+// runs its main to completion in the runtime's worker, which reports the line as stdout output
+// and the exit code 0. It stays the standard-library baseline.
 package main
 
 import (
@@ -251,6 +251,23 @@ func main() {
 	fmt.Printf("hello from Go %s on %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
 </code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="files">
+            <figcaption>
+              A handler demo: Run calls probe's files with the text below, through the in-memory fs
+            </figcaption>
+            <sl-go-demo scenario="probe" handler="files" label="files demo">
+<pre><code class="language-text">hello, files
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="crash">
+            <figcaption>
+              A handler demo whose Go panics outside any handler: its stderr and its exit 2
+            </figcaption>
+            <sl-go-demo scenario="probe" handler="crash" label="crash demo">
+<pre><code class="language-text">boom</code></pre>
             </sl-go-demo>
           </figure>
           <figure class="state" data-state="markdown">

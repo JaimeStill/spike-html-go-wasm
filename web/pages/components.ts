@@ -52,7 +52,8 @@
 // The Go demo's states (sl-go-demo) are written in components.html, each demo's files the fences
 // inside it, so they read as the page's code before the element upgrades and without script: a
 // handler demo, format's JSON input; a program demo, hello's main.go as cmd/hello/main.go holds
-// it; a program demo with editable files; a handler demo whose fence is the SDK's Shiki markup, as
+// it; a program demo with editable files; handler demos for files, its text input, and for crash,
+// which panics outside any handler; a handler demo whose fence is the SDK's Shiki markup, as
 // a Markdown page renders it; a handler demo holding two fences, an authoring error; and two
 // demos, spin and format, sharing the runner. The page copies the states list into the 20rem list,
 // the fences with it, and gives every demo the page's one runner, the runtime's Runner, which

@@ -5,10 +5,10 @@
 
 The GitHub Pages site of spike-html-go-wasm, made from the template of
 [spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.2. Its index,
-`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside two more hand pages:
-`runtime.html`, which runs Go through the runtime in `web/runtime/`, and `components.html`, the
-components page, which shows the components in `web/components/` in each of their states. The site copies no Markdown
-tree: `content.json` records none, and `content/` holds nothing. The spike's question, evidence,
+`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside one more hand page,
+`components.html`, the components page, which shows the components in `web/components/` in each
+of their states, its Go demos running Go through the runtime in `web/runtime/`. The site copies no
+Markdown tree: `content.json` records none, and `content/` holds nothing. The spike's question, evidence,
 and path are in `context/README.md`.
 
 ## Tasks
@@ -23,10 +23,10 @@ and path are in `context/README.md`.
   `test/memfs` drives it through package `os`. It type-checks the configs, the web tiers, and the
   suite with tsc and runs `mise run build`. The unit tier checks `content/` against
   `content.json`, both layer directions, go.mod's by-tag rule, the currency and live commands'
-  logic, and the in-memory fs's error codes. The browser tier, in the pinned
-  chrome-headless-shell, runs the SDK's checks on every hand page and the crawl, runs hello
-  and the probe's handlers on the runtime page, and holds the code editor on the components
-  page: its colors to the SDK's fences in every palette and scheme, its accessibility tree, its
+  logic, the in-memory fs's error codes, and each program demo's go fence on the components page
+  against its scenario's source, byte for byte. The browser tier, in the pinned
+  chrome-headless-shell, runs the SDK's checks on every hand page and the crawl, and holds the
+  code editor on the components page: its colors to the SDK's fences in every palette and scheme, its accessibility tree, its
   gutter, and its loading; and the file tabs there: their accessibility tree, keyboard, control
   by the page's file set, modified marker, overflow, and subscription; and the timings there:
   their table in the accessibility tree, only the run's phases in order with their total, the
@@ -37,16 +37,18 @@ and path are in `context/README.md`.
   subscription; and the Go demo there, running real Go over the page's one runner: no Go before
   a Run, a handler's run and a program's, Ctrl+Enter from inside a demo alone, the authoring
   error, Stop, two demos sharing the runner, editable files and focus after a delete, Reset, its
-  accessibility tree, its fences with and without script, and the 20rem column. The unit tier also holds the file set's, the run timings', and the run state's
-  operations, refusals, and change events. The browser tier proves that Stop ends the probe's spin and the next call fetches
-  nothing new, and that the probe's crash, a panic outside any handler, prints to stderr and
-  exits 2.
+  accessibility tree, its fences with and without script, and the 20rem column; and through the
+  Go demos, the runtime: hello and the probe's handlers in one worker, a held module reused and
+  scenarios switched in place with no fetch, Stop ending the probe's spin with the next call
+  fetching nothing new and one worker live, and the probe's crash, a panic outside any handler,
+  printing to stderr and exiting 2. The unit tier also holds the file set's, the run timings',
+  and the run state's operations, refusals, and change events.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
   (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`. A bare `vite build`
   omits the wasm.
-- `mise run screenshots`: capture the pages, light and dark: the index and the runtime page at
-  390px, 1120px, and 1376px, and each component on the components page alone at 1280px,
+- `mise run screenshots`: capture the pages, light and dark: the index at 390px, 1120px, and
+  1376px, and each component on the components page alone at 1280px,
   `--page components/<component>`, as `--page components/console`.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
