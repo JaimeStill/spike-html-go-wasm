@@ -17,6 +17,14 @@
 // so each number stays beside its line's first row with nothing measured. Both copies are hidden
 // from assistive technology and from selection, and hold no text a copy of the value can take.
 //
+// Settings: whether long lines wrap, and a tab's width, come from an EditorSettings
+// (editor-settings.ts) its owner, the page or the element composing the editor, passes in and
+// writes; the editor renders from it, re-renders on its change event, and never writes it. With
+// none, it shows the defaults: long lines scroll sideways inside the frame, the gutter held in
+// place beside them, and a tab shows four columns wide. A tab is always a tab character in the
+// text, as gofmt writes Go; the tab size sets only its width, and how many spaces an outdent takes
+// from a line indented with spaces.
+//
 // Editing: Enter, Tab, and Shift+Tab are the editor's own, and each makes its edit through
 // execCommand, obsolete in the editing spec but the only insertion that enters the browser's undo
 // history: a line break as insertLineBreak, which writes "\n" as text, the rest as insertText,
@@ -29,6 +37,13 @@
 // browser's own input event, composed, reaches the host from typing, undo, and redo; an editing
 // key's edit holds back its insertions' inputs and sends one of its own. The editor sends change
 // itself, as a field does, when focus leaves with the value changed.
+//
+// A paste is the editor's too: it takes the clipboard's plain text and inserts it through the
+// same path as an editing key, so its line breaks stay "\n", it is one undo step, and it sends one
+// input. A drop is refused, since the browser's own would insert a block per line: text moves in
+// by paste. Read-only, the editor takes no paste, and a plain character key goes no further than it
+// would in a field: the foundation's keys, which pass over a press already handled, fire no
+// single-key shortcut from it.
 
 import { html, LitElement, nothing, type PropertyDeclarations, type PropertyValues } from "lit";
 
@@ -37,6 +52,7 @@ import reset from "@jaimestill/spike-html-apps-foundation/baseline/reset.css" wi
 import { define } from "@jaimestill/spike-html-apps-foundation/dom.js";
 
 import styles from "./code-editor.css" with { type: "css" };
+import { defaults, EditorSettings } from "./editor-settings.ts";
 import { highlightName, highlightSheet, Painted } from "./highlights.ts";
 
 /** The tag the element defines. */
@@ -110,10 +126,14 @@ interface Selected {
   backward: boolean;
 }
 
-/** The leading whitespace an outdent removes from a line: one tab, or up to a tab's width (4) of
+/** The leading whitespace an outdent removes from a line: one tab, or up to a tab's width of
  * spaces. */
-const outdented = (line: string) =>
-  line.startsWith("\t") ? 1 : (/^ {0,4}/.exec(line)?.[0].length ?? 0);
+const outdented = (width: number) => (line: string) =>
+  line.startsWith("\t") ? 1 : Math.min(width, /^ */.exec(line)?.[0].length ?? 0);
+
+/** Whether the press types a character: one character, with no Ctrl, Cmd, or Alt. */
+const typesCharacter = (event: KeyboardEvent) =>
+  [...event.key].length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
 
 /**
  * A source editor. `value` is the whole text: reading it gives the text as edited, and setting it
@@ -125,13 +145,21 @@ const outdented = (line: string) =>
  * an editing host as editable whatever aria-readonly says, but a focusable read-only textbox whose
  * Ctrl or Cmd+A selects its text.
  *
+ * `settings`, an EditorSettings its owner writes and the editor only reads, sets whether long
+ * lines wrap or scroll sideways and how wide a tab shows; with none, long lines scroll and a tab
+ * shows four columns wide. The editor follows each change it sends, and stops listening to
+ * settings it no longer holds or while it is out of the document.
+ *
  * Enter breaks the line, the new line carrying the leading whitespace before the caret on the
  * current one. Tab inserts a tab, or, with a selection, indents every line it touches; Shift+Tab
- * outdents the current or selected lines, a tab or up to four spaces each. One undo reverts each,
- * and redo restores it. Escape releases Tab: the next Tab or Shift+Tab moves focus out, and typing,
- * a click, or focus coming back arms Tab again, and a second Escape is the page's. A hint below the editor shows the model while it
- * has focus, and the textbox's description says it. Read-only, the editor takes none of these keys,
- * and Tab moves focus.
+ * outdents the current or selected lines, a tab or up to a tab's width of spaces each. A paste
+ * inserts the clipboard's plain text, replacing any selection; a drop is refused. One undo
+ * reverts each, and redo restores it. Escape releases Tab: the next Tab or Shift+Tab moves focus
+ * out, and typing, a click, or focus coming back arms Tab again, and a second Escape is the
+ * page's. A hint below the editor shows the model while it has focus, and the textbox's
+ * description says it. Read-only, the editor takes none of these keys
+ * and no paste, Tab moves focus, and a character key fires none of the page's single-key
+ * shortcuts, as in a field.
  *
  * Events: `input`, composed out of the shadow root, once for every edit, undo and redo included;
  * `change`, bubbling, once focus leaves the text with the value changed since focus
@@ -149,6 +177,7 @@ export class CodeEditor extends LitElement {
     label: { type: String },
     readonly: { type: Boolean, reflect: true },
     labelledBy: { type: String, attribute: "aria-labelledby" },
+    settings: { attribute: false },
     lines: { state: true },
     released: { state: true },
   } satisfies PropertyDeclarations;
@@ -162,6 +191,9 @@ export class CodeEditor extends LitElement {
   /** The host's `aria-labelledby`: the ids, in the host's tree, of the elements naming the
    * textbox. */
   declare labelledBy: string | null;
+  /** The settings the editor renders from, which its owner writes and it never does; null shows
+   * the defaults. */
+  declare settings: EditorSettings | null;
   /** The text's lines, which the gutter's rows follow. */
   declare private lines: string[];
   /** Whether Escape has released Tab, so the next Tab moves focus. */
@@ -174,6 +206,10 @@ export class CodeEditor extends LitElement {
   #batching = false;
   #painted = new Painted();
   #timer: ReturnType<typeof setTimeout> | undefined;
+  /** The settings the editor listens to: those it holds, while it is in the document. */
+  #heard: EditorSettings | null = null;
+  /** Renders again as the settings change. */
+  readonly #changed = () => this.requestUpdate();
 
   constructor() {
     super();
@@ -181,6 +217,7 @@ export class CodeEditor extends LitElement {
     this.label = "Code";
     this.readonly = false;
     this.labelledBy = null;
+    this.settings = null;
     this.lines = [""];
     this.released = false;
     void loadTokenizer();
@@ -209,7 +246,9 @@ export class CodeEditor extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    // Reconnected, it paints again, and looks up the elements naming it in its new tree.
+    this.#listen();
+    // Reconnected, it paints again, looks up the elements naming it in its new tree, and shows
+    // the settings as they now are.
     if (this.hasUpdated) {
       this.requestUpdate();
       this.#schedule(0);
@@ -218,8 +257,23 @@ export class CodeEditor extends LitElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#listen();
     clearTimeout(this.#timer);
     this.#painted.clear();
+  }
+
+  /** Listens to the settings the editor holds while it is in the document, and to no other. */
+  #listen(): void {
+    const next = this.isConnected ? this.settings : null;
+    if (next === this.#heard) return;
+    this.#heard?.removeEventListener("change", this.#changed);
+    next?.addEventListener("change", this.#changed);
+    this.#heard = next;
+  }
+
+  /** The settings shown: those held, else the defaults. */
+  get #shown(): { wrap: boolean; tabSize: number } {
+    return this.settings ?? defaults;
   }
 
   /** Highlights after delay ms, replacing any highlight already waiting. */
@@ -258,6 +312,14 @@ export class CodeEditor extends LitElement {
     if (!editable || event.isComposing) return;
     const modified = event.ctrlKey || event.metaKey || event.altKey;
     if (this.readonly) {
+      // A character key would type in a field, so in a field the foundation's keys fire no
+      // shortcut on it; a read-only editor is no field to them, being no editing host, so it
+      // marks the press handled, which they pass over. Nothing else is taken by the default it
+      // prevents: there is no caret to move, and no text to insert.
+      if (typesCharacter(event)) {
+        event.preventDefault();
+        return;
+      }
       if (event.key.toLowerCase() !== "a" || !(event.ctrlKey || event.metaKey)) return;
       if (event.altKey || event.shiftKey) return;
       event.preventDefault();
@@ -314,13 +376,14 @@ export class CodeEditor extends LitElement {
   }
 
   /** Replaces the text from start to end with text, as one step of the browser's undo history,
-   * sending one input. A "\n" goes in as insertLineBreak, which writes it as text where white
-   * space is preserved, as it is here: insertText would split the text into a block per line.
+   * sending one input, of inputType. A "\n" goes in as insertLineBreak, which writes it as text
+   * where white space is preserved, as it is here: insertText would split the text into a block
+   * per line.
    * The browser joins the insertions, made with no selection change between them, into one undo
    * step, and sends an input for each, which go no further than the text: one input for the edit
    * goes to the host after them. Selecting after the edit ends the step, so typing that follows
    * is a step of its own. */
-  #replace(start: number, end: number, text: string): void {
+  #replace(start: number, end: number, text: string, inputType = "insertText"): void {
     const editable = this.#editable;
     if (!editable || (start === end && text === "")) return;
     this.#select(start, end);
@@ -337,7 +400,7 @@ export class CodeEditor extends LitElement {
     }
     editable.dispatchEvent(
       new InputEvent("input", {
-        inputType: "insertText",
+        inputType,
         data: text,
         bubbles: true,
         composed: true,
@@ -369,7 +432,30 @@ export class CodeEditor extends LitElement {
    * selection touches. */
   #outdent(): void {
     const selected = this.#selection();
-    if (selected) this.#lines(selected, outdented, "");
+    if (selected) this.#lines(selected, outdented(this.#shown.tabSize), "");
+  }
+
+  /** A paste: the clipboard's plain text, its line breaks as "\n", in place of the selection,
+   * through the editor's own edit, so it is one undo step and sends one input. Read-only, or with
+   * no plain text on the clipboard, nothing is pasted. */
+  #paste(event: ClipboardEvent): void {
+    event.preventDefault();
+    if (this.readonly) return;
+    const text = (event.clipboardData?.getData("text/plain") ?? "").replace(/\r\n?/g, "\n");
+    const selected = this.#selection();
+    if (!selected || text === "") return;
+    this.#replace(selected.start, selected.end, text, "insertFromPaste");
+  }
+
+  /** A drag over the text: refused, so the pointer shows no drop and none comes. */
+  #dragover(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+  }
+
+  /** A drop: refused, should one come; the browser's own would insert a block per line. */
+  #drop(event: DragEvent): void {
+    event.preventDefault();
   }
 
   /** Edits the start of each line the selection touches, removing remove(line) characters and
@@ -468,6 +554,10 @@ export class CodeEditor extends LitElement {
     this.#editable?.replaceChildren(this.#text);
   }
 
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    if (changed.has("settings")) this.#listen();
+  }
+
   protected override updated(changed: PropertyValues<this>): void {
     // The ids name elements outside the shadow root, which only element references reach. They
     // are looked up on every update, so a naming element parsed after the editor is found once
@@ -487,8 +577,18 @@ export class CodeEditor extends LitElement {
     // by number: the editable element holds the second column across every row, and auto-placement
     // would put the lines below it.
     // The hint and the description say the Tab model, which only an editable editor has.
+    // The settings set the frame's mode, wrapping or scrolling, and the tab's width; the gutter's
+    // width, in digits, keeps a caret revealed at a scrolled line's start clear of it.
     const editable = !this.readonly;
-    return html`<div class="editor" style="--lines: ${this.lines.length}" @pointerdown=${this.#arm}>
+    const { wrap, tabSize } = this.#shown;
+    const rows = this.lines.length;
+    const style = `--lines: ${rows}; --digits: ${String(rows).length}; --tab-size: ${tabSize}`;
+    return html`<div
+        class=${wrap ? "editor wrap" : "editor"}
+        style=${style}
+        @pointerdown=${this.#arm}
+        @focus=${this.#frameFocus}
+      >
         ${this.lines.map(
           (line, i) =>
             html`<span class="number" style="grid-row: ${i + 1}" aria-hidden="true"></span
@@ -511,6 +611,9 @@ export class CodeEditor extends LitElement {
           @input=${this.#input}
           @focus=${this.#focus}
           @blur=${this.#blur}
+          @paste=${this.#paste}
+          @dragover=${this.#dragover}
+          @drop=${this.#drop}
         ></div>
       </div>
       ${
@@ -524,6 +627,14 @@ export class CodeEditor extends LitElement {
           </div>`
           : nothing
       }`;
+  }
+
+  /** Focus on the frame itself, passed to the text. A frame that overflows is a scroller, which
+   * the browser makes focusable, and the first focusable element in the shadow root is the one
+   * the host's delegated focus, and a click on the gutter, focus. The frame scrolls nowhere: the
+   * text takes focus where it stands. */
+  #frameFocus(event: FocusEvent): void {
+    if (event.target === event.currentTarget) this.#editable?.focus({ preventScroll: true });
   }
 
   /** A click in the editor arms Tab. */

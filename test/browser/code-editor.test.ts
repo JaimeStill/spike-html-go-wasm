@@ -21,7 +21,16 @@
 // undo reverts each and redo restores it, Escape releases Tab and typing, a click, or focus coming
 // back arms it, a composition commits as typed, input reaches the host once an edit and change
 // once focus leaves with the value changed, and the keyboard hint and description say the Tab
-// model. Nothing here names the site: its base is package.json's name.
+// model. Settings: with none, long lines scroll sideways, one row a line, and a tab is four
+// columns wide; the page's settings wrap or narrow the tab; the editor follows each change, and
+// settings given in their place, listening only to those it holds while connected, and never
+// writes them. Scrolling: the gutter stays over the lines, covering them, each number beside its
+// line; typing keeps the caret in view and Home brings it back clear of the gutter; the keyboard
+// scrolls an editable and a read-only editor; focus given to a scrolling frame reaches the text.
+// Under a tab size, Tab inserts a tab and Shift+Tab takes up to the tab size's spaces. A paste
+// inserts plain text as one undo step and one input; a read-only editor takes none, and a drop
+// is refused. A read-only editor fires none of the page's single-key shortcuts, and Escape stays
+// the page's. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
@@ -489,6 +498,8 @@ describe("the editor in the accessibility tree", () => {
         { name: "query.sql", multiline: true, readonly: false },
         { name: "shapes.go", multiline: true, readonly: true },
         { name: "long.go", multiline: true, readonly: false },
+        { name: "wrapped.go", multiline: true, readonly: false },
+        { name: "classify.go", multiline: true, readonly: false },
         {
           name: "Empty, named by this caption through aria-labelledby",
           multiline: true,
@@ -597,11 +608,11 @@ describe("the gutter", () => {
     try {
       await settleAll(page);
       const wrapped: boolean = await page.evaluate(`(() => {
-        const editor = window.editors.at("long", 1);
+        const editor = window.editors.at("wrap", 1);
         const rows = editor.shadowRoot.querySelectorAll(".ghost");
         return [...rows].some((row) => row.getBoundingClientRect().height > parseFloat(getComputedStyle(row).lineHeight) * 1.5);
       })()`);
-      assert.ok(wrapped, "the long editor at 20rem wraps a line");
+      assert.ok(wrapped, "the wrapped editor at 20rem wraps a line");
       for (const width of [1120, 390]) {
         await page.cdp("Emulation.setDeviceMetricsOverride", {
           width,
@@ -1484,6 +1495,560 @@ describe("the editor's events", () => {
       await press(page, "Escape", "Escape", 27);
       await press(page, "Tab", "Tab", 9);
       assert.equal(await readout(), "Specimen aid, events heard: input 2 · change 1");
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("the editor's settings", () => {
+  /** The editor's mode as it lays out: its text's white-space and tab size, whether its frame
+   * overflows sideways, and whether any line takes more than one row. */
+  const MODE = (editor: string) => `(() => {
+    const editor = ${editor};
+    const root = editor.shadowRoot;
+    const frame = root.querySelector(".editor");
+    const style = getComputedStyle(root.querySelector(".text"));
+    const rows = [...root.querySelectorAll(".ghost")];
+    const lineHeight = parseFloat(style.lineHeight);
+    return {
+      whiteSpace: style.whiteSpace,
+      tabSize: style.tabSize,
+      overflows: frame.scrollWidth > frame.clientWidth + 1,
+      wraps: rows.some((row) => row.getBoundingClientRect().height > lineHeight * 1.5),
+    };
+  })()`;
+
+  /** A tab's painted width over a character's, measured on the first tab in the editor's text
+   * and the character after it, in the code font, where every character is as wide. */
+  const TAB = (editor: string) => `(() => {
+    const text = ${editor}.shadowRoot.querySelector(".text").firstChild;
+    const at = text.data.indexOf("\\t");
+    const width = (start, end) => {
+      const range = new Range();
+      range.setStart(text, start);
+      range.setEnd(text, end);
+      return range.getBoundingClientRect().width;
+    };
+    const after = text.data.slice(at + 1).search(/[^\\t]/) + at + 1;
+    return Math.round(width(at, at + 1) / width(after, after + 1));
+  })()`;
+
+  test("with none given, long lines scroll sideways, one row a line, and a tab shows four columns wide", async () => {
+    const page = await open();
+    try {
+      for (const list of [0, 1]) {
+        const long = `window.editors.at("long", ${list})`;
+        assert.equal(await page.evaluate(`${long}.settings`), null);
+        assert.deepEqual(await page.evaluate(MODE(long)), {
+          whiteSpace: "pre",
+          tabSize: "4",
+          overflows: true,
+          wraps: false,
+        });
+      }
+      assert.equal(await page.evaluate(TAB(EDITABLE)), 4);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the page's settings wrap long lines, or show a tab two columns wide, still a tab", async () => {
+    const page = await open();
+    try {
+      for (const list of [0, 1]) {
+        assert.deepEqual(await page.evaluate(MODE(`window.editors.at("wrap", ${list})`)), {
+          whiteSpace: "pre-wrap",
+          tabSize: "4",
+          overflows: false,
+          wraps: true,
+        });
+      }
+      const narrow = `window.editors.at("tab-size")`;
+      assert.equal(await page.evaluate(`${narrow}.settings.tabSize`), 2);
+      assert.equal(await page.evaluate(TAB(narrow)), 2);
+      assert.equal(await page.evaluate(`${narrow}.value`), CLASSIFY, "the text holds its tabs");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the editor follows each change its settings send, and settings given in their place", async () => {
+    const page = await open();
+    try {
+      const wrapped = `window.editors.at("wrap", 1)`;
+      await page.evaluate(`${wrapped}.settings.wrap = false`);
+      await page.evaluate(`${wrapped}.updateComplete`);
+      assert.deepEqual(await page.evaluate(MODE(wrapped)), {
+        whiteSpace: "pre",
+        tabSize: "4",
+        overflows: true,
+        wraps: false,
+      });
+      await page.evaluate(`${wrapped}.settings.tabSize = 8`);
+      await page.evaluate(`${wrapped}.updateComplete`);
+      assert.equal((await page.evaluate(MODE(wrapped))).tabSize, "8");
+      // Settings given to an editor that had none, then others in their place: it shows the new
+      // ones, and a change to the old ones no longer reaches it.
+      const long = `window.editors.at("long", 1)`;
+      await page.evaluate(`(() => {
+        const Settings = ${wrapped}.settings.constructor;
+        window.first = new Settings({ wrap: true, tabSize: 3 });
+        window.second = new Settings({ tabSize: 6 });
+        ${long}.settings = window.first;
+      })()`);
+      await page.evaluate(`${long}.updateComplete`);
+      assert.deepEqual(await page.evaluate(MODE(long)), {
+        whiteSpace: "pre-wrap",
+        tabSize: "3",
+        overflows: false,
+        wraps: true,
+      });
+      await page.evaluate(`${long}.settings = window.second`);
+      await page.evaluate(`${long}.updateComplete`);
+      await page.evaluate(`window.first.wrap = false; window.first.tabSize = 1`);
+      await page.evaluate(`${long}.updateComplete`);
+      assert.deepEqual(await page.evaluate(MODE(long)), {
+        whiteSpace: "pre",
+        tabSize: "6",
+        overflows: true,
+        wraps: false,
+      });
+      // A change to the settings now given reaches it.
+      await page.evaluate(`window.second.tabSize = 5`);
+      await page.evaluate(`${long}.updateComplete`);
+      assert.equal((await page.evaluate(MODE(long))).tabSize, "5");
+      // Settings taken away: the defaults.
+      await page.evaluate(`${long}.settings = null`);
+      await page.evaluate(`${long}.updateComplete`);
+      assert.equal((await page.evaluate(MODE(long))).tabSize, "4");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("it listens only to the settings it holds, only while in the document, and never writes them", async () => {
+    const page = await editing();
+    try {
+      // Settings whose change listeners are counted as the editor adds and removes them, and
+      // whose change events are counted as they come.
+      await page.evaluate(`(() => {
+        const Settings = window.editors.at("wrap").settings.constructor;
+        window.counted = (init) => {
+          const settings = new Settings(init);
+          settings.listeners = 0;
+          settings.changes = 0;
+          settings.addEventListener("change", () => settings.changes++);
+          const add = settings.addEventListener.bind(settings);
+          const remove = settings.removeEventListener.bind(settings);
+          settings.addEventListener = (type, listener) => {
+            if (type === "change") settings.listeners++;
+            add(type, listener);
+          };
+          settings.removeEventListener = (type, listener) => {
+            if (type === "change") settings.listeners--;
+            remove(type, listener);
+          };
+          return settings;
+        };
+        window.a = window.counted({ tabSize: 2 });
+        window.b = window.counted({ tabSize: 8 });
+        ${EDITABLE}.settings = window.a;
+      })()`);
+      const listeners = async () => {
+        await page.evaluate(`${EDITABLE}.updateComplete`);
+        return page.evaluate(`[window.a.listeners, window.b.listeners]`);
+      };
+      assert.deepEqual(await listeners(), [1, 0], "it listens to the settings given");
+      await page.evaluate(`(() => {
+        window.held = ${EDITABLE};
+        window.home = window.held.parentElement;
+        window.held.remove();
+      })()`);
+      const held = (count: string) =>
+        page.evaluate(`window.held.updateComplete.then(() => ${count})`);
+      assert.deepEqual(
+        await held(`[window.a.listeners, window.b.listeners]`),
+        [0, 0],
+        "out of the document, it listens to none",
+      );
+      // A change while it is out: back in, it listens again and shows the settings as they are.
+      await page.evaluate(`window.a.wrap = true`);
+      await page.evaluate(`window.home.append(window.held)`);
+      assert.deepEqual(await held(`[window.a.listeners, window.b.listeners]`), [1, 0]);
+      assert.equal((await page.evaluate(MODE("window.held"))).whiteSpace, "pre-wrap");
+      // Replaced, it leaves the old settings and listens to the new.
+      await page.evaluate(`window.held.settings = window.b`);
+      assert.deepEqual(await held(`[window.a.listeners, window.b.listeners]`), [0, 1]);
+      // Editing, through each editing key, typing, and focus leaving, sends no change
+      // from the settings: the editor never writes them.
+      await select(page, 4, 4, "window.held");
+      await page.cdp("Input.insertText", { text: "x" });
+      await press(page, "Tab", "Tab", 9);
+      await press(page, "Tab", "Tab", 9, SHIFT);
+      await enter(page);
+      await press(page, "Escape", "Escape", 27);
+      await press(page, "Tab", "Tab", 9);
+      assert.equal(await page.evaluate(`window.a.changes`), 1, "only the test's own change");
+      assert.equal(await page.evaluate(`window.b.changes`), 0);
+      assert.deepEqual(await page.evaluate(`[window.b.wrap, window.b.tabSize]`), [false, 8]);
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("scrolling long lines", () => {
+  /** The long editor at 20rem, which scrolls sideways at every width. */
+  const LONG = `window.editors.at("long", 1)`;
+  /** The long comment's line in the long editor's text. */
+  const COMMENT = "// A comment longer than any width";
+
+  /** The frame's scroll offset and box, the gutter's inline end, and the caret's box, if the
+   * selection is in the editor. */
+  const VIEW = (editor: string) => `(() => {
+    const root = ${editor}.shadowRoot;
+    const frame = root.querySelector(".editor");
+    const box = frame.getBoundingClientRect();
+    const numbers = [...root.querySelectorAll(".number")];
+    const [range] = getSelection().getComposedRanges({ shadowRoots: [root] });
+    let caret = null;
+    if (range && root.querySelector(".text").contains(range.startContainer)) {
+      const live = new Range();
+      live.setStart(range.endContainer, range.endOffset);
+      const rect = live.getClientRects()[0] ?? live.getBoundingClientRect();
+      caret = { left: rect.left, right: rect.right, top: rect.top };
+    }
+    return {
+      scrollLeft: frame.scrollLeft,
+      left: box.left + frame.clientLeft,
+      right: box.left + frame.clientLeft + frame.clientWidth,
+      gutterEnd: Math.max(...numbers.map((n) => n.getBoundingClientRect().right)),
+      numberLefts: numbers.map((n) => Math.round(n.getBoundingClientRect().left)),
+      caret,
+    };
+  })()`;
+
+  test("the gutter stays in place over the lines as they scroll, each number beside its line", async () => {
+    const page = await open();
+    try {
+      await settleAll(page);
+      await page.evaluate(`${LONG}.scrollIntoView({ block: "center" })`);
+      const before = await page.evaluate(VIEW(LONG));
+      await page.evaluate(`${LONG}.shadowRoot.querySelector(".editor").scrollLeft = 120`);
+      const after = await page.evaluate(VIEW(LONG));
+      assert.ok(after.scrollLeft >= 100, `the lines scroll: ${after.scrollLeft}`);
+      assert.deepEqual(after.numberLefts, before.numberLefts, "the numbers don't move");
+      assert.equal(after.gutterEnd, before.gutterEnd);
+      // The gutter covers what scrolls beneath it: at each number's box, the number is what the
+      // frame shows, and its background is the frame's.
+      const covered: { top: string[]; background: string[]; frame: string } =
+        await page.evaluate(`(() => {
+        const root = ${LONG}.shadowRoot;
+        const numbers = [...root.querySelectorAll(".number")];
+        return {
+          top: numbers.map((n) => {
+            const box = n.getBoundingClientRect();
+            return root.elementFromPoint(box.left + 2, box.top + box.height / 2)?.className ?? "";
+          }),
+          background: [...new Set(numbers.map((n) => getComputedStyle(n).backgroundColor))],
+          frame: getComputedStyle(root.querySelector(".editor")).backgroundColor,
+        };
+      })()`);
+      assert.deepEqual(new Set(covered.top), new Set(["number"]));
+      assert.deepEqual(covered.background, [covered.frame]);
+      // Each number is still beside its line, the tops matched as the alignment test matches them.
+      const tops: string[] = await page.evaluate(`(() => {
+        const editor = ${LONG};
+        const root = editor.shadowRoot;
+        const text = root.querySelector(".text").firstChild;
+        const numbers = [...root.querySelectorAll(".number")];
+        const off = [];
+        let start = 0;
+        editor.value.split("\\n").forEach((line, i) => {
+          if (line !== "") {
+            const range = new Range();
+            range.setStart(text, start);
+            range.setEnd(text, start + 1);
+            const glyph = range.getClientRects()[0];
+            const leading = parseFloat(getComputedStyle(numbers[i]).lineHeight) - glyph.height;
+            const top = numbers[i].getBoundingClientRect().top;
+            if (Math.abs(glyph.top - leading / 2 - top) > 1) off.push(\`line \${i + 1}\`);
+          }
+          start += line.length + 1;
+        });
+        return off;
+      })()`);
+      assert.deepEqual(tops, []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("typing at a long line's end keeps the caret in view, and Home brings it back clear of the gutter", async () => {
+    const page = await editing();
+    try {
+      const value: string = await page.evaluate(`${LONG}.value`);
+      const line = value.indexOf(COMMENT);
+      const end = value.indexOf("\n", line);
+      await select(page, end, end, LONG);
+      await page.cdp("Input.insertText", { text: "x" });
+      await page.cdp("Input.insertText", { text: "y" });
+      const typed = await page.evaluate(VIEW(LONG));
+      assert.ok(typed.scrollLeft > 0, "the frame scrolled to the caret");
+      assert.ok(typed.caret, "the caret is in the editor");
+      assert.ok(
+        typed.caret.left > typed.gutterEnd && typed.caret.right <= typed.right + 1,
+        `the caret, at ${typed.caret.left}, is between the gutter (${typed.gutterEnd}) and the frame's end (${typed.right})`,
+      );
+      assert.equal(await page.evaluate(`${LONG}.value.indexOf("xy")`), end);
+      await press(page, "Home", "Home", 36);
+      const home = await page.evaluate(VIEW(LONG));
+      assert.ok(home.caret, "the caret is in the editor");
+      assert.deepEqual(
+        await page.evaluate(`window.editors.selected(${LONG})`),
+        [line, line],
+        "Home moves to the line's start",
+      );
+      assert.ok(
+        home.caret.left >= home.gutterEnd - 1,
+        `the caret, at ${home.caret.left}, is clear of the gutter, ending at ${home.gutterEnd}`,
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the keyboard scrolls the lines, in an editable editor and a read-only one", async () => {
+    const page = await editing();
+    try {
+      // Editable: End moves the caret to the long line's end, and the frame follows it.
+      const value: string = await page.evaluate(`${LONG}.value`);
+      const line = value.indexOf(COMMENT);
+      await select(page, line, line, LONG);
+      await press(page, "End", "End", 35);
+      assert.ok((await page.evaluate(VIEW(LONG))).scrollLeft > 0, "End scrolls an editable editor");
+      // Read-only, with no caret: the arrow keys scroll the frame, as in any scrolled box, the
+      // browser's scroll animating to its end.
+      const readonly = `window.editors.at("readonly", 1)`;
+      const frame = `${readonly}.shadowRoot.querySelector(".editor")`;
+      assert.ok(
+        await page.evaluate(`${frame}.scrollWidth > ${frame}.clientWidth + 1`),
+        "its lines overflow at 20rem",
+      );
+      await page.evaluate(`${readonly}.focus()`);
+      await press(page, "ArrowRight", "ArrowRight", 39);
+      await until(page, `${frame}.scrollLeft > 0`);
+      assert.ok(await page.evaluate(`${readonly}.shadowRoot.activeElement?.className === "text"`));
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("focus given to a scrolling editor, or a click on its gutter, goes to its text", async () => {
+    const page = await editing();
+    try {
+      for (const state of ["long", "readonly"]) {
+        const editor = `window.editors.at("${state}", 1)`;
+        await page.evaluate(`document.activeElement?.blur()`);
+        await page.evaluate(`${editor}.focus()`);
+        assert.equal(
+          await page.evaluate(`${editor}.shadowRoot.activeElement?.className`),
+          "text",
+          `${state}: focus() reaches the text, not the scrolling frame`,
+        );
+        await page.evaluate(`document.activeElement?.blur()`);
+        const point: { x: number; y: number } = await page.evaluate(`(() => {
+          const number = ${editor}.shadowRoot.querySelector(".number");
+          number.scrollIntoView({ block: "center" });
+          const box = number.getBoundingClientRect();
+          return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+        })()`);
+        for (const type of ["mousePressed", "mouseReleased"]) {
+          await page.cdp("Input.dispatchMouseEvent", {
+            type,
+            ...point,
+            button: "left",
+            clickCount: 1,
+          });
+        }
+        assert.equal(
+          await page.evaluate(`${editor}.shadowRoot.activeElement?.className`),
+          "text",
+          `${state}: a click on the gutter reaches the text`,
+        );
+      }
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("Tab and Shift+Tab under a tab size", () => {
+  const NARROW = `window.editors.at("tab-size")`;
+
+  test("Tab still inserts a tab, and Shift+Tab outdents a tab or up to a tab's width of spaces", async () => {
+    const page = await editing();
+    try {
+      await select(page, 4, 4, NARROW);
+      await press(page, "Tab", "Tab", 9);
+      assert.equal(
+        (await shown(page, NARROW)).value,
+        `${CLASSIFY.slice(0, 4)}\t${CLASSIFY.slice(4)}`,
+        "a tab, never spaces, at a tab size of 2",
+      );
+      // Lines of spaces lose two at a tab size of 2, or as many as they have; a tab goes whole.
+      const spaced = "a\n      six\n two\n\ttab\n";
+      await page.evaluate(`${NARROW}.value = ${JSON.stringify(spaced)}`);
+      await select(page, 2, spaced.length - 1, NARROW);
+      await press(page, "Tab", "Tab", 9, SHIFT);
+      assert.equal((await shown(page, NARROW)).value, "a\n    six\ntwo\ntab\n");
+      // At a tab size of 8, the same lines lose up to eight.
+      await page.evaluate(`(() => {
+        ${NARROW}.value = ${JSON.stringify(spaced)};
+        ${NARROW}.settings.tabSize = 8;
+      })()`);
+      await select(page, 2, spaced.length - 1, NARROW);
+      await press(page, "Tab", "Tab", 9, SHIFT);
+      assert.equal((await shown(page, NARROW)).value, "a\nsix\ntwo\ntab\n");
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("paste and drop", () => {
+  /** Dispatches a paste on the editor's text, carrying text as text/plain, and answers whether it
+   * was cancelled, so the browser's own paste would not run. */
+  const paste = (page: Page, editor: string, text: string): Promise<boolean> =>
+    page.evaluate(`(() => {
+      const data = new DataTransfer();
+      data.setData("text/plain", ${JSON.stringify(text)});
+      data.setData("text/html", "<b>rich</b>");
+      const event = new ClipboardEvent("paste", {
+        clipboardData: data, bubbles: true, cancelable: true, composed: true,
+      });
+      ${editor}.shadowRoot.querySelector(".text").dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+
+  test("a paste inserts the clipboard's plain text in place of the selection, one undo step and one input", async () => {
+    const page = await editing();
+    try {
+      await page.evaluate(`window.editors.listen(${EDITABLE})`);
+      const word = startOf("negative");
+      await select(page, word, word + "negative".length);
+      const pasted = "first\r\n\tsecond\nthird";
+      assert.equal(await paste(page, EDITABLE, pasted), true);
+      const expected = `${CLASSIFY.slice(0, word)}first\n\tsecond\nthird${CLASSIFY.slice(word + "negative".length)}`;
+      const after = await shown(page);
+      assert.deepEqual(after, {
+        value: expected,
+        selected: [word + 19, word + 19],
+        children: 0,
+      });
+      assert.deepEqual(
+        await page.evaluate(`${EDITABLE}.heard`),
+        [{ type: "input", own: true, bubbles: true }],
+        "one input",
+      );
+      await undo(page);
+      assert.equal((await shown(page)).value, CLASSIFY, "one undo reverts the paste whole");
+      await redo(page);
+      assert.equal((await shown(page)).value, expected, "redo restores it");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("a read-only editor takes no paste, and a drop is refused", async () => {
+    const page = await editing();
+    try {
+      const readonly = `window.editors.at("readonly")`;
+      const before: string = await page.evaluate(`${readonly}.value`);
+      await page.evaluate(`(() => { ${readonly}.focus(); window.editors.listen(${readonly}); })()`);
+      assert.equal(await paste(page, readonly, "pasted\nhere"), true);
+      assert.equal(await page.evaluate(`${readonly}.value`), before);
+      assert.deepEqual(await page.evaluate(`${readonly}.heard`), []);
+      // A drop on an editable editor, as the browser sends one: its dragover and its drop are
+      // both cancelled, the dragover showing no drop, and the text stays as it was.
+      await page.evaluate(`window.editors.listen(${EDITABLE})`);
+      await select(page, 4);
+      const dropped: { over: boolean; effect: string; drop: boolean } =
+        await page.evaluate(`(() => {
+        const text = ${EDITABLE}.shadowRoot.querySelector(".text");
+        const box = text.getBoundingClientRect();
+        const init = (data) => ({
+          dataTransfer: data, clientX: box.left + 4, clientY: box.top + 4,
+          bubbles: true, cancelable: true, composed: true,
+        });
+        const data = new DataTransfer();
+        data.setData("text/plain", "dropped\\ntext");
+        const over = new DragEvent("dragover", init(data));
+        text.dispatchEvent(over);
+        const drop = new DragEvent("drop", init(data));
+        text.dispatchEvent(drop);
+        return { over: over.defaultPrevented, effect: data.dropEffect, drop: drop.defaultPrevented };
+      })()`);
+      assert.deepEqual(dropped, { over: true, effect: "none", drop: true });
+      assert.equal((await shown(page)).value, CLASSIFY);
+      assert.deepEqual(await page.evaluate(`${EDITABLE}.heard`), []);
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("the page's shortcuts", () => {
+  /** Whether the page's Settings or Help dialog is open. */
+  const dialogs = (page: Page): Promise<{ settings: boolean; help: boolean }> =>
+    page.evaluate(`({
+      settings: document.querySelector("#settings").open,
+      help: document.querySelector("#help").open,
+    })`);
+
+  test("a character key in a read-only editor fires none, Escape is still the page's, and outside, S opens Settings", async () => {
+    const page = await editing();
+    try {
+      const readonly = `window.editors.at("readonly")`;
+      await page.evaluate(`${readonly}.focus()`);
+      await press(page, "s", "KeyS", 83);
+      await press(page, "?", "Slash", 191, SHIFT);
+      assert.deepEqual(await dialogs(page), { settings: false, help: false });
+      assert.ok(
+        await page.evaluate(`${readonly}.shadowRoot.activeElement?.className === "text"`),
+        "focus stays in the editor",
+      );
+      // Escape passes to the page, unhandled, and focus stays where it was.
+      await page.evaluate(`document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") window.escape = event.defaultPrevented;
+      })`);
+      await press(page, "Escape", "Escape", 27);
+      assert.equal(await page.evaluate(`window.escape`), false, "Escape is the page's");
+      // Outside any editor, the same key opens Settings, so the editor is what kept it.
+      await page.evaluate(`document.activeElement?.blur()`);
+      await press(page, "s", "KeyS", 83);
+      assert.deepEqual(await dialogs(page), { settings: true, help: false });
+      // Escape closes the dialog; from a read-only editor inside a dialog, Escape closes it too.
+      await press(page, "Escape", "Escape", 27);
+      assert.deepEqual(await dialogs(page), { settings: false, help: false });
+      await page.evaluate(`(() => {
+        const dialog = document.querySelector("#settings");
+        window.moved = ${readonly};
+        dialog.append(window.moved);
+        dialog.showModal();
+      })()`);
+      // The dialog's own content takes focus as it opens; the editor takes it after.
+      await page.evaluate(SETTLED);
+      await page.evaluate(`window.moved.focus()`);
+      assert.equal(
+        await page.evaluate(
+          `[document.activeElement?.tagName, window.moved.shadowRoot.activeElement?.className].join()`,
+        ),
+        "SL-CODE-EDITOR,text",
+      );
+      await press(page, "Escape", "Escape", 27);
+      assert.deepEqual(await dialogs(page), { settings: false, help: false });
     } finally {
       await page.close();
     }

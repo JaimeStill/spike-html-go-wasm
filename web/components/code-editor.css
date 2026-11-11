@@ -7,20 +7,30 @@
  *
  * The editor is one frame, a text field's outline, holding a two-column grid: the gutter's numbers
  * and the lines. Each line of the value is a row: its number, drawn by a counter, and the line
- * again, invisible, which wraps exactly as the editable element wraps the same line, since both
- * sit in the second column with the same font, tab size, and wrapping. The editable element lies
- * over that column across every row (--lines, the row count, is set on the frame) and adds nothing
- * to the rows' heights (contain: size), so each row is as tall as its line, and each number sits
- * beside its line's first row at any width, wrapped or not, in every space and type profile. Long
- * lines wrap, anywhere if they must, so the editor never scrolls sideways.
+ * again, invisible, which lays out exactly as the editable element lays out the same line, since
+ * both sit in the second column with the same font, tab size, and wrapping. The editable element
+ * lies over that column across every row (--lines, the row count, is set on the frame) and adds
+ * nothing to the rows' heights (contain: size), so each row is as tall as its line, and each
+ * number sits beside its line's first row at any width, wrapped or not, in every space and type
+ * profile.
+ *
+ * The editor's settings choose the mode, which the script sets on the frame: a tab's width as
+ * --tab-size, and wrapping as the wrap class. Without it, each line is one row and long lines
+ * overflow the column, so the frame scrolls sideways; the gutter is sticky at the frame's inline
+ * start, on the frame's own background, so the lines pass beneath it and it never scrolls away,
+ * and the space between the numbers and the lines is the gutter's own padding, so no scrolled text
+ * shows through it. The frame's scroll padding is the gutter's width (--digits, the widest
+ * number's digit count, is set on the frame), so a caret the browser reveals at a line's start
+ * stops clear of it. With wrap, long lines wrap, anywhere if they must, and nothing scrolls
+ * sideways.
  *
  * While an editable editor has focus, a hint below the frame shows its Tab model, the foundation's
  * glyph hint drawn again: a small label in the page's colors reversed, in the top layer, anchored
  * below the frame at its inline end, flipped above it where the viewport's foot would cut it.
  *
  * The frame grows with the text. A page that holds the host to a block size gets a frame that
- * fills it and scrolls inside, the gutter scrolling with its lines. Nothing moves, so reduced
- * motion has nothing to stop.
+ * fills it and scrolls inside, the gutter scrolling up and down with its lines. Nothing moves, so
+ * reduced motion has nothing to stop.
  */
 
 :host {
@@ -28,14 +38,18 @@
 }
 
 .editor {
+  /* The gutter's inline padding: before the numbers, and between them and the lines. */
+  --gutter-start: var(--space-2xs);
+  --gutter-end: var(--space-xs);
   anchor-name: --sl-code-editor;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: var(--space-xs);
   box-sizing: border-box;
   block-size: 100%;
   overflow: auto;
-  padding: var(--space-3xs) var(--space-2xs);
+  padding-block: var(--space-3xs);
+  padding-inline: 0 var(--space-2xs);
+  scroll-padding-inline-start: calc(var(--gutter-start) + var(--digits) * 1ch + var(--gutter-end));
   border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-sm);
   background-color: var(--bg);
@@ -67,9 +81,15 @@
 }
 
 /* The number: the row's counter, quiet, at the gutter's inline end, beside its line's first row.
-   It is generated content, so no selection or copy reaches it. */
+   It is generated content, so no selection or copy reaches it. Sticky at the frame's inline start
+   and on its background, it stays in place over the lines as they scroll sideways; positioned, it
+   paints above them. */
 .number {
   grid-column: 1;
+  position: sticky;
+  inset-inline-start: 0;
+  padding-inline: var(--gutter-start) var(--gutter-end);
+  background-color: inherit;
   counter-increment: line;
   color: var(--fg-3);
   text-align: end;
@@ -79,14 +99,19 @@
   content: counter(line);
 }
 
-/* The line's copy and the text: the same box, font, and wrapping, so they break alike. */
+/* The line's copy and the text: the same box, font, tab size, and wrapping, so they lay out
+   alike. Unwrapped, a line is one row however long, overflowing the column into the frame's
+   scroll. */
 .ghost,
 .text {
   grid-column: 2;
   min-inline-size: 0;
+  white-space: pre;
+  tab-size: var(--tab-size);
+}
+.wrap > :is(.ghost, .text) {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  tab-size: 4;
 }
 
 /* An empty line is still a row one line tall. */

@@ -6,13 +6,16 @@
 // the components page runs nothing yet.
 //
 // The code editor's states (sl-code-editor): Go and JSON highlighted, another language plain,
-// read-only, long lines wrapped beside the gutter, empty and named by its caption through
-// aria-labelledby, two editors whose highlights share the document's registry, an editable editor
-// for its keyboard model, and an editor whose input and change events a readout beside it counts,
-// a specimen aid that is no part of the editor. The browser tier reads each by its figure's
+// read-only, long lines scrolled sideways (the default) and wrapped, a tab two columns wide, empty
+// and named by its caption through aria-labelledby, two editors whose highlights share the
+// document's registry, an editable editor for its keyboard model, and an editor whose input and
+// change events a readout beside it counts, a specimen aid that is no part of the editor. The page
+// owns each editor's settings: it creates an EditorSettings for each state that sets one, fresh
+// for each list, and is the only one to write it. The browser tier reads each by its figure's
 // data-state.
 
 import "../components/code-editor.ts";
+import { EditorSettings } from "../components/editor-settings.ts";
 
 /** A state: its key, its label, and a function that builds it, fresh for each list, given an id
  * unique to the list, for an element that names another. */
@@ -101,7 +104,7 @@ SELECT name, count(*) FROM runs WHERE status = 'done' GROUP BY name;
 
 const long = `package main
 
-// A comment long enough to wrap at any width the page gives the editor, so its continuation rows sit under the gutter's blank space.
+// A comment longer than any width the page gives the editor, so it scrolls sideways, or wraps, its continuation rows under the gutter's blank space.
 func main() {
 	println("a string literal with no space to break at: https://example.com/a/very/long/path/that/keeps/going/and/going/until/it/wraps")
 	println("short")
@@ -165,8 +168,33 @@ specimens(
     },
     {
       key: "long",
-      label: "Long lines, wrapped, each number beside its line's first row",
+      label:
+        "Long lines, scrolled sideways (the default): one row a line, the gutter held in place",
       build: () => [editor({ language: "go", label: "long.go", value: long })],
+    },
+    {
+      key: "wrap",
+      label: "Long lines, wrapped: each number beside its line's first row",
+      build: () => [
+        editor({
+          language: "go",
+          label: "wrapped.go",
+          value: long,
+          settings: new EditorSettings({ wrap: true }),
+        }),
+      ],
+    },
+    {
+      key: "tab-size",
+      label: "Tab size 2: each tab shows two columns wide, still a tab in the text",
+      build: () => [
+        editor({
+          language: "go",
+          label: "classify.go",
+          value: indented,
+          settings: new EditorSettings({ tabSize: 2 }),
+        }),
+      ],
     },
     {
       key: "empty",

@@ -62,18 +62,24 @@ keyboard.
   grammars, loads lazily as the first editor upgrades; until then, and for any other language,
   the text is plain. After an edit it re-highlights once typing pauses. Every editor on a page
   paints into the document's one set of highlights, and one removed leaves the others painted.
-  Long lines wrap, and each number stays beside its line's first row at every width and profile.
-  The gutter is hidden from assistive technology and holds no text: its numbers are generated
+  Long lines scroll sideways inside the frame by default, one row a line, the gutter held in place
+  beside them, and wrap when its settings say so; either way each number stays beside its line's
+  first row at every width and profile. The gutter is hidden from assistive technology and holds no text: its numbers are generated
   content, outside the editable element. The editor grows with its text; a page that holds it to
   a block size gets a frame that scrolls inside. Its editing keys make each edit through
   `document.execCommand`, a line break as `insertLineBreak` and the rest as `insertText`, so each
-  is one step of the browser's own undo history.
+  is one step of the browser's own undo history. A paste takes the clipboard's plain text through
+  the same path, and a drop is refused.
   - Attributes: `language` (`go` or `json`; any other shows plain; reflected), `label` (the
     textbox's accessible name, "Code" by default), `readonly` (reflected), and `aria-labelledby`
     (ids in the host's tree whose elements name the textbox, taking precedence over `label`).
   - Properties: `value`, the whole text, which reading gives as edited and setting replaces,
     sending no event, and which, set while the editor has focus, is the value `change` is then
-    measured from; and `language`, `label`, and `readonly`, as their attributes.
+    measured from; `settings`, an `EditorSettings` (below) that its owner, the page or the
+    element composing the editor, creates and writes, and the editor renders from, follows as it
+    changes, and never writes; `null`, the default, shows the defaults, long lines scrolling and a
+    tab four columns wide; and `language`, `label`, and `readonly`, as their attributes. The editor
+    has no attribute for wrapping or tab size.
   - Events: `input`, the browser's own, composed out of the shadow root, on every edit, typing,
     each editing key, undo, and redo included; an editing key's edit sends one. `change`, an
     `Event` that bubbles, once focus leaves the text with the value changed since focus came in;
@@ -83,8 +89,9 @@ keyboard.
     - Enter breaks the line, the new line carrying the spaces and tabs before the caret on the
       current one; Shift+Enter breaks it with no indent.
     - Tab inserts a tab at the caret, or, with a selection, indents every line the selection
-      touches; Shift+Tab outdents the caret's line or the selected lines, a tab or up to four
-      spaces from each. The selection keeps the text it held.
+      touches; Shift+Tab outdents the caret's line or the selected lines, a tab or up to the tab
+      size's count of spaces from each. Indenting always inserts a tab character, as gofmt writes
+      Go; the tab size sets only how wide it shows. The selection keeps the text it held.
     - The browser's own undo, Ctrl or Cmd+Z or its Edit menu, reverts each editing key's edit in
       one step, and its redo restores it.
     - Escape releases Tab: the next Tab or Shift+Tab moves focus out of the editor, as anywhere
@@ -95,9 +102,22 @@ keyboard.
     - While the editor has focus, a hint below it, hidden from assistive technology, shows the
       model, "Tab indents · Esc then Tab moves focus", or, released, "Tab moves focus"; the
       textbox's description says the same to assistive technology.
-    - While `readonly` it takes no edit, Enter and Tab included, and is exposed as read-only, and
-      keeps focus, selection, copy, and highlighting; Tab moves focus, no hint shows, and Ctrl or
-      Cmd+A selects its text alone.
+    - Paste, Ctrl or Cmd+V or the browser's menu, inserts the clipboard's plain text in place of
+      the selection, its line breaks as "\n", as one undo step and one `input`.
+    - In scroll mode, an editable editor keeps its caret in view as it moves or types, and a
+      read-only one scrolls with the arrow keys.
+    - While `readonly` it takes no edit, Enter, Tab, and paste included, and is exposed as
+      read-only, and keeps focus, selection, copy, and highlighting; Tab moves focus, no hint
+      shows, and Ctrl or Cmd+A selects its text alone. A character key fires none of the page's
+      single-key shortcuts, as in a field, and Escape is the page's.
+- `./editor-settings.js`: `EditorSettings`, the code editor's settings, a model with no document
+  or element, an `EventTarget` its owner writes: `wrap` (a boolean, `false` by default: long lines
+  scroll sideways) and `tabSize` (a whole number from 1 to 8, 4 by default, how many columns a tab
+  shows). `new EditorSettings({ wrap, tabSize })` starts from the defaults. A value it can't hold
+  is refused, a `TypeError` or `RangeError` naming the reason, and changes nothing;
+  `tabSizeProblem(value)` and `wrapProblem(value)` give that reason, or `null`, without setting
+  anything, and `defaults` holds the defaults, frozen. Each set that changes a value sends one
+  `change` `Event`; a set to the value held sends none. The unit tier tests it under node.
 
 ## Keeping pace with the SDK
 
