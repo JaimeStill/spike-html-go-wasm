@@ -1,10 +1,10 @@
 // The components page's script (components.html): it defines the components, by importing their
 // modules, and builds each component's states into its section, every state once in the states
 // list, again in the 20rem list, and the focus state after its section's focus-start mark; the
-// screenshot command focuses the page's first, the code editor's, before pressing Tab to reach it,
-// and the browser tier each. Each state is a figure, its label the
-// caption, built fresh for each list, so no element is shared between them. Nothing here loads Go:
-// the components page runs nothing yet.
+// screenshot command captures each section alone, the others hidden, and focuses its mark, then
+// the page's first, before pressing Tab to reach it, and the browser tier each. Each state is a
+// figure, its label the caption, built fresh for each list, so no element is shared between them.
+// Nothing here loads Go: the components page runs nothing yet.
 //
 // The code editor's states (sl-code-editor): Go and JSON highlighted, another language plain,
 // read-only, long lines scrolled sideways (the default) and wrapped, a tab two columns wide, empty
