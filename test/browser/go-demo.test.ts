@@ -18,9 +18,11 @@
 // demo's accessibility tree: a region named by its label, the toolbar, the tabs and the panel on
 // a program demo, the editor, the log, and the timings, its fences no part of it. The fences: the
 // SDK's Shiki markup read as plain text and run, and without script, every fence shows as the
-// page's code. At 20rem each demo fits its column. The rest of the runtime's proofs, through the
-// same demos, are go-runs.test.ts's; the page's watch and helpers are go-demos.ts's. Every wait is
-// bounded. Nothing here names the site: its base is package.json's name.
+// page's code. At 20rem each demo fits its column, and wide, at 1280px and 1120px and either side
+// of the 44rem at which the console and timings share a row, every part of every demo lies within
+// it, run or not. The rest of the runtime's proofs, through the same demos, are go-runs.test.ts's;
+// the page's watch and helpers are go-demos.ts's. Every wait is bounded. Nothing here names the
+// site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -62,8 +64,14 @@ after(async () => {
 /** Opens the components page, watched, its helpers installed (go-demos.ts). */
 const open = () => openPage(browser, server.origin);
 
+/** CDP's modifier bits. */
+const ALT = 1;
+const CTRL = 2;
+const META = 4;
+const SHIFT = 8;
+
 /** Enter pressed and released on the focused element, carrying its text as a keyboard's does,
- * with the modifiers (2 is Ctrl). */
+ * with the modifiers, CDP's bits. */
 async function enter(page: Page, modifiers = 0) {
   for (const type of ["keyDown", "keyUp"]) {
     await page.cdp("Input.dispatchKeyEvent", {
@@ -77,7 +85,7 @@ async function enter(page: Page, modifiers = 0) {
   }
 }
 
-const ctrlEnter = (page: Page) => enter(page, 2);
+const ctrlEnter = (page: Page) => enter(page, CTRL);
 
 /** A node of the accessibility tree, as CDP gives it. */
 interface AXNode {
@@ -238,6 +246,57 @@ describe("Ctrl+Enter", () => {
       await page.evaluate(`window.demos.button(${target}, "reset").focus()`);
       await ctrlEnter(page);
       await says(page, target, "Finished hello, exit code 0");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("Cmd+Enter, Meta, runs it as Ctrl+Enter does", async () => {
+    const { page } = await open();
+    try {
+      const target = demo("handler");
+      await page.evaluate(`window.demos.editor(${target}).focus()`);
+      await enter(page, META);
+      await says(page, target, "Finished format");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("Alt or Shift with Enter, alone or beside Ctrl or Cmd, runs nothing", async () => {
+    const watched = await open();
+    const { page } = watched;
+    try {
+      const target = demo("handler");
+      for (const modifiers of [ALT, SHIFT, CTRL | ALT, CTRL | SHIFT, META | ALT, META | SHIFT]) {
+        await page.evaluate(`window.demos.editor(${target}).focus()`);
+        await enter(page, modifiers);
+      }
+      // Give a run every chance to begin: a Run says so in its status at once.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      assert.equal(await page.evaluate(`window.demos.status(${target})`), "");
+      assert.deepEqual(goRequests(watched), []);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the shortcut is the demo's own: Help lists no Run among the page's shortcuts, after a run too", async () => {
+    const { page } = await open();
+    try {
+      await pressControl(page, demo("program"), "run");
+      await says(page, demo("program"), "Finished hello, exit code 0");
+      await page.evaluate(`document.querySelector('header [aria-label="Help"]').click()`);
+      const rows = `document.querySelector("#help sl-shortcuts").shadowRoot?.querySelectorAll("tbody tr") ?? []`;
+      await until(page, `(${rows}).length > 0`, 5_000);
+      const actions: string[] = await page.evaluate(
+        `[...${rows}].map((row) => row.cells[1].textContent.trim())`,
+      );
+      assert.ok(actions.includes("Help"), JSON.stringify(actions));
+      assert.deepEqual(
+        actions.filter((action) => /run/i.test(action)),
+        [],
+      );
     } finally {
       await page.close();
     }
@@ -644,6 +703,74 @@ describe("layout", () => {
           `document.querySelectorAll("#go-demo .states")[1].getBoundingClientRect().width <= 320`,
         ),
       );
+    } finally {
+      await page.close();
+    }
+  });
+
+  /** Every part of every demo on the page, down through the parts' own shadow roots, that lies
+   * outside its demo's box, as "label: tag"; and how many demos lay their console and timings
+   * side by side, and how many stack them. */
+  const WITHIN = `(() => {
+    const out = [];
+    let side = 0;
+    let stacked = 0;
+    for (const demo of document.querySelectorAll("#go-demo sl-go-demo")) {
+      const box = demo.getBoundingClientRect();
+      if (box.width === 0) continue;
+      const walk = (root) => {
+        for (const part of root.querySelectorAll("*")) {
+          const at = part.getBoundingClientRect();
+          if (at.width > 0 && (at.left < box.left - 0.5 || at.right > box.right + 0.5)) {
+            out.push(demo.label + ": " + part.localName);
+          }
+          if (part.shadowRoot) walk(part.shadowRoot);
+        }
+      };
+      walk(demo.shadowRoot);
+      const log = demo.shadowRoot.querySelector("sl-console");
+      const timings = demo.shadowRoot.querySelector("sl-timings");
+      if (log && timings) {
+        if (timings.getBoundingClientRect().top < log.getBoundingClientRect().bottom) side++;
+        else stacked++;
+      }
+    }
+    return { out, side, stacked };
+  })()`;
+
+  test("wide and at the side-by-side threshold, every part of every demo lies within it, run or not", async () => {
+    const { page } = await open();
+    try {
+      // A handler's run and a program's fill a console and a timings table.
+      await pressControl(page, demo("handler"), "run");
+      await says(page, demo("handler"), "Finished format");
+      await pressControl(page, demo("program"), "run");
+      await says(page, demo("program"), "Finished hello, exit code 0");
+      const resize = async (width: number) => {
+        await page.cdp("Emulation.setDeviceMetricsOverride", {
+          width,
+          height: 900,
+          deviceScaleFactor: 1,
+          mobile: false,
+        });
+        await settle(page);
+      };
+      // The viewport at which the wide demos are exactly 44rem, the go demo's threshold, from
+      // one below the page's measure, where a demo's width follows the viewport's.
+      await resize(700);
+      const { demoWidth, rem } = await page.evaluate(`({
+        demoWidth: ${demo("handler")}.getBoundingClientRect().width,
+        rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
+      })`);
+      const threshold = Math.ceil(700 + 44 * rem - demoWidth);
+      for (const width of [1280, 1120, threshold + 8, threshold, threshold - 8]) {
+        await resize(width);
+        const { out, side, stacked } = await page.evaluate(WITHIN);
+        assert.deepEqual(out, [], `${width}px`);
+        if (width >= threshold) assert.ok(side > 0, `${width}px: some demo side by side`);
+        else assert.equal(side, 0, `${width}px: every demo stacked`);
+        assert.ok(stacked > 0, `${width}px: the 20rem column's demos stacked`);
+      }
     } finally {
       await page.close();
     }
