@@ -10,8 +10,9 @@
 # Adapted from spike-html-hosting-components (0f64672): scripts/preflight.sh, with eslint and tsc.
 # Adapted from spike-html-hosting-architecture (8b97a7c): scripts/preflight.sh, its vite and its
 # browser check.
-# From spike-html-hosting-sdk (v0.6.1): template/scripts/preflight.sh, which runs before
-# node_modules exists, so the site holds its own copy rather than the package's.
+# Adapted from spike-html-hosting-sdk (v0.6.1): template/scripts/preflight.sh, which runs before
+# node_modules exists, so the site holds its own copy rather than the package's; with Go,
+# golangci-lint, and go.mod's requirements in the module cache.
 set -euo pipefail
 
 fail() {

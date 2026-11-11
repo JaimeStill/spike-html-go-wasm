@@ -1,5 +1,5 @@
 # golangci-lint v2 configuration, run by mise run lint:go under GOOS=js GOARCH=wasm.
-# From go-core (f1686fb): .golangci.yml.
+# Adapted from go-core (f1686fb): .golangci.yml, its first line naming this repository's run.
 version: "2"
 
 linters:

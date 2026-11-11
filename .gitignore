@@ -2,7 +2,7 @@
 # itself.
 # Adapted from spike-html-hosting-architecture (27d70e1): .gitignore, without marathon's files.
 # Adapted from spike-html-hosting-sdk (v0.6.1): template/gitignore, renamed .gitignore, with
-# marathon's working files.
+# the Go build's .wasm and marathon's working files.
 node_modules
 dist/
 # The Go build's output, written to dist/go/; never committed (mise run lint:go).
