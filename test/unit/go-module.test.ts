@@ -22,7 +22,8 @@ function source(name: string, imports: string[], extra = ""): string {
   return `package ${name}\n\nimport (\n\t_ "fmt"\n${lines})\n${main}${extra}`;
 }
 
-/** The fixture module: two scenarios, a and b, and the bridge with a subpackage. Each forbidden
+/** The fixture module: two scenarios, a and b, the bridge with a subpackage, and util, a second
+ * root-level package beside the bridge. Each forbidden
  * import is planted beside the allowed ones; a cycle and a main package imported among them,
  * which Go itself refuses, are named all the same. A file under another GOOS holds a forbidden
  * import the GOOS=js listing never reads, and a test file one it does. */
@@ -37,18 +38,21 @@ const tree: Record<string, string> = {
   "internal/b/view/view.go": source("view", []),
   "internal/b/b_linux.go": source("b", ["cmd/b"]),
   "bridge/bridge.go": source("bridge", ["internal/a"]),
-  "bridge/js/js.go": source("js", ["bridge"]),
+  "bridge/js/js.go": source("js", ["bridge", "cmd/b"]),
+  "util/util.go": source("util", ["bridge", "internal/a"]),
   "bridge/js/js_test.go": source("js_test", ["bridge/js"]),
 };
 
 /** The problems the tree plants, each once. */
 const planted = [
-  "bridge imports internal/a: bridge imports no internal/",
+  "bridge imports internal/a: a root-level package imports no internal/",
+  "bridge/js imports cmd/b: a root-level package imports no cmd/",
   "cmd/a imports bridge: cmd/a imports only its own internal/a",
   "cmd/a imports internal/b: cmd/a imports only its own internal/a",
   "internal/a imports cmd/a: an internal/<s> imports no cmd/",
   "internal/a imports internal/b: internal/a imports no other scenario's internal/",
   "internal/a imports internal/b/view: internal/a imports no other scenario's internal/",
+  "util imports internal/a: a root-level package imports no internal/",
 ];
 
 /** Writes `files` under a new scratch directory, which `after` removes; returns it. */

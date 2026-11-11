@@ -5,8 +5,9 @@
 //
 // The layers, by a package's path within the module: cmd/<s>, a scenario's entrypoint, imports
 // of the module's packages only its own composition root, internal/<s> and below; internal/<s>
-// imports no other scenario's internal/<t> and no cmd/; bridge/ and below, the infrastructure,
-// imports no internal/ and no cmd/. The standard library and other modules are never ruled here.
+// imports no other scenario's internal/<t> and no cmd/; every root-level package, any outside
+// cmd/ and internal/ (bridge/ and below, the infrastructure, among them), imports no internal/
+// and no cmd/. The standard library and other modules are never ruled here.
 // A package's test imports count with its imports: a test is code in the package's layer.
 
 import { spawnSync } from "node:child_process";
@@ -82,8 +83,9 @@ function forbidden(from: string, to: string): string | undefined {
     }
     return undefined;
   }
-  if (layer === "bridge" && (target === "internal" || target === "cmd")) {
-    return `bridge imports no ${target}/`;
+  // A root-level package: the module's root, bridge/, or any other outside cmd/ and internal/.
+  if (target === "internal" || target === "cmd") {
+    return `a root-level package imports no ${target}/`;
   }
   return undefined;
 }
