@@ -1,15 +1,17 @@
 // The site's build, as Pages serves it: dist/ under the base, by the SDK's served(), Vite's
 // preview, loaded in the pinned chrome-headless-shell. Each of the SDK's shell checks is a test on
-// a fresh page of the hand index, whose header has no site nav, which the checks allow, and which
-// a test of its own holds: no sl-site-nav in the header, and no site-nav.js loaded, which defines
-// it; the build bundles the module, so the registry rather than a request names it. The crawl,
-// from the index, checks every copied page, none here, and loads each hand page it reaches: it
-// reaches exactly the index. The index holds no highlighted code yet, so the SDK's palette check
+// a fresh page of each hand page, the index and the runtime page, whose headers have no site nav,
+// which the checks allow, and which a test of its own holds on each: no sl-site-nav in the header,
+// and no site-nav.js loaded, which defines it; the build bundles the module, so the registry
+// rather than a request names it. The crawl, from the index, checks every copied page, none here,
+// and loads each hand page it reaches: it reaches exactly the index and, by the index's link, the
+// runtime page. Neither page holds highlighted code yet, so the SDK's palette check
 // has nothing to run on. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.1): template/test/browser/site.test.ts, its crawl
-// reaching the hand index alone, without the palette check.
+// Adapted from spike-html-hosting-sdk (v0.6.2): template/test/browser/site.test.ts, its checks
+// run on each hand page, as the SDK's README gives a root-style site, its crawl reaching the hand
+// pages alone, without the palette check.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -35,39 +37,45 @@ after(async () => {
   await server?.stop();
 });
 
+/** The hand pages, each by its path under the base. */
+const hand = ["", "runtime.html"];
+
 describe("the site under its base", () => {
-  for (const [name, check] of Object.entries(shell)) {
-    test(name, async () => {
-      const page = await browser.open("about:blank");
+  for (const path of hand) {
+    const where = path || "the index";
+    for (const [name, check] of Object.entries(shell)) {
+      test(`${name} on ${where}`, async () => {
+        const page = await browser.open("about:blank");
+        try {
+          await check(page, server.origin, `${server.origin}${path}`);
+        } finally {
+          await page.close();
+        }
+      });
+    }
+
+    test(`${where}'s header holds no site nav, and the page loads no site-nav.js`, async () => {
+      const page = await browser.open(`${server.origin}${path}`);
       try {
-        await check(page, server.origin);
+        const nav: { inHeader: number; defined: boolean } = await page.evaluate(`({
+          inHeader: document.querySelectorAll("body > header sl-site-nav").length,
+          defined: customElements.get("sl-site-nav") !== undefined,
+        })`);
+        assert.deepEqual(nav, { inHeader: 0, defined: false });
       } finally {
         await page.close();
       }
     });
   }
 
-  test("the index's header holds no site nav, and the page loads no site-nav.js", async () => {
-    const page = await browser.open(server.origin);
-    try {
-      const nav: { inHeader: number; defined: boolean } = await page.evaluate(`({
-        inHeader: document.querySelectorAll("body > header sl-site-nav").length,
-        defined: customElements.get("sl-site-nav") !== undefined,
-      })`);
-      assert.deepEqual(nav, { inHeader: 0, defined: false });
-    } finally {
-      await page.close();
-    }
-  });
-
-  test("the crawl reaches the hand index, and nothing else", async (t) => {
+  test("the crawl reaches the hand pages, and nothing else", async (t) => {
     const page = await browser.open("about:blank");
     try {
       const crawled = await crawl(page, server.origin, root);
       t.diagnostic(`${crawled.pages} pages, ${crawled.links} in-site links`);
       assert.deepEqual(
         { pages: crawled.pages, unreachable: crawled.unreachable, hand: crawled.hand },
-        { pages: 1, unreachable: [], hand: [""] },
+        { pages: hand.length, unreachable: [], hand },
       );
     } finally {
       await page.close();

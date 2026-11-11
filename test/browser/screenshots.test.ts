@@ -5,7 +5,7 @@
 // that never wrote.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
-// From spike-html-hosting-sdk (v0.6.1): template/test/browser/screenshots.test.ts.
+// From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
 
 import { join } from "node:path";
 import { describe, test } from "node:test";

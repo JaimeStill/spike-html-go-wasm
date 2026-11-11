@@ -4,7 +4,7 @@
 // tree recorded without its copy.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/unit/content.test.ts, its check the
 // SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.1): template/test/unit/content.test.ts, its record
+// Adapted from spike-html-hosting-sdk (v0.6.2): template/test/unit/content.test.ts, its record
 // one with no tree.
 
 import assert from "node:assert/strict";
