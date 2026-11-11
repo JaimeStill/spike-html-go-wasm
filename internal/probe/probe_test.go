@@ -7,8 +7,11 @@ package probe_test
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"io/fs"
+	"maps"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -91,5 +94,15 @@ func TestFilesRejectsWithoutATempDir(t *testing.T) {
 	}
 	if stdout.Len() != 0 {
 		t.Fatalf("stdout = %q, want nothing", stdout.String())
+	}
+}
+
+// spin and crash never answer, so no test calls them: the browser tier runs them through the
+// runtime, Stop ending spin and the Go runtime's exit ending crash. Here, only that they are
+// served.
+func TestHandlersNamesEach(t *testing.T) {
+	got := slices.Sorted(maps.Keys(probe.Handlers(io.Discard)))
+	if want := []string{"crash", "files", "format", "spin"}; !slices.Equal(got, want) {
+		t.Fatalf("handlers = %q, want %q", got, want)
 	}
 }

@@ -4,6 +4,11 @@
 // starts on its first load, so a page that never runs Go requests no worker script and no .wasm.
 // A page holds one runner, and the runner never holds more than one worker.
 //
+// The worker answers each load with the compiled WebAssembly.Module, and the runner keeps it. Stop
+// is the one way to end Go that never yields (GOMAXPROCS is 1 under js, and nothing preempts a
+// busy loop): it terminates the worker, starts a fresh one, and posts it the kept module, so the
+// next run instantiates at once, with no fetch and no compile.
+//
 // A scenario is a Go entrypoint the build writes to <base>go/<name>.wasm, the base the site's,
 // which Vite gives as import.meta.env.BASE_URL. Loading another scenario replaces the one before
 // in place, in the same worker; loading the one held is a no-op.
@@ -31,6 +36,8 @@ export class Runner {
   #listeners = new Set<Listener>();
   #lastId = 0;
   #scenario: string | undefined;
+  /** The compiled module of the scenario loaded, as the worker answered its load. */
+  #held: { scenario: string; url: string; module: WebAssembly.Module } | undefined;
   /** The directory holding the scenarios' modules, absolute, so the worker resolves nothing. */
   readonly #modules: URL;
 
@@ -39,7 +46,8 @@ export class Runner {
     this.#modules = new URL(modules, location.href);
   }
 
-  /** The scenario loaded last, or undefined before the first load and after a stop. */
+  /** The scenario loaded last, or undefined before the first load and after a failed one, or a
+   * stop during one. */
   get scenario(): string | undefined {
     return this.#scenario;
   }
@@ -57,8 +65,12 @@ export class Runner {
     if (scenario === this.#scenario) return;
     const url = new URL(`${encodeURIComponent(scenario)}.wasm`, this.#modules).href;
     this.#scenario = scenario;
+    this.#held = undefined;
     try {
-      await this.#send({ op: "load", scenario, url });
+      const module = await this.#send({ op: "load", scenario, url });
+      if (module instanceof WebAssembly.Module && this.#scenario === scenario) {
+        this.#held = { scenario, url, module };
+      }
     } catch (error) {
       if (this.#scenario === scenario) this.#scenario = undefined;
       throw error;
@@ -76,17 +88,33 @@ export class Runner {
     return this.#send({ op: "run", handler, input });
   }
 
-  /** Ends whatever runs by terminating the worker: every pending load and run rejects, and the
-   * next load starts a fresh worker and fetches its module again. Stopping while nothing runs
-   * leaves the runner ready for a load. */
+  /** Ends whatever runs by terminating the worker: every pending load and run rejects with
+   * "stopped", and the instance, its files, and its handlers are gone. When a scenario is loaded,
+   * a fresh worker starts at once with the kept module, so the scenario stays loaded and the next
+   * run instantiates afresh, with no fetch and no compile; stopping during a load leaves none
+   * loaded, and the next load fetches. Stopping while nothing runs rejects nothing and leaves the
+   * runner ready with the same scenario; an idle handler instance goes with its worker. */
   async stop(): Promise<void> {
     const worker = this.#worker;
     if (!worker) return;
+    // The old worker goes first, so the page never has two.
     worker.terminate();
     this.#worker = undefined;
-    this.#scenario = undefined;
     for (const { reject } of this.#pending.values()) reject(new Error("stopped"));
     this.#pending.clear();
+    const held = this.#held;
+    this.#scenario = held?.scenario;
+    if (!held) return;
+    const { scenario, url, module } = held;
+    const fresh = this.#start();
+    // The adopt is the fresh worker's first request, so every later one follows it. Should it
+    // fail, the worker holds nothing, and the next load fetches afresh; a later Stop's rejection
+    // of it changes nothing, since that Stop has started a worker of its own.
+    this.#send({ op: "adopt", scenario, url, module }).catch(() => {
+      if (this.#worker === fresh && this.#held === held) {
+        this.#held = this.#scenario = undefined;
+      }
+    });
   }
 
   #send(body: Body): Promise<unknown> {

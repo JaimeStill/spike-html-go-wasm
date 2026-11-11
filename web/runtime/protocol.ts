@@ -36,10 +36,14 @@ export interface TimingEvent {
 export type RunnerEvent = OutputEvent | ExitEvent | TimingEvent;
 
 /** The runner's requests, each answered by one Settled with its id. A load names the module's
- * absolute URL, which the runner resolves under the site's base. A run with no handler runs the
- * program's main; with one, it calls that handler with input. */
+ * absolute URL, which the runner resolves under the site's base, and answers the compiled
+ * WebAssembly.Module when it fetched and compiled one, undefined when the worker held it already.
+ * An adopt hands a fresh worker a module compiled before, which it holds as a load's, with no
+ * fetch and no compile: the runner's Stop sends it. A run with no handler runs the program's main;
+ * with one, it calls that handler with input. */
 export type Request =
   | { id: number; op: "load"; scenario: string; url: string }
+  | { id: number; op: "adopt"; scenario: string; url: string; module: WebAssembly.Module }
   | { id: number; op: "run"; handler?: string; input: string };
 
 /** A request's answer: its value, or the message of the error it failed with. */

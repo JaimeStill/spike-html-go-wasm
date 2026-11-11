@@ -14,7 +14,8 @@ set -euo pipefail
 
 export GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off GOTOOLCHAIN=local
 
-# The module's own package directories, never node_modules/, whose packages may carry Go files.
+# The module's own package directories, never node_modules/, whose packages may carry Go files,
+# and never dist/, which go.mod's ignore directive keeps out of ./... while Vite empties it.
 unformatted=$(go list -f '{{.Dir}}' ./... | xargs gofmt -l)
 if [[ -n "$unformatted" ]]; then
   printf 'gofmt: unformatted files:\n%s\n' "$unformatted" >&2

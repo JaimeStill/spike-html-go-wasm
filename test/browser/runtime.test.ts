@@ -3,13 +3,16 @@
 // application/wasm; neither page requests Go on load; and on the runtime page, its Run buttons
 // drive the runner, whose events the page writes out (web/pages/runtime.ts): hello's line and
 // exit, format's answer, its line, and its parse error, files' steps, each run's timings by phase,
-// a held module reused without a fetch, and scenarios switched in place in one worker.
+// a held module reused without a fetch, and scenarios switched in place in one worker. Then Stop:
+// it ends spin's busy loop, and after it, or after crash's panic ends the instance, the next call
+// answers from the module the runner kept, with no new .wasm request, and the page never has more
+// than one live worker.
 //
 // The worker fetches the modules itself, and the page's own Network domain never sees a worker's
 // requests, so each page auto-attaches to its workers through the page's session, in the
 // protocol's non-flat mode, whose messages travel inside Target events on that session: each
-// worker attached is counted, waits for the debugger until its Network domain is on, and reports
-// every request it sends. Nothing here names the site: its base is package.json's name.
+// worker attached is counted, live until it detaches, waits for the debugger until its Network
+// domain is on, and reports every request it sends. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -34,21 +37,23 @@ after(async () => {
   await server?.stop();
 });
 
-/** A page under watch: every request it and its workers send, by URL, and each worker it
- * started, by its script's URL. */
+/** A page under watch: every request it and its workers send, by URL, each worker it started,
+ * by its script's URL, and the workers still live, by their sessions. */
 interface Watched {
   page: Page;
   requests: string[];
   workers: string[];
+  live: Set<string>;
 }
 
 /** Opens path under the base with its requests and workers watched from before it loads. */
 async function watch(path: string): Promise<Watched> {
   const page = await browser.open("about:blank");
-  const watched: Watched = { page, requests: [], workers: [] };
+  const watched: Watched = { page, requests: [], workers: [], live: new Set() };
   let lastId = 0;
   page.on("Target.attachedToTarget", ({ sessionId, targetInfo }) => {
     watched.workers.push(targetInfo.url);
+    watched.live.add(sessionId);
     const send = (method: string) =>
       page.cdp("Target.sendMessageToTarget", {
         sessionId,
@@ -57,6 +62,8 @@ async function watch(path: string): Promise<Watched> {
     // The worker waits until its Network domain is on, so its first fetch is seen.
     void send("Network.enable").then(() => send("Runtime.runIfWaitingForDebugger"));
   });
+  // A terminated worker detaches.
+  page.on("Target.detachedFromTarget", ({ sessionId }) => watched.live.delete(sessionId));
   page.on("Target.receivedMessageFromTarget", ({ message }) => {
     const { method, params } = JSON.parse(message);
     if (method === "Network.requestWillBeSent") watched.requests.push(params.request.url);
@@ -86,22 +93,56 @@ interface Shown {
   phases: string[];
 }
 
+/** The .wasm modules requested, by path under the base. */
+const wasmRequests = (watched: Watched) =>
+  goRequests(watched).filter((path) => path.endsWith(".wasm"));
+
 /** Clicks the Run button for scenario and handler, a program's when handler is undefined, with
- * input in the page's input when given, and answers what the page shows once the run ends. */
-async function run(
+ * input in the page's input when given, and answers at once; the click sets the status busy
+ * before it returns. */
+async function start(
   { page }: Watched,
   scenario: string,
   handler?: string,
   input?: string,
-): Promise<Shown> {
+): Promise<void> {
   const selector = handler
     ? `button[data-scenario="${scenario}"][data-handler="${handler}"]`
     : `button[data-scenario="${scenario}"]:not([data-handler])`;
-  // The click sets the status busy before it returns, so the wait sees this run's end.
   await page.evaluate(`(() => {
     ${input === undefined ? "" : `document.querySelector("#input").value = ${JSON.stringify(input)};`}
     document.querySelector(${JSON.stringify(selector)}).click();
   })()`);
+}
+
+/** Clicks the page's Stop. The runner terminates its worker and starts the fresh one before the
+ * click returns. */
+async function stop({ page }: Watched): Promise<void> {
+  await page.evaluate(`document.querySelector("#stop").click()`);
+}
+
+/** Waits, in node, until check holds, failing naming what after timeout ms. */
+async function settles(check: () => boolean, what: string, timeout = 10_000): Promise<void> {
+  const deadline = Date.now() + timeout;
+  while (!check()) {
+    if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+}
+
+/** Runs what start runs, and answers what the page shows once the run ends. */
+async function run(
+  watched: Watched,
+  scenario: string,
+  handler?: string,
+  input?: string,
+): Promise<Shown> {
+  await start(watched, scenario, handler, input);
+  return shown(watched);
+}
+
+/** Waits for the run started last to end, and answers what the page shows. */
+async function shown({ page }: Watched): Promise<Shown> {
   await until(page, `document.querySelector("#status").dataset.state === "idle"`);
   return page.evaluate(`({
     output: [...document.querySelectorAll("#output > span")].map((span) => ({
@@ -299,6 +340,104 @@ describe("the runtime page", () => {
         "go/hello.wasm",
         "go/probe.wasm",
       ]);
+      assert.equal(watched.workers.length, 1, `one worker: ${watched.workers}`);
+    } finally {
+      await watched.page.close();
+    }
+  });
+});
+
+describe("Stop", () => {
+  test("ends spin's busy loop, and the next format answers from the kept module, no fetch", async () => {
+    const watched = await watch("runtime.html");
+    try {
+      await start(watched, "probe", "spin");
+      await until(
+        watched.page,
+        `document.querySelector("#output").textContent === "spin: looping until Stop\\n"`,
+      );
+      // The loop holds the worker: the call stays pending, however long the page waits.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      assert.equal(
+        await watched.page.evaluate(`document.querySelector("#status").dataset.state`),
+        "busy",
+      );
+      await stop(watched);
+      const spun = await shown(watched);
+      assert.deepEqual(spun.result, { state: "rejected", text: "stopped" });
+      // spin's call never answered, so it posted no call timing.
+      assert.deepEqual(spun.phases, ["fetch", "compile", "instantiate", "start"]);
+      assert.equal(spun.exit, undefined);
+
+      const next = await run(watched, "probe", "format", "[3]");
+      assert.deepEqual(next.result, { state: "resolved", text: "[\n  3\n]" });
+      // A fresh instance of the kept module: no fetch, no compile.
+      assert.deepEqual(next.phases, ["instantiate", "start", "call"]);
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm"]);
+      // The fresh worker replaced the first: two started, one live.
+      assert.equal(watched.workers.length, 2, `two workers: ${watched.workers}`);
+      await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
+    } finally {
+      await watched.page.close();
+    }
+  });
+
+  test("while idle leaves the runner ready, the same scenario loaded, with no fetch", async () => {
+    const watched = await watch("runtime.html");
+    try {
+      // Before any Run there is no worker to stop, and Stop starts none.
+      await stop(watched);
+      assert.deepEqual(goRequests(watched), []);
+      assert.deepEqual(watched.workers, []);
+
+      assert.equal((await run(watched, "probe", "format", "[1]")).result.state, "resolved");
+      await stop(watched);
+      const format = await run(watched, "probe", "format", "[2]");
+      assert.deepEqual(format.result, { state: "resolved", text: "[\n  2\n]" });
+      assert.deepEqual(format.phases, ["instantiate", "start", "call"]);
+
+      assert.equal((await run(watched, "hello")).exit, 0);
+      await stop(watched);
+      const hello = await run(watched, "hello");
+      assert.equal(hello.exit, 0);
+      assert.match(hello.output.map(({ text }) => text).join(""), helloLine);
+      assert.deepEqual(hello.phases, ["instantiate", "run"]);
+
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm", "go/hello.wasm"]);
+      assert.equal(watched.workers.length, 3, `three workers: ${watched.workers}`);
+      await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
+    } finally {
+      await watched.page.close();
+    }
+  });
+});
+
+describe("a Go panic outside any handler", () => {
+  test("prints to stderr, exits 2, fails the call, and the next call starts afresh, no fetch", async () => {
+    const watched = await watch("runtime.html");
+    try {
+      const crashed = await run(watched, "probe", "crash", "boom");
+      assert.deepEqual(crashed.result, { state: "rejected", text: "probe exited with code 2" });
+      assert.equal(crashed.exit, 2);
+      // The handler's line through os.Stdout, then the runtime's panic through writeSync to fd 2.
+      assert.deepEqual(crashed.output[0], {
+        stream: "stdout",
+        text: "crash: panicking outside any handler\n",
+      });
+      const rest = crashed.output.slice(1);
+      assert.ok(
+        rest.length > 0 && rest.every(({ stream }) => stream === "stderr"),
+        JSON.stringify(rest),
+      );
+      assert.match(
+        rest.map(({ text }) => text).join(""),
+        /^panic: probe: crash: boom\n\ngoroutine \d+ \[running\]:\n/,
+      );
+
+      const next = await run(watched, "probe", "format", "[4]");
+      assert.deepEqual(next.result, { state: "resolved", text: "[\n  4\n]" });
+      assert.deepEqual(next.phases, ["instantiate", "start", "call"]);
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm"]);
       assert.equal(watched.workers.length, 1, `one worker: ${watched.workers}`);
     } finally {
       await watched.page.close();

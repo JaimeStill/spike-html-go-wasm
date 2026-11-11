@@ -1,5 +1,6 @@
-// The runtime's dedicated worker, which the runner starts on the first run, one per page: it
-// fetches and compiles a scenario's module, holds the compiled WebAssembly.Module, and runs
+// The runtime's dedicated worker, which the runner starts on the first run, one at a time per
+// page, and again after each Stop: it fetches and compiles a scenario's module, holds the compiled
+// WebAssembly.Module, and runs
 // instances of it through wasm_exec.js over the in-memory fs, posting each output, exit, and
 // timing event and each request's answer to the runner (protocol.ts).
 //
@@ -8,8 +9,10 @@
 // one script, so the shim always pairs with the worker that loads it.
 //
 // A load fetches over the HTTP cache (a plain fetch, its default cache mode) and compiles the
-// bytes, each phase timed apart; loading the scenario already held fetches nothing. A load of
-// another scenario drops the instance and replaces the held module in place, in this worker.
+// bytes, each phase timed apart, and answers the compiled module, which the runner keeps; loading
+// the scenario already held fetches nothing. A load of another scenario drops the instance and
+// replaces the held module in place, in this worker. An adopt, the first request a worker started
+// by Stop receives, holds the module the runner kept, fetching and compiling nothing.
 //
 // Two kinds of scenario run on it. A program's main runs to completion: each run instantiates
 // afresh from the held module and answers its exit code. A handler scenario's main serves its
@@ -107,8 +110,10 @@ function drop(reason: string) {
   instance.calls.clear();
 }
 
-async function load(scenario: string, url: string): Promise<void> {
-  if (held?.scenario === scenario && held.url === url) return;
+/** Fetches and compiles the scenario's module and holds it, answering it; answers undefined when
+ * it is the one held. */
+async function load(scenario: string, url: string): Promise<WebAssembly.Module | undefined> {
+  if (held?.scenario === scenario && held.url === url) return undefined;
   drop(`${live?.scenario} was replaced by ${scenario}`);
   held = undefined;
   const bytes = await timed(scenario, "fetch", async () => {
@@ -117,6 +122,14 @@ async function load(scenario: string, url: string): Promise<void> {
     return response.arrayBuffer();
   });
   const module = await timed(scenario, "compile", () => WebAssembly.compile(bytes));
+  held = { scenario, url, module };
+  return module;
+}
+
+/** Holds a module compiled before, in another worker, as a load would have: no fetch, no
+ * compile, so no timing. */
+function adopt(scenario: string, url: string, module: WebAssembly.Module) {
+  drop(`${live?.scenario} was replaced by ${scenario}`);
   held = { scenario, url, module };
 }
 
@@ -213,9 +226,14 @@ async function call(instance: Instance, id: number, handler: string, input: stri
     calls.set(id, (error) => reject(new Error(error)));
   });
   try {
-    const text = await timed(scenario, "call", () =>
-      Promise.race([bridge!.call(handler, input), ended]),
-    );
+    const text = await timed(scenario, "call", () => {
+      // The call can throw rather than reject: when Go exits during it, a panic in a goroutine
+      // it started, wasm_exec.js drops its instance while the call is still on the stack, and its
+      // next step throws a TypeError. By then the exit has failed ended, which goes first in the
+      // race, so the call fails with the exit's reason.
+      const answer = (async () => bridge!.call(handler, input))();
+      return Promise.race([ended, answer]);
+    });
     return JSON.parse(text) as unknown;
   } finally {
     calls.delete(id);
@@ -231,6 +249,9 @@ function handle(request: Request): Promise<unknown> {
   let step: Promise<unknown>;
   if (request.op === "load") {
     step = queue.then(() => load(request.scenario, request.url));
+  } else if (request.op === "adopt") {
+    const { scenario, url, module } = request;
+    step = queue.then(() => adopt(scenario, url, module));
   } else if (request.handler === undefined) {
     step = queue.then(runProgram);
   } else {

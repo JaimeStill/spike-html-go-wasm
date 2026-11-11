@@ -2,7 +2,8 @@
 // Run per scenario or handler. A button's data-scenario names the scenario it loads, and its
 // data-handler the handler it calls, a program's main run when it names none. Loading is lazy: the
 // runner starts its worker and fetches a module only on a Run. Stop terminates the worker, which
-// ends whatever runs, and the next Run starts afresh.
+// ends whatever runs, spin's loop among them, and the runner hands the compiled module to a fresh
+// one, so the next Run instantiates afresh without a fetch.
 //
 // What the page shows, each element's state also on its data attributes: #output, one span per
 // output event, its class and data-stream the stream; #result, the last run's answer, data-state

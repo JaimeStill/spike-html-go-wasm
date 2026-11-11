@@ -24,7 +24,8 @@ and path are in `context/README.md`.
   both layer directions, go.mod's by-tag rule, the currency and live commands' logic, and the
   in-memory fs's error codes; the browser tier runs the SDK's checks on both hand pages and the crawl, and on the
   runtime page runs hello and the probe's handlers through the runner in its worker, in the
-  pinned chrome-headless-shell.
+  pinned chrome-headless-shell: Stop ending the probe's spin and the next call answering with no
+  new fetch, and the probe's crash, a panic outside any handler, printing to stderr and exiting 2.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it, then the Go entrypoints into `dist/go/`. A bare
   `vite build` omits the wasm.

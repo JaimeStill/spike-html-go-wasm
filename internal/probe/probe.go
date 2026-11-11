@@ -23,12 +23,36 @@ func Serve() {
 	bridge.Serve(Handlers(os.Stdout))
 }
 
-// Handlers is the probe's handlers by name, each printing its one line to stdout.
+// Handlers is the probe's handlers by name, each printing its one line to stdout. spin and crash
+// never answer: spin ends only when the runtime stops its instance, and crash ends the instance.
 func Handlers(stdout io.Writer) map[string]bridge.Handler {
 	return map[string]bridge.Handler{
+		"crash":  func(input string) (any, error) { return crash(stdout, input) },
 		"files":  func(input string) (any, error) { return files(stdout, input) },
 		"format": func(input string) (any, error) { return format(stdout, input) },
+		"spin":   func(string) (any, error) { return spin(stdout) },
 	}
+}
+
+// spin prints one line, then loops without yielding and never returns. Under GOOS=js GOMAXPROCS
+// is 1 and nothing preempts a goroutine, so the loop holds the instance's one thread, and with it
+// the worker's event loop: no later call, timer, or message runs, and only terminating the worker
+// ends it (the runtime's Stop).
+func spin(stdout io.Writer) (any, error) {
+	_, _ = fmt.Fprintln(stdout, "spin: looping until Stop")
+	// A counter, not an empty for {}, which staticcheck flags (SA5002); nothing reads it.
+	for n := uint64(0); ; n++ {
+	}
+}
+
+// crash prints one line, then panics in a new goroutine, outside any handler's recover, naming
+// input, and waits there for good. The Go runtime prints the panic to fd 2 through wasm_exec.js's
+// writeSync and exits with code 2, which fails the call still waiting; the instance is gone, and
+// the next call starts another.
+func crash(stdout io.Writer, input string) (any, error) {
+	_, _ = fmt.Fprintln(stdout, "crash: panicking outside any handler")
+	go func() { panic("probe: crash: " + input) }()
+	select {}
 }
 
 // format answers input, JSON text, indented by two spaces, or its parse error; it prints one line

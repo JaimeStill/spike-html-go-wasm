@@ -113,7 +113,7 @@ run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
 
 [tasks."test:browser"]
-description = "Run the browser tier after the build: dist/ under the base by Vite's preview, in the pinned chrome-headless-shell, the SDK's shell checks on each hand page, the index and the runtime page, and the crawl from the index; the Go modules served as application/wasm, no Go requested on load, and the runtime page's runs through the runner in its one worker, hello's output and exit, probe's format and files, their timings, a held module reused, and scenarios switched in place; and the screenshots command, its captures under a scratch TMPDIR removed after unless --keep; reads no network, writes dist/"
+description = "Run the browser tier after the build: dist/ under the base by Vite's preview, in the pinned chrome-headless-shell, the SDK's shell checks on each hand page, the index and the runtime page, and the crawl from the index; the Go modules served as application/wasm, no Go requested on load, and the runtime page's runs through the runner in its one worker, hello's output and exit, probe's format and files, their timings, a held module reused, and scenarios switched in place; Stop ending probe's spin, and while idle, the next run answering from the kept module with no .wasm fetched and one live worker; crash's panic as stderr, its exit 2, and the next call afresh with no fetch; and the screenshots command, its captures under a scratch TMPDIR removed after unless --keep; reads no network, writes dist/"
 depends = ["preflight browser", "build"]
 run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) node --test 'test/browser/*.test.ts'"
 dir = "{{config_root}}"
