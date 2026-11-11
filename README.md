@@ -14,9 +14,12 @@ The spike's question, evidence, and path are in `context/README.md`.
 ## Tasks
 
 - `mise run install`: install the pinned tools and node_modules; reads the network.
-- `mise run check`: ESLint, with the check that no CSS module script is left in the build;
-  Prettier, shellcheck, and actionlint; tsc's type check; the build; the unit tier, `content/`
-  against `content.json`; and the browser tier, the SDK's checks on the build in the pinned
+- `mise run check`: ESLint, with the check that no CSS module script is left in the build and
+  the web tiers' import direction; Prettier, shellcheck, and actionlint; the Go lint under
+  `GOOS=js GOARCH=wasm`, with `wasm_exec.js` held to the pinned Go's and no `.wasm` tracked;
+  tsc's type check; the site and Go builds; the unit tier, `content/` against `content.json`, both
+  layer-direction checks, go.mod's by-tag rule, and the currency and live commands' logic; and the
+  browser tier, the SDK's checks on the build and the Go module run in the pinned
   chrome-headless-shell. It reads no network.
 - `mise run screenshots`: capture the pages, light and dark, at 390px, 1120px, and 1376px.
 - `mise run currency`: every pin behind its latest, the SDK's tag and go.mod's direct

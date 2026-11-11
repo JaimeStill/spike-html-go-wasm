@@ -111,7 +111,7 @@ run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) node --test 'test/
 dir = "{{config_root}}"
 
 [tasks.check]
-description = "Run every check: lint, types, build, test:unit, and test:browser; reads no network, writes dist/ (gitignored) and nothing else outside TMPDIR"
+description = "Run every check: lint, types, build, test:unit, and test:browser; reads no network, writes dist/ (gitignored) and nothing else outside TMPDIR and Go's caches"
 depends = ["lint", "types", "build", "test:unit", "test:browser"]
 
 # Never a dependency of check: a reviewer's look at the site's pages, not a test. The capture is
