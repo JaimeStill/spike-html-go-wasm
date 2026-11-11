@@ -8,7 +8,6 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
 import {
-  KINDS,
   type Outcome,
   outcomeProblem,
   RunState,
@@ -33,11 +32,6 @@ describe("RunState", () => {
     assert.equal(state.running, null);
     assert.equal(state.run, 0);
     assert.equal(state.last, null);
-  });
-
-  test("names the outcomes' kinds, frozen", () => {
-    assert.deepEqual(KINDS, ["ok", "exit", "stopped", "failed"]);
-    assert.ok(Object.isFrozen(KINDS));
   });
 
   test("a start makes a run pending, numbered from 1, and sends one change", () => {

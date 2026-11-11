@@ -640,16 +640,18 @@ describe("following the tail", () => {
           return { top: frame.scrollTop, end: frame.scrollHeight - frame.clientHeight };
         })`);
       // The browser animates a keyboard scroll: it is read once the log has stopped moving, its
-      // position the same over five frames.
+      // position the same over five frames, within 5 s.
       const still = () =>
-        page.evaluate(`new Promise((resolve) => {
+        page.evaluate(`new Promise((resolve, reject) => {
           const frame = window.consoles.frame(window.loose);
+          const deadline = performance.now() + 5000;
           let last = -1;
           let same = 0;
           const check = () => {
             same = frame.scrollTop === last ? same + 1 : 0;
             last = frame.scrollTop;
             if (same >= 5) resolve();
+            else if (performance.now() > deadline) reject(new Error("the log never stopped scrolling"));
             else requestAnimationFrame(check);
           };
           requestAnimationFrame(check);

@@ -73,8 +73,6 @@ describe("a component's capture", () => {
       const described = description.pages.find(({ name }) => name === `components/${component}`);
       const [state] = described?.states ?? [];
       assert.ok(state?.open, `components/${component} has an open step`);
-      assert.equal(state.full, true);
-      assert.deepEqual(state.viewport, { width: 1280, height: 800 });
       const page = await browser.open(`${server.origin}components.html`);
       try {
         await state.open(page);

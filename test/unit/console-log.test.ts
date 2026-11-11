@@ -54,8 +54,7 @@ describe("ConsoleLog's output", () => {
   test("starts empty, keeping 10,000 entries", () => {
     const log = new ConsoleLog();
     assert.deepEqual(log.entries, []);
-    assert.equal(LIMIT, 10_000);
-    assert.equal(log.limit, LIMIT);
+    assert.equal(log.limit, 10_000);
     assert.deepEqual([log.size, log.dropped, log.first, log.next], [0, 0, 0, 0]);
     assert.equal(log.text(), "");
   });

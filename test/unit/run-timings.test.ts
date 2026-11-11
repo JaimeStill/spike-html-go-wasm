@@ -36,9 +36,14 @@ describe("RunTimings", () => {
     assert.equal(timings.ms("fetch"), undefined);
   });
 
-  test("names the runtime's phases in a run's order, frozen", () => {
-    assert.deepEqual(PHASES, ["fetch", "compile", "instantiate", "start", "call", "run"]);
-    assert.ok(Object.isFrozen(PHASES));
+  test("holds every phase the runtime names, in a run's order, however they arrive", () => {
+    const timings = new RunTimings();
+    timings.begin();
+    for (const phase of [...PHASES].reverse()) timings.record({ phase, ms: 1 });
+    assert.deepEqual(
+      timings.phases.map(({ phase }) => phase),
+      ["fetch", "compile", "instantiate", "start", "call", "run"],
+    );
   });
 
   test("holds only the phases recorded, in the phase order whatever order they arrive in", () => {

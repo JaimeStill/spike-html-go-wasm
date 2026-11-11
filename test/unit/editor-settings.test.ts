@@ -25,8 +25,10 @@ function heard(settings: EditorSettings): { wrap: boolean; tabSize: number }[] {
 describe("EditorSettings", () => {
   test("defaults to scrolling long lines and a tab four columns wide", () => {
     const settings = new EditorSettings();
-    assert.deepEqual({ wrap: settings.wrap, tabSize: settings.tabSize }, defaults);
-    assert.deepEqual(defaults, { wrap: false, tabSize: 4 });
+    assert.deepEqual(
+      { wrap: settings.wrap, tabSize: settings.tabSize },
+      { wrap: false, tabSize: 4 },
+    );
     assert.ok(Object.isFrozen(defaults), "no one can change the defaults every editor shows");
   });
 
