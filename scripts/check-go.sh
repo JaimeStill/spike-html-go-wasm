@@ -11,17 +11,14 @@ set -euo pipefail
 
 export GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off GOTOOLCHAIN=local
 
-unformatted=$(gofmt -l .)
+# The module's own package directories, never node_modules/, whose packages may carry Go files.
+unformatted=$(go list -f '{{.Dir}}' ./... | xargs gofmt -l)
 if [[ -n "$unformatted" ]]; then
   printf 'gofmt: unformatted files:\n%s\n' "$unformatted" >&2
   exit 1
 fi
 go vet ./...
-fixes=$(go fix -diff ./...)
-if [[ -n "$fixes" ]]; then
-  printf 'go fix: fixes to apply (go fix ./...):\n%s\n' "$fixes" >&2
-  exit 1
-fi
+go fix -diff ./...
 go mod tidy -diff
 golangci-lint run ./...
 
