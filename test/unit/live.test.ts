@@ -74,14 +74,14 @@ describe("mise run live", () => {
   test("the module served with the wrong type fails its type assertion alone", async () => {
     const outcomes = await against(site({ type: "application/octet-stream" }));
     assert.deepEqual(failed(outcomes), ["go/hello.wasm 200 application/wasm"]);
-    assert.deepEqual(lines(outcomes)[1], "✗ go/hello.wasm 200 application/wasm");
+    assert.equal(lines(outcomes)[1], "✗ go/hello.wasm 200 application/wasm");
     assert.equal(outcomes[1].failure, "got 200 application/octet-stream");
   });
 
   test("the module served without gzip fails its gzip assertion alone", async () => {
     const outcomes = await against(site({ gzip: false }));
     assert.deepEqual(failed(outcomes), ["go/hello.wasm gzip"]);
-    assert.deepEqual(lines(outcomes)[2], "✗ go/hello.wasm gzip");
+    assert.equal(lines(outcomes)[2], "✗ go/hello.wasm gzip");
     assert.equal(outcomes[2].failure, "got 200 no encoding");
   });
 

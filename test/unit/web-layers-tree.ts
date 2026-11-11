@@ -28,9 +28,9 @@ const sdk = "@jaimestill/spike-html-hosting-sdk";
 const icons = "@jaimestill/spike-html-hosting-icons";
 
 // The rules a case names: the table, the relative-path rule, and the resolution rule.
-export const table = "boundaries/dependencies";
-export const relativePackages = "import-x/no-relative-packages";
-export const unresolved = "import-x/no-unresolved";
+const table = "boundaries/dependencies";
+const relativePackages = "import-x/no-relative-packages";
+const unresolved = "import-x/no-unresolved";
 /** The rules the lint flags the tree with. */
 export const watched: string[] = [table, relativePackages, unresolved];
 

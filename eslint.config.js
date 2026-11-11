@@ -30,7 +30,7 @@ export const packages = ["lit", foundation, hostingComponents];
 // never the runtime, whose runner a page passes in; and the runtime (the SDK tier: the loader, the
 // worker, the in-memory filesystem, and wasm_exec.js), which imports nothing beyond its own files.
 // Each tier may import its own files; nothing imports upward.
-export const layers = [
+const layers = [
   {
     name: "pages",
     path: "web/pages",

@@ -7,7 +7,7 @@
 // Never a part of mise run check: test/unit/live.test.ts runs held() against local servers.
 
 /** The site's URL on Pages, the base when no argument gives one. */
-export const pages = "https://jaimestill.github.io/spike-html-go-wasm/";
+const pages = "https://jaimestill.github.io/spike-html-go-wasm/";
 
 /** An assertion's outcome: its name, and when it failed, what came back instead. */
 export interface Outcome {
@@ -24,7 +24,7 @@ function mediaType(contentType: string | null): string {
  * response came back. */
 async function get(url: URL, headers: Record<string, string> = {}): Promise<Response | string> {
   try {
-    const response = await fetch(url, { headers, redirect: "follow" });
+    const response = await fetch(url, { headers });
     // The body is read and dropped, so the connection is released; fetch has already decoded it.
     await response.arrayBuffer();
     return response;
@@ -46,9 +46,8 @@ function described(response: Response): string {
 export async function held(base: string): Promise<Outcome[]> {
   const root = new URL(base.endsWith("/") ? base : `${base}/`);
   const index = await get(root);
-  const wasmURL = new URL("go/hello.wasm", root);
-  // Its own request, so the type is judged with no encoding asked for as well as with one.
-  const wasm = await get(wasmURL, { "Accept-Encoding": "gzip" });
+  // One request, gzip accepted, judged for its status and type and for its encoding.
+  const wasm = await get(new URL("go/hello.wasm", root), { "Accept-Encoding": "gzip" });
 
   const outcome = (
     name: string,

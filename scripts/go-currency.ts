@@ -24,8 +24,6 @@ export interface Requirement {
  * release than Version exists. */
 interface Listed {
   Path: string;
-  Version?: string;
-  Indirect?: boolean;
   Update?: { Version: string };
 }
 
@@ -44,9 +42,7 @@ export function trailing(requires: Requirement[], listing: string): string[] {
     .filter(({ Indirect }) => !Indirect)
     .flatMap(({ Path, Version }) => {
       const update = listed.get(Path)?.Update;
-      return update && !listed.get(Path)?.Indirect
-        ? [`go.mod: ${Path} ${Version} -> ${update.Version}`]
-        : [];
+      return update ? [`go.mod: ${Path} ${Version} -> ${update.Version}`] : [];
     });
 }
 
