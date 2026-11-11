@@ -22,6 +22,7 @@
 // the reader has scrolled up from the end; once they scroll back to the end it follows again. The
 // jump to the end is instant, never smooth, so there is no motion to reduce, and a fast run's
 // output can't outrun it.
+// From spike-html-apps-components (19d4f59): src/event-log.ts, its atEnd.
 
 import {
   html,

@@ -5,7 +5,7 @@
 // name, its path data as that module gives it: 1em square on a 16 viewBox, drawn in currentColor,
 // hidden from assistive technology, and never focusable, so the text beside it, or its control's
 // name, says what it means.
-// From @jaimestill/spike-html-hosting-icons (v0.1.0): dist/octicon/copy-16.js, trash-16.js,
+// From spike-html-hosting-icons (v0.1.0): dist/octicon/copy-16.js, trash-16.js,
 // check-circle-16.js, x-circle-16.js, play-16.js, square-fill-16.js, undo-16.js, file-added-16.js,
 // and pencil-16.js; Octicons, primer/octicons @primer/octicons@19.42.0, MIT.
 
