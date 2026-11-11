@@ -7,7 +7,10 @@
      scrolled sideways (the default) and wrapped, a tab two columns wide, empty and named by its
      caption through aria-labelledby, two editors sharing the document's highlights, an editable
      editor for the keyboard model, and an editor whose events a readout counts, a specimen aid.
-     The script creates each editor's settings and owns them. The shell is the index's, the same header, dialogs,
+     The script creates each editor's settings and owns them. sl-file-tabs: several files, one
+     modified, one read-only, sixteen overflowing the row, and one alone, each over an editor
+     showing the active file, the script owning each file set and applying the tabs' requests and
+     the editor's edits to it. The shell is the index's, the same header, dialogs,
      and unlayered header-actions rule; see index.html for each. -->
 <html lang="en">
   <head>
@@ -47,6 +50,10 @@
         margin-block-start: var(--space-s);
       }
       /* A specimen aid, beside the component it observes, quieter than the component. */
+      /* The panel the file tabs control, holding the editor that shows the active file. */
+      .state > .panel {
+        margin-block-start: var(--space-2xs);
+      }
       .readout {
         color: var(--fg-2);
         font-size: var(--text-s);
@@ -110,6 +117,22 @@
         <div class="states narrow"></div>
         <h3 id="code-editor-focus">Focus visible</h3>
         <p>The editor, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus"></div>
+      </section>
+      <section id="file-tabs" aria-labelledby="file-tabs-heading">
+        <h2 id="file-tabs-heading">File tabs</h2>
+        <p>
+          <code>sl-file-tabs</code>, tabs for a set of files, over the editor showing the active
+          one. The page owns each set: it applies a tab's request to select its file, and the
+          editor's edits, and the tabs follow the set.
+        </p>
+        <h3 id="file-tabs-states">States</h3>
+        <div class="states"></div>
+        <h3 id="file-tabs-narrow">States at 20rem</h3>
+        <div class="states narrow"></div>
+        <h3 id="file-tabs-focus">Focus visible</h3>
+        <p>The tabs, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>
         <div class="focus"></div>
       </section>

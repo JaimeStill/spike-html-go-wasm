@@ -1,7 +1,8 @@
 // The components page's script (components.html): it defines the components, by importing their
 // modules, and builds each component's states into its section, every state once in the states
-// list, again in the 20rem list, and the focus state after the page's focus-start mark, which the
-// screenshot command focuses before pressing Tab to reach it. Each state is a figure, its label the
+// list, again in the 20rem list, and the focus state after its section's focus-start mark; the
+// screenshot command focuses the page's first, the code editor's, before pressing Tab to reach it,
+// and the browser tier each. Each state is a figure, its label the
 // caption, built fresh for each list, so no element is shared between them. Nothing here loads Go:
 // the components page runs nothing yet.
 //
@@ -13,9 +14,19 @@
 // owns each editor's settings: it creates an EditorSettings for each state that sets one, fresh
 // for each list, and is the only one to write it. The browser tier reads each by its figure's
 // data-state.
+//
+// The file tabs' states (sl-file-tabs): several files, one modified, one read-only, so many they
+// overflow the row, and one alone. Each state is the controlled loop a composing element runs: the
+// page owns the state's FileSet, fresh for each list, and is its only writer. It applies the tabs'
+// select requests to the set, and the editor's input as an edit of the active file, so the tabs'
+// selection follows only the set, and a modified file's marker appears as the editor is typed in.
+// The editor, in a tabpanel each tab controls, shows the active file, read-only when it is.
 
 import "../components/code-editor.ts";
 import { EditorSettings } from "../components/editor-settings.ts";
+import { FileSet, type GivenFile } from "../components/file-set.ts";
+import "../components/file-tabs.ts";
+import type { SelectDetail } from "../components/file-tabs.ts";
 
 /** A state: its key, its label, and a function that builds it, fresh for each list, given an id
  * unique to the list, for an element that names another. */
@@ -225,5 +236,114 @@ specimens(
     key: "focus",
     label: "Focused by Tab",
     build: () => [editor({ language: "go", label: "shapes.go", value: go })],
+  },
+);
+
+/** The grammar of a file's name: go or json by its extension, any other plain. */
+const languageOf = (name: string) => /\.(go|json)$/.exec(name)?.[1] ?? "";
+
+/** The controlled loop over the set: tabs, and below them the tabpanel they control, holding an
+ * editor that shows the active file. The page applies each select request and each edit to the set,
+ * and shows the active file again as the set changes. id, unique to the list, makes the panel's. */
+function workspace(set: FileSet, id: string): HTMLElement[] {
+  const panel = make("div", { id: `${id}-panel`, className: "panel" }, { role: "tabpanel" });
+  const tabs = make("sl-file-tabs", { files: set }, { panel: panel.id });
+  const shown = editor({ language: "go" });
+  panel.append(shown);
+  const show = () => {
+    const file = set.activeFile;
+    panel.setAttribute("aria-label", file.name);
+    Object.assign(shown, { label: file.name, readonly: file.readonly });
+    shown.language = languageOf(file.name);
+    // Set only when the text differs, so an edit coming back from the set leaves the caret.
+    if (shown.value !== file.text) shown.value = file.text;
+  };
+  tabs.addEventListener("select", (event) => {
+    set.select((event as CustomEvent<SelectDetail>).detail.name);
+  });
+  shown.addEventListener("input", () => set.edit(set.active, shown.value));
+  set.addEventListener("change", show);
+  show();
+  return [tabs, panel];
+}
+
+const MAIN = `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(greeting("world"))
+}
+`;
+
+const GREETING = `package main
+
+// greeting is the line main prints.
+func greeting(name string) string {
+	return "hello, " + name
+}
+`;
+
+const MOD = `module example.com/hello
+
+go 1.27
+`;
+
+/** Three files of a small program: main.go, greeting.go, and go.mod, with fields for any. */
+const program = (fields: Record<string, Partial<GivenFile>> = {}): GivenFile[] =>
+  [
+    { name: "main.go", text: MAIN },
+    { name: "greeting.go", text: GREETING },
+    { name: "go.mod", text: MOD },
+  ].map((file) => ({ ...file, ...fields[file.name] }));
+
+/** The overflowing state's files: sixteen, the twelfth active, out of view at the row's start. */
+const many = () =>
+  new FileSet(
+    Array.from({ length: 16 }, (_, i) => ({
+      name: `step${String(i + 1).padStart(2, "0")}.go`,
+      text: `package main\n\n// Step ${i + 1}.\n`,
+    })),
+    "step12.go",
+  );
+
+specimens(
+  "file-tabs",
+  [
+    {
+      key: "several",
+      label: "Several files, the first active: choosing a tab shows its file",
+      build: (id) => workspace(new FileSet(program()), id),
+    },
+    {
+      key: "modified",
+      label: "One file modified, its tab marked: typing in another marks it too",
+      build: (id) => {
+        const set = new FileSet(program());
+        set.edit("greeting.go", GREETING.replace("hello", "hi"));
+        return workspace(set, id);
+      },
+    },
+    {
+      key: "readonly",
+      label: "A read-only file, active: its editor takes no edit",
+      build: (id) =>
+        workspace(new FileSet(program({ "greeting.go": { readonly: true } }), "greeting.go"), id),
+    },
+    {
+      key: "overflow",
+      label: "Sixteen files, overflowing: the row scrolls, the active tab in view",
+      build: (id) => workspace(many(), id),
+    },
+    {
+      key: "single",
+      label: "A single file",
+      build: (id) => workspace(new FileSet([{ name: "main.go", text: MAIN }]), id),
+    },
+  ],
+  {
+    key: "focus",
+    label: "Focused by Tab",
+    build: (id) => workspace(new FileSet(program()), id),
   },
 );

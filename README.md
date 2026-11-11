@@ -27,7 +27,9 @@ and path are in `context/README.md`.
   chrome-headless-shell, runs the SDK's checks on every hand page and the crawl, runs hello
   and the probe's handlers on the runtime page, and holds the code editor on the components
   page: its colors to the SDK's fences in every palette and scheme, its accessibility tree, its
-  gutter, and its loading. It proves that Stop ends the probe's spin and the
+  gutter, and its loading; and the file tabs there: their accessibility tree, keyboard, control
+  by the page's file set, modified marker, overflow, and subscription. The unit tier also holds
+  the file set's operations, refusals, and change events. It proves that Stop ends the probe's spin and the
   next call fetches nothing new, and that the probe's crash, a panic outside any handler, prints
   to stderr and exits 2.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
@@ -118,6 +120,51 @@ keyboard.
   `tabSizeProblem(value)` and `wrapProblem(value)` give that reason, or `null`, without setting
   anything, and `defaults` holds the defaults, frozen. Each set that changes a value sends one
   `change` `Event`; a set to the value held sends none. The unit tier tests it under node.
+- `./file-set.js`: `FileSet`, a set of source files, a model with no document or element, an
+  `EventTarget` its owner, the page or the element composing the tabs and the editor, is the only
+  writer of. It holds at least one file, in the order given or added, and one active file.
+  `new FileSet(files, active?)` takes `{ name, text, readonly? }` for each, the first active
+  unless `active` names another.
+  - Reading: `files`, the files in order as frozen snapshots, `{ name, text, original, modified,
+    readonly }`, `original` the text as given and `modified` whether `text` differs from it, the
+    same array until the set changes; `active`, the active file's name; `activeFile`; `file(name)`;
+    and `modified`, whether any file is.
+  - Operations: `select(name)`; `edit(name, text)`; `reset(name)`, restoring the file's text as
+    given; `resetAll()`, restoring every file's text as given, leaving the files added, renamed, or
+    removed as they are; `add(name, text = "")`, appending an editable file and leaving the active
+    file as it was; `rename(from, to)`, in the file's place, active if it was; and `remove(name)`,
+    which, removing the active file, activates the next file, else the previous.
+  - Refusals: an operation the set can't apply throws, naming the reason, and changes nothing: a
+    `TypeError` for a name or text that isn't a string, a `RangeError` for a name that is empty or
+    white space alone, holds a path separator, `/` or `\`, or another file holds; a file it
+    doesn't hold; an edit to a read-only file; or removing the last file. Read-only holds a file's
+    text alone: it can be renamed and removed. `nameProblem(value)`, the module's, gives a name's
+    own reason; the set's `nameProblem(value, renaming?)` adds a duplicate, and
+    `removeProblem(name)` the last file's; each gives the reason or `null` and changes nothing.
+  - Events: one `change` `Event` for each operation that changes the set; one that changes
+    nothing, such as selecting the active file or editing a file to its own text, sends none. The
+    unit tier tests it under node.
+- `./file-tabs.js`: `sl-file-tabs`, tabs for a `FileSet`, as the ARIA tabs pattern: a tablist
+  with one tab per file, in order, the active file's selected. It renders the set it is given,
+  follows each change the set sends, listening only to the set it holds while it is in the
+  document, and never writes it: choosing a tab sends a request, and the selection changes only
+  when the set's owner applies it. A modified file's tab shows a dot after its name and is named
+  "name, modified"; a read-only file's is described as read-only. When the tabs overflow their
+  row, it scrolls sideways inside itself, never the page, bringing the tab focus reaches, and the
+  active tab as it changes, into view; it scrolls smoothly only when the reader allows motion.
+  - Attributes: `label` (the tablist's accessible name, "Files" by default) and `panel` (the id,
+    in the host's tree, of the panel each tab controls, set on each tab across the shadow root as
+    an element reference, `ariaControlsElements`).
+  - Properties: `files`, the `FileSet` its owner creates and writes; `null`, the default, shows
+    no tablist; and `label` and `panel`, as their attributes.
+  - Events: `select`, a `CustomEvent` whose `detail.name` names the file, bubbling and not
+    composed, when a tab other than the selected one is clicked or reached by the keyboard. The
+    owner applies it with `files.select(detail.name)`.
+  - Slots: none.
+  - Keyboard: Tab reaches the selected tab alone, a roving tabindex. Left and Right move focus to
+    the previous and the next tab, wrapping at either end, and Home and End to the first and the
+    last, each requesting that tab's selection: activation follows focus. Enter, Space, and a
+    click request the focused tab's selection.
 
 ## Keeping pace with the SDK
 

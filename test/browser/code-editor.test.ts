@@ -485,8 +485,16 @@ describe("the editor in the accessibility tree", () => {
       const { nodes }: { nodes: AXNode[] } = await page.cdp("Accessibility.getFullAXTree", {});
       const property = (node: AXNode, name: string) =>
         node.properties?.find((p) => p.name === name)?.value.value;
-      const boxes = nodes
-        .filter((node) => !node.ignored && node.role?.value === "textbox")
+      // The editor's own section's textboxes: the file tabs' section holds editors of its own.
+      const { result } = await page.cdp("Runtime.evaluate", {
+        expression: `document.querySelector("#code-editor")`,
+      });
+      const { nodes: section }: { nodes: AXNode[] } = await page.cdp("Accessibility.queryAXTree", {
+        objectId: result.objectId,
+        role: "textbox",
+      });
+      const boxes = section
+        .filter((node) => !node.ignored)
         .map((node) => ({
           name: node.name?.value ?? "",
           multiline: property(node, "multiline") === true,
