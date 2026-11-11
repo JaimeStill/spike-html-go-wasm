@@ -9,9 +9,10 @@
 // owner applies changes neither the selection nor the tab order, the set's own change does, and
 // the tabs never write the set. The marker follows the editor's edits, through the page's loop.
 // Overflow: at 20rem the row scrolls, the active tab in view as the page loads, as focus moves,
-// and as the set changes, the page never scrolled. Focus shows, the row scrolls smoothly only when
-// motion is allowed, and nothing moves under reduced motion. The tabs listen only to the set they
-// hold, only while in the document. Nothing here names the site: its base is package.json's name.
+// and as the set changes, the page never scrolled; no row, wide or at 20rem, overflows up or down
+// in any space and type. Focus shows, the row scrolls smoothly only when motion is allowed, and
+// nothing moves under reduced motion. The tabs listen only to the set they hold, only while in the
+// document. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -522,6 +523,67 @@ describe("overflowing tabs", () => {
       await page.evaluate(`${NARROW}.updateComplete`);
       assert.equal(await view("step09.go"), true, "the set's select");
       assert.equal(await page.evaluate(`window.scrollY`), scrollY, "the page never scrolled");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("no row overflows up or down, wide or at 20rem, in each space and type; at 20rem it still scrolls sideways", async () => {
+    const page = await open();
+    try {
+      const profiles: { space: string[]; type: string[] } = await page.evaluate(`(() => {
+        const registry = globalThis[Symbol.for("spike-html-apps-foundation.registry")];
+        return { space: [...registry.space], type: [...registry.type] };
+      })()`);
+      assert.ok(profiles.space.length > 1 && profiles.type.length > 1);
+      await page.cdp("Emulation.setDeviceMetricsOverride", {
+        width: 1280,
+        height: 900,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+      for (const space of profiles.space) {
+        for (const type of profiles.type) {
+          // Every tablist on the page, the Go demos' among them, the wide states' and the 20rem
+          // column's, by its figure's state and how far its content reaches past it up and down.
+          const rows: { state: string; overflow: number }[] = await page.evaluate(`(async () => {
+            const root = document.documentElement;
+            root.setAttribute("data-space", ${JSON.stringify(space)});
+            root.setAttribute("data-type", ${JSON.stringify(type)});
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            const rows = [];
+            const walk = (scope) => {
+              for (const element of scope.querySelectorAll("*")) {
+                if (element.localName === "sl-file-tabs") {
+                  const list = element.shadowRoot.querySelector('[role="tablist"]');
+                  rows.push({
+                    state: element.closest("figure")?.dataset.state ?? element.getRootNode().host?.label,
+                    overflow: list.scrollHeight - list.clientHeight,
+                  });
+                }
+                if (element.shadowRoot) walk(element.shadowRoot);
+              }
+            };
+            walk(document);
+            return rows;
+          })()`);
+          assert.ok(rows.length > 2, `${space} ${type}: the tablists found`);
+          assert.deepEqual(
+            rows.filter((row) => row.overflow !== 0),
+            [],
+            `${space} ${type}: every row as tall as its content`,
+          );
+        }
+      }
+      const sideways: { before: number; after: number; max: number } = await page.evaluate(`(() => {
+        const list = ${NARROW}.shadowRoot.querySelector('[role="tablist"]');
+        list.style.scrollBehavior = "auto";
+        const before = list.scrollLeft;
+        list.scrollLeft = before === 0 ? 1e6 : 0;
+        return { before, after: list.scrollLeft, max: list.scrollWidth - list.clientWidth };
+      })()`);
+      assert.ok(sideways.max > 0, "the 20rem row overflows sideways");
+      assert.notEqual(sideways.after, sideways.before, "and scrolls sideways");
     } finally {
       await page.close();
     }
