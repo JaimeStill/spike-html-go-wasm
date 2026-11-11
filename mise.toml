@@ -43,7 +43,7 @@ depends = ["lint:eslint", "lint:format", "lint:go", "lint:shell", "lint:workflow
 # The leftover check reads the build, so the lint follows it: with no dist/, it would pass on
 # nothing.
 [tasks."lint:eslint"]
-description = "Lint with ESLint (eslint.config.js, the SDK's configuration): the recommended rules over the code, and the leftover check, no CSS module script in dist/, after the build; reads no network, writes dist/"
+description = "Lint with ESLint (eslint.config.js, the SDK's configuration and the web tiers' import table): the recommended rules over the code, the web tiers' direction in web/, and the leftover check, no CSS module script in dist/, after the build; reads no network, writes dist/"
 depends = ["preflight", "build"]
 run = "pnpm exec eslint ."
 dir = "{{config_root}}"
@@ -99,7 +99,7 @@ run = ["pnpm exec vite build", "scripts/build-go.sh"]
 dir = "{{config_root}}"
 
 [tasks."test:unit"]
-description = "Run the unit tier under node --test: content/ against content.json, which records no tree, with the SDK's content check; reads no network, writes nothing"
+description = "Run the unit tier under node --test: content/ against content.json, which records no tree, with the SDK's content check; the web tiers' import table over a fixture tree; and the Go module's layer direction (go list under GOOS=js GOARCH=wasm) and its go.mod, no replace directive or local-path requirement, on the module and on fixture modules; reads no network, writes nothing outside TMPDIR and Go's caches"
 depends = ["preflight"]
 run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
