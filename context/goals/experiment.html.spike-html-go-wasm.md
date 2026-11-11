@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** runtime
+- **Branch:** runtime
 
 ## Tasks
 
@@ -17,63 +17,86 @@
 9. [ ] review
 10. [ ] answer
 
-## Task brief · site
+## Task brief · runtime
 
-Problem       No site, Go module, or build yet. Every later task needs a Pages project site on
-              spike-html-hosting-sdk v0.6.1, the Elemental layers with both direction checks, Go
-              built for GOOS=js in the check and the Pages workflow, and wasm_exec.js with its
-              provenance (evidence 1, 6).
-Behaviors     1. Scaffolded from SDK v0.6.1; template files carry a provenance line ending in the
-                 SDK tag. SDK, foundation v0.3.0, tooling v0.3.0, components v0.5.0, icons v0.1.0
-                 pinned by tag; everything else at latest (vite 8.3.8, prettier 3.10.0, eslint
-                 10.14.0, boundaries 7.4.2, import-x 4.18.1, typescript-go 7.0.2, actionlint
-                 1.7.12, golangci-lint 2.15.0, chrome-headless-shell 157.0.8103.50).
-              2. `mise run check` reads no network and runs ESLint (incl. the SDK's leftover check),
-                 Prettier, shellcheck, actionlint; gofmt, vet, go fix -diff, go mod tidy -diff,
-                 golangci-lint under GOOS=js GOARCH=wasm; types; Go + site builds; unit + browser
-                 tiers. A missing tool/module fails naming `mise run install`, which fetches both.
-              3. The build writes the site under /spike-html-go-wasm/: hand index, plus a stdlib
-                 hello built by the pinned Go for js/wasm at a stable path beside wasm_exec.js. No
-                 .wasm is tracked; the check fails if one is.
-              4. The hand index passes every SDK shell check, the crawl reaches it, and it requests
-                 no Go module.
-              5. Under the SDK preview, hello answers 200 with application/wasm and, run in
-                 chrome-headless-shell through the committed wasm_exec.js, prints its line.
-              6. wasm_exec.js is byte-for-byte the pinned Go's lib/wasm copy below one provenance
-                 line naming the release; the check fails when they differ; Prettier/ESLint skip it.
-              7. An ESLint boundaries table holds the web direction (components ↛ runtime/pages;
-                 runtime ↛ pages/components; pages → both; each tier only its listed packages); a
-                 unit test lints a fixture tree, exact rules per forbidden case, none per allowed.
-              8. A `go list` test under GOOS=js holds the Go direction (cmd/<s> → only
-                 internal/<s>; internal/<s> ↛ other scenarios or cmd/; bridge ↛ internal/, cmd/);
-                 passes on the module and names each planted violation in a fixture module.
-              9. The check fails on any replace directive or local-path requirement in go.mod.
-              10. `mise run currency` reports what the SDK bin reports plus each go.mod requirement
-                  behind latest as `go.mod: MODULE PIN -> LATEST`; silent and exit 0 when current.
-              11. PRs run the SDK site CI; a push to main runs the SDK Pages deploy; the site is live
-                  at https://jaimestill.github.io/spike-html-go-wasm/.
-              12. A live command (network, outside the check) asserts the index 200 and hello 200
-                  application/wasm under the base, gzip-encoded when asked.
-              13. The header carries no site nav, only its header-actions group; the SDK shell
-                  checks pass without one.
-              14. `mise run screenshots` captures the index at the SDK widths, light and dark, and
-                  leaves no capture file; the browser tier proves it.
-Test seams    `mise run check` (unit + browser tiers over the built site under its base) for 1–11,
-              13, 14; the live command for 12.
-Slices        1. Site scaffold: template over the repo, hand index, no site nav, pins at latest, CI
-                 and Pages callers, JS-side check green.
-              2. Go for js: module, hello, wasm_exec.js + byte check, Go lints, build into the site;
-                 browser tier proves application/wasm and the printed line.
-              3. Direction checks: boundaries table + fixture tree, go list test + fixture module,
-                 by-tag go.mod check.
-              4. Currency over go.mod.
-              5. Pages live: enable Pages (Actions source), first merge deploys, live command passes.
+Problem       hello runs only by hand on the main thread, through wasm_exec.js's stub fs, and
+              nothing can call Go, stream its output, give it files, or stop it. Every later task
+              needs the Go bridge, the on-demand loader, one worker per page, the in-memory fs,
+              and Stop, used unchanged by every scenario (evidence 6, 11).
+Behaviors     1. The bridge registers named Go handlers on one long-lived instance; each call runs
+                 in its own goroutine and answers a Promise: a string in, JSON out, a Go error a
+                 rejection carrying its message. A handler that blocks (a channel, a sleep, a
+                 file call) resolves without deadlock; an unknown name rejects naming it.
+              2. A panic in a handler rejects that call with the panic's message, and the instance
+                 keeps answering later calls.
+              3. The bridge's Go tests run in the check as GOOS=js go test under node, with an
+                 environment trimmed below wasm_exec.js's 12 KB argv+env cap; reads no network.
+              4. The runtime's own in-memory fs implements every call Go's syscall package makes:
+                 open (Node's O_* constants), close, read and write (positional too), fstat with
+                 isDirectory, stat, lstat, mkdir, readdir, rmdir, unlink, rename, truncate,
+                 ftruncate, fsync, chmod, fchmod, utimes, and process.cwd and chdir. link,
+                 symlink, readlink, and the chown calls answer ENOSYS; every error carries a Node
+                 code Go maps (ENOENT, EEXIST, ENOTDIR, EISDIR, ENOTEMPTY, EBADF, ENOSYS). It
+                 imports nothing beyond the runtime's own files.
+              5. Under node in the check, a Go test program running on the in-memory fs in place
+                 of node's passes: create, read, write, seek, stat, readdir, rename, remove,
+                 MkdirTemp, and Getwd/Chdir through package os.
+              6. Writes to fds 1 and 2, through writeSync (runtime prints, panics) or write
+                 (os.Stdout, os.Stderr), become output events labelled stdout or stderr, in order,
+                 as written and unbuffered.
+              7. A page requests no .wasm and no worker script on load. The first run starts one
+                 dedicated worker, and the page never has more than one. The worker loads
+                 wasm_exec.js bundled after the in-memory fs, so the shim's stub fs never
+                 installs.
+              8. The runtime exports a runner type with load (a scenario's module by name), run,
+                 and stop, and with output, exit, and timing events. Timings per run: fetch,
+                 compile, instantiate, start (main running to handlers registered), and call or
+                 run. A cached load fetches over the HTTP cache. Switching scenarios happens in
+                 place in the one worker, dropping the previous instance.
+              9. A program scenario runs main to completion: hello, moved onto the runtime,
+                 prints its one line as stdout output and exits 0. A Go program that exits
+                 (os.Exit, or a panic outside a handler) emits its stderr and its exit code, and
+                 the next run instantiates afresh from the held module, with no new fetch.
+              10. Stop terminates the worker and reposts the held compiled module to a fresh
+                  one. After Stop ends probe's spin, a format call answers with no new .wasm
+                  request; Stop while idle leaves the runner ready.
+              11. The probe scenario, an entrypoint and its composition root on the bridge,
+                  imports only the standard library and the bridge. Its handlers: format (JSON
+                  text in, indented JSON or the parse error out, one line to stdout); files
+                  (writes, lists, reads back, and removes files under a temporary directory
+                  through package os, reporting each step); spin (a busy loop with no yield
+                  that only Stop ends). The build writes probe's wasm beside hello's.
+              12. A published runtime hand page, linked from the index, runs hello and probe's
+                  three handlers through the runner with plain controls (no components): an
+                  input, Run per handler, Stop, the output, and the timings. It passes every SDK
+                  shell check, the crawl reaches it, and it loads Go only on a Run.
+              13. Both direction checks still pass. The runtime imports only its own files, the
+                  runtime page's script imports only the runtime and the shell's packages, and
+                  the probe's layers hold under the go list test.
+Test seams    `mise run check`: the Go tests under node for 1–5; the browser tier, the runtime page
+              in chrome-headless-shell over the built site under its base, for 6–12; the lint and
+              unit tiers for 13.
+Slices        1. Bridge: the handler registry and probe's format handler, with the Go tests under
+                 node in the check.
+              2. In-memory fs: every call, the Go test program under node in the check, and
+                 probe's files handler.
+              3. Worker and runner: the runner type, the on-demand loader, one worker with
+                 wasm_exec.js bundled after the fs, the long-lived instance, output, exit, and
+                 timing events. hello moves onto the runtime, and the runtime page runs hello,
+                 format, and files, proven in the browser tier.
+              4. Stop: probe's spin handler, terminate and repost, and the browser tier's proof
+                 of no refetch and a working next call.
               (No upgrade slice: the repo is current.)
-Out of scope  bridge, loader, worker, in-memory fs, Stop; components and specimen page; playground;
-              any workspace module demo or requirement; TinyGo and all size/timing measurement;
-              any change to the SDK, components' site list, or any reference repository.
-Door          two-way — enabling Pages and the first deploy publish a public site, which can be
-              unpublished; nothing tagged.
+Out of scope  the six components and the specimen page; the playground's toolchain, archives,
+              manifest, and compiling or linking in the page; persistence (OPFS, IndexedDB, Cache
+              Storage); any workspace module or go.mod requirement; sizes, TinyGo, and timings on
+              the live site; Markdown pages; Firefox and Safari runs; any change to the live
+              command, the SDK, or a reference repository.
+Door          two-way: the runtime page is a public page that can be removed; nothing tagged.
+
+## Progress
+
+slices 0/4 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -172,6 +195,49 @@ Door          two-way — enabling Pages and the first deploy publish a public s
 - site: preflight checks shellcheck and actionlint too, closing a gap in the SDK template.
 - site: the no-site-nav test reads the custom element registry, because Vite bundles
   site-nav.js into a hashed chunk.
+- runtime: a prebuilt scenario is one long-lived instance whose main registers named Go handlers
+  through the bridge; each call runs in its own goroutine and answers a Promise (string in, JSON
+  out, an error or recovered panic a rejection), because a blocking syscall/js callback stops the
+  event loop. A program scenario (hello, the playground's linked programs) runs main to
+  completion. Rejected: a fresh run of main per click with input on argv or stdin (argv+env capped
+  at 12 KB, instantiate and init paid every run, bridge/ left empty), and //go:wasmexport (builds
+  under GOOS=js but passes only numbers and pointers).
+- runtime: the in-memory globalThis.fs is the runtime's own, in its own files, implementing every
+  call Go's syscall package makes with Node error codes; writeSync serves fds 1 and 2 alone.
+  Rejected: memfs 4.80.0 (needs node:buffer, events, stream, url, and path polyfilled in a worker,
+  about 15 packages) and @zenfs/core 2.9.0 (1.27 MB plus a buffer polyfill); either breaks the
+  runtime tier's own-files-only import rule.
+- runtime: the fs keeps files in memory only; persistence is the playground task's to decide.
+  Every call but writeSync is callback-shaped, so a storage-backed directory can mount behind the
+  same calls without changing Go, the bridge, or the worker protocol. Deferred: OPFS (sync handles
+  in dedicated workers, Chrome 102 / Firefox 111 / Safari 15.2, exclusive per-file lock), IndexedDB
+  (async only; can't hold a compiled module), and Cache Storage (the HTTP cache already returns
+  0 B). Storage is one origin across every jaimestill.github.io project site, evictable without
+  persist(), and cleared by Safari after 7 days without interaction.
+- runtime: the fs is built whole in this task and proven under node in the check by a Go test
+  program over package os; the playground task doesn't reopen it. Rejected: only the calls the
+  probe scenario uses, with the playground adding the rest.
+- runtime: the runtime exports the runner type (load, run, stop; output, exit, and timing
+  events); the components task declares the structural subset sl-go-demo reads, and TypeScript
+  checks the match in the page. Rejected: a shared contract tier both import, which would add a
+  tier to the boundaries table.
+- runtime: the worker bundles wasm_exec.js after the in-memory fs module, so the shim's stub fs
+  never installs and the shim's hash changes with the worker's; the repository copy and its byte
+  check stay as evidence 6's provenance. Rejected: a classic worker's importScripts of the copy at
+  its stable go/ path, which a deploy could pair with a newer module for Pages' max-age=600.
+- runtime: the browser tier proves the runtime on a published runtime hand page with plain
+  controls, linked from the index, in the crawl and the SDK shell checks; the components task's
+  specimen page later takes it over. Rejected: a test-only entry never deployed, which needs a
+  second build that differs from what Pages serves.
+- runtime: bridge/'s Go tests run in the check as GOOS=js go test under node, with an environment
+  trimmed below wasm_exec.js's 12 KB argv+env cap. Rejected: proving bridge/ only through the
+  browser tier.
+- runtime: the probe scenario proves the runtime with three handlers (format, files, spin),
+  imports only the standard library and the bridge, and stays on the site as a bridge-sized
+  baseline for the measure task. Rejected: folding them into hello, which stays the stdlib-only
+  baseline with no internal/hello.
+- runtime: hello moves onto the runtime and runs in the worker; the main-thread hand load in the
+  browser tier goes.
 
 ## Notes
 
