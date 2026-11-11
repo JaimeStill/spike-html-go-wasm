@@ -1,0 +1,156 @@
+/*
+ * The controls' layout in a shadow root: controls.ts adopts this sheet after the foundation's reset
+ * and elements sheets (baseline/reset.css and elements.css) and the hosting components' glyph
+ * button sheet (glyph-button.css), which draws its buttons. It reads only the foundation's tokens,
+ * which a shadow root takes by inheritance from the page's entry. Unlayered, it sits above the
+ * adopted layers in the root.
+ *
+ * The host is a block holding one row: the toolbar at its start and the status at its end. The row
+ * wraps, the status first, onto a line of its own; then the toolbar wraps between its groups, so a
+ * group's controls stay together, and only a group wider than its container wraps inside itself.
+ * The separator is a rule the height of the controls.
+ *
+ * Each form is a popover anchored below its button, at its inline start, flipped above it where
+ * the viewport's foot would cut it, or to its inline end where the viewport's side would: a small
+ * panel on the first elevated surface, its label above its input and submit, and a refusal below,
+ * led by a red cross, its words in the page's own text color, so it holds its contrast in every
+ * palette, and the input's boundary red while it shows.
+ *
+ * Nothing moves: no transition or animation, and the popover appears in place.
+ */
+
+:host {
+  display: block;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-xs);
+}
+
+.toolbar,
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toolbar {
+  gap: var(--space-2xs);
+}
+
+.group {
+  gap: var(--space-3xs);
+}
+
+.separator {
+  align-self: stretch;
+  inline-size: var(--line-s);
+  background-color: var(--border-2);
+}
+
+.status {
+  margin: 0;
+  margin-inline-start: auto;
+  color: var(--fg-2);
+  font-size: var(--text-s);
+}
+
+/* An aria-disabled control stays focusable, but reads as unavailable. */
+.glyph-button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Each button anchors its form. */
+[data-control="new"] {
+  anchor-name: --new-file;
+}
+
+[data-control="rename"] {
+  anchor-name: --rename;
+}
+
+#new-form {
+  position-anchor: --new-file;
+}
+
+#rename-form {
+  position-anchor: --rename;
+}
+
+.form-popover {
+  position-area: block-end span-inline-end;
+  position-try-fallbacks:
+    flip-block,
+    flip-inline,
+    flip-block flip-inline;
+  inset: auto;
+  margin: 0;
+  margin-block-start: var(--space-3xs);
+  inline-size: max-content;
+  max-inline-size: min(22rem, 100vw - 2 * var(--space-s));
+  padding: var(--space-2xs) var(--space-xs);
+  border: var(--line-s) solid var(--border-2);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-1);
+  color: var(--fg);
+}
+
+/* A non-modal form leaves the page as it is: the foundation veils behind every top-layer
+   element's backdrop, a modal dialog's meant among them. */
+.form-popover::backdrop {
+  background-color: transparent;
+}
+
+.form-popover label {
+  display: block;
+  margin-block-end: var(--space-3xs);
+  font-size: var(--text-s);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3xs);
+}
+
+.row > input {
+  flex: 1 1 12ch;
+  min-inline-size: 0;
+  font-family: var(--font-code);
+}
+
+.row > input[aria-invalid="true"] {
+  border-color: var(--red);
+}
+
+.problem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  margin: 0;
+  font-size: var(--text-s);
+}
+
+.problem.shown {
+  margin-block-start: var(--space-3xs);
+}
+
+.problem > svg {
+  flex: none;
+  color: var(--red);
+}
+
+/* Forced colors drop the hues: the refusal's glyph and the invalid boundary take the system's
+   text color, and the words still say it. */
+@media (forced-colors: active) {
+  .problem > svg {
+    color: CanvasText;
+  }
+  .row > input[aria-invalid="true"] {
+    border-color: CanvasText;
+  }
+}

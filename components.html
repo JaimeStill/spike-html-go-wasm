@@ -16,7 +16,11 @@
      scripted events, its clear requests applied by the script. sl-timings: a cold load, a held
      instance's call, a program's run, the call after Stop, and no run yet, each run's timings the
      script's own, recorded from scripted events, and one whose specimen aid begins a new run in
-     place of the last on a button's press. The shell is the index's, the same header, dialogs, and
+     place of the last on a button's press. sl-controls: idle with nothing modified, a file
+     modified, a run pending, a run that fails, the files group, New file's form refusing a name
+     on a specimen aid's press, and the last file, each over the file tabs and an editor, the
+     script owning each file set and run state and applying the toolbar's requests, a run ending
+     on its own after a moment. The shell is the index's, the same header, dialogs, and
      unlayered header-actions rule; see index.html for each. -->
 <html lang="en">
   <head>
@@ -169,6 +173,23 @@
         <div class="states"></div>
         <h3 id="timings-narrow">States at 20rem</h3>
         <div class="states narrow"></div>
+      </section>
+      <section id="controls" aria-labelledby="controls-heading">
+        <h2 id="controls-heading">Controls</h2>
+        <p>
+          <code>sl-controls</code>, a demo's toolbar: Run, Stop, and Reset, and, where a demo's
+          files are editable, New file, Rename, and Delete. The page owns each state's files and run
+          state, here with no Go: it applies each control's request, a run ending on its own after
+          a moment, and the toolbar follows them.
+        </p>
+        <h3 id="controls-states">States</h3>
+        <div class="states"></div>
+        <h3 id="controls-narrow">States at 20rem</h3>
+        <div class="states narrow"></div>
+        <h3 id="controls-focus">Focus visible</h3>
+        <p>The toolbar, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus"></div>
       </section>
     </main>
     <dialog id="help" aria-labelledby="help-title">

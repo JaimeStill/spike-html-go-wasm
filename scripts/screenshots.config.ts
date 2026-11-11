@@ -2,11 +2,12 @@
 // SDK's description of the index and the runtime page, --page index and --page runtime, captured
 // whole at 390px, 1120px, and 1376px, and the index also with Help open and with Settings open at
 // each; and the components page as one capture name per component, --page components/<component>,
-// each the page whole at 1280×800 with every other component's section hidden. The SDK's three
-// widths over the whole components page grew with every component, 68 images for the editor alone,
-// so each component is captured alone, at one width. The description's facets, --all's profiles,
-// the registry's profiles, and its server, which serves the site as the browser tier serves it, by
-// the SDK's served(), under the base, are the SDK's.
+// each the page whole at 1280×800 with every other component's section hidden, and the controls'
+// with New file's form open on its refusal. The SDK's three widths over the whole components page
+// grew with every component, 68 images for the editor alone, so each component is captured alone,
+// at one width. The description's facets, --all's profiles, the registry's profiles, and its
+// server, which serves the site as the browser tier serves it, by the SDK's served(), under the
+// base, are the SDK's.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/scripts/screenshots.config.ts, its pages
@@ -22,7 +23,7 @@ import { description } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 const root = join(import.meta.dirname, "..");
 
 /** The components page's sections, by id, each a component's, in the page's order. */
-export const COMPONENTS = ["code-editor", "file-tabs", "console", "timings"] as const;
+export const COMPONENTS = ["code-editor", "file-tabs", "console", "timings", "controls"] as const;
 
 /** Shows the component's section alone: every other section of the page's main is hidden, and its
  * focus-start mark dropped, so the mark the bin focuses, the page's first, is the component's.
@@ -41,6 +42,22 @@ const alone =
     })()`);
   };
 
+/** The steps a component's capture takes after showing its section alone, so a state that opens
+ * only on a press shows open: the controls' refusing state's specimen aid opens New file's form
+ * with its refusal said. */
+const OPENS: Partial<Record<(typeof COMPONENTS)[number], string>> = {
+  controls: `document.querySelector('#controls figure[data-state="refused"] .readout button').click()`,
+};
+
+/** The component's open step: its section alone, then its OPENS step, if any. */
+const opened =
+  (component: (typeof COMPONENTS)[number]): Step =>
+  async (page: Page) => {
+    await alone(component)(page);
+    const step = OPENS[component];
+    if (step) await page.evaluate(step);
+  };
+
 const described = description({ root, pages: ["index.html", "runtime.html", "components.html"] });
 
 /** The components page as a page per component: its path, one state whole at 1280×800 with the
@@ -55,7 +72,7 @@ const perComponent = ({ path }: DescribedPage): DescribedPage[] =>
         name: `components-${component}`,
         viewport: { width: 1280, height: 800 },
         full: true,
-        open: alone(component),
+        open: opened(component),
       },
     ],
   }));

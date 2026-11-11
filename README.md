@@ -30,9 +30,12 @@ and path are in `context/README.md`.
   gutter, and its loading; and the file tabs there: their accessibility tree, keyboard, control
   by the page's file set, modified marker, overflow, and subscription; and the timings there:
   their table in the accessibility tree, only the run's phases in order with their total, the
-  times' format and alignment, the empty state, a new run replacing the last, and subscription.
-  The unit tier also holds the file set's and the run timings' operations, refusals, and change
-  events. The browser tier proves that Stop ends the probe's spin and the next call fetches
+  times' format and alignment, the empty state, a new run replacing the last, and subscription;
+  and the controls there: their toolbar in the accessibility tree, keyboard, availability
+  following the models, requests that change nothing, the New file and Rename forms' validation
+  and focus return, the status's transitions, target sizes, the 20rem column, motion, and
+  subscription. The unit tier also holds the file set's, the run timings', and the run state's
+  operations, refusals, and change events. The browser tier proves that Stop ends the probe's spin and the next call fetches
   nothing new, and that the probe's crash, a panic outside any handler, prints to stderr and
   exits 2.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
@@ -182,6 +185,47 @@ keyboard.
   - Events: one `change` `Event` for each operation that changes the log, however many lines it
     adds; an empty write, or a clear of an empty log, sends none. The unit tier tests it under
     node.
+- `./controls.js`: `sl-controls`, a demo's controls as one ARIA toolbar: a Run group (Run, Stop,
+  and Reset) and, under `editable-files`, a vertical separator and a Files group (New file,
+  Rename, and Delete). Each control is a glyph button showing its name. It renders the `FileSet`
+  and the `RunState` it is given, follows each change they send, listening only to the models it
+  holds while it is in the document, and never writes either: every control sends a request its
+  owner applies. Run is always available, as a new run stops the pending one; Stop only while a
+  run is pending; Reset only while a file differs from its text as given; New file and Rename
+  always; Delete unless the set refuses to remove the active file, the last one. An unavailable
+  control is `aria-disabled`, focusable, and sends nothing. New file and Rename each open a form
+  in a popover, a non-modal dialog anchored below its button: a labelled input and a submit,
+  Create or Rename. Rename's input holds the active file's name, its stem, the name before its
+  extension, selected. On submit the name is checked by the set's `nameProblem`; a refused name
+  leaves the form open, the input `aria-invalid` and described by the set's reason in a polite
+  live region, and from then on the reason follows the name as it is typed. A taken name closes
+  the form, returns focus to its button, and sends the request; a rename to the file's own name
+  sends nothing. Escape closes the form, sends nothing, and returns focus to its button. Delete
+  asks for no confirmation. The status, a polite live region beside the toolbar, says each run's
+  start, "Running hello…", and its end, "Finished format", "Finished hello, exit code 0",
+  "Stopped spin", or "Failed format: <message>", from the run state's transitions alone: the
+  state the toolbar is given is never said, nor a change of the files. The toolbar wraps between
+  its groups, each group's controls together. Nothing moves.
+  - Attributes: `editable-files` (a boolean: show the Files group) and `label` (the toolbar's
+    accessible name, "Controls" by default).
+  - Properties: `files`, the `FileSet` its owner creates and writes, `null` by default, leaving
+    Reset unavailable and the Files group out; `runState`, the `RunState` its owner creates and
+    writes, `null` by default, leaving Stop unavailable; and `editableFiles` and `label`, as their
+    attributes.
+  - Events, each bubbling and not composed, a request that changes nothing until the owner applies
+    it: `run`, `stop`, and `reset` (`Event`s); `new` (a `CustomEvent`, `detail.name`, the new
+    file's name), `rename` (`detail.from` and `detail.to`), and `delete` (`detail.name`, the
+    active file's). The owner applies them as `runState.start(what)` with its runner's run,
+    `runState.finish(run, { kind: "stopped" })` with its runner's stop, `files.resetAll()`,
+    `files.add(name)`, `files.rename(from, to)`, and `files.remove(name)`.
+  - Slots: none.
+  - Keyboard: Tab reaches the toolbar's one tab stop, the control last focused, Run at first, a
+    roving tabindex. Left and Right move to the previous and next control, wrapping, and Home and
+    End to the first and the last, unavailable controls included. Enter and Space press the
+    focused control. Run declares `aria-keyshortcuts="Control+Enter Meta+Enter"`, the shortcut
+    the demo composing it handles from inside itself. In a form, Enter submits and Escape closes
+    it, each returning focus to the control that opened it; the form closes on Escape's keydown,
+    so focus is back on the control before the page's keys see it.
 - `./editor-settings.js`: `EditorSettings`, the code editor's settings, a model with no document
   or element, an `EventTarget` its owner writes: `wrap` (a boolean, `false` by default: long lines
   scroll sideways) and `tabSize` (a whole number from 1 to 8, 4 by default, how many columns a tab
@@ -236,8 +280,28 @@ keyboard.
     last, each requesting that tab's selection: activation follows focus. Enter, Space, and a
     click request the focused tab's selection.
 - `./glyphs.js`: the glyphs the components draw in their shadow roots, Octicons' copy, trash,
-  check-circle, and x-circle from the icons layer, written out as Lit templates with the same
+  check-circle, x-circle, play, square-fill, undo, file-added, and pencil from the icons layer, written out as Lit templates with the same
   paths: the build fills the icons layer into a page's own markup, and no tier imports it.
+- `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
+  `EventTarget` its owner, the page or the element composing the controls over a runner, is the
+  only writer of. The owner starts a run as it asks its runner for one and finishes it as the
+  runner's promise settles.
+  - Reading: `pending`, whether a run is pending; `running`, what it runs, a scenario's or
+    handler's name, or `null` when idle; `run`, the number of the pending run, or of the last, 0
+    before the first; and `last`, how the last finished run ended, a frozen `{ what, outcome }`,
+    or `null` before one has. An `Outcome` is `{ kind: "ok" }`, a handler's answer;
+    `{ kind: "exit", code }`, a program's exit; `{ kind: "stopped" }`; or
+    `{ kind: "failed", message }`, a handler's error or a failed load.
+  - Operations: `start(what)` starts a run and returns its number; a run pending then is
+    superseded, recorded as stopped, as the runner stops it. `finish(run, outcome)` finishes the
+    run of the number and returns `true`; for any run but the pending one, as a superseded run
+    whose promise settles after the next has begun, it changes nothing and returns `false`.
+  - Refusals: an operation it can't apply throws, naming the reason, and changes nothing: a
+    `TypeError` for a value of the wrong type, a `RangeError` for an empty what, an unknown kind,
+    or an exit code that isn't whole. `whatProblem(value)` and `outcomeProblem(value)` give that
+    reason, or `null`; `KINDS` lists the outcomes' kinds.
+  - Events: one `change` `Event` for each start and each finish of the pending run; a finish that
+    changes nothing sends none. The unit tier tests it under node.
 - `./run-timings.js`: `RunTimings`, a run's timings, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the timings over a runner, is the
   only writer of. It takes the runtime's timing events as they are, their shapes re-declared

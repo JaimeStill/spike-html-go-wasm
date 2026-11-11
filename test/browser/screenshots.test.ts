@@ -68,7 +68,7 @@ describe("a component's capture", () => {
     );
   });
 
-  test("its open step hides every other section and leaves its own focus-start mark, if any, the page's first", async () => {
+  test("its open step hides every other section and leaves its own focus-start mark, if any, the page's first; the controls' opens New file's form", async () => {
     for (const component of COMPONENTS) {
       const described = description.pages.find(({ name }) => name === `components/${component}`);
       const [state] = described?.states ?? [];
@@ -87,6 +87,11 @@ describe("a component's capture", () => {
         }))()`);
         assert.deepEqual(shown, [component]);
         assert.equal(mark, own ? component : null);
+        // The controls' capture opens New file's form in its refusing state.
+        const forms: number =
+          await page.evaluate(`[...document.querySelectorAll("#${component} sl-controls")]
+          .filter((controls) => controls.shadowRoot.querySelector(".form-popover:popover-open")).length`);
+        assert.equal(forms, component === "controls" ? 1 : 0, `${component}'s open forms`);
       } finally {
         await page.close();
       }

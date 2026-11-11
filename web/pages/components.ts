@@ -36,14 +36,28 @@
 // some out of the phase order, as a runner's can arrive. One state's specimen aid, a button,
 // begins a new run in place of the last when pressed, so a capture of the page never catches it
 // changed. The table holds nothing to focus, so the section has no focus state.
+//
+// The controls' states (sl-controls): idle with nothing modified, a file modified, a run pending,
+// a run that fails, the files group, New file's form refusing a taken name, and the last file,
+// each over the file tabs and an editor. Each state is the controlled loop sl-go-demo runs over a
+// runner, with no Go: the page owns the state's FileSet and RunState, fresh for each list, and is
+// their only writer. It applies the toolbar's requests: Run starts a run of the state's scenario,
+// which ends on its own after a moment with the state's outcome, or, for the pending state's
+// spin, only by Stop or another Run; Stop finishes the pending run as stopped; Reset, New file,
+// Rename, and Delete change the set, a new file made active. The refusing state's specimen aid, a
+// button, opens New file's form, types a name the set holds, and submits it, so a capture of the
+// page opens it in one step, and a page loaded shows every form closed.
 
 import "../components/code-editor.ts";
 import "../components/console.ts";
+import "../components/controls.ts";
 import { ConsoleLog, LIMIT } from "../components/console-log.ts";
 import { EditorSettings } from "../components/editor-settings.ts";
 import { FileSet, type GivenFile } from "../components/file-set.ts";
 import "../components/file-tabs.ts";
 import type { SelectDetail } from "../components/file-tabs.ts";
+import type { DeleteDetail, NewDetail, RenameDetail } from "../components/controls.ts";
+import { type Outcome, RunState } from "../components/run-state.ts";
 import { type Phase, RunTimings } from "../components/run-timings.ts";
 import "../components/timings.ts";
 
@@ -609,3 +623,155 @@ specimens("timings", [
     build: replaced,
   },
 ]);
+
+/** How long a run on the page takes to end on its own, in ms: long enough to see Stop available,
+ * short enough to wait for. */
+const RUN_MS = 800;
+
+/** A controls state's loop: its files, whether they are editable, the scenario its Run runs, and
+ * the outcome the run ends with, or null for one that ends only when stopped; pending starts a run
+ * as the state is built. */
+interface Loop {
+  set: FileSet;
+  editable?: boolean;
+  what: string;
+  outcome: Outcome | null;
+  pending?: boolean;
+}
+
+/** The controlled loop: the toolbar over the file tabs and the editor showing the active file. The
+ * page owns the set and the run state and applies each request the toolbar sends to them; the
+ * toolbar, the tabs, and the editor follow. id, unique to the list, makes the panel's. */
+function controlled(id: string, { set, editable = false, what, outcome, pending }: Loop) {
+  const state = new RunState();
+  const controls = make("sl-controls", { files: set, runState: state, editableFiles: editable });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const run = () => {
+    clearTimeout(timer);
+    const started = state.start(what);
+    if (outcome) timer = setTimeout(() => state.finish(started, outcome), RUN_MS);
+  };
+  if (pending) run();
+  controls.addEventListener("run", run);
+  controls.addEventListener("stop", () => {
+    clearTimeout(timer);
+    state.finish(state.run, { kind: "stopped" });
+  });
+  controls.addEventListener("reset", () => set.resetAll());
+  controls.addEventListener("new", (event) => {
+    const { name } = (event as CustomEvent<NewDetail>).detail;
+    set.add(name);
+    set.select(name);
+  });
+  controls.addEventListener("rename", (event) => {
+    const { from, to } = (event as CustomEvent<RenameDetail>).detail;
+    set.rename(from, to);
+  });
+  controls.addEventListener("delete", (event) => {
+    set.remove((event as CustomEvent<DeleteDetail>).detail.name);
+  });
+  return [controls, ...workspace(set, id)];
+}
+
+/** The refusing state: the editable loop and, below it, a specimen aid, a button that opens New
+ * file's form, types main.go, a name the set holds, and submits it, so the form says why it
+ * refuses. It opens nothing until pressed. */
+function refusing(id: string): HTMLElement[] {
+  const parts = controlled(id, {
+    set: new FileSet(program()),
+    editable: true,
+    what: "files",
+    outcome: { kind: "ok" },
+  });
+  const controls = parts[0] as HTMLElementTagNameMap["sl-controls"];
+  const button = make("button", { type: "button", textContent: "Open New file with a taken name" });
+  button.addEventListener("click", () => {
+    const root = controls.shadowRoot;
+    root?.querySelector<HTMLButtonElement>('[data-control="new"]')?.click();
+    const input = root?.querySelector<HTMLInputElement>("#new-name");
+    if (!input) return;
+    input.value = "main.go";
+    input.form?.requestSubmit();
+  });
+  const aid = make("p", { className: "readout" });
+  aid.append("Specimen aid: ", button);
+  return [...parts, aid];
+}
+
+/** One file, main.go, as given. */
+const single = () => new FileSet([{ name: "main.go", text: MAIN }]);
+
+specimens(
+  "controls",
+  [
+    {
+      key: "idle",
+      label:
+        "Idle, nothing modified: Reset unavailable; Run runs hello, which exits after a moment",
+      build: (id) =>
+        controlled(id, { set: single(), what: "hello", outcome: { kind: "exit", code: 0 } }),
+    },
+    {
+      key: "modified",
+      label: "A file modified: Reset available, restoring it as given",
+      build: (id) => {
+        const set = single();
+        set.edit("main.go", MAIN.replace("world", "gopher"));
+        return controlled(id, { set, what: "format", outcome: { kind: "ok" } });
+      },
+    },
+    {
+      key: "running",
+      label: "A run pending: Stop available; Run stays available, and stops it to run again",
+      build: (id) => controlled(id, { set: single(), what: "spin", outcome: null, pending: true }),
+    },
+    {
+      key: "fails",
+      label: "A run that fails: the status names its error",
+      build: (id) =>
+        controlled(id, {
+          set: single(),
+          what: "format",
+          outcome: { kind: "failed", message: "input.go:3:1: expected declaration, found '}'" },
+        }),
+    },
+    {
+      key: "editable",
+      label: "Editable files: New file, Rename, and Delete, after a separator",
+      build: (id) =>
+        controlled(id, {
+          set: new FileSet(program()),
+          editable: true,
+          what: "files",
+          outcome: { kind: "ok" },
+        }),
+    },
+    {
+      key: "refused",
+      label: "New file's form, refusing a name another file holds",
+      build: refusing,
+    },
+    {
+      key: "last-file",
+      label: "The last file, editable: Delete unavailable",
+      build: (id) =>
+        controlled(id, {
+          set: single(),
+          editable: true,
+          what: "hello",
+          outcome: { kind: "exit", code: 0 },
+        }),
+    },
+  ],
+  {
+    key: "focus",
+    label: "Focused by Tab",
+    build: (id) =>
+      controlled(id, {
+        set: new FileSet(program()),
+        editable: true,
+        what: "files",
+        outcome: { kind: "ok" },
+      }),
+  },
+);
