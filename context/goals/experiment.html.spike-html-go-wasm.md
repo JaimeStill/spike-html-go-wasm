@@ -77,7 +77,7 @@ Door          two-way — enabling Pages and the first deploy publish a public s
 
 ## Progress
 
-slices 1/5 committed · standards — · spec — · editor —
+slices 2/5 committed · standards — · spec — · editor —
 
 ## Decisions
 
