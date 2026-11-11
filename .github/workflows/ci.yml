@@ -1,0 +1,18 @@
+# Runs the check on every pull request: the SDK's reusable site-ci.yml, at the SDK's release tag,
+# which checks this repository out; a push to main runs it in pages.yml before the deploy.
+# Adapted from spike-html-apps-foundation (d5037b4): .github/workflows/ci.yml, on pull requests
+# only, its job the SDK's.
+# Adapted from spike-html-hosting (fc5cf2c): .github/workflows/ci.yml, its job the SDK's.
+# From spike-html-hosting-sdk (v0.6.1): template/.github/workflows/ci.yml.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-ci.yml@v0.6.1

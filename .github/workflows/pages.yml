@@ -1,0 +1,27 @@
+# Builds the site and deploys dist/ to GitHub Pages on every push to main, after the whole check
+# passes on the same build: the SDK's reusable site-pages.yml, at the SDK's release tag, which
+# checks this repository out. The repository's Pages source is GitHub Actions. The caller grants
+# the deploy its permissions and holds its concurrency group, one deploy at a time, a queued one
+# waiting rather than cancelling the one in flight. Pull requests run ci.yml.
+# Adapted from spike-html-design (0be53be): .github/workflows/pages.yml, its job the SDK's.
+# Adapted from spike-html-hosting (fc5cf2c): .github/workflows/pages.yml, its job the SDK's.
+# From spike-html-hosting-sdk (v0.6.1): template/.github/workflows/pages.yml.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  pages:
+    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-pages.yml@v0.6.1
