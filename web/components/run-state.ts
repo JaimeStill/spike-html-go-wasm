@@ -10,6 +10,8 @@
 // late, changes nothing. A start while a run is pending supersedes it, recording it as stopped, as
 // the runner stops it.
 
+import { shown } from "./reasons.ts";
+
 /** How a run ended: a handler's answer (ok), a program's exit and its code, stopped, or failed, a
  * handler's error or a load that failed, with its message. */
 export type Outcome =
@@ -26,11 +28,6 @@ export interface Finished {
   readonly what: string;
   readonly outcome: Outcome;
 }
-
-/** The value as a reason names it: a string as JSON, so its spaces show; anything else as it
- * prints. */
-const shown = (value: unknown) =>
-  typeof value === "string" ? JSON.stringify(value) : String(value);
 
 /** Why value can't name what a run runs, or null when it can: a string holding something other
  * than white space, as a scenario's or handler's name. */

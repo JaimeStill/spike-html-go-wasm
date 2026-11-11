@@ -27,24 +27,19 @@
 // when the controls first hold it is never said, so a page that loads with a run pending, or one
 // finished, announces nothing until something changes.
 
-import {
-  html,
-  LitElement,
-  nothing,
-  type PropertyDeclarations,
-  type PropertyValues,
-  type TemplateResult,
-} from "lit";
+import { html, LitElement, nothing, type PropertyDeclarations, type TemplateResult } from "lit";
 
 import elements from "@jaimestill/spike-html-apps-foundation/baseline/elements.css" with { type: "css" };
 import reset from "@jaimestill/spike-html-apps-foundation/baseline/reset.css" with { type: "css" };
 import { define } from "@jaimestill/spike-html-apps-foundation/dom.js";
 import glyphButton from "@jaimestill/spike-html-hosting-components/glyph-button.css" with { type: "css" };
 
+import { roved } from "./aria.ts";
 import styles from "./controls.css" with { type: "css" };
 import type { FileSet } from "./file-set.ts";
 import { fileAdded, pencil, play, squareFill, trash, undo, xCircle } from "./glyphs.ts";
 import type { Finished, RunState } from "./run-state.ts";
+import { Subscription } from "./subscription.ts";
 
 /** The tag the element defines. */
 export const tagName = "sl-controls";
@@ -151,17 +146,10 @@ export class Controls extends LitElement {
   /** Each form's refusal, while it shows. */
   declare private problems: Record<Form, string | null>;
 
-  /** The models the controls listen to: those held, while the element is in the document. */
-  #heardFiles: FileSet | null = null;
-  #heardRun: RunState | null = null;
   /** The run state as last seen, whose change from it is a transition. */
   #seen = { pending: false, run: 0 };
   /** Each form, whether focus was in it as it began to close, so its closing returns focus. */
   readonly #restore: Record<Form, boolean> = { new: false, rename: false };
-  /** Renders again as the files change. */
-  readonly #filesChanged = () => this.requestUpdate();
-  /** Says a transition, and renders again, as the run state changes. */
-  readonly #runChanged = () => this.#transition();
 
   constructor() {
     super();
@@ -173,36 +161,28 @@ export class Controls extends LitElement {
     this.current = "run";
     this.renaming = "";
     this.problems = { new: null, rename: null };
+    // Renders again as the files it holds change, and says each transition of the run state it
+    // holds, while it is in the document. Taking a run state, from no state or another, starts
+    // from it as it is: nothing is said of it.
+    new Subscription(
+      this,
+      () => this.files,
+      () => this.requestUpdate(),
+    );
+    new Subscription(
+      this,
+      () => this.runState,
+      () => this.#transition(),
+      (run) => {
+        this.#seen = { pending: run?.pending ?? false, run: run?.run ?? 0 };
+        this.status = "";
+      },
+    );
   }
 
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#listen();
     if (this.hasUpdated) this.requestUpdate();
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#listen();
-  }
-
-  /** Listens to the models the controls hold while in the document, and to no others. Taking a run
-   * state, from no state or another, starts from it as it is: nothing is said of it. */
-  #listen(): void {
-    const files = this.isConnected ? this.files : null;
-    if (files !== this.#heardFiles) {
-      this.#heardFiles?.removeEventListener("change", this.#filesChanged);
-      files?.addEventListener("change", this.#filesChanged);
-      this.#heardFiles = files;
-    }
-    const run = this.isConnected ? this.runState : null;
-    if (run !== this.#heardRun) {
-      this.#heardRun?.removeEventListener("change", this.#runChanged);
-      run?.addEventListener("change", this.#runChanged);
-      this.#heardRun = run;
-      this.#seen = { pending: run?.pending ?? false, run: run?.run ?? 0 };
-      this.status = "";
-    }
   }
 
   /** Says the run state's transition from the state last seen: a run begun, or the pending run
@@ -290,21 +270,11 @@ export class Controls extends LitElement {
   /** The toolbar's keys: Left and Right, wrapping, Home and End, each moving focus to a control.
    * Any other key, or one with a modifier, is the control's or the page's. */
   #keydown(event: KeyboardEvent): void {
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-    const buttons = this.#buttons;
-    const from = buttons.indexOf(event.target as HTMLButtonElement);
-    if (from === -1) return;
     // Left and Right follow the toolbar's direction: in a right-to-left page, Right is previous.
-    const step = getComputedStyle(this).direction === "rtl" ? -1 : 1;
-    const to = {
-      ArrowLeft: from - step,
-      ArrowRight: from + step,
-      Home: 0,
-      End: buttons.length - 1,
-    }[event.key];
-    if (to === undefined) return;
+    const button = roved(event, this.#buttons, this);
+    if (!button) return;
     event.preventDefault();
-    buttons[(to + buttons.length) % buttons.length].focus();
+    button.focus();
   }
 
   /** Focus reaching a control gives it the toolbar's tab stop. */
@@ -385,8 +355,7 @@ export class Controls extends LitElement {
     this.#popover(form)?.hidePopover();
   }
 
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    if (changed.has("files") || changed.has("runState")) this.#listen();
+  protected override willUpdate(): void {
     if (!this.#shown.includes(this.current)) this.current = "run";
   }
 

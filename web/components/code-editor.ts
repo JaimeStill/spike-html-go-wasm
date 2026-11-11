@@ -51,9 +51,11 @@ import elements from "@jaimestill/spike-html-apps-foundation/baseline/elements.c
 import reset from "@jaimestill/spike-html-apps-foundation/baseline/reset.css" with { type: "css" };
 import { define } from "@jaimestill/spike-html-apps-foundation/dom.js";
 
+import { idrefs } from "./aria.ts";
 import styles from "./code-editor.css" with { type: "css" };
 import { defaults, EditorSettings } from "./editor-settings.ts";
 import { highlightName, highlightSheet, Painted } from "./highlights.ts";
+import { Subscription } from "./subscription.ts";
 
 /** The tag the element defines. */
 export const tagName = "sl-code-editor";
@@ -206,10 +208,6 @@ export class CodeEditor extends LitElement {
   #batching = false;
   #painted = new Painted();
   #timer: ReturnType<typeof setTimeout> | undefined;
-  /** The settings the editor listens to: those it holds, while it is in the document. */
-  #heard: EditorSettings | null = null;
-  /** Renders again as the settings change. */
-  readonly #changed = () => this.requestUpdate();
 
   constructor() {
     super();
@@ -220,6 +218,12 @@ export class CodeEditor extends LitElement {
     this.settings = null;
     this.lines = [""];
     this.released = false;
+    // Renders again as the settings it holds change, while it is in the document.
+    new Subscription(
+      this,
+      () => this.settings,
+      () => this.requestUpdate(),
+    );
     void loadTokenizer();
   }
 
@@ -246,7 +250,6 @@ export class CodeEditor extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#listen();
     // Reconnected, it paints again, looks up the elements naming it in its new tree, and shows
     // the settings as they now are.
     if (this.hasUpdated) {
@@ -257,18 +260,8 @@ export class CodeEditor extends LitElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#listen();
     clearTimeout(this.#timer);
     this.#painted.clear();
-  }
-
-  /** Listens to the settings the editor holds while it is in the document, and to no other. */
-  #listen(): void {
-    const next = this.isConnected ? this.settings : null;
-    if (next === this.#heard) return;
-    this.#heard?.removeEventListener("change", this.#changed);
-    next?.addEventListener("change", this.#changed);
-    this.#heard = next;
   }
 
   /** The settings shown: those held, else the defaults. */
@@ -428,7 +421,7 @@ export class CodeEditor extends LitElement {
     else this.#lines(selected, () => 0, "\t");
   }
 
-  /** Shift+Tab: a tab, or up to four spaces, off the start of every line the caret or the
+  /** Shift+Tab: a tab, or up to a tab's width of spaces, off the start of every line the caret or the
    * selection touches. */
   #outdent(): void {
     const selected = this.#selection();
@@ -540,22 +533,8 @@ export class CodeEditor extends LitElement {
     return this.hasUpdated ? this.renderRoot.querySelector(".hint") : null;
   }
 
-  /** The elements the host's aria-labelledby names, in the host's tree; none found names none. */
-  #labelledBy(): Element[] {
-    const root = this.getRootNode() as Document | ShadowRoot;
-    return (this.labelledBy ?? "")
-      .split(/\s+/)
-      .filter((id) => id !== "")
-      .map((id) => root.getElementById(id))
-      .filter((element) => element !== null);
-  }
-
   protected override firstUpdated(): void {
     this.#editable?.replaceChildren(this.#text);
-  }
-
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    if (changed.has("settings")) this.#listen();
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -564,14 +543,14 @@ export class CodeEditor extends LitElement {
     // the editor next renders.
     const editable = this.#editable;
     if (editable) {
-      const named = this.#labelledBy();
+      const named = idrefs(this, this.labelledBy);
       editable.ariaLabelledByElements = named.length > 0 ? named : null;
     }
     if (changed.has("language")) this.#schedule(0);
   }
 
   render() {
-    const named = this.#labelledBy().length > 0;
+    const named = idrefs(this, this.labelledBy).length > 0;
     // Each row: its number, drawn by the gutter's counter, and its line, invisible, which sizes
     // the row as the editable element lays the same line out above it. Each is placed in its row
     // by number: the editable element holds the second column across every row, and auto-placement

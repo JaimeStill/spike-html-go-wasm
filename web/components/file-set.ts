@@ -9,6 +9,8 @@
 // kept in the order the files were given or added; a rename keeps a file's place. A name names a
 // file in one flat directory, so it holds no path separator.
 
+import { shown } from "./reasons.ts";
+
 /** A file as the set holds it, a frozen snapshot: replaced, never changed, when the file changes.
  * `original` is the text as given, at construction or by add; `modified` is whether `text` differs
  * from it. A read-only file's text never changes, so it is never modified. */
@@ -27,11 +29,6 @@ export interface GivenFile {
   text: string;
   readonly?: boolean;
 }
-
-/** The value as a reason names it: a string as JSON, so its spaces show; anything else as it
- * prints. */
-const shown = (value: unknown) =>
-  typeof value === "string" ? JSON.stringify(value) : String(value);
 
 /** Why value can't be a file's name, or null when it can: a string holding something other than
  * white space, and neither path separator, "/" or "\". Whether another file holds it is the set's

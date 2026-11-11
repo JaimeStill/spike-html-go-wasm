@@ -24,14 +24,7 @@
 // output can't outrun it.
 // From spike-html-apps-components (19d4f59): src/event-log.ts, its atEnd.
 
-import {
-  html,
-  LitElement,
-  nothing,
-  render,
-  type PropertyDeclarations,
-  type PropertyValues,
-} from "lit";
+import { html, LitElement, nothing, render, type PropertyDeclarations } from "lit";
 
 import elements from "@jaimestill/spike-html-apps-foundation/baseline/elements.css" with { type: "css" };
 import reset from "@jaimestill/spike-html-apps-foundation/baseline/reset.css" with { type: "css" };
@@ -41,6 +34,7 @@ import glyphButton from "@jaimestill/spike-html-hosting-components/glyph-button.
 import styles from "./console.css" with { type: "css" };
 import { type ConsoleEntry, type ConsoleLog, entryText } from "./console-log.ts";
 import { checkCircle, copy, trash, xCircle } from "./glyphs.ts";
+import { Subscription } from "./subscription.ts";
 
 /** The tag the element defines. */
 export const tagName = "sl-console";
@@ -164,8 +158,6 @@ export class ConsoleView extends LitElement {
   /** Copy's confirmation, while it shows. */
   declare private status: string;
 
-  /** The log the console listens to: the one held, while the element is in the document. */
-  #heard: ConsoleLog | null = null;
   /** The log the rows show, and the rows' range: the sequence numbers from #first to #next, the
    * last row showing #last. */
   #shown: ConsoleLog | null = null;
@@ -190,31 +182,22 @@ export class ConsoleView extends LitElement {
     this.log = null;
     this.label = "Output";
     this.status = "";
+    // Follows the log it holds, while it is in the document, a frame at a time.
+    new Subscription(this, () => this.log, this.#changed);
   }
 
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#listen();
     // Reconnected, it shows the log as it now is.
     if (this.hasUpdated) this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#listen();
     cancelAnimationFrame(this.#frame);
     this.#frame = 0;
     clearTimeout(this.#confirmation);
     this.status = "";
-  }
-
-  /** Listens to the log the console holds while it is in the document, and to no other. */
-  #listen(): void {
-    const next = this.isConnected ? this.log : null;
-    if (next === this.#heard) return;
-    this.#heard?.removeEventListener("change", this.#changed);
-    next?.addEventListener("change", this.#changed);
-    this.#heard = next;
   }
 
   /** The scrolling log, once rendered. */
@@ -252,10 +235,6 @@ export class ConsoleView extends LitElement {
   #clear(): void {
     if (this.#empty) return;
     this.dispatchEvent(new Event("clear", { bubbles: true }));
-  }
-
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    if (changed.has("log")) this.#listen();
   }
 
   protected override updated(): void {

@@ -23,6 +23,8 @@
 // run unbroken from `first` to `next - 1`, and a reader rendering the log can tell, in constant
 // time, what has gone from the front, what has changed at the end, and what is new.
 
+import { shown } from "./reasons.ts";
+
 /** The fd a write went to, as the runtime names it: 1 is stdout, 2 is stderr. */
 export type Stream = "stdout" | "stderr";
 
@@ -75,11 +77,6 @@ export type ConsoleEntry = OutputEntry | ExitEntry | ResultEntry;
 
 /** How many entries a log keeps unless told otherwise. */
 export const LIMIT = 10_000;
-
-/** The value as a reason names it: a string as JSON, so its spaces show; anything else as it
- * prints. */
-const shown = (value: unknown) =>
-  typeof value === "string" ? JSON.stringify(value) : String(value);
 
 /** The text of an entry as a copy of the log gives it, one line or block: an output line as
  * written; an exit as "<scenario> exited with code <code>"; a result as its text, an error's

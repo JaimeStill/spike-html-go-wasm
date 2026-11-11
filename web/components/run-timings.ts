@@ -14,6 +14,8 @@
 // The model holds them in the runtime's phase order, whatever order they arrive in, and the total
 // is their sum, derived on each read. A new run replaces the last: begin clears every phase.
 
+import { shown } from "./reasons.ts";
+
 /** A run's phases as the runtime names them, in the order a run goes through them: fetch and
  * compile on a load; instantiate for a fresh instance; start, a handler scenario's main running
  * until its handlers are registered; and call, one handler's answer, or run, a program's main
@@ -42,11 +44,6 @@ export interface PhaseTiming {
   readonly phase: Phase;
   readonly ms: number;
 }
-
-/** The value as a reason names it: a string as JSON, so its spaces show; anything else as it
- * prints. */
-const shown = (value: unknown) =>
-  typeof value === "string" ? JSON.stringify(value) : String(value);
 
 /** Why value can't be a phase, or null when it can: one of PHASES. */
 export function phaseProblem(value: unknown): string | null {

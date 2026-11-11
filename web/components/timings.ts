@@ -10,13 +10,14 @@
 // their digits line up, formatted by Intl.NumberFormat as ms: a tenth of a ms under 10 ms, where a
 // tenth is a tenth of the time, and whole ms from there. Nothing moves.
 
-import { html, LitElement, nothing, type PropertyDeclarations, type PropertyValues } from "lit";
+import { html, LitElement, nothing, type PropertyDeclarations } from "lit";
 
 import elements from "@jaimestill/spike-html-apps-foundation/baseline/elements.css" with { type: "css" };
 import reset from "@jaimestill/spike-html-apps-foundation/baseline/reset.css" with { type: "css" };
 import { define } from "@jaimestill/spike-html-apps-foundation/dom.js";
 
 import type { Phase, RunTimings } from "./run-timings.ts";
+import { Subscription } from "./subscription.ts";
 import styles from "./timings.css" with { type: "css" };
 
 /** The tag the element defines. */
@@ -76,40 +77,22 @@ export class TimingsTable extends LitElement {
   /** The table's accessible name, its caption. */
   declare label: string;
 
-  /** The timings the table listens to: those held, while the element is in the document. */
-  #heard: RunTimings | null = null;
-  /** Renders again as the timings change. */
-  readonly #changed = () => this.requestUpdate();
-
   constructor() {
     super();
     this.timings = null;
     this.label = "Timings";
+    // Renders again as the timings it holds change, while it is in the document.
+    new Subscription(
+      this,
+      () => this.timings,
+      () => this.requestUpdate(),
+    );
   }
 
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#listen();
     // Reconnected, it shows the timings as they now are.
     if (this.hasUpdated) this.requestUpdate();
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#listen();
-  }
-
-  /** Listens to the timings the table holds while it is in the document, and to no other. */
-  #listen(): void {
-    const next = this.isConnected ? this.timings : null;
-    if (next === this.#heard) return;
-    this.#heard?.removeEventListener("change", this.#changed);
-    next?.addEventListener("change", this.#changed);
-    this.#heard = next;
-  }
-
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    if (changed.has("timings")) this.#listen();
   }
 
   render() {

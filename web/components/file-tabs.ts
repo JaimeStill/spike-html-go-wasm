@@ -16,14 +16,16 @@
 // The tablist scrolls sideways when its tabs overflow it, and scrolls the tab focus reaches, and
 // the active tab as it changes, into view within itself, never scrolling the page.
 
-import { html, LitElement, nothing, type PropertyDeclarations, type PropertyValues } from "lit";
+import { html, LitElement, nothing, type PropertyDeclarations } from "lit";
 
 import elements from "@jaimestill/spike-html-apps-foundation/baseline/elements.css" with { type: "css" };
 import reset from "@jaimestill/spike-html-apps-foundation/baseline/reset.css" with { type: "css" };
 import { define } from "@jaimestill/spike-html-apps-foundation/dom.js";
 
+import { idrefs, roved } from "./aria.ts";
 import styles from "./file-tabs.css" with { type: "css" };
 import type { FileSet } from "./file-set.ts";
+import { Subscription } from "./subscription.ts";
 
 /** The tag the element defines. */
 export const tagName = "sl-file-tabs";
@@ -69,39 +71,25 @@ export class FileTabs extends LitElement {
   /** The id, in the host's tree, of the panel each tab controls. */
   declare panel: string | null;
 
-  /** The set the tabs listen to: the one held, while the element is in the document. */
-  #heard: FileSet | null = null;
   /** The active file's name at the last render, so the tabs reveal it only as it changes. */
   #shown: string | null = null;
-  /** Renders again as the set changes. */
-  readonly #changed = () => this.requestUpdate();
-
   constructor() {
     super();
     this.files = null;
     this.label = "Files";
     this.panel = null;
+    // Renders again as the set it holds changes, while it is in the document.
+    new Subscription(
+      this,
+      () => this.files,
+      () => this.requestUpdate(),
+    );
   }
 
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#listen();
     // Reconnected, it shows the set as it now is, and looks up its panel in its new tree.
     if (this.hasUpdated) this.requestUpdate();
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.#listen();
-  }
-
-  /** Listens to the set the tabs hold while they are in the document, and to no other. */
-  #listen(): void {
-    const next = this.isConnected ? this.files : null;
-    if (next === this.#heard) return;
-    this.#heard?.removeEventListener("change", this.#changed);
-    next?.addEventListener("change", this.#changed);
-    this.#heard = next;
   }
 
   /** Focuses the selected tab, the tablist's one tab stop, as rendered last: the host itself takes
@@ -132,21 +120,10 @@ export class FileTabs extends LitElement {
   /** The tabs pattern's keys: Left and Right, wrapping, Home and End, each moving focus to a tab
    * and requesting its selection. Any other key, or one with a modifier, is the page's. */
   #keydown(event: KeyboardEvent): void {
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-    const tabs = this.#tabs;
-    const from = tabs.indexOf(event.target as HTMLElement);
-    if (from === -1) return;
     // Left and Right follow the tablist's direction: in a right-to-left page, Right is previous.
-    const step = getComputedStyle(this).direction === "rtl" ? -1 : 1;
-    const to = {
-      ArrowLeft: from - step,
-      ArrowRight: from + step,
-      Home: 0,
-      End: tabs.length - 1,
-    }[event.key];
-    if (to === undefined) return;
+    const tab = roved(event, this.#tabs, this);
+    if (!tab) return;
     event.preventDefault();
-    const tab = tabs[(to + tabs.length) % tabs.length];
     tab.focus({ preventScroll: true });
     this.#reveal(tab);
     this.#request(tab.dataset.name ?? "");
@@ -172,24 +149,10 @@ export class FileTabs extends LitElement {
     }
   }
 
-  /** The elements the panel attribute names, in the host's tree; none found names none. */
-  #panels(): Element[] {
-    const root = this.getRootNode() as Document | ShadowRoot;
-    return (this.panel ?? "")
-      .split(/\s+/)
-      .filter((id) => id !== "")
-      .map((id) => root.getElementById(id))
-      .filter((element) => element !== null);
-  }
-
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    if (changed.has("files")) this.#listen();
-  }
-
   protected override updated(): void {
     // The panel is outside the shadow root, which only element references reach. It is looked up
     // on every update, so a panel added after the tabs is found once they next render.
-    const panels = this.#panels();
+    const panels = idrefs(this, this.panel);
     for (const tab of this.#tabs) tab.ariaControlsElements = panels.length > 0 ? panels : null;
     const active = this.files?.active ?? null;
     if (active === this.#shown) return;
