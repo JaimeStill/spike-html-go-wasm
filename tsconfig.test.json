@@ -6,7 +6,7 @@
 // suite.
 // Adapted from spike-html-hosting-architecture (27d70e1): tsconfig.test.json, its options the
 // SDK's base.
-// From spike-html-hosting-sdk (v0.6.1): template/tsconfig.test.json.
+// From spike-html-hosting-sdk (v0.6.2): template/tsconfig.test.json.
 {
   "extends": "@jaimestill/spike-html-hosting-sdk/tsconfig.json",
   "compilerOptions": {

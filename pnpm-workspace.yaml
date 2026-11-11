@@ -6,5 +6,5 @@
 # bump lands, a review that stands in for the age gate; with the wait on, a frozen install of a
 # lockfile that pins a release under a day old fails, the scaffold's first install and CI's among
 # them.
-# From spike-html-hosting-sdk (v0.6.1): template/pnpm-workspace.yaml.
+# From spike-html-hosting-sdk (v0.6.2): template/pnpm-workspace.yaml.
 minimumReleaseAge: 0

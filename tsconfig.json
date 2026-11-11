@@ -4,7 +4,7 @@
 // Adapted from spike-html-apps (529ec52): tsconfig.json, its inputs the site's configs.
 // Adapted from spike-html-hosting-architecture (27d70e1): tsconfig.json, its options the SDK's
 // base.
-// From spike-html-hosting-sdk (v0.6.1): template/tsconfig.json.
+// From spike-html-hosting-sdk (v0.6.2): template/tsconfig.json.
 {
   "extends": "@jaimestill/spike-html-hosting-sdk/tsconfig.json",
   "compilerOptions": {

@@ -4,7 +4,7 @@
 // each. The site is served as the browser tier serves it, by the SDK's served(), under the base.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.1): template/scripts/screenshots.config.ts, its pages
+// Adapted from spike-html-hosting-sdk (v0.6.2): template/scripts/screenshots.config.ts, its pages
 // the hand pages, as the site copies no tree for contentPages to list.
 
 import { join } from "node:path";

@@ -15,7 +15,7 @@
 // Markdown file.
 // Adapted from spike-html-hosting-architecture (27d70e1): vite.config.ts, its plugins and its base
 // the SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.1): template/vite.config.ts, its trees none and its one
+// Adapted from spike-html-hosting-sdk (v0.6.2): template/vite.config.ts, its trees none and its one
 // page the hand index, as the SDK's README gives a root-style site.
 
 import { fileURLToPath } from "node:url";

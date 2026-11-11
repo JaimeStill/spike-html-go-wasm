@@ -99,7 +99,7 @@ The spike reads these repositories and never writes to them. Each is a key in th
 
 - `sqlate`, `go-core`, and `go-web-sdk`: the demos' Go, each at its latest release when a task
   plans; graph-ergonomics is updating the Go stack.
-- `spike-html-hosting-sdk` at v0.6.1, `spike-html-hosting-components` at v0.5.0, and
+- `spike-html-hosting-sdk` at v0.6.2, `spike-html-hosting-components` at v0.5.0, and
   `spike-html-hosting-icons` at v0.1.0: the site scaffold, shell, and Shiki 4.6.0 themes.
 - `spike-html-apps-foundation` at v0.3.0, through the SDK: the visual baseline.
 - `spike-html-apps-tooling` at v0.3.0: the screenshot review.

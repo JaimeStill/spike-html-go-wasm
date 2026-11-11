@@ -1,10 +1,10 @@
-<!-- Adapted from spike-html-hosting-sdk (v0.6.1): template/README.md, its site a hand index with
+<!-- Adapted from spike-html-hosting-sdk (v0.6.2): template/README.md, its site a hand index with
      no copied tree. -->
 
 # spike-html-go-wasm
 
 The GitHub Pages site of spike-html-go-wasm, made from the template of
-[spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.1. Its index,
+[spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.2. Its index,
 `index.html`, is a hand page served under `/spike-html-go-wasm/`, beside a second hand page,
 `runtime.html`, which runs Go through the runtime in `web/runtime/`. The site copies no Markdown
 tree: `content.json` records none, and `content/` holds nothing. The spike's question, evidence,

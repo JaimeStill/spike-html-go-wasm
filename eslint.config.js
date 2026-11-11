@@ -7,7 +7,7 @@
 // SDK's.
 // Adapted from spike-html-apps (dae9a77): eslint.config.js, its app tier's table replaced by the
 // three web tiers', each a directory in web/.
-// Adapted from spike-html-hosting-sdk (v0.6.1): template/eslint.config.js, ignoring the copied
+// Adapted from spike-html-hosting-sdk (v0.6.2): template/eslint.config.js, ignoring the copied
 // wasm_exec.js, the pinned Go's own file, which mise run lint:go checks byte for byte.
 
 import { config } from "@jaimestill/spike-html-hosting-sdk/eslint.js";

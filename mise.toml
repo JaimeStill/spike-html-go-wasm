@@ -2,7 +2,7 @@
 # reads no network, and fails naming mise run install, the one task that installs tools.
 # Adapted from spike-html-hosting (690e5e4): mise.toml, its init toolchain and tasks, with Go and
 # TinyGo added.
-# Adapted from spike-html-hosting-sdk (v0.6.1): template/mise.toml, its toolchain merged with the
+# Adapted from spike-html-hosting-sdk (v0.6.2): template/mise.toml, its toolchain merged with the
 # repository's Go, TinyGo, and pnpm pins, its build the hand index alone, and its unit tier the
 # empty content.json.
 [settings]
