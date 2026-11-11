@@ -86,17 +86,21 @@ Slices        1. Bridge: the handler registry and probe's format handler, with t
                  format, and files, proven in the browser tier.
               4. Stop: probe's spin handler, terminate and repost, and the browser tier's proof
                  of no refetch and a working next call.
-              (No upgrade slice: the repo is current.)
+              5. Upgrade (added by escalation, after brief ready): spike-html-hosting-sdk v0.6.2,
+                 Help's heading taking focus as it opens, on both pages; node 26.13.1.
 Out of scope  the six components and the specimen page; the playground's toolchain, archives,
               manifest, and compiling or linking in the page; persistence (OPFS, IndexedDB, Cache
               Storage); any workspace module or go.mod requirement; sizes, TinyGo, and timings on
               the live site; Markdown pages; Firefox and Safari runs; any change to the live
-              command, the SDK, or a reference repository.
-Door          two-way: the runtime page is a public page that can be removed; nothing tagged.
+              command, or a reference repository other than the help dialog fix escalation 1
+              approved.
+Door          one-way for the SDK tag (released); the rest two-way: the runtime page is a public
+              page that can be removed.
+Release       spike-html-hosting-sdk v0.6.2 (released during BUILD, by escalation 1).
 
 ## Progress
 
-slices 4/4 committed · standards done · spec done · editor done
+slices 5/5 committed (5: SDK v0.6.2 upgrade) · standards done · spec done · editor done
 
 ## Decisions
 
@@ -257,6 +261,19 @@ slices 4/4 committed · standards done · spec done · editor done
 - runtime: the probe's format handler prints its line only on success.
 - runtime: review and a comment in install-fs.ts hold the fs-before-shim import order, because no
   test can fail on it.
+- runtime (escalation 1, after brief ready): Help opened by `?` focused its Close, whose
+  interestfor hint showed at once. The fix lands in spike-html-hosting-sdk v0.6.2 this session,
+  before runtime ships, with runtime adding an upgrade slice; components' docs and tests change on
+  main with no release; the architect chose to fix every affected site now, not leave
+  spike-html-hosting to the intake.
+- runtime (escalation 2): `autofocus` on <dialog> does nothing in Chromium 155 and 157, so Help's
+  heading takes focus: `<h2 id="help-title" tabindex="-1" autofocus>`; SDK site.css drops its
+  outline. Rejected: script suppressing Close's hint on the opening focus, and `dialog.focus()`
+  from the shell's keys module.
+- runtime: shipped with the fix: spike-html-hosting-sdk v0.6.2 (PR #12, tagged by its Release
+  workflow as release commit e0baeac), spike-html-hosting-components (PR #12, no tag),
+  spike-html-hosting (PR #13), spike-html-hosting-architecture (PR #10), and
+  spike-html-hosting-sqlate (PR #11), each site's Pages deploy green.
 
 ## Notes
 
@@ -279,6 +296,10 @@ slices 4/4 committed · standards done · spec done · editor done
   to workers through CDP to count them.
 - When Go exits during a call, wasm_exec.js deletes the instance, so the worker races the exit's
   rejection ahead of the call.
+- The SDK's Release workflow tags a release itself, on a release commit above the merge; pushing
+  the tag by hand is rejected as already existing.
+- The SDK removes the focus outline on Help's heading, which isn't a control; spike-html-hosting-
+  sqlate's STANDARDS.md says "Focus is always visible", so its next review may raise it.
 - staticcheck SA5002 flags an empty `for {}`; the probe's spin loops on a counter.
 
 ## Pending edits
