@@ -3,12 +3,16 @@
 // data-handler the handler it calls, a program's main run when it names none. Loading is lazy: the
 // runner starts its worker and fetches a module only on a Run. Stop terminates the worker, which
 // ends whatever runs, spin's loop among them, and the runner hands the compiled module to a fresh
-// one, so the next Run instantiates afresh without a fetch.
+// one, so the next Run instantiates afresh without a fetch. A Run while another is pending stops
+// that one first, as the runner does every request: the earlier Run rejects with "stopped", and the
+// page shows the latest Run alone, logging how each settled in #runs.
 //
 // What the page shows, each element's state also on its data attributes: #output, one span per
 // output event, its class and data-stream the stream; #result, the last run's answer, data-state
 // resolved or rejected; #exit, the last exit code, data-code; #timings, a row per phase of the
-// last Run, data-phase; and #status, data-state busy or idle.
+// last Run, data-phase; #status, data-state busy or idle, idle once the latest Run settles; and
+// #runs, one item per Run, data-run the handler or scenario it names, data-state pending, resolved,
+// or rejected, and its answer or error as text.
 
 import { Runner } from "../runtime/runner.ts";
 
@@ -25,6 +29,7 @@ const result = element("#result");
 const exit = element("#exit");
 const timings = element("#timings");
 const status = element("#status");
+const runs = element("#runs");
 const input = element<HTMLTextAreaElement>("#input");
 
 runner.listen((event) => {
@@ -56,10 +61,27 @@ runner.listen((event) => {
   }
 });
 
+/** How many Runs have started: only the latest shows its answer and sets the status idle. */
+let latest = 0;
+
 /** Runs what button names, showing its answer or error; each Run clears the last one's. */
 async function run(button: HTMLButtonElement) {
   const { scenario, handler } = button.dataset;
   if (!scenario) return;
+  const mine = ++latest;
+  const item = document.createElement("li");
+  item.dataset.run = handler ?? scenario;
+  item.dataset.state = "pending";
+  item.textContent = `${handler ?? scenario}: pending`;
+  runs.append(item);
+  /** Records how this Run settled in #runs, and in #result when it is the latest. */
+  const settle = (state: "resolved" | "rejected", text: string) => {
+    item.dataset.state = state;
+    item.textContent = `${handler ?? scenario}: ${state}, ${text}`;
+    if (mine !== latest) return;
+    result.dataset.state = state;
+    result.textContent = text;
+  };
   output.replaceChildren();
   timings.replaceChildren();
   result.textContent = exit.textContent = "";
@@ -70,14 +92,14 @@ async function run(button: HTMLButtonElement) {
   try {
     await runner.load(scenario);
     const value = await runner.run(handler, input.value);
-    result.dataset.state = "resolved";
-    result.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+    settle("resolved", typeof value === "string" ? value : JSON.stringify(value, null, 2));
   } catch (error) {
-    result.dataset.state = "rejected";
-    result.textContent = error instanceof Error ? error.message : String(error);
+    settle("rejected", error instanceof Error ? error.message : String(error));
   } finally {
-    status.dataset.state = "idle";
-    status.textContent = "Idle.";
+    if (mine === latest) {
+      status.dataset.state = "idle";
+      status.textContent = "Idle.";
+    }
   }
 }
 

@@ -1,8 +1,9 @@
 <!doctype html>
 <!-- The runtime page, a hand page: hello and the probe's handlers run through the runtime's runner
      (web/runtime/runner.ts) with plain controls, no components: Run per scenario or handler, an
-     input the handlers read, Stop, which ends spin, the output as the runner's events give it,
-     stdout and stderr marked, the last answer, the exit code, and the last run's timings by phase.
+     input the handlers read, Stop, which ends spin, a Run while another is pending, which stops
+     that one first, the output as the runner's events give it, stdout and stderr marked, the last
+     answer, the exit code, the last run's timings by phase, and how each run settled.
      Its script, web/pages/runtime.ts, starts nothing on load: the runner starts its worker, and the
      worker fetches a module, only on a Run. The shell is the index's, the same header, dialogs, and
      unlayered header-actions rule; see index.html for each. -->
@@ -97,7 +98,8 @@
       </p>
       <p>
         Stop terminates the worker, ending whatever runs, and hands the compiled module to a fresh
-        one: the next Run starts a new instance without fetching or compiling again.
+        one: the next Run starts a new instance without fetching or compiling again. A Run while
+        another is pending stops that one first, which rejects with <code>stopped</code>.
       </p>
       <p><label for="input">Input</label></p>
       <textarea id="input" rows="4" spellcheck="false">{"name":"probe","handlers":["format","files","spin","crash"]}</textarea>
@@ -114,6 +116,8 @@
       <h2 id="result-heading">Result</h2>
       <pre id="result" aria-labelledby="result-heading"></pre>
       <p id="exit"></p>
+      <h2 id="runs-heading">Runs</h2>
+      <ol id="runs" aria-labelledby="runs-heading"></ol>
       <h2 id="timings-heading">Timings</h2>
       <table aria-labelledby="timings-heading">
         <thead>

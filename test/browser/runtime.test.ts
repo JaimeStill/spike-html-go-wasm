@@ -6,7 +6,9 @@
 // a held module reused without a fetch, and scenarios switched in place in one worker. Then Stop:
 // it ends spin's busy loop, and after it, or after crash's panic ends the instance, the next call
 // answers from the module the runner kept, with no new .wasm request, and the page never has more
-// than one live worker.
+// than one live worker. And one request at a time: a Run while spin is pending stops spin first,
+// whose call rejects with "stopped", and the Run answers, a format from the module kept and a
+// hello's load in the fresh worker.
 //
 // The worker fetches the modules itself, and the page's own Network domain never sees a worker's
 // requests, so each page auto-attaches to its workers through the page's session, in the protocol's
@@ -158,6 +160,23 @@ async function shown({ page }: Watched): Promise<Shown> {
       : Number(document.querySelector("#exit").dataset.code),
     phases: [...document.querySelectorAll("#timings > tr")].map((row) => row.dataset.phase),
   })`);
+}
+
+/** How each Run settled, in the order they started, from the page's #runs. */
+const settled = ({ page }: Watched): Promise<{ run: string; state: string; text: string }[]> =>
+  page.evaluate(`[...document.querySelectorAll("#runs > li")].map((item) => ({
+    run: item.dataset.run,
+    state: item.dataset.state,
+    text: item.textContent,
+  }))`);
+
+/** Starts spin and waits until its loop holds the worker. */
+async function spin(watched: Watched): Promise<void> {
+  await start(watched, "probe", "spin");
+  await until(
+    watched.page,
+    `document.querySelector("#output").textContent === "spin: looping until Stop\\n"`,
+  );
 }
 
 const helloLine = /^hello from Go go1\.\d+\.\d+ on js\/wasm\n$/;
@@ -351,11 +370,7 @@ describe("Stop", () => {
   test("ends spin's busy loop, and the next format answers from the kept module, no fetch", async () => {
     const watched = await watch("runtime.html");
     try {
-      await start(watched, "probe", "spin");
-      await until(
-        watched.page,
-        `document.querySelector("#output").textContent === "spin: looping until Stop\\n"`,
-      );
+      await spin(watched);
       // The loop holds the worker: the call stays pending, however long the page waits.
       await new Promise((resolve) => setTimeout(resolve, 300));
       assert.equal(
@@ -439,6 +454,52 @@ describe("a Go panic outside any handler", () => {
       assert.deepEqual(next.phases, ["instantiate", "start", "call"]);
       assert.deepEqual(wasmRequests(watched), ["go/probe.wasm"]);
       assert.equal(watched.workers.length, 1, `one worker: ${watched.workers}`);
+    } finally {
+      await watched.page.close();
+    }
+  });
+});
+
+describe("one request at a time", () => {
+  test("a call while spin is pending stops spin first, and answers from the kept module", async () => {
+    const watched = await watch("runtime.html");
+    try {
+      await spin(watched);
+      const format = await run(watched, "probe", "format", "[5]");
+      assert.deepEqual(format.result, { state: "resolved", text: "[\n  5\n]" });
+      // Only format's events: its output and the fresh instance's phases, none of spin's.
+      assert.deepEqual(format.output, [
+        { stream: "stdout", text: "format: 3 bytes in, 7 bytes out\n" },
+      ]);
+      assert.deepEqual(format.phases, ["instantiate", "start", "call"]);
+      assert.deepEqual(await settled(watched), [
+        { run: "spin", state: "rejected", text: "spin: rejected, stopped" },
+        { run: "format", state: "resolved", text: "format: resolved, [\n  5\n]" },
+      ]);
+      // The module was reposted to the fresh worker, not fetched again.
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm"]);
+      assert.equal(watched.workers.length, 2, `two workers: ${watched.workers}`);
+      await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
+    } finally {
+      await watched.page.close();
+    }
+  });
+
+  test("a load while spin is pending stops spin first, then loads in the fresh worker", async () => {
+    const watched = await watch("runtime.html");
+    try {
+      await spin(watched);
+      const hello = await run(watched, "hello");
+      assert.equal(hello.exit, 0);
+      assert.match(hello.output.map(({ text }) => text).join(""), helloLine);
+      assert.deepEqual(hello.phases, ["fetch", "compile", "instantiate", "run"]);
+      assert.deepEqual(await settled(watched), [
+        { run: "spin", state: "rejected", text: "spin: rejected, stopped" },
+        { run: "hello", state: "resolved", text: "hello: resolved, 0" },
+      ]);
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm", "go/hello.wasm"]);
+      assert.equal(watched.workers.length, 2, `two workers: ${watched.workers}`);
+      await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
     } finally {
       await watched.page.close();
     }
