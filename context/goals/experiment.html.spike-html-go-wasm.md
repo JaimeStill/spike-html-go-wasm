@@ -184,7 +184,7 @@ Door          two-way: the components stay in this repository unreleased, the ru
 
 ## Progress
 
-slices 5/10 committed · standards — · spec — · editor —
+slices 6/10 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -432,6 +432,21 @@ slices 5/10 committed · standards — · spec — · editor —
   caret.
 - components: lit 3.3.3 and vite-plugin-standard-css-modules 0.3.0 are pinned at the root, the
   latter for the components' own CSS module scripts; the boundaries table gains only shiki.
+- components (after approval): the components are captured one capture name per component over
+  the one components page, `--page components/<component>`, each whole at 1280px, an open step
+  hiding the other sections; the index stays on the SDK's description. Rejected: one specimen page
+  per component (changes the one components page), and the page whole at one width (still grows
+  with every component). The SDK's three widths wrote 68 images for the editor alone.
+- components: ConsoleLog caps entries, not visual lines; a write joins the previous line only when
+  it's the same stream's open last entry, so no line mixes streams.
+- components: the console's frame is a block with its own max block size
+  (--sl-console-max-block-size, 24rem), because as a flex item each append re-laid every row
+  (~50 ms against ~3 ms at 10,000 rows). Rejected: content-visibility, which drops rows from the
+  accessibility tree.
+- components: stderr keeps the foreground colour on a red tint with a red rule and a hidden
+  "stderr: " for assistive technology, because red text falls below 4.5:1 in some palettes.
+- components: Octicons glyphs are copied into the components tier, since no tier may import the
+  icons layer and the boundaries table gains only shiki.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
