@@ -96,7 +96,7 @@ Door          two-way: the runtime page is a public page that can be removed; no
 
 ## Progress
 
-slices 3/4 committed · standards — · spec — · editor —
+slices 4/4 committed · standards — · spec — · editor —
 
 ## Decisions
 
