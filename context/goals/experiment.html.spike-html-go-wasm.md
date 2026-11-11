@@ -1,13 +1,13 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** runtime
-- **Branch:** runtime
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
 1. [x] site
-2. [ ] runtime
+2. [x] runtime
 3. [ ] components
 4. [ ] playground
 5. [ ] programs
@@ -97,10 +97,6 @@ Out of scope  the six components and the specimen page; the playground's toolcha
 Door          one-way for the SDK tag (released); the rest two-way: the runtime page is a public
               page that can be removed.
 Release       spike-html-hosting-sdk v0.6.2 (released during BUILD, by escalation 1).
-
-## Progress
-
-slices 5/5 committed (5: SDK v0.6.2 upgrade) · standards done · spec done · editor done
 
 ## Decisions
 
