@@ -178,7 +178,7 @@ Door          two-way: the components stay in this repository unreleased, the ru
 
 ## Progress
 
-slices 0/9 committed · standards — · spec — · editor —
+slices 1/9 committed · standards — · spec — · editor —
 
 ## Decisions
 
