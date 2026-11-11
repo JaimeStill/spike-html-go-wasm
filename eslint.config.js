@@ -5,10 +5,10 @@
 // test/unit/web-layers.test.ts runs over test/unit/web-layers-tree.ts's tree.
 // Adapted from spike-html-hosting-architecture (27d70e1): eslint.config.js, its configuration the
 // SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.1): template/eslint.config.js, ignoring the copied
-// wasm_exec.js, the pinned Go's own file, which mise run lint:go checks byte for byte.
 // Adapted from spike-html-apps (dae9a77): eslint.config.js, its app tier's table replaced by the
 // three web tiers', each a directory in web/.
+// Adapted from spike-html-hosting-sdk (v0.6.1): template/eslint.config.js, ignoring the copied
+// wasm_exec.js, the pinned Go's own file, which mise run lint:go checks byte for byte.
 
 import { config } from "@jaimestill/spike-html-hosting-sdk/eslint.js";
 import { defineConfig } from "eslint/config";
