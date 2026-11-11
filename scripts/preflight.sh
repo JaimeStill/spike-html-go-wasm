@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fails naming mise run install when a tool a task needs is missing: the node_modules tooling, and
-# typescript-go's tsc, the pinned mise tool; Go and golangci-lint, and go.mod's requirements in the
-# module cache; and with `browser`, the pinned chrome-headless-shell.
+# typescript-go's tsc, the pinned mise tool; Go, golangci-lint, shellcheck, and actionlint, and
+# go.mod's requirements in the module cache; and with `browser`, the pinned chrome-headless-shell.
 # Adapted from spike-html-apps-foundation (d5037b4): scripts/preflight.sh, without the browser
 # check.
 # Adapted from spike-html-apps-foundation (d5037b4): scripts/preflight.sh, with vite among the
@@ -12,7 +12,7 @@
 # browser check.
 # Adapted from spike-html-hosting-sdk (v0.6.1): template/scripts/preflight.sh, which runs before
 # node_modules exists, so the site holds its own copy rather than the package's; with Go,
-# golangci-lint, and go.mod's requirements in the module cache.
+# golangci-lint, shellcheck, actionlint, and go.mod's requirements in the module cache.
 set -euo pipefail
 
 fail() {
@@ -26,6 +26,8 @@ done
 mise which tsc > /dev/null 2>&1 || fail "tsc (typescript-go, mise.toml)"
 mise which go > /dev/null 2>&1 || fail "go (mise.toml)"
 mise which golangci-lint > /dev/null 2>&1 || fail "golangci-lint (mise.toml)"
+mise which shellcheck > /dev/null 2>&1 || fail "shellcheck (mise.toml)"
+mise which actionlint > /dev/null 2>&1 || fail "actionlint (mise.toml)"
 # With the proxy off, a requirement missing from the module cache fails rather than downloads.
 GOPROXY=off GOTOOLCHAIN=local GOWORK=off go mod download > /dev/null 2>&1 \
   || fail "go.mod's requirements (the Go module cache)"

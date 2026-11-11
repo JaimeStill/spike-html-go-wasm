@@ -62,6 +62,7 @@ dir = "{{config_root}}"
 
 [tasks."lint:shell"]
 description = "Shellcheck every .sh file outside node_modules/ and .git/; reads no network, writes nothing"
+depends = ["preflight"]
 run = '''
 set -eu
 find . -name '*.sh' -not -path './node_modules/*' -not -path './.git/*' -print0 \
@@ -72,6 +73,7 @@ dir = "{{config_root}}"
 # actionlint shellchecks each run: block too, with the shellcheck pinned above.
 [tasks."lint:workflows"]
 description = "Lint the GitHub Actions workflows with actionlint; reads no network, writes nothing"
+depends = ["preflight"]
 run = "actionlint"
 dir = "{{config_root}}"
 
