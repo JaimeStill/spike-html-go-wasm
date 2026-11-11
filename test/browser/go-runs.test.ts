@@ -9,16 +9,18 @@
 // new .wasm request, and the page never has more than one live worker; the runner's Stop while
 // idle, which no demo sends, leaves the scenario loaded. And one request at a time: a program's
 // Run in another demo while spin is pending stops spin first, then loads hello in the fresh
-// worker. hello's line and exit, format's answer, line, and error, the timings by phase, and a
-// call while spin is pending are go-demo.test.ts's, the page's watch and helpers go-demos.ts's.
-// Every wait is bounded. Nothing here names the site: its base is package.json's name.
+// worker; a load or Run while another demo's load is pending, its probe.wasm held back by CDP's
+// Fetch, stops that load, which rejects with "stopped", and proceeds, and the stopped load,
+// settling, never clears the newer load's scenario. hello's line and exit, format's answer, line,
+// and error, the timings by phase, and a call while spin is pending are go-demo.test.ts's, the
+// page's watch and helpers go-demos.ts's. Every wait is bounded. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 
 import { launch } from "@jaimestill/spike-html-apps-tooling/browser.js";
-import type { Browser } from "@jaimestill/spike-html-apps-tooling/browser.js";
+import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
@@ -63,6 +65,27 @@ const SPIN = demo("shared", 0);
 const FORMAT5 = demo("shared", 1);
 
 const HELLO_DONE = "Finished hello, exit code 0";
+
+/** probe.wasm's requests held back, each paused, by CDP's Fetch, which sees the worker's fetch
+ * through the page, until release(), which lets every one paused go on and holds no more. */
+async function hold(page: Page): Promise<{ paused: string[]; release(): Promise<void> }> {
+  const paused: string[] = [];
+  page.on("Fetch.requestPaused", ({ requestId }) => paused.push(requestId));
+  await page.cdp("Fetch.enable", { patterns: [{ urlPattern: "*/go/probe.wasm" }] });
+  let released = false;
+  return {
+    paused,
+    async release() {
+      if (released) return;
+      released = true;
+      await page.cdp("Fetch.disable").catch(() => {});
+      // A request of a worker Stop terminated may be gone already.
+      for (const requestId of paused) {
+        await page.cdp("Fetch.continueRequest", { requestId }).catch(() => {});
+      }
+    },
+  };
+}
 
 describe("the Go modules under the base", () => {
   for (const name of ["hello", "probe"]) {
@@ -283,6 +306,62 @@ describe("one request at a time", () => {
       assert.equal(watched.workers.length, 2, `two workers: ${watched.workers}`);
       await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
     } finally {
+      await page.close();
+    }
+  });
+
+  test("a program's Run while a load is pending stops the load, which rejects as stopped, then loads and runs hello", async () => {
+    const watched = await open();
+    const { page } = watched;
+    const held = await hold(page);
+    try {
+      // Format's load waits on probe.wasm, held back.
+      const loading = page.evaluate(`${FORMAT}.runner.load("probe").then(
+        () => "loaded",
+        (error) => error.message,
+      )`);
+      await settles(() => held.paused.length === 1, "probe.wasm requested and held");
+      const hello = await run(page, HELLO, HELLO_DONE);
+      assert.equal(await loading, "stopped");
+      assert.match(hello.lines.map(({ text }) => text).join(""), helloLine);
+      assert.deepEqual(hello.phases, ["Fetch", "Compile", "Instantiate", "Run"]);
+      // The stopped load's response, released now, reaches no worker and changes nothing.
+      await held.release();
+      assert.equal(await page.evaluate(`${FORMAT}.runner.scenario`), "hello");
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm", "go/hello.wasm"]);
+      assert.equal(watched.workers.length, 2, `two workers: ${watched.workers}`);
+      await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
+    } finally {
+      await held.release();
+      await page.close();
+    }
+  });
+
+  test("a Run while another demo's load of the same scenario is pending stops it, which, settling, leaves the newer load's scenario", async () => {
+    const watched = await open();
+    const { page } = watched;
+    const held = await hold(page);
+    try {
+      await pressControl(page, FORMAT, "run");
+      await settles(() => held.paused.length === 1, "format's probe.wasm requested and held");
+      await pressControl(page, FILES, "run");
+      await says(page, FORMAT, "Stopped format");
+      await settles(() => held.paused.length === 2, "files' probe.wasm requested and held");
+      await held.release();
+      await says(page, FILES, "Finished files");
+      const files = await shown(page, FILES);
+      assert.equal(files.result?.ok, true, JSON.stringify(files.result));
+      assert.equal(await page.evaluate(`${FORMAT}.runner.scenario`), "probe");
+      // The newer load's module is held: the next call answers on its instance, with no fetch.
+      const next = await run(page, FORMAT5, "Finished format");
+      assert.deepEqual(next.result, { ok: true, text: "[\n  5\n]\n" });
+      assert.deepEqual(next.phases, ["Call"]);
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm", "go/probe.wasm"]);
+      assert.deepEqual((await shown(page, FORMAT)).rows, []);
+      assert.equal(watched.workers.length, 2, `two workers: ${watched.workers}`);
+      await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
+    } finally {
+      await held.release();
       await page.close();
     }
   });
