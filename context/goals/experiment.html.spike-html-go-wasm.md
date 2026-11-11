@@ -77,7 +77,7 @@ Door          two-way — enabling Pages and the first deploy publish a public s
 
 ## Progress
 
-slices 5/5 committed · standards — · spec — · editor —
+slices 5/5 committed · standards ✓ · spec ✓ (2 rounds) · editor ✓
 
 ## Decisions
 
@@ -151,6 +151,31 @@ slices 5/5 committed · standards — · spec — · editor —
   empty tree list; the Markdown shell arrives with the sqlate task.
 - site: no header site nav. The SDK v0.6.1 shell checks treat sl-site-nav as optional, and this
   site isn't in components v0.5.0's built list. Rejected: a sites list served under the base.
+- site: `content.json` stays `{ "trees": [] }`, because the SDK's crawl and content check read it
+  without checking that it exists.
+- site: one unlayered CSS rule in the index pushes the header-actions group to the inline end;
+  SDK v0.6.1's site.css places it there only beside a site nav.
+- site: the template's palette check is dropped until a page holds highlighted code.
+- site: no `internal/hello`; the hello entrypoint imports only the standard library.
+- site: the Go build is the second step of `mise run build` (`scripts/build-go.sh`), not a Vite
+  plugin, so a bare `vite build` omits the wasm.
+- site: the Go lint and build export `GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off
+  GOTOOLCHAIN=local`, so the check reads no network.
+- site: page scripts live in `web/pages/`. Components may import lit, the foundation, and the
+  hosting components; pages may import components, the runtime, the foundation, and the hosting
+  components, but not lit directly; the runtime imports only its own files. `web/**` gets browser
+  globals with node's turned off; `globals` 17.14.0 is added as a pin.
+- site: the Go direction check is a unit-tier TypeScript test running host `go list -e` under
+  GOOS=js, and test imports count. Widened by the session, per the Go Elemental topology page:
+  every root-level package, `bridge/` included, imports no `internal/` and no `cmd/`.
+- site: every replace directive fails the check, not only a local one.
+- site: currency's go.mod part queries direct requirements on a scratch copy of go.mod and
+  go.sum, so it never writes the tree.
+- site: `mise run live` makes three checks (index 200 text/html; hello.wasm 200
+  application/wasm; gzip) with one module request that accepts gzip.
+- site: preflight checks shellcheck and actionlint too, closing a gap in the SDK template.
+- site: the no-site-nav test reads the custom element registry, because Vite bundles
+  site-nav.js into a hashed chunk.
 
 ## Notes
 
@@ -161,6 +186,10 @@ slices 5/5 committed · standards — · spec — · editor —
   `elemental-runtime-layers` backlog goal.
 - `GOOS=js` go test under node needs a trimmed environment: wasm_exec.js caps argv+env at 12 KB,
   and mise's environment overflows it.
+- SDK v0.6.1's site.css places header-actions at the inline end only beside a site nav; an
+  intake candidate.
+- Vite's preview doesn't gzip, so the live command alone proves the gzip assertion, against the
+  deployed site.
 
 ## Pending edits
 
