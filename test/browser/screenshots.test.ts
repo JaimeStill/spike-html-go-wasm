@@ -4,8 +4,9 @@
 // what it printed, so the first run's empty TMPDIR is the output's cleanup, not a capture that
 // never wrote. A component's capture, --page components/<component>, takes its section alone: the
 // capture file names a page for every section of the components page, its open step hides every
-// other section and leaves the component's focus-start mark the page's first, and a run of one
-// prints that component's few tiles alone and leaves nothing under its TMPDIR.
+// other section and leaves the component's focus-start mark the page's first, or none for a
+// component with no focus state, and a run of one prints that component's few tiles alone and
+// leaves nothing under its TMPDIR.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -67,7 +68,7 @@ describe("a component's capture", () => {
     );
   });
 
-  test("its open step hides every other section and leaves its own focus-start mark the page's first", async () => {
+  test("its open step hides every other section and leaves its own focus-start mark, if any, the page's first", async () => {
     for (const component of COMPONENTS) {
       const described = description.pages.find(({ name }) => name === `components/${component}`);
       const [state] = described?.states ?? [];
@@ -77,14 +78,15 @@ describe("a component's capture", () => {
       const page = await browser.open(`${server.origin}components.html`);
       try {
         await state.open(page);
-        const { shown, mark } = await page.evaluate(`(() => ({
+        const { shown, mark, own } = await page.evaluate(`(() => ({
           shown: [...document.querySelectorAll("main > section")]
             .filter((section) => section.checkVisibility())
             .map((section) => section.id),
           mark: document.querySelector("[data-focus-start]")?.closest("section")?.id ?? null,
+          own: !!document.querySelector("#${component} [data-focus-start]"),
         }))()`);
         assert.deepEqual(shown, [component]);
-        assert.equal(mark, component);
+        assert.equal(mark, own ? component : null);
       } finally {
         await page.close();
       }

@@ -28,10 +28,13 @@ and path are in `context/README.md`.
   and the probe's handlers on the runtime page, and holds the code editor on the components
   page: its colors to the SDK's fences in every palette and scheme, its accessibility tree, its
   gutter, and its loading; and the file tabs there: their accessibility tree, keyboard, control
-  by the page's file set, modified marker, overflow, and subscription. The unit tier also holds
-  the file set's operations, refusals, and change events. It proves that Stop ends the probe's spin and the
-  next call fetches nothing new, and that the probe's crash, a panic outside any handler, prints
-  to stderr and exits 2.
+  by the page's file set, modified marker, overflow, and subscription; and the timings there:
+  their table in the accessibility tree, only the run's phases in order with their total, the
+  times' format and alignment, the empty state, a new run replacing the last, and subscription.
+  The unit tier also holds the file set's and the run timings' operations, refusals, and change
+  events. The browser tier proves that Stop ends the probe's spin and the next call fetches
+  nothing new, and that the probe's crash, a panic outside any handler, prints to stderr and
+  exits 2.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
   (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`. A bare `vite build`
@@ -235,6 +238,40 @@ keyboard.
 - `./glyphs.js`: the glyphs the components draw in their shadow roots, Octicons' copy, trash,
   check-circle, and x-circle from the icons layer, written out as Lit templates with the same
   paths: the build fills the icons layer into a page's own markup, and no tier imports it.
+- `./run-timings.js`: `RunTimings`, a run's timings, a model with no document or element, an
+  `EventTarget` its owner, the page or the element composing the timings over a runner, is the
+  only writer of. It takes the runtime's timing events as they are, their shapes re-declared
+  (`Phase`, `TimingLike`), since the components tier imports nothing from the runtime.
+  - Operations: `begin()` begins a new run, clearing the last's phases; `record({ phase, ms })`
+    adds the phase's time to the current run, or replaces the time it has.
+  - Reading: `phases`, the current run's phases as frozen snapshots, `{ phase, ms }`, only those
+    recorded, in the runtime's phase order (`PHASES`: fetch, compile, instantiate, start, call,
+    run) whatever order they arrived in, the same array until the timings change; `total`, their
+    sum in ms; `ms(phase)`; and `runs`, how many runs have begun, 0 before the first.
+  - Refusals: a record it can't apply throws, naming the reason, and changes nothing: a
+    `TypeError` for a phase that isn't a string or a time that isn't a number, a `RangeError` for
+    a phase the runtime doesn't name or a time that is negative, NaN, or infinite.
+    `phaseProblem(value)` and `msProblem(value)` give that reason, or `null`.
+  - Events: one `change` `Event` for each operation that changes the timings: every `begin()`,
+    and a record that adds a phase or changes its time; a record of the time a phase has sends
+    none. The unit tier tests it under node.
+- `./timings.js`: `sl-timings`, the last run's phases as a table: a row for each phase the run
+  had, in phase order, its name and its time, and a total row. It renders the `RunTimings` it is
+  given, follows each change it sends, listening only to the timings it holds while it is in the
+  document, and never writes them; a new run replaces the last as the timings do. Times are
+  formatted by `Intl.NumberFormat` as ms, to a tenth while they round under 10 ms ("4.2 ms") and
+  whole from there, grouped ("1,535 ms"), as `formatMs(ms)` gives them, right-aligned in tabular
+  numerals; the total row is set apart by a heavier rule and weight. With no run yet the table
+  says "No run yet.", and with a run begun and no phase timed, "No phase timed yet.", with no
+  total. The table is as wide as its content, at least 16rem or its container's width, and never
+  wider than its container. Nothing moves.
+  - Attributes: `label` (the table's caption and accessible name, "Timings" by default).
+  - Properties: `timings`, the `RunTimings` its owner creates and writes; `null`, the default,
+    shows no run yet; and `label`, as its attribute.
+  - Events: none. Slots: none.
+  - Accessibility: a table named by its caption, "Phase" and "Time" its column headers, each
+    phase's name and "Total" a row header.
+  - Keyboard: none; the table holds nothing to operate.
 
 ## Keeping pace with the SDK
 

@@ -22,7 +22,7 @@ import { description } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 const root = join(import.meta.dirname, "..");
 
 /** The components page's sections, by id, each a component's, in the page's order. */
-export const COMPONENTS = ["code-editor", "file-tabs", "console"] as const;
+export const COMPONENTS = ["code-editor", "file-tabs", "console", "timings"] as const;
 
 /** Shows the component's section alone: every other section of the page's main is hidden, and its
  * focus-start mark dropped, so the mark the bin focuses, the page's first, is the component's.

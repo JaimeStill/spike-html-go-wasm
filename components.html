@@ -1,20 +1,23 @@
 <!doctype html>
 <!-- The components page, a hand page: each of the spike's components in every state, each state
-     labelled in its figure's caption, then every state again in a column 20rem wide, and one
-     instance reached by the keyboard, its focus shown. Its script, web/pages/components.ts, defines
-     the components and builds the states into each list; nothing here runs Go, and nothing loads
-     Go. sl-code-editor: Go and JSON highlighted, another language plain, read-only, long lines
-     scrolled sideways (the default) and wrapped, a tab two columns wide, empty and named by its
-     caption through aria-labelledby, two editors sharing the document's highlights, an editable
-     editor for the keyboard model, and an editor whose events a readout counts, a specimen aid.
-     The script creates each editor's settings and owns them. sl-file-tabs: several files, one
-     modified, one read-only, sixteen overflowing the row, and one alone, each over an editor
-     showing the active file, the script owning each file set and applying the tabs' requests and
-     the editor's edits to it. sl-console: interleaved streams, exits of 0 and 2, a handler's
-     answer and error, ANSI escapes, long lines, a log past its limit, empty, and one streaming on a
-     button's press, each log the script's own, written from scripted events, its clear requests
-     applied by the script. The shell is the index's, the same header, dialogs,
-     and unlayered header-actions rule; see index.html for each. -->
+     labelled in its figure's caption, then every state again in a column 20rem wide, and, for a
+     component that takes focus, one instance reached by the keyboard, its focus shown. Its script,
+     web/pages/components.ts, defines the components and builds the states into each list; nothing
+     here runs Go, and nothing loads Go. sl-code-editor: Go and JSON highlighted, another language
+     plain, read-only, long lines scrolled sideways (the default) and wrapped, a tab two columns
+     wide, empty and named by its caption through aria-labelledby, two editors sharing the
+     document's highlights, an editable editor for the keyboard model, and an editor whose events a
+     readout counts, a specimen aid. The script creates each editor's settings and owns them.
+     sl-file-tabs: several files, one modified, one read-only, sixteen overflowing the row, and one
+     alone, each over an editor showing the active file, the script owning each file set and
+     applying the tabs' requests and the editor's edits to it. sl-console: interleaved streams,
+     exits of 0 and 2, a handler's answer and error, ANSI escapes, long lines, a log past its
+     limit, empty, and one streaming on a button's press, each log the script's own, written from
+     scripted events, its clear requests applied by the script. sl-timings: a cold load, a held
+     instance's call, a program's run, the call after Stop, and no run yet, each run's timings the
+     script's own, recorded from scripted events, and one whose specimen aid begins a new run in
+     place of the last on a button's press. The shell is the index's, the same header, dialogs, and
+     unlayered header-actions rule; see index.html for each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -154,6 +157,18 @@
         <p>The log, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>
         <div class="focus"></div>
+      </section>
+      <section id="timings" aria-labelledby="timings-heading">
+        <h2 id="timings-heading">Timings</h2>
+        <p>
+          <code>sl-timings</code>, the last run's phases as a table in ms, with their total. The
+          page owns each run's timings, recorded here from scripted events with no Go, and the
+          table follows them. It holds nothing to operate, so the keyboard passes it by.
+        </p>
+        <h3 id="timings-states">States</h3>
+        <div class="states"></div>
+        <h3 id="timings-narrow">States at 20rem</h3>
+        <div class="states narrow"></div>
       </section>
     </main>
     <dialog id="help" aria-labelledby="help-title">

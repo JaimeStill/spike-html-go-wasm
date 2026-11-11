@@ -28,6 +28,14 @@
 // is pressed, so a capture of the page never catches it moving. The page owns each state's
 // ConsoleLog, fresh for each list, writes it from a script of the events a runner would send,
 // with no Go, and applies the console's clear requests to it.
+//
+// The timings' states (sl-timings): a cold load's five phases, a held instance's call alone, a
+// program's instantiate and run, the call after Stop, which instantiates and starts afresh with no
+// fetch, no run yet, and the 20rem column holding them. The page owns each state's RunTimings,
+// fresh for each list, recording a script of the timing events a runner would send, with no Go,
+// some out of the phase order, as a runner's can arrive. One state's specimen aid, a button,
+// begins a new run in place of the last when pressed, so a capture of the page never catches it
+// changed. The table holds nothing to focus, so the section has no focus state.
 
 import "../components/code-editor.ts";
 import "../components/console.ts";
@@ -36,6 +44,8 @@ import { EditorSettings } from "../components/editor-settings.ts";
 import { FileSet, type GivenFile } from "../components/file-set.ts";
 import "../components/file-tabs.ts";
 import type { SelectDetail } from "../components/file-tabs.ts";
+import { type Phase, RunTimings } from "../components/run-timings.ts";
+import "../components/timings.ts";
 
 /** A state: its key, its label, and a function that builds it, fresh for each list, given an id
  * unique to the list, for an element that names another. */
@@ -66,14 +76,14 @@ function figure({ key, label, build }: State, list: string): HTMLElement {
 }
 
 /** Builds the states into the section's lists: every state into each .states, and the focus
- * state into .focus. */
-function specimens(section: string, states: State[], focus: State): void {
+ * state, when the component takes focus, into .focus. */
+function specimens(section: string, states: State[], focus?: State): void {
   const root = document.querySelector(`#${section}`);
   if (!root) throw new Error(`components.html has no #${section}`);
   for (const [i, list] of root.querySelectorAll(".states").entries()) {
     list.append(...states.map((state) => figure(state, `${section}-${i}`)));
   }
-  root.querySelector(".focus")?.append(figure(focus, `${section}-focus`));
+  if (focus) root.querySelector(".focus")?.append(figure(focus, `${section}-focus`));
 }
 
 const go = `// Package shapes sums the areas of shapes.
@@ -524,3 +534,78 @@ specimens(
     build: () => [consoleOf(scripted(out("hello, world\n"), exited("hello", 0)))],
   },
 );
+
+/** A run's timings as a runner's timing events would bring them: a run begun, then each phase's
+ * time, in the order given. */
+function timed(...phases: [Phase, number][]): RunTimings {
+  const timings = new RunTimings();
+  timings.begin();
+  for (const [phase, ms] of phases) timings.record({ phase, ms });
+  return timings;
+}
+
+/** A table showing the timings, the page their owner. */
+const table = (timings: RunTimings) => make("sl-timings", { timings });
+
+/** The replaced state: a cold load's table and, below it, a specimen aid, a button that begins a
+ * new run, a held instance's call, in its place, and the next press another cold load. It changes
+ * nothing until pressed, so a capture of the page is the same every time. */
+function replaced(): HTMLElement[] {
+  const timings = timed(...COLD);
+  const button = make("button", { type: "button", textContent: "Run again" });
+  let cold = false;
+  button.addEventListener("click", () => {
+    timings.begin();
+    for (const [phase, ms] of cold ? COLD : HELD) timings.record({ phase, ms });
+    cold = !cold;
+  });
+  const aid = make("p", { className: "readout" });
+  aid.append("Specimen aid: ", button);
+  return [table(timings), aid];
+}
+
+/** A cold load's phases: the module fetched and compiled, instantiated, its main started, and one
+ * handler called. */
+const COLD: [Phase, number][] = [
+  ["fetch", 182.4],
+  ["compile", 96.31],
+  ["instantiate", 4.2],
+  ["start", 12.75],
+  ["call", 0.62],
+];
+
+/** A held instance's call: the handler's answer alone. */
+const HELD: [Phase, number][] = [["call", 0.38]];
+
+specimens("timings", [
+  {
+    key: "cold",
+    label: "A cold load: fetch, compile, instantiate, start, and call",
+    build: () => [table(timed(...COLD))],
+  },
+  {
+    key: "held",
+    label: "A held instance's handler call: the call alone",
+    build: () => [table(timed(...HELD))],
+  },
+  {
+    key: "program",
+    label: "A program's run: instantiate and run, arriving run first, shown in phase order",
+    build: () => [table(timed(["run", 1534.6], ["instantiate", 3.08]))],
+  },
+  {
+    key: "after-stop",
+    label: "A call after Stop: a fresh instance from the held module, no fetch or compile",
+    build: () => [table(timed(["instantiate", 5.61], ["start", 11.94], ["call", 9.96]))],
+  },
+  {
+    key: "empty",
+    label: "No run yet",
+    build: () => [table(new RunTimings())],
+  },
+  {
+    key: "replaced",
+    label: "A new run replaces the last",
+    build: replaced,
+  },
+]);

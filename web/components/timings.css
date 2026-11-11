@@ -1,0 +1,52 @@
+/*
+ * The timings' layout in a shadow root: timings.ts adopts this sheet after the foundation's reset
+ * and elements sheets (baseline/reset.css and elements.css), which draw the table's grid, its
+ * caption, and its header cells on the element surface. It reads only the foundation's tokens,
+ * which a shadow root takes by inheritance from the page's entry. Unlayered, it sits above the
+ * adopted layers in the root.
+ *
+ * The table is as wide as its content, at least 16rem or the container's width when that is
+ * narrower, and never wider than the container. The phases' names lead each row; the times keep to
+ * the end of their column in tabular numerals, so the digits of each place line up, and never
+ * break between a number and its unit. The total row stands apart from the phases above it by a
+ * heavier rule and weight, not by color. Nothing moves.
+ */
+
+/* The table takes the width its container gives and asks for no more. */
+:host {
+  display: block;
+  contain: inline-size;
+}
+
+table {
+  inline-size: max-content;
+  min-inline-size: min(16rem, 100%);
+  max-inline-size: 100%;
+  margin: 0;
+}
+
+.time {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A phase's name takes what the time leaves. */
+tbody th {
+  inline-size: 100%;
+}
+
+tfoot th,
+tfoot td {
+  border-block-start-width: var(--line-m);
+  font-weight: 600;
+}
+
+tfoot td {
+  color: var(--fg);
+}
+
+.empty {
+  color: var(--fg-2);
+  font-size: var(--text-s);
+}
