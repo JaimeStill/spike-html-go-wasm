@@ -47,18 +47,32 @@ One repository, one Go module, one Pages site, in Elemental layers; dependencies
 The check holds the direction: `eslint.config.js` for the web tiers and `test/unit/go-module.ts`
 for the Go packages.
 
-- **Go bridge** (`bridge/`, infrastructure): the Go-to-JS bridge every scenario composes on.
+- **Go bridge** (`bridge/`, infrastructure): `Serve` installs named Go handlers on
+  `globalThis.goBridge` from one long-lived instance. Each call runs in its own goroutine and
+  answers a Promise that resolves with JSON text, or rejects with the handler's error, its panic's
+  message, or the unknown name.
 - **Scenarios** (`internal/<scenario>`, composition roots; `cmd/<scenario>`, entrypoints, one
-  wasm each): sqlate, go-core graph, and go-web-sdk handlers in-process.
-- **Runtime** (`web/runtime`, the SDK tier): the on-demand loader, one worker per page over the
-  HTTP cache, the in-memory filesystem, Stop by terminating the worker, and `wasm_exec.js`.
-- **Playground**: `cmd/compile` and `cmd/link` built to wasm and run in the worker, with
-  per-package standard-library and workspace archives fetched per import through a manifest.
-- **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
-  sl-file-tabs, sl-console, sl-run-controls, sl-timings, and sl-go-demo composing them over a
-  runner the page passes in.
-- **Pages** (`web/pages`, the apps tier, for the scripts a page loads): hand pages and rendered
-  Markdown, embedding `<sl-go-demo>` around a go fence.
+  wasm each): `cmd/hello`, a standard-library program, and the probe (`internal/probe`,
+  `cmd/probe`), which imports only the standard library and the bridge and serves four handlers
+  that prove the runtime: format, files, spin, and crash. Planned: sqlate, go-core graph, and
+  go-web-sdk handlers in-process.
+- **Runtime** (`web/runtime`, the SDK tier): `runner.ts` exports the `Runner` type (load, run,
+  stop; output, exit, and timing events), and starts one dedicated worker, `worker.ts`, on the
+  first load. The worker fetches a module over the HTTP cache, compiles it, and runs instances of
+  it through `wasm_exec.js` over the in-memory fs in `fs.ts`, which `install-fs.ts` installs
+  first. `protocol.ts` holds the events and the messages between the runner and the worker. Stop
+  terminates the worker and posts the compiled module to a fresh one.
+- **Go tests on the in-memory fs** (`test/memfs`): a Go test program that the check runs under
+  node on the runtime's fs, through package `os`.
+- **Playground** (planned): `cmd/compile` and `cmd/link` built to wasm and run in the worker,
+  with per-package standard-library and workspace archives fetched per import through a manifest.
+- **Components** (planned; `web/components`, the component tier, Lit, `sl-` prefix):
+  sl-code-editor, sl-file-tabs, sl-console, sl-run-controls, sl-timings, and sl-go-demo composing
+  them over a runner the page passes in.
+- **Pages** (`web/pages`, the apps tier, for the scripts a page loads): `runtime.html`, a hand
+  page whose script, `web/pages/runtime.ts`, runs hello and the probe's handlers through the
+  runner with plain controls. Planned: hand pages and rendered Markdown embedding `<sl-go-demo>`
+  around a go fence.
 
 ## Path
 

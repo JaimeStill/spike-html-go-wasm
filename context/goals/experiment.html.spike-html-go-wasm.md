@@ -96,7 +96,7 @@ Door          two-way: the runtime page is a public page that can be removed; no
 
 ## Progress
 
-slices 4/4 committed · standards done · spec done · editor —
+slices 4/4 committed · standards done · spec done · editor done
 
 ## Decisions
 
@@ -238,6 +238,25 @@ slices 4/4 committed · standards done · spec done · editor —
   baseline with no internal/hello.
 - runtime: hello moves onto the runtime and runs in the worker; the main-thread hand load in the
   browser tier goes.
+- runtime: the bridge resolves a call with JSON text, and the runner parses it.
+- runtime: the ready signal is an optional globalThis.goBridgeReady, which Serve calls once it has
+  installed the goBridge global; a host without one waits for goBridge.
+- runtime: the fs runs each callback before the call returns, as wasm_exec.js's stub does.
+- runtime: the storage seam is the FileNode and DirectoryNode interfaces, each node carrying a
+  device number; rename across devices answers EXDEV. Nothing mounts yet.
+- runtime: the fs stores and reports permission bits but never enforces them; it starts with /tmp
+  and cwd /.
+- runtime: the build no longer copies wasm_exec.js to go/; Vite bundles it into the worker.
+- runtime: the worker answers each load with the compiled Module, and the runner holds it. Stop
+  terminates the worker first, then starts a fresh one at once and posts it the module, so the
+  scenario stays loaded.
+- runtime: the probe's fourth handler, `crash`, proves the nonzero exit path and stderr through
+  writeSync.
+- runtime: `ignore ./dist` in go.mod keeps `./...` off the build output.
+- runtime: `mise run types:web`, over tsconfig.web.json, type-checks web/.
+- runtime: the probe's format handler prints its line only on success.
+- runtime: review and a comment in install-fs.ts hold the fs-before-shim import order, because no
+  test can fail on it.
 
 ## Notes
 
@@ -252,6 +271,15 @@ slices 4/4 committed · standards done · spec done · editor —
   intake candidate.
 - Vite's preview doesn't gzip, so the live command alone proves the gzip assertion, against the
   deployed site.
+- After Stop, a handler call's timings are instantiate, start, and call; a program's are
+  instantiate and run.
+- Switching back to a scenario refetches it over the HTTP cache, because the worker holds only the
+  current module.
+- The page's CDP Network domain doesn't see the worker's requests, so the browser tests auto-attach
+  to workers through CDP to count them.
+- When Go exits during a call, wasm_exec.js deletes the instance, so the worker races the exit's
+  rejection ahead of the call.
+- staticcheck SA5002 flags an empty `for {}`; the probe's spin loops on a counter.
 
 ## Pending edits
 
