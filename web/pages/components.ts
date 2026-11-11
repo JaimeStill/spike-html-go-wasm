@@ -7,8 +7,10 @@
 //
 // The code editor's states (sl-code-editor): Go and JSON highlighted, another language plain,
 // read-only, long lines wrapped beside the gutter, empty and named by its caption through
-// aria-labelledby, and two editors whose highlights share the document's registry. The browser
-// tier reads each by its figure's data-state.
+// aria-labelledby, two editors whose highlights share the document's registry, an editable editor
+// for its keyboard model, and an editor whose input and change events a readout beside it counts,
+// a specimen aid that is no part of the editor. The browser tier reads each by its figure's
+// data-state.
 
 import "../components/code-editor.ts";
 
@@ -106,9 +108,37 @@ func main() {
 }
 `;
 
+const indented = `func classify(n int) string {
+	switch {
+	case n < 0:
+		return "negative"
+	default:
+		return "other"
+	}
+}
+`;
+
 /** An editor of the fields. */
 const editor = (fields: Partial<HTMLElementTagNameMap["sl-code-editor"]>, attributes = {}) =>
   make("sl-code-editor", fields, attributes);
+
+/** The events state: an editor and, below it, a readout counting the input and change events it
+ * sends. The readout is a specimen aid, labelled as
+ * one, and no live region: a count announced on every keystroke would drown the editor. */
+function events(): HTMLElement[] {
+  const target = editor({ language: "go", label: "events.go", value: indented });
+  const counts = { input: 0, change: 0 };
+  const output = make("span", { className: "counts", textContent: "input 0 · change 0" });
+  for (const type of ["input", "change"] as const) {
+    target.addEventListener(type, () => {
+      counts[type] += 1;
+      output.textContent = `input ${counts.input} · change ${counts.change}`;
+    });
+  }
+  const readout = make("p", { className: "readout" });
+  readout.append("Specimen aid, events heard: ", output);
+  return [target, readout];
+}
 
 specimens(
   "code-editor",
@@ -150,6 +180,17 @@ specimens(
         editor({ language: "go", label: "first.go", value: go }),
         editor({ language: "go", label: "second.go", value: go }),
       ],
+    },
+    {
+      key: "editable",
+      label:
+        "Editable: Enter keeps the line's indent, Tab indents and Shift+Tab outdents the selected lines, and Escape, then Tab, moves focus out",
+      build: () => [editor({ language: "go", label: "classify.go", value: indented })],
+    },
+    {
+      key: "events",
+      label: "Events: input on every edit, and change as focus leaves with the value changed",
+      build: events,
     },
   ],
   {

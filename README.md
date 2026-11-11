@@ -65,17 +65,39 @@ keyboard.
   Long lines wrap, and each number stays beside its line's first row at every width and profile.
   The gutter is hidden from assistive technology and holds no text: its numbers are generated
   content, outside the editable element. The editor grows with its text; a page that holds it to
-  a block size gets a frame that scrolls inside.
+  a block size gets a frame that scrolls inside. Its editing keys make each edit through
+  `document.execCommand`, a line break as `insertLineBreak` and the rest as `insertText`, so each
+  is one step of the browser's own undo history.
   - Attributes: `language` (`go` or `json`; any other shows plain; reflected), `label` (the
     textbox's accessible name, "Code" by default), `readonly` (reflected), and `aria-labelledby`
     (ids in the host's tree whose elements name the textbox, taking precedence over `label`).
   - Properties: `value`, the whole text, which reading gives as edited and setting replaces,
-    sending no event; and `language`, `label`, and `readonly`, as their attributes.
-  - Events: none yet.
+    sending no event, and which, set while the editor has focus, is the value `change` is then
+    measured from; and `language`, `label`, and `readonly`, as their attributes.
+  - Events: `input`, the browser's own, composed out of the shadow root, on every edit, typing,
+    each editing key, undo, and redo included; an editing key's edit sends one. `change`, an
+    `Event` that bubbles, once focus leaves the text with the value changed since focus came in;
+    a value undone back to where it was sends none. Setting `value` sends neither.
   - Slots: none.
-  - Keyboard: it takes focus in the page's tab order and types as a plain-text field does. While
-    `readonly` it takes no edit and is exposed as read-only, and keeps focus, selection, copy,
-    and highlighting; Ctrl or Cmd+A selects its text alone.
+  - Keyboard: it takes focus in the page's tab order and types as a plain-text field does.
+    - Enter breaks the line, the new line carrying the spaces and tabs before the caret on the
+      current one; Shift+Enter breaks it with no indent.
+    - Tab inserts a tab at the caret, or, with a selection, indents every line the selection
+      touches; Shift+Tab outdents the caret's line or the selected lines, a tab or up to four
+      spaces from each. The selection keeps the text it held.
+    - The browser's own undo, Ctrl or Cmd+Z or its Edit menu, reverts each editing key's edit in
+      one step, and its redo restores it.
+    - Escape releases Tab: the next Tab or Shift+Tab moves focus out of the editor, as anywhere
+      else. Typing, a click in the editor, or focus coming back arms Tab again. A second Escape is
+      the page's: under the foundation's keys it releases the field, blurring it, or it closes a
+      dialog holding the editor.
+    - While an input method composes, no key is the editor's, so a composition commits as typed.
+    - While the editor has focus, a hint below it, hidden from assistive technology, shows the
+      model, "Tab indents · Esc then Tab moves focus", or, released, "Tab moves focus"; the
+      textbox's description says the same to assistive technology.
+    - While `readonly` it takes no edit, Enter and Tab included, and is exposed as read-only, and
+      keeps focus, selection, copy, and highlighting; Tab moves focus, no hint shows, and Ctrl or
+      Cmd+A selects its text alone.
 
 ## Keeping pace with the SDK
 

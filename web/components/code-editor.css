@@ -14,6 +14,10 @@
  * beside its line's first row at any width, wrapped or not, in every space and type profile. Long
  * lines wrap, anywhere if they must, so the editor never scrolls sideways.
  *
+ * While an editable editor has focus, a hint below the frame shows its Tab model, the foundation's
+ * glyph hint drawn again: a small label in the page's colors reversed, in the top layer, anchored
+ * below the frame at its inline end, flipped above it where the viewport's foot would cut it.
+ *
  * The frame grows with the text. A page that holds the host to a block size gets a frame that
  * fills it and scrolls inside, the gutter scrolling with its lines. Nothing moves, so reduced
  * motion has nothing to stop.
@@ -24,6 +28,7 @@
 }
 
 .editor {
+  anchor-name: --sl-code-editor;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: var(--space-xs);
@@ -102,4 +107,30 @@
    box, matching the gutter's last row. */
 .text::after {
   content: "\200b";
+}
+
+/* The keyboard hint, shown by script while the text has focus, no wider than the frame; its keys
+   outlined in its own text color. */
+.hint {
+  position-anchor: --sl-code-editor;
+  position-area: block-end span-inline-start;
+  position-try-fallbacks: flip-block;
+  inset: auto;
+  margin: 0;
+  margin-block-start: var(--space-3xs);
+  padding: var(--space-3xs) var(--space-2xs);
+  border: none;
+  background-color: var(--fg);
+  color: var(--bg);
+  font-family: var(--font-ui);
+  font-size: var(--text-s);
+  line-height: var(--leading-ui);
+  max-inline-size: anchor-size(inline);
+  --kbd-color: var(--bg);
+}
+
+/* A popover in the top layer has a backdrop, which the elements layer veils as a modal dialog's;
+   the hint veils nothing. */
+.hint::backdrop {
+  background-color: transparent;
 }

@@ -16,7 +16,12 @@
 // paste change nothing, while selection, copy, and focus work and the highlighting stays. value:
 // setting it replaces the text and re-highlights, sending no event. Typing re-highlights without
 // moving the caret or a selection. Focus shows on the frame, and nothing moves under reduced
-// motion. Nothing here names the site: its base is package.json's name.
+// motion. Editing, through CDP's keys and input methods: Enter carries the indent, Tab and
+// Shift+Tab indent and outdent a caret's line or a selection's lines and keep the selection, one
+// undo reverts each and redo restores it, Escape releases Tab and typing, a click, or focus coming
+// back arms it, a composition commits as typed, input reaches the host once an edit and change
+// once focus leaves with the value changed, and the keyboard hint and description say the Tab
+// model. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
@@ -54,6 +59,11 @@ after(async () => {
  * - ranges(editor): how many ranges in the document's highlights lie in the editor's text.
  * - settled(editor): resolves once the editor's ranges cover its text as tokenized: a range ends
  *   at its value's last non-space character.
+ * - select(editor, start, end): focuses the editor and selects its text from start to end, as
+ *   offsets in its value; selected(editor) gives the selection as [start, end] offsets, a br
+ *   counting as its "\n", or null when the selection isn't in the editor.
+ * - listen(editor): counts the input and change events the host hears from then on, in
+ *   editor.heard, with whether each was the host's own and change bubbled.
  */
 const HELPERS = `(() => {
   const lists = () => document.querySelectorAll("#code-editor .states");
@@ -85,8 +95,58 @@ const HELPERS = `(() => {
     }
     return found;
   };
+  /** The text of the content before a DOM position, a br counting as "\n". */
+  const before = (element, node, at) => {
+    const range = new Range();
+    range.setStart(element, 0);
+    range.setEnd(node, at);
+    let length = 0;
+    const walk = (parent) => {
+      for (const child of parent.childNodes) {
+        if (child instanceof Text) length += child.data.length;
+        else if (child instanceof HTMLBRElement) length += 1;
+        else walk(child);
+      }
+    };
+    walk(range.cloneContents());
+    return length;
+  };
+  /** The DOM position of an offset in the element's text. */
+  const at = (element, offset) => {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    let start = 0;
+    let last = null;
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (offset <= start + node.data.length) return [node, offset - start];
+      start += node.data.length;
+      last = node;
+    }
+    return last ? [last, last.data.length] : [element, 0];
+  };
   window.editors = {
     at: (state, list) => all(state, list)[0],
+    select(editor, start, end = start) {
+      editor.focus();
+      const element = text(editor);
+      getSelection().setBaseAndExtent(...at(element, start), ...at(element, end));
+    },
+    selected(editor) {
+      const element = text(editor);
+      const [range] = getSelection().getComposedRanges({ shadowRoots: [editor.shadowRoot] });
+      if (!range || !element.contains(range.startContainer)) return null;
+      return [
+        before(element, range.startContainer, range.startOffset),
+        before(element, range.endContainer, range.endOffset),
+      ];
+    },
+    listen(editor) {
+      editor.heard = [];
+      for (const type of ["input", "change"]) {
+        editor.addEventListener(type, (event) => editor.heard.push({
+          type, own: event.target === editor, bubbles: event.bubbles,
+        }));
+      }
+    },
     all,
     ranges: (editor) => spans(editor).length,
     painted(editor) {
@@ -436,6 +496,8 @@ describe("the editor in the accessibility tree", () => {
         },
         { name: "first.go", multiline: true, readonly: false },
         { name: "second.go", multiline: true, readonly: false },
+        { name: "classify.go", multiline: true, readonly: false },
+        { name: "events.go", multiline: true, readonly: false },
       ];
       // The tree lists nodes in no promised order, so the boxes are compared as a sorted list.
       const sorted = (list: typeof boxes) => list.map((box) => JSON.stringify(box)).sort();
@@ -741,6 +803,687 @@ describe("focus and motion", () => {
         }).map((element) => element.className);
       })()`);
       assert.deepEqual(moving, []);
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+// Editing, on the editable state's editor, its value the classify function below: each key's
+// edit, its undo and redo, Escape's release of Tab, input methods, the events, and the hint.
+
+/** The editable state's value, as the page sets it. */
+const CLASSIFY = `func classify(n int) string {
+\tswitch {
+\tcase n < 0:
+\t\treturn "negative"
+\tdefault:
+\t\treturn "other"
+\t}
+}
+`;
+
+/** CDP's modifiers mask: Shift. */
+const SHIFT = 8;
+
+/** The editable state's editor, as the page script reads it. */
+const EDITABLE = `window.editors.at("editable")`;
+
+/** The editor's value, its selection as offsets, and how many elements its text holds. */
+interface Shown {
+  value: string;
+  selected: [number, number] | null;
+  children: number;
+}
+
+const shown = (page: Page, editor = EDITABLE): Promise<Shown> =>
+  page.evaluate(`(() => {
+    const editor = ${editor};
+    return {
+      value: editor.value,
+      selected: window.editors.selected(editor),
+      children: editor.shadowRoot.querySelector(".text").children.length,
+    };
+  })()`);
+
+/** Focuses the editor and selects from start to end, offsets in its value. */
+const select = (page: Page, start: number, end = start, editor = EDITABLE) =>
+  page.evaluate(`window.editors.select(${editor}, ${start}, ${end})`);
+
+/** The offset just after the first occurrence of text in CLASSIFY. */
+const endOf = (text: string) => {
+  const at = CLASSIFY.indexOf(text);
+  assert.ok(at >= 0, `CLASSIFY holds ${JSON.stringify(text)}`);
+  return at + text.length;
+};
+
+/** The offset of the start of the first occurrence of text in CLASSIFY. */
+const startOf = (text: string) => endOf(text) - text.length;
+
+/** Enter pressed and released, with the carriage return a real key types, so the browser would
+ * break the line itself were the press not taken. */
+async function enter(page: Page, modifiers = 0) {
+  const key = { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, modifiers };
+  await page.cdp("Input.dispatchKeyEvent", { type: "keyDown", text: "\r", ...key });
+  await page.cdp("Input.dispatchKeyEvent", { type: "keyUp", ...key });
+}
+
+const undo = (page: Page) => press(page, "z", "KeyZ", 90, CTRL);
+const redo = (page: Page) => press(page, "Z", "KeyZ", 90, CTRL | SHIFT);
+
+/** Opens the components page with focus emulated, every editor painted. */
+async function editing(): Promise<Page> {
+  const page = await open();
+  await page.cdp("Emulation.setFocusEmulationEnabled", { enabled: true });
+  await settleAll(page);
+  assert.equal(await page.evaluate(`${EDITABLE}.value`), CLASSIFY);
+  return page;
+}
+
+describe("Enter", () => {
+  test("breaks the line, the new line carrying the indent before the caret, and the caret after it", async () => {
+    const page = await editing();
+    try {
+      const end = endOf(`\t\treturn "negative"`);
+      await select(page, end);
+      await enter(page);
+      const indented = `${CLASSIFY.slice(0, end)}\n\t\t${CLASSIFY.slice(end)}`;
+      assert.deepEqual(await shown(page), {
+        value: indented,
+        selected: [end + 3, end + 3],
+        children: 0,
+      });
+      // The caret survives the re-highlight, and typing lands there.
+      await page.evaluate(`window.editors.settled(${EDITABLE})`);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      assert.deepEqual((await shown(page)).selected, [end + 3, end + 3]);
+      await page.cdp("Input.insertText", { text: "x" });
+      assert.equal(
+        (await shown(page)).value,
+        `${CLASSIFY.slice(0, end)}\n\t\tx${CLASSIFY.slice(end)}`,
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("carries only the whitespace before the caret, nothing from an unindented line, and replaces a selection", async () => {
+    const page = await editing();
+    try {
+      // Between the two tabs of "\t\treturn": one tab before the caret.
+      const between = startOf(`\t\treturn "negative"`) + 1;
+      await select(page, between);
+      await enter(page);
+      assert.equal(
+        (await shown(page)).value,
+        `${CLASSIFY.slice(0, between)}\n\t${CLASSIFY.slice(between)}`,
+      );
+      await page.evaluate(`${EDITABLE}.value = ${JSON.stringify(CLASSIFY)}`);
+      // At the end of the unindented first line: nothing carried.
+      const first = endOf("string {");
+      await select(page, first);
+      await enter(page);
+      assert.deepEqual((await shown(page)).selected, [first + 1, first + 1]);
+      assert.equal(
+        (await shown(page)).value,
+        `${CLASSIFY.slice(0, first)}\n${CLASSIFY.slice(first)}`,
+      );
+      await page.evaluate(`${EDITABLE}.value = ${JSON.stringify(CLASSIFY)}`);
+      // Shift+Enter breaks the line with no indent, as the browser does.
+      const line = endOf(`\t\treturn "negative"`);
+      await select(page, line);
+      await enter(page, SHIFT);
+      assert.equal(
+        (await shown(page)).value,
+        `${CLASSIFY.slice(0, line)}\n${CLASSIFY.slice(line)}`,
+      );
+      await page.evaluate(`${EDITABLE}.value = ${JSON.stringify(CLASSIFY)}`);
+      // A selection of "negative" inside the indented line: replaced by the break and the indent.
+      const word = startOf("negative");
+      await select(page, word, word + "negative".length);
+      await enter(page);
+      assert.equal(
+        (await shown(page)).value,
+        `${CLASSIFY.slice(0, word)}\n\t\t${CLASSIFY.slice(word + "negative".length)}`,
+      );
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("Tab and Shift+Tab", () => {
+  test("Tab at a caret inserts a tab and leaves the caret after it", async () => {
+    const page = await editing();
+    try {
+      const at = startOf("negative");
+      await select(page, at);
+      await press(page, "Tab", "Tab", 9);
+      assert.deepEqual(await shown(page), {
+        value: `${CLASSIFY.slice(0, at)}\t${CLASSIFY.slice(at)}`,
+        selected: [at + 1, at + 1],
+        children: 0,
+      });
+      assert.ok(
+        await page.evaluate(`${EDITABLE}.shadowRoot.activeElement?.classList.contains("text")`),
+        "focus stays in the editor",
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("Tab with a selection indents every line it touches and keeps the same text selected", async () => {
+    const page = await editing();
+    try {
+      // From inside "case" to inside the first "return": three lines.
+      const from = startOf("case") + 2;
+      const to = startOf("return") + 3;
+      const selectedText = CLASSIFY.slice(from, to);
+      await select(page, from, to);
+      await press(page, "Tab", "Tab", 9);
+      const expected = CLASSIFY.replace(
+        `\tcase n < 0:\n\t\treturn "negative"\n`,
+        `\t\tcase n < 0:\n\t\t\treturn "negative"\n`,
+      );
+      const indented = await shown(page);
+      assert.equal(indented.value, expected);
+      assert.ok(indented.selected);
+      assert.equal(
+        indented.value.slice(...indented.selected),
+        selectedText.replace("\n", "\n\t"),
+        "the selection holds the text it held, with the tab the line gained inside it",
+      );
+      assert.deepEqual(indented.selected, [from + 1, to + 2]);
+      // A selection ending at a line's start doesn't touch that line; one starting at a line's
+      // start takes in the tab it gains.
+      await page.evaluate(`${EDITABLE}.value = ${JSON.stringify(CLASSIFY)}`);
+      const lines = [startOf("\tswitch"), startOf("\tcase")];
+      await select(page, lines[0], lines[1]);
+      await press(page, "Tab", "Tab", 9);
+      const one = await shown(page);
+      assert.equal(one.value, CLASSIFY.replace("\tswitch", "\t\tswitch"));
+      assert.deepEqual(one.selected, [lines[0], lines[1] + 1]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("Shift+Tab outdents a tab or up to four spaces from the caret's line or every selected line", async () => {
+    const page = await editing();
+    try {
+      // The caret's line loses its first tab, the caret moving with the text.
+      const caret = startOf("negative");
+      await select(page, caret);
+      await press(page, "Tab", "Tab", 9, SHIFT);
+      assert.deepEqual(await shown(page), {
+        value: CLASSIFY.replace(`\t\treturn "negative"`, `\treturn "negative"`),
+        selected: [caret - 1, caret - 1],
+        children: 0,
+      });
+      // Lines of spaces lose four, or as many as they have; a line with none is left.
+      const spaced = "a\n      six\n  two\nnone\n";
+      await page.evaluate(`${EDITABLE}.value = ${JSON.stringify(spaced)}`);
+      await select(page, spaced.indexOf("six") + 1, spaced.indexOf("none") + 2);
+      await press(page, "Tab", "Tab", 9, SHIFT);
+      const out = await shown(page);
+      assert.equal(out.value, "a\n  six\ntwo\nnone\n");
+      assert.ok(out.selected);
+      assert.equal(out.value.slice(...out.selected), "ix\ntwo\nno");
+      // A caret inside the whitespace a line loses moves to the line's start.
+      await page.evaluate(`${EDITABLE}.value = ${JSON.stringify(spaced)}`);
+      await select(page, 4);
+      await press(page, "Tab", "Tab", 9, SHIFT);
+      assert.deepEqual((await shown(page)).selected, [2, 2]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("Shift+Tab with nothing to outdent makes no edit and sends no input", async () => {
+    const page = await editing();
+    try {
+      await page.evaluate(`window.editors.listen(${EDITABLE})`);
+      await select(page, 4);
+      await press(page, "Tab", "Tab", 9, SHIFT);
+      assert.deepEqual(await shown(page), { value: CLASSIFY, selected: [4, 4], children: 0 });
+      assert.deepEqual(await page.evaluate(`${EDITABLE}.heard`), []);
+      assert.ok(
+        await page.evaluate(`${EDITABLE}.shadowRoot.activeElement?.classList.contains("text")`),
+        "focus stays in the editor",
+      );
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("undo and redo", () => {
+  /** Each key edit, made from a fresh value: the selection it starts from and its keys. */
+  const edits: { name: string; from: [number, number]; keys: (page: Page) => Promise<void> }[] = [
+    {
+      name: "Enter",
+      from: [endOf(`"negative"`), endOf(`"negative"`)],
+      keys: (page) => enter(page),
+    },
+    {
+      name: "Tab at a caret",
+      from: [startOf("negative"), startOf("negative")],
+      keys: (page) => press(page, "Tab", "Tab", 9),
+    },
+    {
+      name: "Tab over lines",
+      from: [startOf("switch"), endOf("default:")],
+      keys: (page) => press(page, "Tab", "Tab", 9),
+    },
+    {
+      name: "Shift+Tab over lines",
+      from: [startOf("switch"), endOf("default:")],
+      keys: (page) => press(page, "Tab", "Tab", 9, SHIFT),
+    },
+  ];
+
+  for (const { name, from, keys } of edits) {
+    test(`one undo reverts ${name}, and redo restores it, by key and by the browser's command`, async () => {
+      const page = await editing();
+      try {
+        await select(page, ...from);
+        await keys(page);
+        const edited = (await shown(page)).value;
+        assert.notEqual(edited, CLASSIFY, "the edit is made");
+        await undo(page);
+        assert.equal((await shown(page)).value, CLASSIFY, "Ctrl+Z reverts it in one step");
+        await redo(page);
+        assert.equal((await shown(page)).value, edited, "Ctrl+Shift+Z restores it");
+        // The browser's own undo and redo, as its Edit menu runs them.
+        await page.evaluate(`document.execCommand("undo")`);
+        assert.equal((await shown(page)).value, CLASSIFY, "the browser's undo reverts it");
+        await page.evaluate(`document.execCommand("redo")`);
+        assert.equal((await shown(page)).value, edited, "the browser's redo restores it");
+        assert.equal((await shown(page)).children, 0, "no element enters the text");
+      } finally {
+        await page.close();
+      }
+    });
+  }
+
+  test("typing, then a key edit, undo one step at a time", async () => {
+    const page = await editing();
+    try {
+      const end = endOf(`"other"`);
+      await select(page, end);
+      await page.cdp("Input.insertText", { text: " // done" });
+      const typed = (await shown(page)).value;
+      await enter(page);
+      await undo(page);
+      assert.equal((await shown(page)).value, typed, "the first undo takes back the Enter alone");
+      await undo(page);
+      assert.equal((await shown(page)).value, CLASSIFY, "the second takes back the typing");
+      // Typing after a key edit is a step of its own.
+      await press(page, "Tab", "Tab", 9);
+      const tabbed = (await shown(page)).value;
+      await page.cdp("Input.insertText", { text: "after" });
+      await undo(page);
+      assert.equal((await shown(page)).value, tabbed, "undo takes back the typing alone");
+      await undo(page);
+      assert.equal((await shown(page)).value, CLASSIFY, "and then the Tab");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("an undo after value is set leaves the value as set", async () => {
+    const page = await editing();
+    try {
+      await select(page, 4);
+      await press(page, "Tab", "Tab", 9);
+      await page.evaluate(`${EDITABLE}.value = "set\\n"`);
+      await undo(page);
+      const { value, children } = await shown(page);
+      assert.deepEqual({ value, children }, { value: "set\n", children: 0 });
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("Escape's release of Tab", () => {
+  /** Whether focus is in the editor's text. */
+  const inside = (page: Page, editor = EDITABLE): Promise<boolean> =>
+    page.evaluate(
+      `document.activeElement === ${editor} && ${editor}.shadowRoot.activeElement?.classList.contains("text")`,
+    );
+
+  test("after Escape, Tab and Shift+Tab move focus out of the editor, editing nothing", async () => {
+    const page = await editing();
+    try {
+      for (const modifiers of [0, SHIFT]) {
+        await select(page, 4);
+        await press(page, "Escape", "Escape", 27);
+        assert.ok(await inside(page), "Escape leaves focus where it is");
+        await press(page, "Tab", "Tab", 9, modifiers);
+        assert.equal(
+          await inside(page),
+          false,
+          `Tab${modifiers ? " with Shift" : ""} moves focus out`,
+        );
+        assert.equal((await shown(page)).value, CLASSIFY);
+      }
+      // Forward, focus reaches the events state's editor, the next in the tab order.
+      await select(page, 4);
+      await press(page, "Escape", "Escape", 27);
+      await press(page, "Tab", "Tab", 9);
+      assert.ok(await inside(page, `window.editors.at("events")`));
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("typing, a click, or focus coming back arms Tab again", async () => {
+    const page = await editing();
+    try {
+      // Typing.
+      await select(page, 4);
+      await press(page, "Escape", "Escape", 27);
+      await page.cdp("Input.insertText", { text: "x" });
+      await press(page, "Tab", "Tab", 9);
+      assert.ok(await inside(page), "Tab after typing stays in the editor");
+      assert.equal((await shown(page)).value, `${CLASSIFY.slice(0, 4)}x\t${CLASSIFY.slice(4)}`);
+      // A click in the text.
+      await page.evaluate(`${EDITABLE}.value = ${JSON.stringify(CLASSIFY)}`);
+      await select(page, 4);
+      await press(page, "Escape", "Escape", 27);
+      const point: { x: number; y: number } = await page.evaluate(`(() => {
+        const element = ${EDITABLE}.shadowRoot.querySelector(".text");
+        element.scrollIntoView({ block: "center" });
+        const box = element.getBoundingClientRect();
+        return { x: box.left + 4, y: box.top + 4 };
+      })()`);
+      for (const type of ["mousePressed", "mouseReleased"]) {
+        await page.cdp("Input.dispatchMouseEvent", {
+          type,
+          ...point,
+          button: "left",
+          clickCount: 1,
+        });
+      }
+      const clicked = (await shown(page)).selected;
+      assert.ok(clicked && (await inside(page)), "the click puts the caret in the text");
+      await press(page, "Tab", "Tab", 9);
+      assert.ok(await inside(page), "Tab after a click stays in the editor");
+      assert.equal(
+        (await shown(page)).value,
+        `${CLASSIFY.slice(0, clicked[0])}\t${CLASSIFY.slice(clicked[0])}`,
+      );
+      // Focus leaving and coming back.
+      await page.evaluate(`${EDITABLE}.value = ${JSON.stringify(CLASSIFY)}`);
+      await select(page, 4);
+      await press(page, "Escape", "Escape", 27);
+      await press(page, "Tab", "Tab", 9);
+      assert.equal(await inside(page), false);
+      const next = `window.editors.at("events")`;
+      assert.ok(await inside(page, next));
+      await press(page, "Escape", "Escape", 27);
+      await press(page, "Tab", "Tab", 9, SHIFT);
+      assert.ok(await inside(page), "Escape, then Shift+Tab, in the next editor comes back");
+      await select(page, 4);
+      await press(page, "Tab", "Tab", 9);
+      assert.ok(await inside(page), "Tab after focus came back stays in the editor");
+      assert.equal((await shown(page)).value, `${CLASSIFY.slice(0, 4)}\t${CLASSIFY.slice(4)}`);
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("the keyboard hint", () => {
+  /** The editor's hint: whether it is shown, its text, and whether it is hidden from assistive
+   * technology; null when the editor has none. */
+  const hint = (page: Page, editor = EDITABLE) =>
+    page.evaluate(`(() => {
+      const hint = ${editor}.shadowRoot.querySelector(".hint");
+      if (!hint) return null;
+      return {
+        open: hint.matches(":popover-open"),
+        text: hint.textContent.replace(/\\s+/g, " ").trim(),
+        hidden: hint.getAttribute("aria-hidden") === "true",
+      };
+    })()`);
+
+  test("shows the Tab model below the editor while it has focus, and the release after Escape", async () => {
+    const page = await editing();
+    try {
+      assert.deepEqual(await hint(page), {
+        open: false,
+        text: "Tab indents · Esc then Tab moves focus",
+        hidden: true,
+      });
+      await select(page, 4);
+      assert.equal((await hint(page))?.open, true, "shown while focused");
+      const placed: { below: boolean; end: boolean; within: boolean; veil: string } =
+        await page.evaluate(`(() => {
+          const root = ${EDITABLE}.shadowRoot;
+          const frame = root.querySelector(".editor").getBoundingClientRect();
+          const hint = root.querySelector(".hint");
+          const box = hint.getBoundingClientRect();
+          return {
+            below: box.top >= frame.bottom,
+            end: Math.abs(box.right - frame.right) <= 1,
+            within: box.width <= frame.width + 1,
+            veil: getComputedStyle(hint, "::backdrop").backgroundColor,
+          };
+        })()`);
+      assert.deepEqual(
+        placed,
+        { below: true, end: true, within: true, veil: "rgba(0, 0, 0, 0)" },
+        "below the frame, at its inline end, no wider, and veiling nothing",
+      );
+      await press(page, "Escape", "Escape", 27);
+      assert.deepEqual(await hint(page), { open: true, text: "Tab moves focus", hidden: true });
+      await page.cdp("Input.insertText", { text: "x" });
+      assert.equal((await hint(page))?.text, "Tab indents · Esc then Tab moves focus");
+      await press(page, "Escape", "Escape", 27);
+      await press(page, "Tab", "Tab", 9);
+      assert.equal((await hint(page))?.open, false, "hidden once focus leaves");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("an editable textbox describes the model, and a read-only one has neither hint nor description", async () => {
+    const page = await editing();
+    try {
+      assert.equal(await hint(page, `window.editors.at("readonly")`), null);
+      await page.evaluate(`window.editors.at("readonly").focus()`);
+      assert.equal(
+        await page.evaluate(`document.querySelectorAll(":popover-open").length`),
+        0,
+        "no hint opens for the read-only editor",
+      );
+      const { nodes }: { nodes: AXNode[] } = await page.cdp("Accessibility.getFullAXTree", {});
+      const described = nodes
+        .filter((node) => !node.ignored && node.role?.value === "textbox")
+        .map((node) => ({
+          readonly: node.properties?.some((p) => p.name === "readonly" && p.value.value === true),
+          description: (node as AXNode & { description?: { value: string } }).description?.value,
+        }));
+      assert.ok(described.length > 0);
+      for (const { readonly, description } of described) {
+        assert.equal(
+          description,
+          readonly ? undefined : "Tab indents. Press Escape, then Tab, to move focus out.",
+        );
+      }
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("input methods", () => {
+  test("a composition commits as typed, and no key is taken while it composes", async () => {
+    const page = await editing();
+    try {
+      await page.evaluate(`window.editors.listen(${EDITABLE})`);
+      const at = startOf("negative");
+      await select(page, at);
+      await page.cdp("Input.imeSetComposition", {
+        text: "ね",
+        selectionStart: 1,
+        selectionEnd: 1,
+      });
+      await page.cdp("Input.imeSetComposition", {
+        text: "ねg",
+        selectionStart: 2,
+        selectionEnd: 2,
+      });
+      // A Tab, Enter, or Escape while composing belongs to the input method: the editor neither
+      // takes nor cancels it.
+      const taken: string[] = await page.evaluate(`(() => {
+        const element = ${EDITABLE}.shadowRoot.querySelector(".text");
+        return ["Tab", "Enter", "Escape"].filter((key) => {
+          const event = new KeyboardEvent("keydown", {
+            key, isComposing: true, bubbles: true, cancelable: true, composed: true,
+          });
+          element.dispatchEvent(event);
+          return event.defaultPrevented;
+        });
+      })()`);
+      assert.deepEqual(taken, []);
+      await page.cdp("Input.insertText", { text: "猫" });
+      const committed = await shown(page);
+      assert.equal(committed.value, `${CLASSIFY.slice(0, at)}猫${CLASSIFY.slice(at)}`);
+      assert.deepEqual(committed.selected, [at + 1, at + 1]);
+      const heard: { type: string }[] = await page.evaluate(`${EDITABLE}.heard`);
+      assert.ok(heard.length > 0 && heard.every(({ type }) => type === "input"));
+      // The composition's Escape released nothing: Tab after it still indents.
+      await press(page, "Tab", "Tab", 9);
+      assert.equal((await shown(page)).value, `${CLASSIFY.slice(0, at)}猫\t${CLASSIFY.slice(at)}`);
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("the editor's events", () => {
+  test("input reaches the host once for each edit, key edits, undo, and redo included", async () => {
+    const page = await editing();
+    try {
+      await page.evaluate(`window.editors.listen(${EDITABLE})`);
+      const heard = async () =>
+        (await page.evaluate(`${EDITABLE}.heard`)) as { type: string; own: boolean }[];
+      const steps: [string, () => Promise<unknown>][] = [
+        ["typing", () => page.cdp("Input.insertText", { text: "y" })],
+        ["Enter", () => enter(page)],
+        ["Tab", () => press(page, "Tab", "Tab", 9)],
+        ["Shift+Tab", () => press(page, "Tab", "Tab", 9, SHIFT)],
+        ["Backspace", () => press(page, "Backspace", "Backspace", 8)],
+        ["undo", () => undo(page)],
+        ["redo", () => redo(page)],
+      ];
+      await select(page, endOf(`"other"`));
+      let value = (await shown(page)).value;
+      for (const [i, [name, step]] of steps.entries()) {
+        await step();
+        const now = (await shown(page)).value;
+        assert.notEqual(now, value, `${name} edits`);
+        value = now;
+        assert.deepEqual(
+          await heard(),
+          Array.from({ length: i + 1 }, () => ({ type: "input", own: true, bubbles: true })),
+          `one input after ${name}, the host's own`,
+        );
+      }
+      // The indent over lines, one input for every line it changes.
+      await select(page, startOf("switch"), endOf("default:"));
+      await press(page, "Tab", "Tab", 9);
+      assert.equal((await heard()).length, steps.length + 1);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("change goes once focus leaves with the value changed since focus came in, and no other time", async () => {
+    const page = await editing();
+    try {
+      await page.evaluate(`window.editors.listen(${EDITABLE})`);
+      const changes = async () =>
+        ((await page.evaluate(`${EDITABLE}.heard`)) as { type: string }[]).filter(
+          ({ type }) => type === "change",
+        );
+      const leave = () =>
+        page.evaluate(
+          `document.querySelector("h1").setAttribute("tabindex", "-1"), document.querySelector("h1").focus()`,
+        );
+      // Edited, then left: one change, bubbling, the host's own, as focus leaves and not before.
+      await select(page, 4);
+      await page.cdp("Input.insertText", { text: "z" });
+      await enter(page);
+      assert.deepEqual(await changes(), [], "no change while focus stays");
+      await leave();
+      assert.deepEqual(await changes(), [{ type: "change", own: true, bubbles: true }]);
+      // Focused and left with no edit: none.
+      await select(page, 4);
+      await leave();
+      assert.equal((await changes()).length, 1, "no change without an edit");
+      // Edited and undone back to the value focus came in with: none.
+      await select(page, 4);
+      await page.cdp("Input.insertText", { text: "q" });
+      await undo(page);
+      await leave();
+      assert.equal((await changes()).length, 1, "no change when the value is as it was");
+      // Set by value while focused: none, and the set value is what change measures from.
+      await select(page, 4);
+      await page.evaluate(`${EDITABLE}.value = "set"`);
+      await leave();
+      assert.equal((await changes()).length, 1, "setting value sends no change");
+      // Edited after the set: one more.
+      await select(page, 3);
+      await page.cdp("Input.insertText", { text: "!" });
+      await leave();
+      assert.equal((await changes()).length, 2);
+      assert.equal((await shown(page)).value, "set!");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("setting value sends neither event, and a read-only editor sends none and lets Tab move focus", async () => {
+    const page = await editing();
+    try {
+      for (const state of ["editable", "readonly"]) {
+        await page.evaluate(`window.editors.listen(window.editors.at("${state}"))`);
+      }
+      await page.evaluate(`${EDITABLE}.value = "package main\\n"`);
+      const readonly = `window.editors.at("readonly")`;
+      const before = (await shown(page, readonly)).value;
+      await page.evaluate(`${readonly}.focus()`);
+      await enter(page);
+      await page.cdp("Input.insertText", { text: "typed" });
+      await press(page, "Tab", "Tab", 9);
+      const moved: boolean = await page.evaluate(`document.activeElement !== ${readonly}`);
+      assert.ok(moved, "Tab moves focus out of the read-only editor");
+      assert.equal((await shown(page, readonly)).value, before);
+      assert.deepEqual(await page.evaluate(`[${EDITABLE}.heard, ${readonly}.heard]`), [[], []]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the events state's readout counts what its editor sends", async () => {
+    const page = await editing();
+    try {
+      const events = `window.editors.at("events")`;
+      const readout = () =>
+        page.evaluate(`${events}.closest("figure").querySelector(".readout").textContent`);
+      assert.equal(await readout(), "Specimen aid, events heard: input 0 · change 0");
+      await select(page, 4, 4, events);
+      await page.cdp("Input.insertText", { text: "a" });
+      await press(page, "Tab", "Tab", 9);
+      assert.equal(await readout(), "Specimen aid, events heard: input 2 · change 0");
+      await press(page, "Escape", "Escape", 27);
+      await press(page, "Tab", "Tab", 9);
+      assert.equal(await readout(), "Specimen aid, events heard: input 2 · change 1");
     } finally {
       await page.close();
     }

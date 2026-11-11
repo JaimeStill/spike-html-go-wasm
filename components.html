@@ -4,8 +4,9 @@
      instance reached by the keyboard, its focus shown. Its script, web/pages/components.ts, defines
      the components and builds the states into each list; nothing here runs Go, and nothing loads
      Go. sl-code-editor: Go and JSON highlighted, another language plain, read-only, long lines
-     wrapped beside the gutter, empty and named by its caption through aria-labelledby, and two
-     editors sharing the document's highlights. The shell is the index's, the same header, dialogs,
+     wrapped beside the gutter, empty and named by its caption through aria-labelledby, two
+     editors sharing the document's highlights, an editable editor for the keyboard model, and an
+     editor whose events a readout counts, a specimen aid. The shell is the index's, the same header, dialogs,
      and unlayered header-actions rule; see index.html for each. -->
 <html lang="en">
   <head>
@@ -43,6 +44,11 @@
       /* A state of several instances sets them apart. */
       .state > * + :not(figcaption) {
         margin-block-start: var(--space-s);
+      }
+      /* A specimen aid, beside the component it observes, quieter than the component. */
+      .readout {
+        color: var(--fg-2);
+        font-size: var(--text-s);
       }
     </style>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
