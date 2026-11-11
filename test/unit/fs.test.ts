@@ -243,14 +243,12 @@ describe("the in-memory fs", () => {
     assert.equal(goFs.fs.writeSync(2, view), 4);
     view.fill(0);
     call(goFs, "write", 1, bytes("out"), 0, 3, null);
-    const later: string[] = [];
-    goFs.setOutput((fd, data) => later.push(`${fd}:${text(data)}`));
     call(goFs, "write", 2, bytes("xerrx"), 1, 3, null);
     assert.deepEqual(seen, [
       [2, "sync"],
       [1, "out"],
+      [2, "err"],
     ]);
-    assert.deepEqual(later, ["2:err"]);
     assert.equal(call(goFs, "read", 0, new Uint8Array(4), 0, 4, null), 0, "stdin reads empty");
     assert.equal(code(goFs, "write", 0, bytes("x"), 0, 1, null), "EBADF");
   });

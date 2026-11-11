@@ -10,7 +10,7 @@
 // from inside a call, as its own stub does.
 //
 // Writes to fds 1 and 2, through write (os.Stdout, os.Stderr) or writeSync (the runtime's prints
-// and panics, wasm_exec.js's path), go to an output sink the runtime can replace; the default
+// and panics, wasm_exec.js's path), go to the output sink the fs is created with; the default
 // prints whole lines to the console, as the stub does. fd 0 reads as empty.
 //
 // The tree is nodes behind two interfaces, FileNode and DirectoryNode: the fs resolves paths,
@@ -155,10 +155,6 @@ export class Stats {
 
   isDirectory(): boolean {
     return (this.mode & 0o170000) === S_IFDIR;
-  }
-
-  isFile(): boolean {
-    return (this.mode & 0o170000) === S_IFREG;
   }
 }
 
@@ -307,8 +303,7 @@ function resolvePath(cwd: string, path: string): string {
   return `/${segments.join("/")}`;
 }
 
-/** The fs, path, and process objects Go reads from globalThis, and setOutput, which routes
- * later writes to fds 1 and 2 to a new sink. */
+/** The fs, path, and process objects Go reads from globalThis. */
 export type GoFs = ReturnType<typeof createFs>;
 
 /** The default sink: whole lines to console.log (stdout) or console.error (stderr), each fd's
@@ -330,7 +325,6 @@ export function createFs(sink: OutputSink = consoleOutput()) {
   const root: DirectoryNode = new MemoryDirectory(0o755);
   root.set("tmp", root.createDirectory(0o1777));
   let cwd = "/";
-  let output = sink;
   const opens = new Map<number, Open>();
   let lastFd = 2;
 
@@ -375,7 +369,7 @@ export function createFs(sink: OutputSink = consoleOutput()) {
 
   /** Sends bytes to the sink, a copy: writeSync's are a view into the instance's memory. */
   function emit(fd: 1 | 2, bytes: Uint8Array): number {
-    output(fd, bytes.slice());
+    sink(fd, bytes.slice());
     return bytes.length;
   }
 
@@ -668,9 +662,6 @@ export function createFs(sink: OutputSink = consoleOutput()) {
       /** Throws its fs error, which Go's Chdir recovers and maps. */
       chdir,
     },
-    setOutput(next: OutputSink) {
-      output = next;
-    },
   };
 }
 
@@ -696,7 +687,7 @@ function processStub(cwd: () => string, chdir: (path: string) => void) {
 
 /** Installs a fresh in-memory fs on scope, globalThis by default, before wasm_exec.js loads:
  * scope.fs and scope.path, and the cwd and chdir of scope.process, or a process in the stub's
- * shape when scope has none, as in a worker. Answers the fs, whose setOutput routes fds 1 and 2. */
+ * shape when scope has none, as in a worker, its fds 1 and 2 written to output. Answers the fs. */
 export function install(
   scope: Record<string, unknown> = globalThis as unknown as Record<string, unknown>,
   output?: OutputSink,
