@@ -10,7 +10,10 @@
      The script creates each editor's settings and owns them. sl-file-tabs: several files, one
      modified, one read-only, sixteen overflowing the row, and one alone, each over an editor
      showing the active file, the script owning each file set and applying the tabs' requests and
-     the editor's edits to it. The shell is the index's, the same header, dialogs,
+     the editor's edits to it. sl-console: interleaved streams, exits of 0 and 2, a handler's
+     answer and error, ANSI escapes, long lines, a log past its limit, empty, and one streaming on a
+     button's press, each log the script's own, written from scripted events, its clear requests
+     applied by the script. The shell is the index's, the same header, dialogs,
      and unlayered header-actions rule; see index.html for each. -->
 <html lang="en">
   <head>
@@ -133,6 +136,22 @@
         <div class="states narrow"></div>
         <h3 id="file-tabs-focus">Focus visible</h3>
         <p>The tabs, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus"></div>
+      </section>
+      <section id="console" aria-labelledby="console-heading">
+        <h2 id="console-heading">Console</h2>
+        <p>
+          <code>sl-console</code>, a run's output, exits, and answers as a quiet log. The page owns
+          each log, written here from scripted events with no Go: it applies Clear's request, and
+          the console follows the log.
+        </p>
+        <h3 id="console-states">States</h3>
+        <div class="states"></div>
+        <h3 id="console-narrow">States at 20rem</h3>
+        <div class="states narrow"></div>
+        <h3 id="console-focus">Focus visible</h3>
+        <p>The log, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>
         <div class="focus"></div>
       </section>

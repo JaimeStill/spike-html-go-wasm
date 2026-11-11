@@ -112,6 +112,71 @@ keyboard.
       read-only, and keeps focus, selection, copy, and highlighting; Tab moves focus, no hint
       shows, and Ctrl or Cmd+A selects its text alone. A character key fires none of the page's
       single-key shortcuts, as in a field, and Escape is the page's.
+- `./console.js`: `sl-console`, a run's output, exits, and answers as a quiet log. It renders the
+  `ConsoleLog` (below) it is given, follows each change it sends, listening only to the log it
+  holds while it is in the document, and never writes it. Output shows as written, in arrival
+  order, keeping Go's line breaks and blank lines and wrapping long lines, anywhere if it must, so
+  nothing scrolls sideways; a control character shows as its Unicode control picture, so an ANSI
+  escape reads "␛[31m". stdout is plain. stderr's line is the palette's red mixed into the
+  surface, with a red rule at its start and a cue in its gutter, "err", which assistive
+  technology reads as "stderr: "; its text keeps the page's text color, which holds 4.5:1 on the
+  tint in every palette and scheme where the red itself doesn't. An exit is a status line,
+  "hello exited with code 0", led by a tick for 0 and a cross for any other; a result is a block
+  of its own headed "Result" or "Error", with the same glyphs, an error's tinted as stderr is. With
+  entries dropped, the bar above the log says how many ("500 earlier lines dropped"), and describes
+  the log; with none, the log says "No output yet." The log follows its tail, showing each new
+  entry, unless the reader has scrolled up, and follows again once they return to the end; the
+  jump is instant, so nothing moves. It renders once an animation frame, whatever changed since
+  the last, appending the new rows and dropping those the limit dropped, never re-rendering the
+  whole log: 10,000 writes, each its own task, render in a few frames. The log grows with its
+  lines up to 24rem, or the length the page sets as `--sl-console-max-block-size` on the host,
+  and scrolls inside; it is no flex item, which would lay out every row again on each append.
+  - Attributes: `label` (the log's accessible name, "Output" by default).
+  - Properties: `log`, the `ConsoleLog` its owner creates and writes; `null`, the default, shows
+    the empty state; and `label`, as its attribute.
+  - Events: `clear`, an `Event` that bubbles and is not composed, when Clear is pressed with
+    entries shown: a request, which changes nothing until the owner applies it with
+    `log.clear()`. Copy sends none: it puts the log's `text()` on the clipboard itself, changing
+    nothing, and confirms "Copied" (or "Couldn't copy") in a polite status for two seconds.
+  - Slots: none.
+  - Accessibility: the log is `role="log"` named by `label`, with `aria-live="off"`, so no write
+    is announced; Copy's status is the console's only live region. Copy and Clear are glyph
+    buttons, Octicons' copy and trash, named "Copy" and "Clear", each showing its name in a hint
+    on hover and keyboard focus, and `aria-disabled`, still focusable, while the log is empty.
+  - Keyboard: Tab reaches Copy and Clear, each pressed by Enter or Space, then the log, which
+    shows the focus outline inside its frame and scrolls by the arrow keys, Page Up and Down, Home,
+    and End.
+- `./console-log.js`: `ConsoleLog`, a console's log, a model with no document or element, an
+  `EventTarget` its owner, the page or the element composing the console over a runner, is the
+  only writer of. It takes the runtime's events as they are, their shapes re-declared, since the
+  components tier imports nothing from the runtime.
+  - Writing: `output({ stream, text })`, `stream` `"stdout"` or `"stderr"`, splits the text into
+    lines at `"\n"`, keeping every other character as written, `"\r"` and ANSI escapes included,
+    the last line left open unless the text ends one; `exit({ scenario, code })`, a whole-number
+    code; `result({ ok, text })`, a handler's answer (`ok` true) or error; and `clear()`, which
+    empties the log and its dropped count.
+  - Interleaving: a write continues the line before it only when that line is the same stream's,
+    still open, and the last entry; a write to the other stream, an exit, a result, or a clear in
+    between ends the open line where it stands, and the continuation starts a line of its own. So
+    the entries are in arrival order, no line holds both streams' text, and only the last entry
+    ever changes.
+  - Reading: `entries`, the kept entries in order as frozen snapshots, `{ kind: "output", seq,
+    stream, text, open }`, `{ kind: "exit", seq, scenario, code }`, or `{ kind: "result", seq, ok,
+    text }`, the same array until the log changes; `size`; `dropped`; `limit`; `first` and
+    `next`, the sequence numbers of the first entry kept and of the next to be added, every kept
+    entry's number between them, unbroken and never reused, clear included; `at(seq)` and
+    `since(seq)`, in constant time and in the entries returned; and `text()`, each entry on a line
+    of its own, output as written, an exit as "<scenario> exited with code <code>", an error's
+    text after "error: ", as `entryText(entry)` gives each.
+  - Limit: it keeps the latest 10,000 entries (`LIMIT`; `new ConsoleLog({ limit })` sets
+    another), an output line, an exit, and a result each counting as one, and counts those dropped
+    from the front. A write costs the lines it adds.
+  - Refusals: an operation the log can't apply throws, naming the reason, and changes nothing: a
+    `TypeError` for a value of the wrong type, a `RangeError` for another stream or a code that
+    isn't a whole number.
+  - Events: one `change` `Event` for each operation that changes the log, however many lines it
+    adds; an empty write, or a clear of an empty log, sends none. The unit tier tests it under
+    node.
 - `./editor-settings.js`: `EditorSettings`, the code editor's settings, a model with no document
   or element, an `EventTarget` its owner writes: `wrap` (a boolean, `false` by default: long lines
   scroll sideways) and `tabSize` (a whole number from 1 to 8, 4 by default, how many columns a tab
@@ -165,6 +230,9 @@ keyboard.
     the previous and the next tab, wrapping at either end, and Home and End to the first and the
     last, each requesting that tab's selection: activation follows focus. Enter, Space, and a
     click request the focused tab's selection.
+- `./glyphs.js`: the glyphs the components draw in their shadow roots, Octicons' copy, trash,
+  check-circle, and x-circle from the icons layer, written out as Lit templates with the same
+  paths: the build fills the icons layer into a page's own markup, and no tier imports it.
 
 ## Keeping pace with the SDK
 

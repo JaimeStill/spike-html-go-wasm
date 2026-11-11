@@ -21,8 +21,17 @@
 // select requests to the set, and the editor's input as an edit of the active file, so the tabs'
 // selection follows only the set, and a modified file's marker appears as the editor is typed in.
 // The editor, in a tabpanel each tab controls, shows the active file, read-only when it is.
+//
+// The console's states (sl-console): stdout and stderr interleaved, an exit of 0 and of 2, a
+// handler's answer and its error, ANSI escapes, long lines, a log past its limit with the count it
+// dropped, an empty log, and a log that streams a line every 250 ms once a button, a specimen aid,
+// is pressed, so a capture of the page never catches it moving. The page owns each state's
+// ConsoleLog, fresh for each list, writes it from a script of the events a runner would send,
+// with no Go, and applies the console's clear requests to it.
 
 import "../components/code-editor.ts";
+import "../components/console.ts";
+import { ConsoleLog, LIMIT } from "../components/console-log.ts";
 import { EditorSettings } from "../components/editor-settings.ts";
 import { FileSet, type GivenFile } from "../components/file-set.ts";
 import "../components/file-tabs.ts";
@@ -345,5 +354,173 @@ specimens(
     key: "focus",
     label: "Focused by Tab",
     build: (id) => workspace(new FileSet(program()), id),
+  },
+);
+
+/** A console showing the log, named by label or, with none, by the console's own default, the
+ * page its owner: the console's clear requests are applied to the
+ * log, and nothing else writes it but the state that made it. */
+function consoleOf(log: ConsoleLog, label?: string): HTMLElement {
+  const shown = make("sl-console", label === undefined ? { log } : { log, label });
+  shown.addEventListener("clear", () => log.clear());
+  return shown;
+}
+
+/** A log of the writes, exits, and results, in order, as a runner's events would bring them. */
+function scripted(...steps: ((log: ConsoleLog) => void)[]): ConsoleLog {
+  const log = new ConsoleLog();
+  for (const step of steps) step(log);
+  return log;
+}
+
+const out = (text: string) => (log: ConsoleLog) => log.output({ stream: "stdout", text });
+const err = (text: string) => (log: ConsoleLog) => log.output({ stream: "stderr", text });
+const exited = (scenario: string, code: number) => (log: ConsoleLog) =>
+  log.exit({ scenario, code });
+const answered = (ok: boolean, text: string) => (log: ConsoleLog) => log.result({ ok, text });
+
+/** The capped state's log: 10,500 lines written, the first 500 dropped. */
+function capped(): ConsoleLog {
+  const log = new ConsoleLog();
+  for (let i = 1; i <= LIMIT + 500; i++) {
+    log.output({ stream: i % 100 === 0 ? "stderr" : "stdout", text: `step ${i}\n` });
+  }
+  return log;
+}
+
+/** The streaming state: a console and, below it, a specimen aid, a button that starts and stops
+ * writing a line every 250 ms, so the console's following of its tail shows. It writes nothing
+ * until pressed, so a capture of the page is the same every time. */
+function streaming(): HTMLElement[] {
+  const log = new ConsoleLog();
+  const shown = consoleOf(log, "Streaming output");
+  const button = make("button", { type: "button", textContent: "Start streaming" });
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let count = 0;
+  button.addEventListener("click", () => {
+    if (timer === undefined) {
+      timer = setInterval(() => {
+        count += 1;
+        const stream = count % 7 === 0 ? "stderr" : "stdout";
+        log.output({ stream, text: `tick ${count}: ${"·".repeat(count % 40)}\n` });
+      }, 250);
+      button.textContent = "Stop streaming";
+    } else {
+      clearInterval(timer);
+      timer = undefined;
+      button.textContent = "Start streaming";
+    }
+  });
+  const aid = make("p", { className: "readout" });
+  aid.append("Specimen aid: ", button);
+  return [shown, aid];
+}
+
+const PANIC = `panic: runtime error: index out of range [3] with length 3
+
+goroutine 1 [running]:
+main.main()
+	/src/crash/main.go:12 +0x1d
+exit status 2
+`;
+
+specimens(
+  "console",
+  [
+    {
+      key: "mixed",
+      label: "stdout and stderr interleaved, partial lines joined, each stream's line in order",
+      build: () => [
+        consoleOf(
+          scripted(
+            out("loading "),
+            out("config…\n"),
+            err("warning: no cache, building from source\n"),
+            out("step 1 of 3\nstep 2 of 3\n"),
+            err("warning: "),
+            err("slow disk\n"),
+            out("step 3 of 3\n\ndone\n"),
+          ),
+        ),
+      ],
+    },
+    {
+      key: "exit-ok",
+      label: "A program's exit, code 0",
+      build: () => [consoleOf(scripted(out("hello, world\n"), exited("hello", 0)))],
+    },
+    {
+      key: "exit-fail",
+      label: "A crash: stderr, then its exit, code 2",
+      build: () => [consoleOf(scripted(err(PANIC), exited("crash", 2)))],
+    },
+    {
+      key: "result-ok",
+      label: "A handler's answer, its own block",
+      build: () => [
+        consoleOf(
+          scripted(answered(true, '{\n  "formatted": "package main\\n",\n  "changed": true\n}')),
+        ),
+      ],
+    },
+    {
+      key: "result-error",
+      label: "A handler's error, its own block",
+      build: () => [
+        consoleOf(
+          scripted(
+            out("parsing input\n"),
+            answered(false, "input.go:3:1: expected declaration, found '}'"),
+          ),
+        ),
+      ],
+    },
+    {
+      key: "ansi",
+      label: "ANSI escapes, shown as text, not colors",
+      build: () => [
+        consoleOf(
+          scripted(
+            out("\u001b[1;32mPASS\u001b[0m TestSum (0.00s)\n"),
+            err("\u001b[31mFAIL\u001b[0m TestParse\n"),
+          ),
+        ),
+      ],
+    },
+    {
+      key: "long",
+      label: "A long line, wrapped, a long word broken where it must be",
+      build: () => [
+        consoleOf(
+          scripted(
+            out(
+              `${"a line of words longer than any width the page gives the console, so it wraps at its spaces ".repeat(2)}\n`,
+            ),
+            out(`https://example.com/${"a-very-long-path-segment/".repeat(8)}\n`),
+          ),
+        ),
+      ],
+    },
+    {
+      key: "capped",
+      label: "10,500 lines written: the latest 10,000 kept, the count dropped shown",
+      build: () => [consoleOf(capped())],
+    },
+    {
+      key: "empty",
+      label: "Empty",
+      build: () => [consoleOf(new ConsoleLog())],
+    },
+    {
+      key: "stream",
+      label:
+        "Streaming: the console follows its tail until scrolled up, and again once back at the end",
+      build: streaming,
+    },
+  ],
+  {
+    key: "focus",
+    label: "Focused by Tab",
+    build: () => [consoleOf(scripted(out("hello, world\n"), exited("hello", 0)))],
   },
 );
