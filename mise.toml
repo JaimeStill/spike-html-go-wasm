@@ -1,0 +1,37 @@
+# mise run never installs a missing tool first (task.run_auto_install, on by default): the check
+# reads no network, and fails naming mise run install, the one task that installs tools.
+# Adapted from spike-html-hosting (690e5e4): mise.toml, its init toolchain and tasks, with Go and
+# TinyGo added.
+[settings]
+task.run_auto_install = false
+
+# spike-html-hosting's toolchain at its latest pins, with Go for the GOOS=js builds and TinyGo for
+# the comparison build; the site task adds the rest (Vite, typescript-go, ESLint, Prettier,
+# actionlint, chrome-headless-shell).
+[tools]
+go = "1.27.4"
+node = "26.13.0"
+pnpm = "12.19.0"
+shellcheck = "0.11.0"
+tinygo = "0.44.0"
+
+[tasks.check]
+description = "Lint the shell scripts with shellcheck; reads no network, writes nothing. The site task grows it to the Go and site builds, the lints, and both layer-direction checks"
+run = '''
+set -eu
+cd "$MISE_PROJECT_ROOT"
+find . -name '*.sh' -not -path './node_modules/*' -not -path './.git/*' -print0 \
+  | xargs -0 -r shellcheck
+'''
+
+[tasks.install]
+description = "Install every mise.toml pin; reads the network"
+run = "mise install"
+dir = "{{config_root}}"
+
+[tasks.currency]
+description = "Report every mise tool pinned behind its latest, one line each, exiting nonzero if any; reads the network, writes nothing"
+run = "scripts/currency.sh"
+# Without mise's own command echo, so a current tree prints nothing at all.
+quiet = true
+dir = "{{config_root}}"

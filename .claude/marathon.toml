@@ -1,0 +1,26 @@
+# Project kind: this spike runs workspace Go live in the browser through GOOS=js WebAssembly, on a
+# Pages project site over experiment.html's stack, checked by `mise run check`. Its goals live in
+# the coordinator's roadmap (standards-lab/context/roadmap.toml). `mise run currency` reports every
+# mise tool pinned behind its latest; the site task extends it to the package and go.mod
+# dependencies. No gate.
+[project]
+kind = "code"
+check = "mise run check"
+currency = "mise run currency"
+
+# Remote platform, the commands that publish and merge a finished branch, and the wait for the
+# push run on main: the Pages deploy, which the site task adds, so a merge isn't done until its
+# deploy passes.
+[remote]
+platform = "github"
+publish = "gh pr create"
+merge = "gh pr checks --watch && gh pr merge --merge --delete-branch"
+ci = '''
+sha=$(git rev-parse HEAD)
+for _ in $(seq 30); do
+  runs=$(gh run list --commit "$sha" --event push --json databaseId --jq '.[].databaseId')
+  [ -n "$runs" ] && break || sleep 10
+done
+[ -n "$runs" ] || exit 1
+for run in $runs; do gh run watch --exit-status "$run" || exit 1; done
+'''
