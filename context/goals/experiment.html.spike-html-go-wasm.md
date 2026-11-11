@@ -149,6 +149,12 @@ Slices        1. One request at a time: the runner stops a pending request befor
                  colour test runs in every palette and scheme. README entry.
               3. Editing: Enter, Tab, Shift+Tab, Escape's release, undo and redo, IME, the
                  events, and value, each proven in the browser tier with its specimen states.
+              3b. Editor settings (added after approval): a DOM-free EditorSettings model (wrap,
+                 default off so long lines scroll; tab size, default 4, 1 to 8) that
+                 sl-code-editor renders from and never writes, the gutter aligned in both
+                 modes, Tab and Shift+Tab reading the tab size, specimen states for each; with
+                 paste inserting plain text through the editor's own edit path and a read-only
+                 editor not firing the page's single-key shortcuts.
               4. The file set and sl-file-tabs: the model under the unit tier, and the tabs'
                  keyboard model, modified marker, and accessibility tree on the components
                  page. README entry.
@@ -178,7 +184,7 @@ Door          two-way: the components stay in this repository unreleased, the ru
 
 ## Progress
 
-slices 2/9 committed · standards — · spec — · editor —
+slices 3/10 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -404,6 +410,28 @@ slices 2/9 committed · standards — · spec — · editor —
   6.43.15) and Monaco (@shikijs/monaco 4.6.0), which bring their own model and theming; Web
   Awesome 3.14.0, Shoelace 2.20.1, and Material Web 2.5.0 tabs, which bring their own tokens.
 
+- components (after approval): the editor's wrap and tab size live in a DOM-free EditorSettings
+  model that sl-code-editor renders from and never writes; each sl-go-demo builds its own from
+  its `wrap` and `tab-size` attributes. Long lines scroll unless wrap is set; tab size defaults to
+  4. Rejected: attributes owned by the editor, a Settings-dialog preference (an SDK change), and
+  one page-wide model.
+- components (after approval): the architect promoted the state rule to a web principle: a
+  component holds no authoritative state; a DOM-free model below it, written by one owner, holds
+  the state, its rules, and its validation. It lands in STANDARDS.md now and is offered to
+  experiment.html's intake as a page for the web standard, not the Go standard or the
+  cross-language principles.
+- components: line breaks go through execCommand("insertLineBreak"), since insertText of "\n" in
+  plaintext-only splits the text into divs; one edit's insertions form one undo step.
+- components: Escape works in two steps in the editor: the first releases Tab and keeps focus;
+  the next passes to the page (keys.js blur, a dialog's close). Tab is re-armed on focus, typing,
+  or a click.
+- components: the Tab model is described by aria-description on the textbox and a visible
+  aria-hidden hint popover while focused, not aria-keyshortcuts, which names activating keys.
+- components: a read-only editor is contenteditable="false" with tabindex 0, role textbox, and
+  aria-readonly, because Chrome ignores aria-readonly on an editable element; it has no keyboard
+  caret.
+- components: lit 3.3.3 and vite-plugin-standard-css-modules 0.3.0 are pinned at the root, the
+  latter for the components' own CSS module scripts; the boundaries table gains only shiki.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
@@ -431,7 +459,15 @@ slices 2/9 committed · standards — · spec — · editor —
   sqlate's STANDARDS.md says "Focus is always visible", so its next review may raise it.
 - staticcheck SA5002 flags an empty `for {}`; the probe's spin loops on a counter.
 
+- The state-outside-components principle is a native web principle for the intake's web
+  standard; the answer section carries it.
+
 ## Pending edits
 
+- coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", a candidate principle
+  for the web standard experiment.html's intake may found: a component holds no authoritative
+  state; a DOM-free model below it, written by one owner (the composing element or the page),
+  holds the state, its rules, and its validation. Evidence: this spike's FileSet and
+  EditorSettings.
 - coordinator · roadmap.toml: in the components task's summary, "sl-run-controls" becomes
   "sl-controls".
