@@ -1,6 +1,6 @@
 // The web tiers' import cases as one file tree in the site's shape: a file per forbidden import
 // and form, each with the rules that catch it, and the imports each tier may make in the same
-// layout. web-layers.test.ts lints it. The tiers hold no source yet, so the tree is the table's
+// layout. web-layers.test.ts lints it apart from the site's own web/, so the tree is the table's
 // only subject: the three tiers in web/, wasm_exec.js in the runtime, and the packages as stubs
 // in node_modules/.
 // Adapted from spike-html-apps (dae9a77): test/unit/apps-tree.ts, its cases the web tiers'.

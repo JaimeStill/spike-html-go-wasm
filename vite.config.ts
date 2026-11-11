@@ -1,5 +1,6 @@
-// The site's build (mise run build): the hand index, index.html, and the foundation modules it
-// loads, into dist/: static files GitHub Pages serves as the repository's project site, under
+// The site's build (mise run build): the hand pages, index.html and runtime.html, the foundation
+// modules they load, the runtime page's script, and the runtime's worker it starts, into dist/:
+// static files GitHub Pages serves as the repository's project site, under
 // /<repository>/. The base is that path, and the repository's name is package.json's name, the one
 // place it is written; the SDK's served(), which the browser tier and the captures serve the build
 // with, reads the same name.
@@ -42,11 +43,15 @@ export default defineConfig({
     outDir: "dist",
     target: "es2024",
     // The hand pages: Vite builds index.html by default only with no input given, and the plugin
-    // gives its pages, none here, as an input list.
+    // gives its pages, none here, as an input list. runtime.html is the runtime's page.
     rolldownOptions: {
-      input: [`${root}index.html`],
+      input: [`${root}index.html`, `${root}runtime.html`],
     },
   },
+  // The runtime's worker (web/runtime/runner.ts starts it as `new Worker(new URL(...),
+  // { type: "module" })`) is bundled as an ES module, its own chunk, which the page requests only
+  // when the runner starts it.
+  worker: { format: "es" },
   // A multi-page site: a path no page builds to is a 404 in the preview, as it is on Pages, never
   // a fallback to the index.
   appType: "mpa",
