@@ -1,12 +1,12 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** site
-- **Branch:** site
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
-1. [ ] site
+1. [x] site
 2. [ ] runtime
 3. [ ] components
 4. [ ] playground
@@ -74,10 +74,6 @@ Out of scope  bridge, loader, worker, in-memory fs, Stop; components and specime
               any change to the SDK, components' site list, or any reference repository.
 Door          two-way — enabling Pages and the first deploy publish a public site, which can be
               unpublished; nothing tagged.
-
-## Progress
-
-slices 5/5 committed · standards ✓ · spec ✓ (2 rounds) · editor ✓
 
 ## Decisions
 
