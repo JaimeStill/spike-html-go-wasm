@@ -10,7 +10,10 @@
 // Left and Right move focus to the previous and next control, wrapping, and Home and End to the
 // first and last. An unavailable control is aria-disabled, never disabled, so it stays focusable,
 // as the APG recommends inside a toolbar, and a press of it sends nothing. Each control is a glyph
-// button showing its name beside its glyph, so it needs no hint.
+// button named by aria-label, whose name shows beside its glyph where the toolbar's widest group
+// fits with its names; narrower, the glyph shows alone and the name shows as the hosting
+// components' hint (glyph-button.css), on hover and keyboard focus, as sl-console's Copy and Clear
+// do. controls.css's container query on the host decides which, so the font's width never does.
 //
 // New file and Rename each open a small form in a popover, anchored to its button by CSS anchor
 // positioning. The form names its input by a label and validates the name as the file set does,
@@ -62,6 +65,16 @@ export interface RenameDetail {
 export interface DeleteDetail {
   name: string;
 }
+
+/** Each control's name: its accessible name, the words beside its glyph, and its hint. */
+const names: Record<Control, string> = {
+  run: "Run",
+  stop: "Stop",
+  reset: "Reset",
+  new: "New file",
+  rename: "Rename",
+  delete: "Delete",
+};
 
 /** The forms, by the control that opens each. */
 type Form = "new" | "rename";
@@ -359,18 +372,25 @@ export class Controls extends LitElement {
     if (!this.#shown.includes(this.current)) this.current = "run";
   }
 
-  /** A control's button: its glyph and its name, the tab stop's tabindex, and its availability. */
+  /** A control's button: its glyph and its name, the tab stop's tabindex, and its availability.
+   * The name is its aria-label, so it stays the accessible name whether its words show or the glyph
+   * shows alone; its hint, the popover <control>-hint, shows it then. Chromium makes an interest target's text
+   * its invoker's description, so the empty aria-description comes first and leaves none, and
+   * aria-hidden keeps the hint out of the tree while it shows. */
   #control(
     control: Control,
-    name: string,
     glyph: TemplateResult,
     attributes: { press?: () => void; opens?: Form; keys?: string } = {},
   ): TemplateResult {
+    const name = names[control];
     const { press, opens, keys } = attributes;
     return html`<button
       type="button"
       class="glyph-button"
       data-control=${control}
+      aria-label=${name}
+      interestfor="${control}-hint"
+      aria-description=""
       tabindex=${control === this.current ? "0" : "-1"}
       aria-disabled=${this.#available(control) ? "false" : "true"}
       aria-keyshortcuts=${keys ?? nothing}
@@ -379,8 +399,14 @@ export class Controls extends LitElement {
       command=${opens ? "toggle-popover" : nothing}
       @click=${press ?? nothing}
     >
-      ${glyph}<span>${name}</span>
+      ${glyph}<span class="name">${name}</span>
     </button>`;
+  }
+
+  /** A control's hint: its name, shown under its button while the glyph shows alone. */
+  #hint(control: Control): TemplateResult {
+    const name = names[control];
+    return html`<div id="${control}-hint" class="glyph-hint" popover="hint" aria-hidden="true">${name}</div>`;
   }
 
   /** A form's popover: a non-modal dialog holding a labelled input, its refusal, and its submit. */
@@ -429,26 +455,27 @@ export class Controls extends LitElement {
           @focusin=${this.#focusin}
         >
           <div class="group" role="group" aria-label="Run">
-            ${this.#control("run", "Run", play, {
+            ${this.#control("run", play, {
               press: () => this.#press("run"),
               keys: "Control+Enter Meta+Enter",
             })}
-            ${this.#control("stop", "Stop", squareFill, { press: () => this.#press("stop") })}
-            ${this.#control("reset", "Reset", undo, { press: () => this.#press("reset") })}
+            ${this.#control("stop", squareFill, { press: () => this.#press("stop") })}
+            ${this.#control("reset", undo, { press: () => this.#press("reset") })}
           </div>
           ${
             filesShown
               ? html`<div class="separator" role="separator" aria-orientation="vertical"></div>
                 <div class="group" role="group" aria-label="Files">
-                  ${this.#control("new", "New file", fileAdded, { opens: "new" })}
-                  ${this.#control("rename", "Rename", pencil, { opens: "rename" })}
-                  ${this.#control("delete", "Delete", trash, { press: () => this.#press("delete") })}
+                  ${this.#control("new", fileAdded, { opens: "new" })}
+                  ${this.#control("rename", pencil, { opens: "rename" })}
+                  ${this.#control("delete", trash, { press: () => this.#press("delete") })}
                 </div>`
               : nothing
           }
         </div>
         <p class="status" role="status">${this.status}</p>
       </div>
+      ${this.#shown.map((control) => this.#hint(control))}
       ${
         filesShown
           ? html`${this.#form("new", "New file", "New file's name", "Create")}

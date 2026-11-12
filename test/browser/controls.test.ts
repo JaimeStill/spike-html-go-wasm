@@ -4,14 +4,16 @@
 // The accessibility tree, read through CDP: a toolbar named Controls holding a Run group (Run,
 // Stop, Reset), and under editable-files a vertical separator and a Files group (New file, Rename,
 // Delete), each button named, an unavailable one disabled yet focusable, Run's key shortcuts, the
-// form buttons' popup a dialog; the status a polite live region; a form's input named by its label,
+// form buttons' popup a dialog, the hints out of the tree and describing nothing; the status a polite live region; a form's input named by its label,
 // invalid and described by the reason once refused. The keyboard: one tab stop, the control last
 // focused; Left and Right wrapping, Home and End, unavailable controls reached; Enter and Space
 // pressing. Availability follows the models; every press sends a request and changes neither
 // model, an unavailable one sending nothing. The forms: opened anchored below their buttons, the
 // input focused, a rename's stem selected; refused on submit and checked again as typed; taken on
 // submit; Escape closing with nothing sent; focus back on the button either way. The status says
-// only transitions. Sizes, the 20rem column, motion, and the subscription. Every wait is bounded.
+// only transitions. Sizes; at a phone's width the glyphs alone, the groups whole and a name's hint
+// on hover, wider the names, in every profile and a wide font; motion; and the subscription.
+// Every wait is bounded.
 // Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
@@ -163,6 +165,28 @@ async function click(page: Page, expression: string) {
   }
 }
 
+/** The mouse moved to the middle of the element the expression gives, scrolled into view first. */
+async function hover(page: Page, expression: string) {
+  const point: { x: number; y: number } = await page.evaluate(`(() => {
+    const element = ${expression};
+    element.scrollIntoView({ block: "center" });
+    const box = element.getBoundingClientRect();
+    return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+  })()`);
+  await page.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", ...point });
+}
+
+/** The page laid out at the width, 900px tall, once two frames have painted. */
+async function viewport(page: Page, width: number) {
+  await page.cdp("Emulation.setDeviceMetricsOverride", {
+    width,
+    height: 900,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+  await page.evaluate(SETTLED);
+}
+
 /** The control focused in the toolbar the expression gives, or the id of the field focused in its
  * shadow root, or null; and whether the page's focus is in the toolbar's host at all. */
 const focusIn = (page: Page, controls: string): Promise<string | null> =>
@@ -262,6 +286,12 @@ describe("the controls in the accessibility tree", () => {
         all.map((node) => property(node, "hasPopup") ?? null),
         [null, null, null, "dialog", "dialog", null],
       );
+      assert.deepEqual(
+        all.map((node) => node.description?.value ?? ""),
+        Array(6).fill(""),
+        "a hint describes nothing",
+      );
+      assert.deepEqual(await axQuery(page, figure, "tooltip"), [], "the hints out of the tree");
       const [status] = await axQuery(page, figure, "status");
       assert.equal(property(status, "live"), "polite");
     } finally {
@@ -964,28 +994,101 @@ describe("size, space, and motion", () => {
     }
   });
 
-  test("at 20rem the toolbar wraps between its groups, each group whole on its row, nothing wider than the column", async () => {
+  test("below 26rem each button shows its glyph alone, each group whole on one row and nothing past the host, in every space and type and a wide font; wider, the names show", async () => {
     const page = await open();
     try {
-      const layout: { fits: boolean; rows: number[][]; groups: number } =
+      const profiles: { space: string[]; type: string[] } = await page.evaluate(`(() => {
+        const registry = globalThis[Symbol.for("spike-html-apps-foundation.registry")];
+        return { space: [...registry.space], type: [...registry.type] };
+      })()`);
+      assert.ok(profiles.space.length > 1 && profiles.type.length > 1);
+      // A font far wider than any the foundation's stacks fall back to, so the names would split
+      // the Files group at a phone's width whatever font the machine has: the layout must not
+      // depend on it.
+      await page.evaluate(`(() => {
+        const wide = document.createElement("style");
+        wide.textContent = "sl-controls { letter-spacing: 0.3em; }";
+        document.head.append(wide);
+      })()`);
+      const controls = `window.controls.at("editable")`;
+      for (const [width, named] of [
+        [390, false],
+        [1280, true],
+      ] as const) {
+        await viewport(page, width);
+        for (const space of profiles.space) {
+          for (const type of profiles.type) {
+            const layout: {
+              host: number;
+              rem: number;
+              past: string[];
+              rows: number[];
+              lines: number[];
+              names: boolean[];
+            } = await page.evaluate(`(async () => {
+              const root = document.documentElement;
+              root.setAttribute("data-space", ${JSON.stringify(space)});
+              root.setAttribute("data-type", ${JSON.stringify(type)});
+              await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+              const controls = ${controls};
+              const host = controls.getBoundingClientRect();
+              const shown = [...${shadow(controls)}.querySelectorAll(".bar *")].filter((e) => e.checkVisibility());
+              const groups = [...${shadow(controls)}.querySelectorAll('[role="group"]')];
+              return {
+                host: host.width,
+                rem: parseFloat(getComputedStyle(root).fontSize),
+                past: shown
+                  .filter((e) => e.getBoundingClientRect().right > host.right + 0.5)
+                  .map((e) => e.dataset.control ?? e.className ?? e.localName),
+                rows: groups.map((g) => new Set([...g.querySelectorAll("button")].map((b) => Math.round(b.getBoundingClientRect().top))).size),
+                // The lines each button's name takes: one shown whole, none hidden, more wrapped.
+                lines: [...${shadow(controls)}.querySelectorAll("[data-control] > .name")].map((name) => {
+                  const range = document.createRange();
+                  range.selectNodeContents(name);
+                  return new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top))).size;
+                }),
+                names: [...${shadow(controls)}.querySelectorAll("[data-control] > .name")].map((n) => n.checkVisibility()),
+              };
+            })()`);
+            const at = `${width}px, ${space} ${type}`;
+            assert.equal(layout.host < 26 * layout.rem, !named, `${at}: the host's width`);
+            assert.deepEqual(layout.past, [], `${at}: nothing reaches past the host`);
+            assert.deepEqual(layout.rows, [1, 1], `${at}: each group's buttons share one row`);
+            assert.deepEqual(layout.lines, Array(6).fill(named ? 1 : 0), `${at}: no name wraps`);
+            assert.deepEqual(layout.names, Array(6).fill(named), `${at}: the names shown`);
+          }
+        }
+      }
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("a glyph alone shows its name as a hint below it on hover; a named button shows none", async () => {
+    const page = await open();
+    try {
+      const controls = `window.controls.at("editable")`;
+      const hint = `${shadow(controls)}.querySelector("#rename-hint")`;
+      await viewport(page, 390);
+      await hover(page, `window.controls.button(${controls}, "rename")`);
+      await until(page, `${hint}.matches(":popover-open")`, 3000);
+      const shown: { text: string; visible: boolean; below: boolean } =
         await page.evaluate(`(() => {
-        const controls = window.controls.at("editable", 1);
-        const figure = controls.parentElement.getBoundingClientRect();
-        const groups = [...controls.shadowRoot.querySelectorAll('[role="group"]')];
-        const all = [...controls.shadowRoot.querySelectorAll("*")];
+        const hint = ${hint};
+        const button = window.controls.button(${controls}, "rename").getBoundingClientRect();
         return {
-          fits: all.every((e) => e.getBoundingClientRect().right <= figure.right + 0.5),
-          rows: groups.map((g) => [...new Set([...g.querySelectorAll("button")].map((b) => Math.round(b.getBoundingClientRect().top)))]),
-          groups: new Set(groups.map((g) => Math.round(g.getBoundingClientRect().top))).size,
+          text: hint.textContent,
+          visible: hint.checkVisibility(),
+          below: hint.getBoundingClientRect().top >= button.bottom - 0.5,
         };
       })()`);
-      assert.ok(layout.fits, "nothing reaches past the 20rem column");
-      assert.deepEqual(
-        layout.rows.map((tops) => tops.length),
-        [1, 1],
-        "each group's buttons share one row",
-      );
-      assert.equal(layout.groups, 2, "the groups wrap onto rows of their own");
+      assert.deepEqual(shown, { text: "Rename", visible: true, below: true });
+      await hover(page, "document.querySelector('h1')");
+      await until(page, `!${hint}.matches(":popover-open")`, 3000);
+      await viewport(page, 1280);
+      await hover(page, `window.controls.button(${controls}, "rename")`);
+      await until(page, `${hint}.matches(":popover-open")`, 3000);
+      assert.equal(await page.evaluate(`${hint}.checkVisibility()`), false, "named, no hint shows");
     } finally {
       await page.close();
     }

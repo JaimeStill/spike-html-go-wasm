@@ -10,6 +10,17 @@
  * group's controls stay together, and only a group wider than its container wraps inside itself.
  * The separator is a rule the height of the controls.
  *
+ * Each button shows its name beside its glyph only where the toolbar's widest group fits with the
+ * names: the host is an inline-size container, and below 26rem the names hide and each glyph shows
+ * alone, its name still the button's accessible name and shown as its hint on hover and keyboard
+ * focus (glyph-button.css's glyph-hint); at 26rem and wider the hints never show, the names being in
+ * view. The widest group is Files, its names twenty characters (New file, Rename, Delete): with
+ * three glyphs and the regular space profile's widest padding and gaps, about 7.8rem, it fits 20rem
+ * in a monospace font of 0.6em a character, and 26rem leaves room for one of 0.9em, wider than any
+ * the foundation's stacks fall back to. A query in rem, not in the font's own units, so no font
+ * decides the layout, and a glyph alone is 24px a side at the smallest space, as glyph-button.css
+ * says.
+ *
  * Each form is a popover anchored below its button, at its inline start, flipped above it where
  * the viewport's foot would cut it, or to its inline end where the viewport's side would: a small
  * panel on the first elevated surface, its label above its input and submit, and a refusal below,
@@ -21,6 +32,7 @@
 
 :host {
   display: block;
+  container-type: inline-size;
 }
 
 .bar {
@@ -56,6 +68,20 @@
   margin-inline-start: auto;
   color: var(--fg-2);
   font-size: var(--text-s);
+}
+
+/* Narrower than the widest group with its names: the glyphs alone, the names as hints. Wider: the
+   names in view, and no hint. */
+@container (inline-size < 26rem) {
+  .glyph-button > .name {
+    display: none;
+  }
+}
+
+@container (inline-size >= 26rem) {
+  .glyph-hint {
+    display: none;
+  }
 }
 
 /* An aria-disabled control stays focusable, but reads as unavailable. */

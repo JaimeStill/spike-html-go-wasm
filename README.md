@@ -45,7 +45,8 @@ evidence, and path are in `context/README.md`.
       last, and subscription;
     - the controls: their toolbar in the accessibility tree, keyboard, availability following the
       models, requests that change nothing, the New file and Rename forms' validation and focus
-      return, the status's transitions, target sizes, the 20rem column, motion, and subscription;
+      return, the status's transitions, target sizes, the glyphs alone and the groups whole at a
+      phone's width in a wide font, the names' hints, motion, and subscription;
     - the Go demo, running real Go over the page's one runner: no Go before a Run, a handler's run
       and a program's, Ctrl or Cmd+Enter from inside a demo alone, Alt or Shift with Enter running
       nothing, Help listing no Run, the authoring error, Stop, two demos sharing the runner,
@@ -208,7 +209,10 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
     node.
 - `./controls.js`: `sl-controls`, a demo's controls as one ARIA toolbar: a Run group (Run, Stop,
   and Reset) and, under `editable-files`, a vertical separator and a Files group (New file,
-  Rename, and Delete). Each control is a glyph button showing its name. It renders the `FileSet`
+  Rename, and Delete). Each control is a glyph button named by its name, which shows beside its
+  glyph while the toolbar is 26rem wide or wider, where the widest group fits with its names in
+  any font; narrower, the glyph shows alone and the name as a hint on hover and keyboard focus,
+  as the console's Copy and Clear show theirs. It renders the `FileSet`
   and the `RunState` it is given, follows each change they send, listening only to the models it
   holds while it is in the document, and never writes either: every control sends a request its
   owner applies. Run is always available, as a new run stops the pending one; Stop only while a
