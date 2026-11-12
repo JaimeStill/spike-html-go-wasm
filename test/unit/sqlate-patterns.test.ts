@@ -4,7 +4,8 @@
 // (playground/sqlate/main.go). So a statement the Markdown page's compile demo compiles sees the
 // catalog the sqlate page's program builds from its shipped files. Every pattern file of either
 // has its counterpart in the other, so a pattern added to one and not the other fails; the
-// program's statements, any other .sql file, have none.
+// program's statements, any other .sql file, have none. And the Markdown page, which shows the
+// app pattern its demo compiles against, shows it byte for byte, so the page can't drift from it.
 
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
@@ -14,6 +15,7 @@ import { describe, test } from "node:test";
 const root = join(import.meta.dirname, "../..");
 const program = join(root, "playground/sqlate");
 const scenario = join(root, "internal/sqlate/patterns");
+const markdown = join(root, "markdown/sqlate-compile.md");
 
 /** The program's pattern files, each <ns>.<name>.sql, a .sql file whose base name holds a dot. */
 const programPatterns = (): string[] =>
@@ -50,5 +52,15 @@ describe("the sqlate scenario's patterns", () => {
         `internal/sqlate/patterns/${ns}/${pattern} isn't playground/sqlate/${name}`,
       );
     }
+  });
+
+  test("app.identity is the Markdown page's sql fence that shows it, byte for byte", () => {
+    const fences = [...readFileSync(markdown, "utf8").matchAll(/^```sql\n([\s\S]*?)^```$/gm)].map(
+      ([, text]) => text,
+    );
+    assert.ok(
+      fences.includes(readFileSync(join(scenario, "app/identity.sql"), "utf8")),
+      "markdown/sqlate-compile.md shows internal/sqlate/patterns/app/identity.sql",
+    );
   });
 });

@@ -4,16 +4,17 @@
 //
 // The page holds one source demo with editable files, playground/sqlate's main.go, active, its
 // guard.go, its .sql files, and its input.json, and requests no Go and starts no worker before a
-// Run. Each .sql file shows in SQL's grammar, its comments painted apart from its statement. The first Run fetches the manifest, the compiler, the linker, and only the program's
-// closure of archives, the standard library's and the site's pinned modules', sqlate's, its
-// sqltest driver's, and PostgreSQL's driver's among them, and prints every statement and the
-// guarded edit's success exactly, with exit 0 and every phase of a build. An edit to input.json
-// alone builds nothing: the Run fetches nothing and shows no Go compile or link, and each outcome
-// the row's stored version sets prints its call log and result, the version mismatch, no row, and
-// the success again. An edit to a .sql file alone builds nothing either, and prints the edited
-// statement. A statement with no tier prints sqlate's one stderr line with exit 1; and a pattern
-// file in a namespace of the reader's, added by New file, is included by a statement added after
-// it, each rerun again building nothing.
+// Run. Each .sql file shows in SQL's grammar, its comments painted apart from its statement. The
+// first Run fetches the manifest, the compiler, the linker, and only the program's closure of
+// archives, the standard library's and the site's pinned modules', sqlate's, its sqltest driver's,
+// and PostgreSQL's driver's among them, and prints every statement and the guarded edit's success
+// exactly, with exit 0 and every phase of a build. An edit to input.json alone builds nothing: the
+// Run fetches nothing and shows no Go compile or link, and each outcome the row's stored version
+// sets prints its call log and result, the version mismatch, no row, and the success again. An edit
+// to a .sql file alone builds nothing either, and prints the edited statement. A statement with no
+// tier prints sqlate's one stderr line with exit 1; and a pattern file in a namespace of the
+// reader's, added by New file, is included by a statement added after it, each rerun again building
+// nothing.
 //
 // The cases run in order on one page, each from the files the last left, since every page's first
 // Run is a cold build of about 220 archives; each restores what it changed, and the first page in
@@ -312,6 +313,7 @@ ${EXEC_EDIT}${QUERY_VERSION}
 SELECT version, updated_at FROM project WHERE id = $1
 ${SUCCEEDED}`),
     );
+    await edit("version.sql", source("version.sql").replace(/\n$/, ""));
   });
 
   test("a statement with no tier prints sqlate's message on one stderr line, with exit 1", async () => {
