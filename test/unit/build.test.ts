@@ -4,10 +4,10 @@
 // archives on the runtime's in-memory fs, and the built program runs over a fresh fs whose
 // working directory holds the program's other files. hello builds and runs; a compile error
 // reaches the output as the compiler wrote it, positions relative to the file's name, with its
-// exit code and the step named; an import the manifest lacks fails before the compiler runs; a
-// package clause other than main fails in the compiler; and a program reads a non-Go file from
-// its working directory, and what a run writes is gone from the next. Writes nothing outside
-// TMPDIR and Go's caches; node's process.cwd and chdir, which install() replaces, are restored.
+// exit code and the step named; an import the manifest lacks, or a program with no .go file, fails
+// before the compiler runs; a package clause other than main fails in the compiler; and a program
+// reads a non-Go file from its working directory, and what a run writes is gone from the next.
+// Writes nothing outside TMPDIR and Go's caches; node's process.cwd and chdir, which install() replaces, are restored.
 
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -172,6 +172,14 @@ func main() { fmt.Println(x) }
     const message = "package example.com/nope is not in the manifest";
     assert.throws(() => programClosure(toolchain.manifest, files), { message });
     assert.throws(() => prepare(toolchain, files, archives, sink), { message });
+    assert.deepEqual(written, { 1: "", 2: "" });
+  });
+
+  test("a program with no .go file fails before the compiler runs", () => {
+    const { written, sink } = capture();
+    assert.throws(() => prepare(toolchain, [{ name: "input.txt", text: "x" }], archives, sink), {
+      message: "the program has no .go file to build",
+    });
     assert.deepEqual(written, { 1: "", 2: "" });
   });
 

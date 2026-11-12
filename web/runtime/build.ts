@@ -167,6 +167,13 @@ export function goImports(source: string): string[] {
   return paths;
 }
 
+/** The names of the program's .go files, in order; throws when it has none, as nothing builds. */
+export function goSources(files: readonly BuildFile[]): string[] {
+  const sources = files.filter(isGo).map((file) => file.name);
+  if (sources.length === 0) throw new Error("the program has no .go file to build");
+  return sources;
+}
+
 /** The standard packages the program's .go files import, each once, sorted. */
 export function programImports(files: readonly BuildFile[]): string[] {
   return [...new Set(files.filter(isGo).flatMap((file) => goImports(file.text)))].sort();
@@ -297,8 +304,8 @@ export interface Build {
  * a program with no .go file.
  *
  * Each step's failure rejects with a BuildError, its diagnostics already on `output`; a file
- * whose package clause isn't main fails in compile. The fs stays installed until the caller installs
- * another, as a run does; nothing else may run on globalThis's fs between the steps.
+ * whose package clause isn't main fails in compile. The fs stays installed until the caller
+ * installs another, as a run does; nothing else may run on globalThis's fs between the steps.
  */
 export function prepare(
   toolchain: Toolchain,
@@ -307,8 +314,7 @@ export function prepare(
   output?: OutputSink,
 ): Build {
   const { manifest } = toolchain;
-  const sources = files.filter(isGo).map((file) => file.name);
-  if (sources.length === 0) throw new Error("the program has no .go file to build");
+  const sources = goSources(files);
   const imports = programImports(files);
   const packages = closure(manifest, imports);
   const held = packages.flatMap((path) => {

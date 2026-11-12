@@ -37,7 +37,7 @@
 import "./install-fs.ts";
 import "./wasm_exec.js";
 
-import { BuildError, installProgramFs, prepare, programClosure } from "./build.ts";
+import { BuildError, goSources, installProgramFs, prepare, programClosure } from "./build.ts";
 import { install, type OutputSink } from "./fs.ts";
 import type { Manifest } from "./manifest.ts";
 import {
@@ -200,9 +200,8 @@ async function build(manifestUrl: string, files: BuildFile[]): Promise<WebAssemb
     if (spent[phase] > 0) emit({ type: "timing", scenario, phase, ms: spent[phase] });
   };
   try {
-    if (!files.some((file) => file.name.endsWith(".go"))) {
-      throw new Error("the program has no .go file to build");
-    }
+    // Refused before the manifest is fetched.
+    goSources(files);
     const { manifest, toolBytes } = await part("fetch", async () => {
       // Revalidated on every build: the manifest alone has a stable name.
       const response = await fetch(manifestUrl, { cache: "no-cache" });

@@ -32,6 +32,7 @@ import {
   build,
   BUILT_PHASES,
   DONE,
+  manifest,
   retype as retypeIn,
   timed,
   TOOLS,
@@ -215,7 +216,7 @@ describe("Stop and a built program", () => {
       );
 
       // A build whose new archive is held back by CDP's Fetch, stopped while it waits.
-      const [unicode] = archivesOf(["unicode/utf16"]).filter((name) => name.includes("utf16"));
+      const unicode = manifest.packages["unicode/utf16"].archive!;
       page.on("Fetch.requestPaused", ({ requestId }) => paused.push(requestId));
       await page.cdp("Fetch.enable", { patterns: [{ urlPattern: `*/${unicode}` }] });
       await retype(
