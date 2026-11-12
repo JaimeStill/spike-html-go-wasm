@@ -15,7 +15,8 @@
 // the set, a new file selected with the editor focused, focus on the tab now active after a
 // delete, and the last file kept. Reset restores an edited file. A tab size the settings refuse is
 // an authoring error a valid one mends, and a handler's change rebuilds the files in its mode. A
-// demo's accessibility tree: a region named by its label, the toolbar, the tabs and the panel on
+// program demo given a FileSet as its files property renders that set, and its fences again when
+// given none; a handler demo refuses a set as an authoring error. A demo's accessibility tree: a region named by its label, the toolbar, the tabs and the panel on
 // a program demo, the editor, the log, and the timings, its fences no part of it. The fences: the
 // SDK's Shiki markup read as plain text and run, and without script, every fence shows as the
 // page's code. At a phone's width each demo fits its column, and at 1280px and 1120px, either side
@@ -400,6 +401,70 @@ describe("attributes after the first render", () => {
       assert.deepEqual(await state(), { problem: null, tabs: false, readonly: false, tabSize: 2 });
       await page.evaluate(`window.made.removeAttribute("handler")`);
       assert.deepEqual(await state(), { problem: null, tabs: true, readonly: true, tabSize: 2 });
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("a program demo renders a set the page gives it, and its fences again when given none; a handler demo refuses a set", async () => {
+    const { page } = await open();
+    try {
+      await page.evaluate(`(() => {
+        const FileSet = window.demos.at("handler").owned.files.constructor;
+        window.given = new FileSet([
+          { name: "a.go", text: "package main // given" },
+          { name: "b.txt", text: "b" },
+        ]);
+        const made = (handler) => {
+          const demo = document.createElement("sl-go-demo");
+          demo.setAttribute("scenario", "probe");
+          if (handler) demo.setAttribute("handler", "format");
+          demo.innerHTML = '<pre><code class="language-go">package main // fence\\n</code></pre>';
+          document.querySelector('#go-demo figure[data-state="handler"]').append(demo);
+          return demo;
+        };
+        window.program = made(false);
+        window.handler = made(true);
+      })()`);
+      const state = (demo: string) =>
+        page.evaluate(`window.${demo}.updateComplete.then(() => ({
+          problem: window.${demo}.problem,
+          tabs: [...(window.demos.part(window.${demo}, "sl-file-tabs")?.shadowRoot
+            .querySelectorAll('[role="tab"]') ?? [])].map((tab) => tab.dataset.name),
+          value: window.demos.editor(window.${demo})?.value ?? null,
+          given: window.${demo}.owned?.files === window.given,
+        }))`);
+      const fence = "package main // fence\n";
+
+      await page.evaluate(`window.program.files = window.given`);
+      assert.deepEqual(await state("program"), {
+        problem: null,
+        tabs: ["a.go", "b.txt"],
+        value: "package main // given",
+        given: true,
+      });
+      await page.evaluate(`window.program.files = null`);
+      assert.deepEqual(await state("program"), {
+        problem: null,
+        tabs: ["main.go"],
+        value: fence,
+        given: false,
+      });
+
+      await page.evaluate(`window.handler.files = window.given`);
+      assert.deepEqual(await state("handler"), {
+        problem: "a handler demo holds one fence, its handler's input, and takes no files",
+        tabs: [],
+        value: null,
+        given: false,
+      });
+      await page.evaluate(`window.handler.files = null`);
+      assert.deepEqual(await state("handler"), {
+        problem: null,
+        tabs: [],
+        value: fence,
+        given: false,
+      });
     } finally {
       await page.close();
     }

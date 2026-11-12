@@ -5,10 +5,18 @@
      fence equal byte for byte to its file in playground/calc/ (the unit tier holds it). Run
      compiles and links the reader's files with Go's own compiler and linker in the page's worker,
      then runs main; nothing loads Go, or starts the worker, until a Run. Its script,
-     web/pages/playground.ts, gives the demo the page's one runner and the reader's arrangement.
+     web/pages/playground.ts, gives the demo the page's one runner and the reader's arrangement,
+     and the files of the program chosen in the Program select, beside the heading in the prose's
+     title row: Calculator, the starter, whose files are the demo's fences, or Basics, Generics,
+     Concurrency, or Standard library, whose files are the fences of the template after the demo
+     whose data-program names it, each fence equal byte for byte to its file in
+     playground/<program>/ (the unit tier holds it). A template renders nothing; the script builds
+     a file set from its fences by the demo's own rules, and keeps one per program for the tab's
+     life. The fragment names the program shown, #calc or the template's program; each template's
+     id is its program's name, so the index's links to the programs each name an element here.
      The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
      body of class app (web/pages/page.css): the header, then main across the body's content
-     width, its prose, the heading and a short lede alone, on its 80ch content column, then the
+     width, its prose, the title row and a short lede alone, on its 80ch content column, then the
      demo on its full column, in the row the prose leaves, a gutter above the viewport's bottom. The
      demo is fixed, as tall as that row, each part in its share, never below its floor, in lines of
      its editor and console; below that, as at a larger type or text zoom, the page scrolls down.
@@ -86,7 +94,19 @@
     </header>
     <main>
       <div class="prose">
-        <h1>Playground</h1>
+        <div class="title">
+          <h1>Playground</h1>
+          <label class="program">
+            Program
+            <select id="program" name="program" autocomplete="off">
+              <option value="calc" selected>Calculator</option>
+              <option value="basics">Basics</option>
+              <option value="generics">Generics</option>
+              <option value="concurrency">Concurrency</option>
+              <option value="stdlib">Standard library</option>
+            </select>
+          </label>
+        </div>
         <p>
           Edit the Go below and press Run (<kbd>Ctrl+Enter</kbd>). Go's own compiler and linker
           build it right here in your browser.
@@ -471,6 +491,795 @@ total / 4
 25 - total
 </code></pre>
       </sl-go-demo>
+      <template id="basics" data-program="basics">
+<pre data-file="main.go"><code class="language-go">// Command basics tours four of Go's building blocks over a few shapes: structs, which hold a
+// shape's sides; methods, which work out its area and perimeter; interfaces, which let one slice
+// hold every kind of shape; and function values, which pass a measure or a test around like any
+// other value. shapes.go declares the shapes, and this file puts them to work. It prints the same
+// lines on every run.
+package main
+
+import "fmt"
+
+func main() {
+	// A slice of an interface type holds a value of any type that has the interface's methods.
+	shapes := []Shape{Rect{Width: 3, Height: 4}, Circle{Radius: 2}, NewSquare(2)}
+
+	fmt.Println("Shapes:")
+	for _, s := range shapes {
+		// %v calls String, since each shape is a fmt.Stringer as well as a Shape.
+		fmt.Printf("  %-20v area %5.2f  perimeter %5.2f\n", s, s.Area(), s.Perimeter())
+	}
+
+	// A method with a pointer receiver changes the variable it's called on.
+	r := Rect{Width: 1, Height: 2}
+	r.Scale(3)
+	fmt.Println("\nScaled by 3:", r)
+
+	// Function values: a method expression, such as Shape.Area, is a function whose first argument
+	// is the receiver, so a measure can be stored in a struct and passed to largest.
+	measures := []struct {
+		name string
+		of   func(Shape) float64
+	}{
+		{"area", Shape.Area},
+		{"perimeter", Shape.Perimeter},
+	}
+	fmt.Println("\nLargest by:")
+	for _, m := range measures {
+		fmt.Printf("  %-10s %v\n", m.name, largest(shapes, m.of))
+	}
+
+	// A function literal is a closure: it can use the variables around it, here limit.
+	limit := 10.0
+	big := keep(shapes, func(s Shape) bool { return s.Area() > limit })
+	fmt.Printf("\nArea over %g: %v\n", limit, big)
+
+	// A type switch asks which concrete type an interface value holds.
+	fmt.Println("\nWhat each shape is:")
+	for _, s := range shapes {
+		switch s := s.(type) {
+		case Circle:
+			fmt.Printf("  a circle, %g across\n", 2*s.Radius)
+		case Square:
+			fmt.Printf("  a square, its sides %g\n", s.Width)
+		default:
+			fmt.Printf("  some other shape: %v\n", s)
+		}
+	}
+}
+
+// largest answers the shape that measure finds the largest, the first of any tie.
+func largest(shapes []Shape, measure func(Shape) float64) Shape {
+	best := shapes[0]
+	for _, s := range shapes[1:] {
+		if measure(s) > measure(best) {
+			best = s
+		}
+	}
+	return best
+}
+
+// keep answers the shapes that test is true of, in their order.
+func keep(shapes []Shape, test func(Shape) bool) []Shape {
+	var kept []Shape
+	for _, s := range shapes {
+		if test(s) {
+			kept = append(kept, s)
+		}
+	}
+	return kept
+}
+</code></pre>
+<pre data-file="shapes.go"><code class="language-go">package main
+
+import (
+	"fmt"
+	"math"
+)
+
+// A Shape is anything with an area and a perimeter. An interface lists methods, and a type with
+// those methods satisfies it, with nothing declaring that it does: Rect, Circle, and Square all do.
+type Shape interface {
+	Area() float64
+	Perimeter() float64
+}
+
+// A Rect is a rectangle: a struct, its fields its two sides.
+type Rect struct {
+	Width, Height float64
+}
+
+// Area is a method: a function with a receiver, here a copy of the Rect it's called on.
+func (r Rect) Area() float64 {
+	return r.Width * r.Height
+}
+
+// Perimeter is the distance around the rectangle.
+func (r Rect) Perimeter() float64 {
+	return 2 * (r.Width + r.Height)
+}
+
+// String makes a Rect a fmt.Stringer, another interface, so fmt prints a Rect this way.
+func (r Rect) String() string {
+	return fmt.Sprintf("%gx%g rectangle", r.Width, r.Height)
+}
+
+// Scale grows the rectangle by factor. Its receiver is a pointer, so it changes the Rect it's
+// called on, not a copy; called on a variable, Go takes the variable's address for you.
+func (r *Rect) Scale(factor float64) {
+	r.Width *= factor
+	r.Height *= factor
+}
+
+// A Circle is a circle, by its radius.
+type Circle struct {
+	Radius float64
+}
+
+// Area is pi times the radius squared.
+func (c Circle) Area() float64 {
+	return math.Pi * c.Radius * c.Radius
+}
+
+// Perimeter is the circumference, two pi times the radius.
+func (c Circle) Perimeter() float64 {
+	return 2 * math.Pi * c.Radius
+}
+
+// String names the circle by its radius.
+func (c Circle) String() string {
+	return fmt.Sprintf("circle of radius %g", c.Radius)
+}
+
+// A Square is a rectangle whose sides are equal. It embeds a Rect, so the Rect's fields and
+// methods are the Square's own: Width, Height, Area, Perimeter, and Scale, with no code here.
+type Square struct {
+	Rect
+}
+
+// NewSquare makes a square whose sides are side long.
+func NewSquare(side float64) Square {
+	return Square{Rect{Width: side, Height: side}}
+}
+
+// String names the square by its side. A method declared on Square itself takes the place of the
+// embedded Rect's.
+func (s Square) String() string {
+	return fmt.Sprintf("square of side %g", s.Width)
+}
+</code></pre>
+      </template>
+      <template id="generics" data-program="generics">
+<pre data-file="main.go"><code class="language-go">// Command generics tours Go's generics: functions and types with type parameters, which the
+// compiler checks once for every type they may be given. A constraint, an interface, limits a type
+// parameter to the types that have what the function needs, such as + or &lt;; Stack, in stack.go, is
+// a generic type, a stack of any one type of value; and iterators, functions a for range calls
+// with the loop's body, chain small generic steps over a sequence that never ends. It prints the
+// same lines on every run.
+package main
+
+import (
+	"cmp"
+	"fmt"
+	"iter"
+	"slices"
+	"strings"
+)
+
+// Number is a constraint: an interface that lists types rather than methods, so it can only limit
+// a type parameter. The ~ admits every type whose underlying type is listed, Celsius among them.
+type Number interface {
+	~int | ~float64
+}
+
+// Celsius is a temperature: a named type whose underlying type is float64, so it's a Number.
+type Celsius float64
+
+// String makes a Celsius print with its unit.
+func (c Celsius) String() string {
+	return fmt.Sprintf("%gC", float64(c))
+}
+
+// Sum adds xs, whichever Number type they are; the constraint is what lets it use +.
+func Sum[T Number](xs ...T) T {
+	var total T
+	for _, x := range xs {
+		total += x
+	}
+	return total
+}
+
+// Largest answers the largest of its arguments, the first of any tie. cmp.Ordered, the standard
+// library's constraint, admits every type that &lt; works on, strings among them.
+func Largest[T cmp.Ordered](first T, rest ...T) T {
+	best := first
+	for _, x := range rest {
+		if x &gt; best {
+			best = x
+		}
+	}
+	return best
+}
+
+func main() {
+	// The compiler infers T from the arguments, or it can be given, as Sum[Celsius] is.
+	fmt.Println("Sum:")
+	fmt.Printf("  %-8s %v\n", "ints", Sum(1, 2, 3, 4))
+	fmt.Printf("  %-8s %v\n", "floats", Sum(0.5, 0.25))
+	fmt.Printf("  %-8s %v\n", "Celsius", Sum[Celsius](21.5, -3))
+
+	fmt.Println("\nLargest:")
+	fmt.Printf("  %-21s %v\n", "of 3, 9, 4", Largest(3, 9, 4))
+	fmt.Printf("  %-21s %v\n", "of pear, apple, plum", Largest("pear", "apple", "plum"))
+
+	// Stack[string] is the generic type given string: Push takes only strings, Pop answers them.
+	var words Stack[string]
+	for w := range strings.FieldsSeq("first in last out") {
+		words.Push(w)
+	}
+	fmt.Println("\nA Stack[string]:")
+	fmt.Print("  top down:")
+	for w := range words.All() {
+		fmt.Print(" ", w)
+	}
+	fmt.Println()
+	top, _ := words.Pop()
+	fmt.Printf("  popped %q, %d left\n", top, words.Len())
+
+	// An empty Stack[int] answers int's zero value, and false.
+	var numbers Stack[int]
+	n, ok := numbers.Pop()
+	fmt.Printf("  an empty Stack[int] pops %d, %t\n", n, ok)
+
+	// Fibonacci never ends, so the loop over it does, with break.
+	fmt.Println("\nIterators:")
+	fmt.Print("  Fibonacci under 100:")
+	for n := range Fibonacci() {
+		if n &gt;= 100 {
+			break
+		}
+		fmt.Print(" ", n)
+	}
+	fmt.Println()
+
+	// Each step takes a sequence and answers another, pulling one value at a time, so the chain
+	// works over an endless sequence: Take stops it after five.
+	even := func(n int) bool { return n%2 == 0 }
+	label := func(n int) string { return fmt.Sprintf("#%d", n) }
+	fmt.Println("  first five even, labelled:",
+		slices.Collect(Take(Map(Filter(Fibonacci(), even), label), 5)))
+}
+
+// Fibonacci is an iterator over the Fibonacci numbers, 0, 1, 1, 2, and on without end, until the
+// loop's body stops it: yield answers false once the body breaks, and Fibonacci returns.
+func Fibonacci() iter.Seq[int] {
+	return func(yield func(int) bool) {
+		a, b := 0, 1
+		for yield(a) {
+			a, b = b, a+b
+		}
+	}
+}
+
+// Filter answers the values of seq that keep is true of, in their order.
+func Filter[T any](seq iter.Seq[T], keep func(T) bool) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for v := range seq {
+			if keep(v) &amp;&amp; !yield(v) {
+				return
+			}
+		}
+	}
+}
+
+// Map answers f of each value of seq, in their order: two type parameters, since f may answer
+// a type of its own.
+func Map[T, U any](seq iter.Seq[T], f func(T) U) iter.Seq[U] {
+	return func(yield func(U) bool) {
+		for v := range seq {
+			if !yield(f(v)) {
+				return
+			}
+		}
+	}
+}
+
+// Take answers the first n values of seq, then stops it.
+func Take[T any](seq iter.Seq[T], n int) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		if n &lt;= 0 {
+			return
+		}
+		i := 0
+		for v := range seq {
+			if !yield(v) {
+				return
+			}
+			i++
+			if i == n {
+				return
+			}
+		}
+	}
+}
+</code></pre>
+<pre data-file="stack.go"><code class="language-go">package main
+
+import (
+	"iter"
+	"slices"
+)
+
+// A Stack is a generic type: a last-in, first-out stack of values of one type, T, its type
+// parameter. Stack[string] and Stack[int] are two types, each as if written out by hand, and the
+// zero Stack of either is empty and ready to use.
+type Stack[T any] struct {
+	items []T
+}
+
+// Push puts v on top.
+func (s *Stack[T]) Push(v T) {
+	s.items = append(s.items, v)
+}
+
+// Pop takes the top value off and answers it and true, or T's zero value and false if the stack
+// is empty.
+func (s *Stack[T]) Pop() (T, bool) {
+	if len(s.items) == 0 {
+		var zero T
+		return zero, false
+	}
+	top := s.items[len(s.items)-1]
+	s.items = s.items[:len(s.items)-1]
+	return top, true
+}
+
+// Len answers how many values the stack holds.
+func (s *Stack[T]) Len() int {
+	return len(s.items)
+}
+
+// All is an iterator over the stack's values from the top down, leaving them in place. A for
+// range over it calls it with a yield function holding the loop's body; when the body breaks,
+// yield answers false, and All returns. It ranges over slices.Backward, the standard library's
+// own iterator over a slice from its end.
+func (s *Stack[T]) All() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for _, v := range slices.Backward(s.items) {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
+</code></pre>
+      </template>
+      <template id="concurrency" data-program="concurrency">
+<pre data-file="main.go"><code class="language-go">// Command concurrency tours Go's concurrency: goroutines, functions that run alongside the rest of
+// the program; channels, which pass values from one goroutine to another and make one wait for
+// the other; select, which waits on several channels at once; a sync.WaitGroup, which waits for a
+// group of goroutines to finish; and a pipeline, stages joined by channels, in pipeline.go.
+//
+// Under GOOS=js, as here in the browser, GOMAXPROCS is 1: the goroutines take turns on one thread
+// rather than run in parallel, though each behaves as it would anywhere. Whatever order they take
+// their turns in, the program prints the same lines on every run, since no line depends on that
+// order: each result goes in its own place and is printed once all are in, or comes over a
+// channel whose sends and receives fix the order themselves.
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func main() {
+	// A WaitGroup's Go starts a goroutine and counts it; Wait returns once every one has finished.
+	// Each goroutine writes only its own element of lengths, so none gets in another's way.
+	words := []string{"goroutine", "channel", "select", "pipeline"}
+	lengths := make([]int, len(words))
+	var wg sync.WaitGroup
+	for i, w := range words {
+		wg.Go(func() { lengths[i] = len(w) })
+	}
+	wg.Wait()
+	fmt.Println("Goroutines, one per word, then Wait:")
+	for i, w := range words {
+		fmt.Printf("  %-10s %d letters\n", w, lengths[i])
+	}
+
+	// An unbuffered channel hands a value straight from sender to receiver, each waiting for the
+	// other, so the two goroutines here, main and the doubler, take strict turns.
+	ping, pong := make(chan int), make(chan int)
+	go func() {
+		defer close(pong)
+		for n := range ping {
+			pong &lt;- 2 * n
+		}
+	}()
+	fmt.Println("\nChannels, taking turns:")
+	for n := 1; n &lt;= 3; n++ {
+		ping &lt;- n
+		fmt.Printf("  sent %d, got back %d\n", n, &lt;-pong)
+	}
+	close(ping)
+
+	fmt.Println("\nSelect:")
+	// With a default case, select doesn't wait: nothing is ready, so default runs.
+	empty := make(chan string)
+	select {
+	case s := &lt;-empty:
+		fmt.Println("  received", s)
+	default:
+		fmt.Println("  nothing ready, so the default case ran")
+	}
+
+	// time.After answers a channel that receives once the time is up, so a select on it and on a
+	// channel nothing sends to gives up after 10ms rather than wait forever.
+	never := make(chan string)
+	select {
+	case s := &lt;-never:
+		fmt.Println("  received", s)
+	case &lt;-time.After(10 * time.Millisecond):
+		fmt.Println("  nothing came within 10ms, so the timeout case ran")
+	}
+
+	// Select takes from whichever of two channels is ready, in whatever order the senders run, so
+	// the totals, not the order, are what it prints. generate is pipeline.go's.
+	evens, odds := tally(generate(2, 4, 6, 8), generate(1, 3, 5))
+	fmt.Printf("  from evens: %d values, sum %d\n", evens.count, evens.sum)
+	fmt.Printf("  from odds:  %d values, sum %d\n", odds.count, odds.sum)
+
+	fmt.Println("\nA pipeline, squared by three workers:")
+	results := collect(merge(square(generate(1, 2, 3, 4, 5, 6)), square(generate(7, 8)),
+		square(generate(9, 10))))
+	total := 0
+	for _, r := range results {
+		fmt.Printf("  %2d squared is %3d\n", r.n, r.square)
+		total += r.square
+	}
+	fmt.Println("  total", total)
+}
+
+// count is a running count and sum of the values received from one channel.
+type count struct {
+	count, sum int
+}
+
+// tally receives from a and b, whichever is ready, until both are closed, and answers each one's
+// count and sum. A closed channel is set to nil, since a nil channel is never ready, so select stops
+// choosing it.
+func tally(a, b &lt;-chan int) (fromA, fromB count) {
+	for a != nil || b != nil {
+		select {
+		case v, ok := &lt;-a:
+			if !ok {
+				a = nil
+				continue
+			}
+			fromA.count++
+			fromA.sum += v
+		case v, ok := &lt;-b:
+			if !ok {
+				b = nil
+				continue
+			}
+			fromB.count++
+			fromB.sum += v
+		}
+	}
+	return fromA, fromB
+}
+</code></pre>
+<pre data-file="pipeline.go"><code class="language-go">package main
+
+import (
+	"cmp"
+	"slices"
+	"sync"
+)
+
+// A pipeline is a chain of stages, each a goroutine that receives values from one channel and
+// sends what it makes of them down another, closing that channel when its input is done. Here
+// generate starts each chain, square works over it, merge joins the chains into one channel, and
+// collect gathers what comes out, in order.
+
+// A result is a number and its square.
+type result struct {
+	n, square int
+}
+
+// generate answers a channel that receives each of nums, then is closed.
+func generate(nums ...int) &lt;-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for _, n := range nums {
+			out &lt;- n
+		}
+	}()
+	return out
+}
+
+// square answers a channel that receives each number from in with its square, then is closed once
+// in is.
+func square(in &lt;-chan int) &lt;-chan result {
+	out := make(chan result)
+	go func() {
+		defer close(out)
+		for n := range in {
+			out &lt;- result{n, n * n}
+		}
+	}()
+	return out
+}
+
+// merge answers one channel that receives every value from each of ins, in whatever order they
+// come, and is closed once all of them are: a WaitGroup counts the goroutines still copying, and
+// one more goroutine waits on it to close the channel.
+func merge(ins ...&lt;-chan result) &lt;-chan result {
+	out := make(chan result)
+	var wg sync.WaitGroup
+	for _, in := range ins {
+		wg.Go(func() {
+			for r := range in {
+				out &lt;- r
+			}
+		})
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
+
+// collect receives every value from in until it's closed, and answers them ordered by number, so
+// the order the stages ran in doesn't show.
+func collect(in &lt;-chan result) []result {
+	var results []result
+	for r := range in {
+		results = append(results, r)
+	}
+	slices.SortFunc(results, func(a, b result) int { return cmp.Compare(a.n, b.n) })
+	return results
+}
+</code></pre>
+      </template>
+      <template id="stdlib" data-program="stdlib">
+<pre data-file="main.go"><code class="language-go">// Command stdlib prints release notes for the commits listed in input.json, using only the
+// standard library: encoding/json decodes the file, regexp takes each commit message apart,
+// slices sorts and groups what it finds, and text/template lays out the report.
+//
+// A message in the conventional form, type(scope): subject, such as
+// fix(lexer): accept a leading dot (#12), goes under its type's heading: Features for feat,
+// Fixes for fix, and Other for any other type. A message in any other form is listed on its own.
+// Each #&lt;number> in a message is an issue it references.
+//
+// If input.json is missing, or isn't the JSON stdlib expects, the program prints one line on
+// stderr saying why, with the line and column of a JSON error, and exits 1.
+package main
+
+import (
+	"bytes"
+	"cmp"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
+	"regexp"
+	"slices"
+	"strconv"
+	"text/template"
+)
+
+// input is the file stdlib reads, from the working directory.
+const input = "input.json"
+
+// Log is input.json's shape. A field the JSON doesn't name stays its zero value, and a key no
+// field names is skipped.
+type Log struct {
+	Project string   `json:"project"`
+	Version string   `json:"version"`
+	Commits []Commit `json:"commits"`
+}
+
+// Commit is one entry of the log's commits.
+type Commit struct {
+	Hash    string `json:"hash"`
+	Author  string `json:"author"`
+	Message string `json:"message"`
+}
+
+func main() {
+	os.Exit(run())
+}
+
+// run reads and decodes input.json and prints its report to stdout, or one line on stderr saying
+// why it can't, and answers the exit code.
+func run() int {
+	src, err := os.ReadFile(input)
+	if errors.Is(err, fs.ErrNotExist) {
+		fmt.Fprintf(os.Stderr, "%s: no such file in the working directory\n", input)
+		return 1
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	var log Log
+	if err := json.Unmarshal(src, &amp;log); err != nil {
+		fmt.Fprintln(os.Stderr, describe(src, err))
+		return 1
+	}
+	if err := report.Execute(os.Stdout, notes(log)); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	return 0
+}
+
+// describe says what's wrong with src, which json.Unmarshal refused with err. errors.As finds the
+// error's concrete type, even were it wrapped: a SyntaxError, where src isn't JSON, or an
+// UnmarshalTypeError, where a value's JSON type doesn't fit its field. Each carries the offset in
+// src where the decoder stopped, just past the byte it couldn't take or the value that didn't fit,
+// so the line and column given are those of the last byte it read.
+func describe(src []byte, err error) string {
+	var syntax *json.SyntaxError
+	var mistyped *json.UnmarshalTypeError
+	switch {
+	case errors.As(err, &amp;syntax):
+		return fmt.Sprintf("%s:%s: syntax error: %v", input, position(src, syntax.Offset-1), syntax)
+	case errors.As(err, &amp;mistyped):
+		return fmt.Sprintf("%s:%s: %s is a JSON %s, not a Go %s",
+			input, position(src, mistyped.Offset-1), cmp.Or(mistyped.Field, "the whole file"), mistyped.Value, mistyped.Type)
+	default:
+		return fmt.Sprintf("%s: %v", input, err)
+	}
+}
+
+// position gives the byte at offset in src as line:column, each counted from 1, the column in
+// bytes. An offset outside src is held to its ends.
+func position(src []byte, offset int64) string {
+	before := src[:min(max(offset, 0), int64(len(src)))]
+	line := bytes.Count(before, []byte("\n")) + 1
+	column := len(before) - bytes.LastIndexByte(before, '\n')
+	return fmt.Sprintf("%d:%d", line, column)
+}
+
+var (
+	// conventional matches a message in the form type(scope): subject, its scope optional.
+	conventional = regexp.MustCompile(`^(\w+)(?:\(([\w-]+)\))?: (.+)$`)
+	// issue matches a reference to an issue, #&lt;number>.
+	issue = regexp.MustCompile(`#(\d+)\b`)
+)
+
+// Notes is what the report shows.
+type Notes struct {
+	Project, Version string
+	Commits          int
+	Sections         []Section
+	Unconventional   []Commit
+	Authors          []Author
+	Issues           []int
+}
+
+// Section is a heading's changes, sorted by scope.
+type Section struct {
+	Title   string
+	Changes []Change
+}
+
+// Change is a conventional commit's scope and subject, and its hash.
+type Change struct{ Scope, Subject, Hash string }
+
+// Author is a commit author, with the number of commits they made.
+type Author struct {
+	Name    string
+	Commits int
+}
+
+// kinds are the types with a heading of their own, in the report's order, before Other.
+var kinds = []string{"feat", "fix"}
+
+// notes works out the report from the log.
+func notes(log Log) Notes {
+	sections := []Section{{Title: "Features"}, {Title: "Fixes"}, {Title: "Other"}}
+	n := Notes{Project: log.Project, Version: log.Version, Commits: len(log.Commits)}
+	for _, c := range log.Commits {
+		if m := conventional.FindStringSubmatch(c.Message); m != nil {
+			// A type with no heading of its own is Other's, the last.
+			kind := slices.Index(kinds, m[1])
+			if kind &lt; 0 {
+				kind = len(kinds)
+			}
+			sections[kind].Changes = append(sections[kind].Changes, Change{m[2], m[3], c.Hash})
+		} else {
+			n.Unconventional = append(n.Unconventional, c)
+		}
+		for _, ref := range issue.FindAllStringSubmatch(c.Message, -1) {
+			if number, err := strconv.Atoi(ref[1]); err == nil {
+				n.Issues = append(n.Issues, number)
+			}
+		}
+		if at := slices.IndexFunc(n.Authors, func(a Author) bool { return a.Name == c.Author }); at >= 0 {
+			n.Authors[at].Commits++
+		} else {
+			n.Authors = append(n.Authors, Author{c.Author, 1})
+		}
+	}
+	// Stable sorts, so changes in one scope, and authors with as many commits, keep the log's order.
+	for _, s := range sections {
+		slices.SortStableFunc(s.Changes, func(a, b Change) int { return cmp.Compare(a.Scope, b.Scope) })
+	}
+	n.Sections = slices.DeleteFunc(sections, func(s Section) bool { return len(s.Changes) == 0 })
+	slices.SortStableFunc(n.Authors, func(a, b Author) int { return cmp.Compare(b.Commits, a.Commits) })
+	slices.Sort(n.Issues)
+	n.Issues = slices.Compact(n.Issues)
+	return n
+}
+
+// report lays out Notes. Each action that ends with -}} trims the newline after it, so the
+// template's lines are the report's.
+var report = template.Must(template.New("report").Parse(
+	`{{.Project}} {{.Version}}: {{.Commits}} commits by {{len .Authors}} authors
+{{range .Sections}}
+{{.Title}}:
+{{range .Changes -}}
+{{"  "}}{{.Hash}}  {{printf "%-8s" (or .Scope "-")}}{{.Subject}}
+{{end -}}
+{{end -}}
+{{with .Unconventional}}
+Not in the conventional form:
+{{range . -}}
+{{"  "}}{{.Hash}}  {{printf "%q" .Message}}
+{{end -}}
+{{end}}
+By author, most commits first:
+{{range .Authors -}}
+{{"  "}}{{printf "%-6s" .Name}}{{.Commits}}
+{{end}}
+Issues referenced: {{range $i, $n := .Issues}}{{if $i}}, {{end}}#{{$n}}{{else}}none{{end}}
+`))
+</code></pre>
+<pre data-file="input.json"><code class="language-json">{
+  "project": "calc",
+  "version": "v1.1.0",
+  "commits": [
+    {
+      "hash": "4d1e7a2",
+      "author": "Ada",
+      "message": "feat(parser): parse a leading minus as negation (#14)"
+    },
+    {
+      "hash": "b83f0c9",
+      "author": "Grace",
+      "message": "fix(lexer): accept a number that starts with a dot (#12)"
+    },
+    { "hash": "71c5e30", "author": "Ada", "message": "docs: explain let in the doc comment" },
+    {
+      "hash": "e2a9d48",
+      "author": "Linus",
+      "message": "feat(eval): report division by zero (#9, #14)"
+    },
+    { "hash": "0f6b1d5", "author": "Grace", "message": "tidy up before the release" },
+    {
+      "hash": "93ac27f",
+      "author": "Ada",
+      "message": "fix(parser): reject a let with no name (#17)"
+    },
+    { "hash": "5be8c14", "author": "Grace", "message": "test(lexer): cover numbers with two dots" },
+    {
+      "hash": "c47d2a6",
+      "author": "Ada",
+      "message": "feat: comments start with # and run to the end of the line"
+    }
+  ]
+}
+</code></pre>
+      </template>
     </main>
     <dialog id="about" aria-labelledby="about-title">
       <header class="dialog-header">
@@ -500,9 +1309,12 @@ total / 4
         files, so anything the program writes is gone by the next one.
       </p>
       <p>
-        Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays
-        loaded after a Stop, so the next Run is quick. Your edits live only in this tab: reload,
-        and you're back to where you started.
+        Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. Goroutines take turns on
+        one thread: they sleep, wait, and talk over channels as usual, but CPU-heavy work doesn't
+        run any faster in parallel. A program that waits forever, say on a channel nothing sends
+        to, never finishes and shows no deadlock error; press Stop. The compiler stays loaded after
+        a Stop, so the next Run is quick. Your edits to each program live only in this tab, so you
+        can switch away and come back to them: reload, and you're back to where you started.
       </p>
       <p>
         The first Run downloads the compiler, the linker, and the standard-library packages your

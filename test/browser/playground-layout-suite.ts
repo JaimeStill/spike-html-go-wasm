@@ -249,7 +249,8 @@ if (families) {
       try {
         const root = `${PLAYGROUND}.shadowRoot`;
         const drawn = {
-          heading: await drawnIn(page, `document.querySelector("main > .prose > h1")`),
+          heading: await drawnIn(page, `document.querySelector("main > .prose > .title > h1")`),
+          program: await drawnIn(page, `document.querySelector("main > .prose > .title > label")`),
           lede: await drawnIn(page, `document.querySelector("main > .prose > p")`),
           toolbar: await drawnIn(page, `${CONTROLS}.querySelector(".name")`),
           code: await drawnIn(

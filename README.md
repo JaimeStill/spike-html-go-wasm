@@ -23,8 +23,11 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   tracked. It runs the Go tests as wasm under node twice: on node's fs, and on the runtime's
   in-memory fs, where `test/memfs` drives it through package `os`. Among them, `playground/calc`'s
   tests run the playground's starter over its shipped `input.txt` and over a script with failing
-  lines, and hold its output and its exit code. It type-checks the configs, the web tiers, and
-  the suite with tsc and runs `mise run build`.
+  lines, and hold its output and its exit code. Each of the four programs' tests holds its exact
+  output and exit 0; `playground/concurrency`'s hold it over six runs and hold `GOMAXPROCS` at 1,
+  and `playground/stdlib`'s hold the one stderr line and exit 1 of a malformed and of a missing
+  `input.json`. It type-checks the configs, the web tiers, and the suite with tsc and runs
+  `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
     checks the playground's toolchain: each file its manifest names exists under its content's
@@ -35,8 +38,9 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
     working directory. It tests the components' six models (`Arrangement`, `EditorSettings`,
     `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change
     events. It holds each program demo's go fence on the components page to its scenario's source,
-    byte for byte, and the playground's demo to the starter's files in `playground/calc/`, its four
-    `.go` files and its `input.txt`. It fails if a module under `web/components` or `web/pages`
+    byte for byte, the playground's demo to the starter's files in `playground/calc/`, its four
+    `.go` files and its `input.txt`, and each program template's fences to its files in
+    `playground/<program>/`. It fails if a module under `web/components` or `web/pages`
     registers a page shortcut through the foundation's `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
     and the crawl, reads each hand page's cascade layers (the foundation's, then `site`, then
@@ -91,11 +95,25 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       only the archives its closure adds, and the edited program's output; a compile error; Stop
       ending a busy loop, the next build fetching no toolchain module; and a file the reader adds
       read through `os.ReadFile` from the working directory, nothing a run writes outliving it;
+    - the playground's programs: the Program select beside the heading, a combobox named Program
+      offering the five programs, Calculator chosen; each program shown in the one demo in place,
+      `main.go` active, with no reload and no request, and its Run printing its exact output with
+      exit 0; an edit to stdlib's `input.json` alone rerunning it with no Go compile or link, and
+      a malformed one's stderr line with exit 1; edits and the active file surviving a switch,
+      Reset restoring the program on screen alone, a switch stopping a pending run and clearing
+      the console and the timings; switching back to a program built earlier compiling and
+      linking it again, fetching no archive the worker holds; and the fragment: the page opening
+      on the program it names, and on the calculator with none or an unknown one, a choice
+      writing it as a new history entry, and Back, Forward, and an edited fragment showing the
+      program it names, with its edits, the select following;
+    - the programs' report, never a gate (`test/browser/playground-report.test.ts`, which
+      `mise run report:programs` runs alone);
     - the playground's prose and About: the prose is the heading and the lede alone, and the page
       holds no disclosure; About leads the header's group, a glyph button showing A; A, a click, or
       Enter opens the About dialog on its title, Tab reaches its Close, and Close or Escape closes
       it, focus back where it was; A typed into the editor types; the accessibility tree names the
-      button and the dialog; and the dialog's text is the approved text, in order;
+      button and the dialog; and the dialog's text is the approved text, in order, its last
+      sentence on each program's edits;
     - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
       at 900px, at 1120x800, and at 900x700: the demo takes every row left and ends a gutter above
       the viewport's bottom edge, the one gutter that holds the page off both sides, every part's
@@ -143,13 +161,24 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   playground, `--page playground`, is captured as its viewport alone, the page's one screen, in
   each band of its fixed demo: 390px with the output panel's Output tab and again with its
   Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
-  each chosen through the Layout menu, and with the menu open; and 1376px with the About dialog
-  open.
+  each chosen through the Layout menu, and with the menu open; 1376px with the About dialog
+  open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and Standard
+  library chosen in the Program select.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as
   `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
   is taken only when no width is given. Any other width is a usage error naming the three.
   `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't know, and hands it to the
   capture file.
+- `mise run report:programs`: report, never as a gate, what each of the playground's programs
+  costs. For each, in a browser of its own, so its worker is fresh and its cache empty, opened by
+  its fragment, it prints the phase timings of the first Run, cold, and of a Run after an edit to
+  `main.go`, warm, as the demo's timings show them, and its closure: the count of standard-library
+  archives the cold Run fetched, their bytes as `dist/` holds them and Vite's preview serves them,
+  and their bytes gzipped by node's zlib at its default level, since the preview doesn't gzip.
+  The timings table has a column only for a phase some Run recorded, so it has no Start column: a
+  source build records no Start phase. The tables are the test's diagnostics, written nowhere
+  else; only a Run that doesn't finish fails it. The browser tier runs the same file among its
+  others, so its timings there are a busier machine's.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
 - `mise run live [base URL]`: check that the deployed site, at its Pages URL or the base given,
@@ -217,16 +246,17 @@ layer. A page rule goes in `web/pages/page.css`.
 ## Playground
 
 `playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
-opening on the starter program's files as `playground/calc/` holds them. Its script,
-`web/pages/playground.ts`, gives the demo the page's one `Runner` and the reader's arrangement.
+and a Program select beside its heading that picks the program the demo shows: the starter, a
+calculator, or one of four programs (see "The programs"). Its script, `web/pages/playground.ts`,
+gives the demo the page's one `Runner`, the reader's arrangement, and the chosen program's files.
 Nothing loads Go until a Run: the first fetches the manifest, the compiler, the linker, and the
 archives of the program's import closure, and a later Run fetches the manifest again and only the
 archives a new import adds (see "Runtime", `build(files)`). A Run after an edit to non-Go files
 alone, such as `input.txt`, builds nothing: it reruns the last program built over the edited
 files. The program's limits and its working directory are the build's. New file adds a file, so
 the program can read a non-Go file through `os.ReadFile`. Stop keeps the compiled toolchain. The
-reader's files live only in the page: a reload opens on the starter again, and no file is shared
-or stored.
+reader's files live only in the page: each program keeps its edits while the tab lives, a reload
+opens every program as shipped, and no file is shared or stored.
 
 The starter is a calculator language. `main.go`, the active file, reads `input.txt` from the
 working directory and runs it line by line; `lexer.go`, `parser.go`, and `eval.go` turn each line
@@ -239,6 +269,50 @@ total, and its top comment suggests a line to try that fails.
 The starter isn't a scenario and no page loads it prebuilt, so it lives outside `cmd/` and the
 build never writes it to `dist/`. The check vets it and runs its Go tests under `GOOS=js`, on
 node's fs and on the in-memory fs.
+
+### The programs
+
+Four more programs sit beside the starter, each a package main in `playground/<program>/`, sized
+by its topic, and, like the starter, vetted and tested under `GOOS=js` on both filesystems and
+never built into the site:
+
+- Basics (`playground/basics`): structs, methods, function values, and interfaces, over a few
+  shapes, in `main.go` and `shapes.go`.
+- Generics (`playground/generics`): a type-parameter constraint, a generic `Stack`, and
+  range-over-func iterators, in `main.go` and `stack.go`.
+- Concurrency (`playground/concurrency`): goroutines, channels, `select`, a `WaitGroup`, and a
+  pipeline, in `main.go` and `pipeline.go`, its output in a fixed order whatever the scheduling;
+  `GOMAXPROCS` is 1 under `GOOS=js`, so its goroutines take turns on one thread.
+- Standard library (`playground/stdlib`): prints release notes from a commit log. It reads
+  `input.json` from its working directory, decodes it with `encoding/json`, takes each commit
+  message apart with `regexp`, sorts and groups with `slices`, and prints a `text/template`
+  report, all in `main.go`. A malformed `input.json` prints one stderr line naming the JSON error,
+  found through `errors.As`, at its `input.json:<line>:<column>`, and a missing one prints one
+  line found through `errors.Is`; either exits 1.
+
+The Program select, a native `<select id="program">` labelled Program, offers Calculator, Basics,
+Generics, Concurrency, and Standard library, their values `calc`, `basics`, `generics`,
+`concurrency`, and `stdlib`. The calculator's files are the demo's own fences; each other
+program's are the fences of a `<template data-program="<program>">` in the page, which renders
+nothing, each fence equal byte for byte to its file in `playground/<program>/` (the unit tier
+holds it). On load the script builds one `FileSet` per program from those fences, by the demo's
+own rules (`readFences` in `web/components/fences.ts`), editable, the first file active, and keeps
+each for the tab's life. Choosing a program gives the demo that set as its `files` property, in
+place, with no reload and no request: the program's edits, added files, and active file are as
+the reader left them, Reset restores the program on screen alone, and the switch stops a pending
+run, recorded as stopped, and clears the console and the timings. Switching back to a program
+built earlier compiles and links it again, as the runner holds only the last build, but fetches
+no archive the worker already holds.
+
+The fragment names the program shown: `#calc`, `#basics`, `#generics`, `#concurrency`, or
+`#stdlib`. The page opens on the program the fragment names, and on the calculator with no
+fragment or one that names no program. A choice in the select writes its fragment as a new
+history entry, so Back and Forward step through the reader's choices; those steps, and a fragment
+the reader edits, show the program it then names, with its edits, and the select follows. Each
+template carries its program's fragment as its `id`, so the index's links to the programs, from
+evidence 12, each name an element on the page, as the SDK's crawl requires; a template renders
+nothing, so following one scrolls nothing. The select's `autocomplete` is off, so a reload
+restores no choice over the fragment.
 
 ### The one-screen page
 
@@ -516,6 +590,12 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   `tabSizeProblem(value)` and `wrapProblem(value)` give that reason, or `null`, without setting
   anything, and `defaults` holds the defaults, frozen. Each set that changes a value sends one
   `change` `Event`; a set to the value held sends none. The unit tier tests it under node.
+- `./fences.js`: `readFences(parent, program)`, a Go demo's fences read as files, `{ name, text }`
+  each, in order: the rules `sl-go-demo` builds its files by (its "Fences", below), stated once so
+  that a page building a `FileSet` for a demo, from a template's content, reads them alike.
+  `parent` is the demo's host or a template's content; `program` picks the default name of a
+  fence that names no language, `main.go` when true, else `input.json`. It reads the markup and
+  changes nothing.
 - `./file-set.js`: `FileSet`, a set of source files, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the tabs and the editor, is the only
   writer of. It holds at least one file, in the order given or added, and one active file.
@@ -569,13 +649,14 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   layer into a page's own markup, and no tier imports it.
 - `./go-demo.js`: `sl-go-demo`, live Go: the element composing `sl-controls`, `sl-file-tabs`,
   `sl-code-editor`, `sl-console`, and `sl-timings` over the page's runner, and the one owner of
-  their models. It builds a `FileSet` from its fences, an `EditorSettings` from its attributes,
-  and a `ConsoleLog`, a `RunTimings`, and a `RunState` of its own; it is the only writer of each,
-  and applies every request its parts send. It imports nothing from the runtime and fetches
-  nothing: it reads `DemoRunner`, the runtime's `Runner`'s structural subset, `load`, `build`,
-  `run`, `stop`, and `listen`, with the output, exit, and timing events re-declared
-  (`DemoEvent`), and the page that passes it the runtime's `Runner` has TypeScript check the one
-  against the other there (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
+  their models. It builds a `FileSet` from its fences, unless the page gives it one as its `files`
+  property, an `EditorSettings` from its attributes, and a `ConsoleLog`, a `RunTimings`, and a
+  `RunState` of its own; it is the only writer of each, and applies every request its parts send.
+  It imports nothing from the runtime and fetches nothing: it reads `DemoRunner`, the runtime's
+  `Runner`'s structural subset, `load`, `build`, `run`, `stop`, and `listen`, with the output,
+  exit, and timing events re-declared (`DemoEvent`), and the page that passes it the runtime's
+  `Runner` has TypeScript check the one against the other there
+  (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
   - Modes: with `handler` named, Run loads the scenario and calls that handler with the one file's
     text, editable; its answer, a string as it is or anything else as indented JSON, or its error,
     shows as the console's result block. With none, Run runs the prebuilt program's main: the
@@ -604,9 +685,16 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
     change the settings in place; while an authoring error shows, a change to `scenario`,
     `wrap`, or `tab-size` builds the demo again, so a mended attribute mends it.
   - Properties: `runner`, a `DemoRunner`, the page's one runner, `null` by default, which runs
-    nothing; `arrangement`, an `Arrangement`, the page's, which a fixed demo renders from and never
-    writes, `null` by default, placing the editor left with no Layout menu; `problem`, read-only,
-    the authoring error's reason, or `null`; and the attributes'.
+    nothing; `files`, a `FileSet` the page owns, `null` by default: given one, a program or source
+    demo reads no fence and holds no set of its own, and editing, the file actions, Reset, and Run
+    work on the set given; a handler demo refuses one as an authoring error. Giving another set,
+    or taking it away, which builds the files from the fences again, is a switch: it stops the
+    demo's pending run, recorded as stopped, and gives the demo a new console and timings, both
+    empty; the editor settings and the run state stay, so the status still says how the last run
+    ended, or "Stopped main" after a switch stopped it. `arrangement`, an `Arrangement`, the
+    page's, which a fixed demo renders from and never writes, `null` by default, placing the
+    editor left with no Layout menu; `problem`, read-only, the authoring error's reason, or
+    `null`; and the attributes'.
   - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
     the pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
     Shiki-rendered `<pre class="shiki">` read alike. A file's name is the pre's or its code's

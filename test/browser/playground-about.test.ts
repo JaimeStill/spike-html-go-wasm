@@ -1,18 +1,21 @@
 // The playground's prose and its About dialog, playground.html: the build as Pages serves it,
 // dist/ under the base by the SDK's served(), Vite's preview, in the pinned chrome-headless-shell.
 //
-// The prose is the heading and the lede alone, the lede's text as approved, Ctrl+Enter in a kbd,
-// and the page holds no disclosure. The header's group is About, Help, and Settings, in that
-// order: About a glyph button in the shell's pattern, its glyph the icons layer's info-16, its key
-// A shown in a kbd, its hint "About". A, a click, or Enter on About opens the dialog, its title
-// heading focused and its Close's hint closed past the interest delay; Tab moves focus to Close;
-// Escape, or Close, closes it, focus back where it was before it opened. A typed into the editor
-// types and opens nothing. In the accessibility tree the button is named About and the dialog
-// "About the playground", modal. The dialog holds, after its header row, the three paragraphs
-// approved with the brief, then what a Run downloads, then the link to the spike's question and
-// evidence, the index, in that order and in those words. The SDK's shell checks hold the button
-// and the dialog to the components' shortcut dialog pattern, and Help's list to the page's
-// bindings, A's among them (site.test.ts). Every wait is bounded.
+// The prose is the title row, the heading and the Program select's label beside it, and the lede
+// alone, the lede's text as approved, Ctrl+Enter in a kbd, and the page holds no disclosure; the
+// select itself is playground-programs.test.ts's. The header's group is About, Help, and Settings,
+// in that order: About a glyph button in the shell's pattern, its glyph the icons layer's info-16,
+// its key A shown in a kbd, its hint "About". A, a click, or Enter on About opens the dialog, its
+// title heading focused and its Close's hint closed past the interest delay; Tab moves focus to
+// Close; Escape, or Close, closes it, focus back where it was before it opened. A typed into the
+// editor types and opens nothing. In the accessibility tree the button is named About and the
+// dialog "About the playground", modal. The dialog holds, after its header row, the three
+// paragraphs approved with the brief, the third with the programs task's goroutine and deadlock
+// sentences after "Stop to cancel" and its last sentence on each program's edits, then what a Run
+// downloads, then the link to the spike's question and evidence, the index, in that order and in
+// those words. The SDK's shell checks hold the button and the dialog to the components' shortcut
+// dialog pattern, and Help's list to the page's bindings, A's among them (site.test.ts). Every wait
+// is bounded.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -62,16 +65,20 @@ const LEDE =
   "here in your browser.";
 
 /** The dialog's content after its header row, each block's text, in order: the three paragraphs
- * approved with the brief, what a Run downloads, and the link. */
+ * approved with the brief, the third with the goroutine and deadlock sentences after "Stop to
+ * cancel" and its last sentence on each program's edits, what a Run downloads, and the link. */
 const ABOUT_TEXT = [
   "Your .go files build together as one main package, using only the standard library. There's " +
     "no go.mod, no other packages of your own, no cgo or assembly, and nothing passed in as " +
     "arguments or standard input.",
   'Any other file you add sits next to your program, so os.ReadFile("input.txt") will find it. ' +
     "Each Run starts fresh from your files, so anything the program writes is gone by the next one.",
-  "Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays loaded " +
-    "after a Stop, so the next Run is quick. Your edits live only in this tab: reload, and you're " +
-    "back to where you started.",
+  "Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. Goroutines take turns on " +
+    "one thread: they sleep, wait, and talk over channels as usual, but CPU-heavy work doesn't " +
+    "run any faster in parallel. A program that waits forever, say on a channel nothing sends to, " +
+    "never finishes and shows no deadlock error; press Stop. The compiler stays loaded " +
+    "after a Stop, so the next Run is quick. Your edits to each program live only in this tab, so " +
+    "you can switch away and come back to them: reload, and you're back to where you started.",
   "The first Run downloads the compiler, the linker, and the standard-library packages your " +
     "program imports; later Runs download only what a new import adds.",
   "The spike's question and evidence",
@@ -105,23 +112,31 @@ async function closed(page: Page, how: string): Promise<boolean> {
 }
 
 describe("the playground's prose and About", () => {
-  test("the prose is the heading and the lede alone, Ctrl+Enter in a kbd, and the page holds no disclosure", async () => {
+  test("the prose is the title row, the heading and the Program select's label, and the lede alone, Ctrl+Enter in a kbd, and the page holds no disclosure", async () => {
     const page = await open();
     try {
-      const prose: { children: string[]; lede: string; kbd: string[]; details: number } =
-        await page.evaluate(`(() => {
+      const prose: {
+        children: string[];
+        title: string[];
+        lede: string;
+        kbd: string[];
+        details: number;
+      } = await page.evaluate(`(() => {
           const prose = document.querySelector("main > .prose");
           const lede = prose.querySelector(":scope > p");
+          const said = (element) => element.textContent.replace(/\\s+/g, " ").trim();
           return {
-            children: [...prose.children].map((child) => child.localName + ": " +
-              child.textContent.replace(/\\s+/g, " ").trim()),
-            lede: lede.textContent.replace(/\\s+/g, " ").trim(),
+            children: [...prose.children].map((child) => child.localName),
+            title: [...prose.querySelector(":scope > .title").children].map((child) =>
+              child.localName + ": " + (child.localName === "h1" ? said(child) : said(child.firstChild))),
+            lede: said(lede),
             kbd: [...lede.querySelectorAll("kbd")].map((kbd) => kbd.textContent),
             details: document.querySelectorAll("details").length,
           };
         })()`);
       assert.deepEqual(prose, {
-        children: ["h1: Playground", `p: ${LEDE}`],
+        children: ["div", "p"],
+        title: ["h1: Playground", "label: Program"],
         lede: LEDE,
         kbd: ["Ctrl+Enter"],
         details: 0,

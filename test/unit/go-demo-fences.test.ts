@@ -2,12 +2,17 @@
 // each sl-go-demo in components.html with no handler and no source attribute runs the prebuilt
 // program, so the code it shows must be the code that program was built from. The playground's one
 // demo, a source demo, opens on the starter: its fences, main.go, lexer.go, parser.go, eval.go, and
-// input.txt, in that order, are playground/calc's files byte for byte. A fence is a direct-child
-// pre of the demo, its text the pre's text content, as sl-go-demo reads it
-// (web/components/go-demo.ts); its file is the fence's name, its data-file, on the pre or its code,
-// else the pre's title, else main.go, under cmd/<scenario>/, so a one-fence demo's is its
-// entrypoint, cmd/<scenario>/main.go. The written demos are every demo's source: the pages' scripts
-// add none.
+// input.txt, in that order, are playground/calc's files byte for byte. Each other program the
+// playground's Program select offers is a template in the page, its data-program the program's
+// name, whose fences are playground/<program>'s files byte for byte, as the page's script builds
+// the program's file set from them by the demo's rules: basics, its main.go and shapes.go;
+// generics, its main.go and stack.go; concurrency, its main.go and pipeline.go; and stdlib, its
+// main.go and the input.json it reads. Each program's fences are every file in its directory but
+// its tests, so a file added there and not to the page fails. A fence is a direct-child pre of the demo or the template,
+// its text the pre's text content, as sl-go-demo reads it (web/components/fences.ts); its file is
+// the fence's name, its data-file, on the pre or its code, else the pre's title, else main.go,
+// under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go. The
+// written demos and templates are every program's source: the pages' scripts add none.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the
 // page's hand-written markup, so a small reader suffices, held to the HTML parser's rules where
@@ -16,11 +21,17 @@
 // doesn't know or a demo it can't close, fails the test rather than pass a fence unread.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, test } from "node:test";
 
 const root = join(import.meta.dirname, "../..");
+
+/** A program's files in playground/<program>, but its tests, sorted: every file its fences show. */
+const shipped = (program: string): string[] =>
+  readdirSync(join(root, "playground", program))
+    .filter((name) => !name.endsWith("_test.go"))
+    .sort();
 
 /** The named character references the reader decodes; any other fails the read. */
 const NAMED: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
@@ -130,6 +141,29 @@ function writtenDemos(html: string): WrittenDemo[] {
   return demos;
 }
 
+/** A program's template as written: its data-program and its fences. */
+interface WrittenTemplate {
+  program: string;
+  fences: { name: string; text: string }[];
+}
+
+/** The page's program templates, every template with a data-program outside a comment, in
+ * order. */
+function writtenTemplates(html: string): WrittenTemplate[] {
+  const page = html.replace(/<!--[\s\S]*?-->/g, "");
+  const templates: WrittenTemplate[] = [];
+  for (const start of page.matchAll(/<template\b[^>]*>/gi)) {
+    const attrs = attributes(start[0]);
+    const program = attrs.get("data-program");
+    if (program === undefined) continue;
+    const from = start.index + start[0].length;
+    const end = page.indexOf("</template>", from);
+    if (end < 0) throw new Error(`a template the reader can't close: ${start[0]}`);
+    templates.push({ program, fences: fences(page.slice(from, end)) });
+  }
+  return templates;
+}
+
 /** The page's program demos, each sl-go-demo with no handler attribute and no source attribute,
  * in order: a source demo's fences are the reader's program, which no scenario was built from. */
 function programDemos(html: string): ProgramDemo[] {
@@ -177,12 +211,54 @@ describe("the playground's demo", () => {
       [[true, true, false, ["main.go", "lexer.go", "parser.go", "eval.go", "input.txt"]]],
     );
     const [{ fences }] = demos;
+    assert.deepEqual(fences.map(({ name }) => name).sort(), shipped("calc"), "every starter file");
     for (const { name, text } of fences) {
       assert.equal(
         text,
         readFileSync(join(root, "playground/calc", name), "utf8"),
         `the starter's ${name}`,
       );
+    }
+  });
+});
+
+describe("the playground's program templates", () => {
+  const html = readFileSync(join(root, "playground.html"), "utf8");
+  const templates = writtenTemplates(html);
+
+  test("are found: basics, its main.go and shapes.go, generics, its main.go and stack.go, concurrency, its main.go and pipeline.go, and stdlib, its main.go and input.json, every one read", () => {
+    assert.deepEqual(
+      templates.map(({ program, fences }) => [program, fences.map(({ name }) => name)]),
+      [
+        ["basics", ["main.go", "shapes.go"]],
+        ["generics", ["main.go", "stack.go"]],
+        ["concurrency", ["main.go", "pipeline.go"]],
+        ["stdlib", ["main.go", "input.json"]],
+      ],
+    );
+  });
+
+  test("are every program in playground/ but the calculator, each with a fence for every file of its directory but its tests", () => {
+    assert.deepEqual(
+      templates.map(({ program }) => program).sort(),
+      readdirSync(join(root, "playground"))
+        .filter((program) => program !== "calc")
+        .sort(),
+    );
+    for (const { program, fences } of templates) {
+      assert.deepEqual(fences.map(({ name }) => name).sort(), shipped(program), program);
+    }
+  });
+
+  test("each fence equals its program's file in playground/ byte for byte", () => {
+    for (const { program, fences } of templates) {
+      for (const { name, text } of fences) {
+        assert.equal(
+          text,
+          readFileSync(join(root, "playground", program, name), "utf8"),
+          `the ${program} program's ${name}`,
+        );
+      }
     }
   });
 });
@@ -204,6 +280,25 @@ describe("the reader", () => {
       ],
     });
     assert.deepEqual(rest, [], "a handler demo and a source demo are no program demos");
+  });
+
+  test("reads a program's template as a demo's fences, and passes over a template naming no program", () => {
+    assert.deepEqual(
+      writtenTemplates(
+        `<!-- <template data-program="no"><pre>x</pre></template> --><template id="other"><pre>y</pre></template>
+<template data-program="a"><pre data-file="a.go"><code>if a &lt; b {}</code></pre>
+<pre title="b.txt">b</pre></template>`,
+      ),
+      [
+        {
+          program: "a",
+          fences: [
+            { name: "a.go", text: "if a < b {}" },
+            { name: "b.txt", text: "b" },
+          ],
+        },
+      ],
+    );
   });
 
   test("refuses a reference it doesn't know, rather than pass the fence unread", () => {

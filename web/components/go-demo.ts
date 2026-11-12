@@ -16,17 +16,21 @@
 // so a runner sending an event, or a field's value, the demo doesn't declare fails the check.
 // The demo fetches nothing: Go loads only as the runner loads it, on a Run.
 //
-// The fences: each `pre` that is a child of the host is one file, in order: its text is the
-// pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
-// Shiki-rendered `<pre class="shiki">`, its tokens in spans, read alike. A fence's name is its
-// `data-file`, on the pre or its code, else the pre's `title`; else a default from its language,
-// a `data-language` on either, or a `language-<name>` class, as marked writes it: main.go for go,
-// input.json for json, input.txt for any other; and, with no language, as Shiki's output carries
-// none, main.go on a program or source demo and input.json on a handler demo. Each file's grammar
-// follows its name's extension, .go or .json, any other plain. The fences are read once the
-// document has parsed the demo's children, and again when `handler` or `source` changes, which
+// The fences: each `pre` that is a child of the host is one file, in order, read and named by
+// fences.ts's rules, which a page building a file set for the demo reads by too. Each file's
+// grammar follows its name's extension, .go or .json, any other plain. The fences are read once
+// the document has parsed the demo's children, and again when `handler` or `source` changes, which
 // rebuilds the files, or, while an authoring error shows, when an attribute it validates changes,
 // which may mend it.
+//
+// The page's files: given a FileSet as its `files` property, the demo reads no fence and holds no
+// file set of its own; the set given is the one its parts render from and the one it writes,
+// editing, the file actions, and Reset applying to it, and Run building or running its files. The
+// page owns the set, and may hold several, one per program, giving the demo one at a time; giving
+// another, or taking the set away, which builds the files from the fences again, is a switch: it
+// stops the demo's pending run, recorded as stopped, and clears the console and the timings, so
+// they show nothing of the last set's runs. The editor's settings and the run state stay: the
+// status still says how the last run ended.
 //
 // The fences stay in the light DOM, never moved or changed: before the element upgrades, and
 // without script, they render as the page's code, as any fence does. Once upgraded, the shadow
@@ -107,6 +111,7 @@ import type { CodeEditor } from "./code-editor.ts";
 import { ConsoleLog, type Stream } from "./console-log.ts";
 import type { ArrangeDetail, DeleteDetail, NewDetail, RenameDetail } from "./controls.ts";
 import { defaults, EditorSettings } from "./editor-settings.ts";
+import { readFences } from "./fences.ts";
 import { FileSet, type GivenFile } from "./file-set.ts";
 import type { FileTabs, SelectDetail } from "./file-tabs.ts";
 import styles from "./go-demo.css" with { type: "css" };
@@ -185,50 +190,8 @@ const TABBED_BAND: Band = "phone";
 /** The band where a fixed demo's arrangement applies, and its toolbar shows Layout. */
 const ARRANGED_BAND: Band = "wide";
 
-/** A fence's file, as read from the light DOM, before the set holds it. */
-interface Fence {
-  name: string;
-  text: string;
-}
-
 /** What a source demo's run runs, as its status names it: the built program's main package. */
 const SOURCE_PROGRAM = "main";
-
-/** The fences' default names, by language. */
-const DEFAULT_NAMES: Readonly<Record<string, string>> = Object.freeze({
-  go: "main.go",
-  json: "input.json",
-});
-
-/** The language a fence's markup names: a data-language on the pre or its code, else a
- * language-<name> class on either, as marked writes it; undefined when it names none, as the
- * SDK's Shiki output doesn't. */
-function fenceLanguage(pre: HTMLPreElement): string | undefined {
-  const code = pre.querySelector(":scope > code");
-  for (const element of [pre, code]) {
-    const named = element?.getAttribute("data-language");
-    if (named) return named.toLowerCase();
-  }
-  for (const element of [pre, code]) {
-    for (const name of element?.classList ?? []) {
-      const match = /^(?:language|lang)-(.+)$/.exec(name);
-      if (match) return match[1].toLowerCase();
-    }
-  }
-  return undefined;
-}
-
-/** A fence's file name: data-file on the pre or its code, else the pre's title, else a default
- * from its language, or, with none named, the mode's: main.go when program, a program or source
- * demo. */
-function fenceName(pre: HTMLPreElement, program: boolean): string {
-  const code = pre.querySelector(":scope > code");
-  const named = pre.dataset.file ?? code?.getAttribute("data-file") ?? (pre.title || undefined);
-  if (named !== undefined) return named;
-  const language = fenceLanguage(pre);
-  if (language === undefined) return program ? DEFAULT_NAMES.go : DEFAULT_NAMES.json;
-  return DEFAULT_NAMES[language] ?? "input.txt";
-}
 
 /** The grammar of a file's name: go or json by its extension, any other plain. */
 export const languageOf = (name: string): string => /\.(go|json)$/.exec(name)?.[1] ?? "";
@@ -253,7 +216,8 @@ const isRunShortcut = (event: KeyboardEvent) =>
   !event.shiftKey &&
   !event.isComposing;
 
-/** The models a demo owns, built together from its fences and attributes. */
+/** The models a demo renders from, built together from its fences and attributes; files is the
+ * page's while it gives one. */
 interface Owned {
   files: FileSet;
   settings: EditorSettings;
@@ -267,7 +231,9 @@ interface Owned {
  * `scenario` names the scenario Run loads; `handler`, when given, the handler Run calls with the
  * one file's text, else Run runs the program's main. `source` builds the program from the files
  * instead, every .go file as package main, and runs its main, naming no scenario. The files are
- * the light DOM's fences (see the module's note). `editable-files` adds New file, Rename, and
+ * the light DOM's fences (see the module's note), unless `files`, a FileSet the page owns, gives
+ * them; giving another set, or none, switches the demo to it in place, stopping its pending run
+ * and clearing its console and timings. `editable-files` adds New file, Rename, and
  * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
  * to 8 columns, 4 by default. `fixed` makes the demo as tall as the box its parent's layout gives
  * it, never below its floor in lines of its parts (go-demo.css); each part keeps its share of that
@@ -297,6 +263,7 @@ export class GoDemo extends LitElement {
 
   static properties = {
     runner: { attribute: false },
+    files: { attribute: false },
     scenario: { type: String },
     handler: { type: String },
     source: { type: Boolean },
@@ -314,6 +281,9 @@ export class GoDemo extends LitElement {
 
   /** The page's runner, which the demo reads and never replaces; null runs nothing. */
   declare runner: DemoRunner | null;
+  /** The page's file set, which the demo renders from and writes in place of its own; null builds
+   * the files from the fences. */
+  declare files: FileSet | null;
   /** The scenario Run loads. */
   declare scenario: string | null;
   /** The handler Run calls; null, or empty, runs the program's main. */
@@ -365,6 +335,7 @@ export class GoDemo extends LitElement {
   constructor() {
     super();
     this.runner = null;
+    this.files = null;
     this.scenario = null;
     this.handler = null;
     this.source = false;
@@ -456,13 +427,8 @@ export class GoDemo extends LitElement {
     }
   }
 
-  /** The fences: the host's pre children, in order. */
-  get #fences(): HTMLPreElement[] {
-    return [...this.querySelectorAll<HTMLPreElement>(":scope > pre")];
-  }
-
-  /** Builds the models from the fences and the attributes, or names why it can't. While the
-   * document is still parsing, it waits until it has, so every fence is read. */
+  /** Builds the models from the fences, or the page's files, and the attributes, or names why it
+   * can't. While the document is still parsing, it waits until it has, so every fence is read. */
   #build(): void {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", this.#parsed, { once: true });
@@ -486,7 +452,8 @@ export class GoDemo extends LitElement {
     this.#current = null;
   }
 
-  /** The models, built afresh; throws the reason when the demo can't run. */
+  /** The models, built afresh, over the page's files when it gives them, else over a set of the
+   * fences; throws the reason when the demo can't run. */
   #models(): Owned {
     if (this.source) {
       if (this.scenario || this.handler) {
@@ -497,11 +464,30 @@ export class GoDemo extends LitElement {
     } else if (!this.scenario) {
       throw new Error("a demo names its Go scenario in its scenario attribute");
     }
+    return {
+      files: this.#fileSet(),
+      settings: new EditorSettings({ wrap: this.wrap, tabSize: tabSizeOf(this.tabSize) }),
+      log: new ConsoleLog(),
+      timings: new RunTimings(),
+      state: new RunState(),
+    };
+  }
+
+  /** The files the demo renders from: the page's set when it gives one, else a set of the
+   * fences'; throws the reason when a handler demo is given a set, or the fences can't make one. */
+  #fileSet(): FileSet {
     const program = this.#program;
-    const fences: Fence[] = this.#fences.map((pre) => ({
-      name: fenceName(pre, program),
-      text: pre.textContent ?? "",
-    }));
+    if (!this.files) return this.#fenceSet(program);
+    if (!program) {
+      throw new Error("a handler demo holds one fence, its handler's input, and takes no files");
+    }
+    return this.files;
+  }
+
+  /** A set of the fences' files, for the mode, program or not; throws the reason when they can't
+   * make one. */
+  #fenceSet(program: boolean): FileSet {
+    const fences = readFences(this, program);
     if (fences.length === 0) {
       throw new Error("a demo holds its code in at least one fence, a pre among its children");
     }
@@ -513,13 +499,34 @@ export class GoDemo extends LitElement {
     // A prebuilt program's source is what it was built from; a source demo's is the reader's.
     const readonly = program && !this.source;
     const given: GivenFile[] = fences.map(({ name, text }) => ({ name, text, readonly }));
-    return {
-      files: new FileSet(given),
-      settings: new EditorSettings({ wrap: this.wrap, tabSize: tabSizeOf(this.tabSize) }),
-      log: new ConsoleLog(),
-      timings: new RunTimings(),
-      state: new RunState(),
-    };
+    return new FileSet(given);
+  }
+
+  /** A switch to the page's files, or back to the fences': the demo's pending run stopped, and
+   * recorded as stopped, and the models the same but for the files, given or built from the
+   * fences, and a console and timings afresh. Where the files can't be had, or no models are
+   * built yet, it builds them all, as at first. */
+  #switch(): void {
+    const owned = this.owned;
+    if (!owned) {
+      this.#build();
+      return;
+    }
+    const run = this.#current;
+    if (run !== null) {
+      void this.runner?.stop();
+      owned.state.finish(run, { kind: "stopped" });
+    }
+    let files: FileSet;
+    try {
+      files = this.#fileSet();
+    } catch {
+      this.#build();
+      return;
+    }
+    this.#retire();
+    this.owned = { ...owned, files, log: new ConsoleLog(), timings: new RunTimings() };
+    files.addEventListener("change", this.#filesChanged);
   }
 
   /** The editor, once rendered. */
@@ -659,6 +666,9 @@ export class GoDemo extends LitElement {
     const mode = changed.has("handler") || changed.has("source");
     if (this.hasUpdated && (mode || (this.problem !== null && validated))) {
       this.#build();
+    } else if (changed.has("files") && this.owned?.files !== this.files) {
+      // The page's files given, another set, or none: a switch, in place.
+      this.#switch();
     }
     const owned = this.owned;
     if (owned && (changed.has("wrap") || changed.has("tabSize"))) {

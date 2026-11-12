@@ -265,6 +265,7 @@ export interface AXNode {
   ignored: boolean;
   role?: { value: string };
   name?: { value: string };
+  value?: { value?: unknown };
   properties?: { name: string; value: { value?: unknown } }[];
 }
 

@@ -5,26 +5,26 @@
 // component, --page components/<component>, each the page whole at each of the same widths, one
 // state per width, with every other component's section hidden, and the controls' with New file's
 // form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run, and
-// no Go loads; and the playground, --page playground, its demo as before a Run, on the starter:
-// the viewport alone, the page's one screen, not the page whole, since the page fits its viewport
-// by its demo's row, and a viewport grown to the page would grow the demo with it. It is captured
-// in each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
+// no Go loads; and the playground, --page playground, its demo as before a Run, on the starter: the
+// viewport alone, the page's one screen, not the page whole, since the page fits its viewport by
+// its demo's row, and a viewport grown to the page would grow the demo with it. It is captured in
+// each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
 // again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and 1376px,
 // the wide band in each arrangement, editor left, top, and right, and with the Layout menu open,
 // each chosen by the menu as a reader chooses, so no state depends on what an earlier one stored;
-// and at 1376px with the About dialog open, opened by its button in the header. The components page
-// shows each state once and its layout follows the viewport, so the narrow layout is the 390px
-// capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, and
-// the playground's, takes only that width's states, so the 900px capture, at no SDK width, is taken
-// only when every width is. The SDK's widths over the whole components page grew with every
-// component, so each component is captured alone. The description's facets, --all's profiles, the
-// registry's profiles, and its server, which serves the site as the browser tier serves it, by the
-// SDK's served(), under the base, are the SDK's.
-// Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
-// description the SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.2): template/scripts/screenshots.config.ts, its pages
-// the hand pages, as the site copies no tree for contentPages to list; the components page split
-// into a page per component, a state per width.
+// and at 1376px with the About dialog open, opened by its button in the header; and at each of the
+// SDK's widths with each of Basics, Generics, Concurrency, and Standard library chosen in the
+// Program select, as a reader chooses it. The components page shows each state once and its layout
+// follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by
+// --width, every page, the index's, each component's, and the playground's, takes only that width's
+// states, so the 900px capture, at no SDK width, is taken only when every width is. The SDK's
+// widths over the whole components page grew with every component, so each component is captured
+// alone. The description's facets, --all's profiles, the registry's profiles, and its server, which
+// serves the site as the browser tier serves it, by the SDK's served(), under the base, are the
+// SDK's. Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
+// description the SDK's. Adapted from spike-html-hosting-sdk (v0.6.2):
+// template/scripts/screenshots.config.ts, its pages the hand pages, as the site copies no tree for
+// contentPages to list; the components page split into a page per component, a state per width.
 
 import { join } from "node:path";
 
@@ -110,6 +110,33 @@ const aboutOpen: Step = async (page: Page) => {
   await until(page, `document.getElementById("about").matches(":modal")`, 5000);
 };
 
+/** The programs captured chosen in the playground's Program select, each its option's value, its
+ * label, and a file of its own, which no other program has, whose tab says the demo shows it. */
+const CHOSEN = [
+  ["basics", "Basics", "shapes.go"],
+  ["generics", "Generics", "stack.go"],
+  ["concurrency", "Concurrency", "pipeline.go"],
+  ["stdlib", "Standard library", "input.json"],
+] as const;
+
+/** Chooses the program in the playground's Program select, as a reader's choice changes it,
+ * resolving once the demo shows its file of its own. */
+const chosen =
+  (program: string, file: string): Step =>
+  async (page: Page) => {
+    await page.evaluate(`(() => {
+      const picker = document.querySelector("select#program");
+      picker.value = ${JSON.stringify(program)};
+      picker.dispatchEvent(new Event("change", { bubbles: true }));
+    })()`);
+    await until(
+      page,
+      `document.querySelector("sl-go-demo").shadowRoot.querySelector("sl-file-tabs").shadowRoot
+        .querySelector('[role="tab"][data-name=${JSON.stringify(file)}]') !== null`,
+      5000,
+    );
+  };
+
 /** Selects the playground demo's Timings tab, its phone band's output panel. */
 const timingsTab: Step = async (page: Page) => {
   await page.evaluate(
@@ -151,8 +178,9 @@ const menuOpen: Step = async (page: Page) => {
 
 /** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
  * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
- * Layout menu open; and the widest with the About dialog open, each named as the SDK names a
- * page's, the width last. */
+ * Layout menu open; the widest with the About dialog open; and each of the SDK's widths with each
+ * program but the calculator chosen in the Program select, Basics, Generics, Concurrency, and
+ * Standard library, each named as the SDK names a page's, the width last. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
   const state = (
@@ -179,6 +207,11 @@ const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
       state(viewport, menuOpen, "menu-", "Layout menu, "),
     ]),
     state(wide.at(-1) ?? phone, aboutOpen, "about-", "About open, "),
+    ...CHOSEN.flatMap(([program, label, file]) =>
+      WIDTHS.map((viewport) =>
+        state(viewport, chosen(program, file), `${program}-`, `${label} chosen, `),
+      ),
+    ),
   ];
 };
 
