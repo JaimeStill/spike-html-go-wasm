@@ -285,7 +285,7 @@ Slices        13. The fix: the lede, the header's About button and dialog#about 
 
 ## Progress
 
-fix: slice 13 done · standards done · spec — · editor —
+fix: slice 13 done · standards done · spec done · editor —
 
 ## Decisions
 
