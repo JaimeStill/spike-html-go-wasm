@@ -26,10 +26,11 @@
 // the components page's, has no output tablist and a console that grows. The reservations are
 // one property each, read where they apply: the timings' track is sl-timings' least width, 28ch of
 // its table, and the steady status asks the row for 24ch of its own text, sharing the toolbar's
-// line at 50rem and taking its own at a phone's width; each property set on its element moves
-// every reader. The helpers are go-demos.ts's, go-builds.ts's, and playground-layouts.ts's.
-// playground-arrangement.test.ts proves the Layout menu and the stored choice. Every wait is
-// bounded.
+// line where the row holds the toolbar, the gap, and that reservation, as measured, and taking its
+// own where it doesn't, a rem either side, and at a phone's width, whatever it says; each property
+// set on its element moves every reader. The helpers are go-demos.ts's, go-builds.ts's, and
+// playground-layouts.ts's. playground-arrangement.test.ts proves the Layout menu and the stored
+// choice. Every wait is bounded.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -55,6 +56,7 @@ import {
   type Band,
   comments,
   contained,
+  CONTROLS,
   kept,
   layout,
   type Layout,
@@ -66,6 +68,7 @@ import {
   press,
   printing,
   property,
+  REM,
   widthFor,
 } from "./playground-layouts.ts";
 import { PHONE, viewport } from "./viewport.ts";
@@ -516,23 +519,28 @@ describe("the phone's output tablist", () => {
 
 describe("the reservations", () => {
   /** The timings' box and the status's, beside the ch of the text each is in: the table's, and the
-   * status's own; the status's line against Run's. */
+   * status's own; the status's line against Run's; and the row the status asks a share of, its
+   * width, the toolbar's, and the gap between them. */
   const reserved = (page: Page) =>
     page.evaluate(`(() => {
       const root = ${PLAYGROUND}.shadowRoot;
       const controls = root.querySelector("sl-controls");
+      const bar = controls.shadowRoot.querySelector(".bar");
+      const toolbar = controls.shadowRoot.querySelector(".toolbar");
       const status = controls.shadowRoot.querySelector(".status");
       const run = controls.shadowRoot.querySelector('[data-control="run"]').getBoundingClientRect();
       const timings = root.querySelector("sl-timings");
       const table = timings.shadowRoot.querySelector("table");
-      // A ch measured in the element's own text: a probe beside it, styled as it is.
+      // A ch measured in the element's own text: a probe beside it, styled as it is, 100ch wide,
+      // so the box's rounding to a 64th of a px is a hundredth of that in the ch, and 200ch read
+      // from it is within a 30th of a px in any font.
       const ch = (element) => {
         const probe = document.createElement("span");
         const style = getComputedStyle(element);
-        probe.style.cssText = "position: absolute; visibility: hidden; inline-size: 1ch;";
+        probe.style.cssText = "position: absolute; visibility: hidden; inline-size: 100ch;";
         probe.style.font = style.font;
         element.getRootNode().append(probe);
-        const width = probe.getBoundingClientRect().width;
+        const width = probe.getBoundingClientRect().width / 100;
         probe.remove();
         return width;
       };
@@ -543,8 +551,28 @@ describe("the reservations", () => {
         status: parseFloat(getComputedStyle(status).flexBasis),
         statusCh: ch(status),
         ownLine: status.getBoundingClientRect().top >= run.bottom,
+        bar: bar.getBoundingClientRect().width,
+        toolbar: toolbar.getBoundingClientRect().width,
+        gap: parseFloat(getComputedStyle(bar).columnGap),
+        controls: controls.getBoundingClientRect().height,
       };
     })()`);
+
+  type Reserved = Awaited<ReturnType<typeof reserved>>;
+
+  /** The row's width the status needs to share the toolbar's line: the toolbar's, the gap, and
+   * the status's reservation, each as measured, so no font decides the expectation. */
+  const needed = ({ toolbar, gap, status }: Reserved) => toolbar + gap + status;
+
+  /** Asserts the status's line is the one its reservation gives at the row's width: its own
+   * where the toolbar, the gap, and the reservation don't fit on the toolbar's line. */
+  function lined(laid: Reserved, where: string): void {
+    assert.equal(
+      laid.ownLine,
+      needed(laid) > laid.bar,
+      `${where}: the status's line follows its reservation, ${JSON.stringify(laid)}`,
+    );
+  }
 
   test("the timings' track is the least width sl-timings states, 28ch of its table, read on the element; the steady status asks the row for 24ch of its own text, which decides its line by width alone", async () => {
     const page = await open();
@@ -554,9 +582,39 @@ describe("the reservations", () => {
       assert.ok(Math.abs(laid.timings - 28 * laid.tableCh) < 0.5, `the track, ${laid.timings}`);
       assert.ok(Math.abs(laid.table - laid.timings) < 0.5, `the table fills it, ${laid.table}`);
       assert.ok(Math.abs(laid.status - 24 * laid.statusCh) < 0.5, `the status, ${laid.status}`);
-      assert.equal(laid.ownLine, false, "at 50rem the status shares the toolbar's line");
+      lined(laid, "at 50rem");
+
+      // A rem either side of the row the status needs, read at 50rem, each in the band where the
+      // toolbar shows its names and no Layout group: the toolbar's fluid spaces move it by a px
+      // or so between the two, well inside the rem, so the status shares the toolbar's line on
+      // the wider side alone, whatever the font.
+      const need = needed(laid);
+      assert.ok(need / REM - 1 >= 26 && need / REM + 1 < 64, `the row needed, ${need}, is in band`);
+      for (const [side, ownLine] of [
+        [1, false],
+        [-1, true],
+      ] as const) {
+        const where = `a row ${Math.round(need + side * REM)}px wide`;
+        await viewport(page, await widthFor(page, need / REM + side));
+        laid = await reserved(page);
+        lined(laid, where);
+        assert.equal(laid.ownLine, ownLine, `${where}: the status's own line is ${ownLine}`);
+
+        // Words longer than the reservation change neither its line nor the controls' box.
+        const words = "Finished a program whose name runs well past the status's reservation";
+        await page.evaluate(`(() => {
+          const status = ${CONTROLS}.querySelector(".status");
+          status.append(new Text(${JSON.stringify(words)}));
+        })()`);
+        await settle(page);
+        const said = await reserved(page);
+        assert.equal(said.ownLine, ownLine, `${where}: long words keep the status's line`);
+        assert.equal(said.controls, laid.controls, `${where}: long words keep the controls' box`);
+        await page.evaluate(`${CONTROLS}.querySelector(".status").lastChild.remove()`);
+      }
 
       // One property each: set on the element, it moves every reader.
+      await viewport(page, await widthFor(page, 50));
       await page.evaluate(`(() => {
         const root = ${PLAYGROUND}.shadowRoot;
         root.querySelector("sl-timings").style.setProperty("--sl-timings-min-inline-size", "20ch");
@@ -580,6 +638,7 @@ describe("the reservations", () => {
       await viewport(page, PHONE);
       await settle(page);
       laid = await reserved(page);
+      lined(laid, "at a phone's width");
       assert.equal(laid.ownLine, true, "at a phone's width the status takes a line of its own");
     } finally {
       await page.close();
