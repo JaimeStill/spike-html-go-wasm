@@ -111,9 +111,9 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   left or right of a column of the console over the timings, or the editor top,
                   over the console and timings row. A run, a Stop, a build failure, or a
                   layout change preserves each part's content and scroll position. The toolbar
-                  status's reserved width and the timings' track are each stated once, as a named property in their content's unit (ch for the status's
-                  text), read wherever the size is needed, so no literal is kept in step across
-                  sheets. The Layout menu's width is bounded by its containing block, not by a
+                  status's reserved width and the timings' track are each stated once, as a
+                  named property in their content's unit (ch for the status's text), read
+                  wherever the size is needed, so no literal is kept in step across sheets. The Layout menu's width is bounded by its containing block, not by a
                   viewport unit. The demo's script reads its width band, named only in CSS, just
                   where the accessibility tree changes (the output panels' tabpanel roles) and
                   for whether the Layout group shows.
