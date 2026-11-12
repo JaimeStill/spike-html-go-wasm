@@ -50,12 +50,11 @@
       /* Main fills its row, a column of the heading, the intro, and the disclosure, each its own
          height, then the demo's container, taking every row they leave, but never less than the
          floor, half the viewport's height, the least share at which every part of the demo stays
-         usable: at a phone's width, the editor shows seven lines and the console two and a half, where
-         45% left the console under two. An open
-         disclosure takes its space from the container, down to the floor; past it, main and the
-         body grow, and the page scrolls. Main's 80ch reading width and its centring stay
-         site.css's, as the SDK's shell checks hold them; its foot keeps no padding, so the demo's
-         bottom edge is the viewport's. */
+         usable: at a phone's width, the editor shows seven lines and the console two and a half,
+         where 45% left the console under two. An open disclosure takes its space from the
+         container, down to the floor; past it, main and the body grow, and the page scrolls. Main's
+         80ch reading width and its centring stay site.css's, as the SDK's shell checks hold them;
+         its foot keeps no padding, so the demo's bottom edge is the viewport's. */
       main {
         display: grid;
         grid-template-columns: minmax(0, 1fr);

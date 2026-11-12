@@ -64,18 +64,18 @@
 //
 // The fixed layout: with `fixed`, the demo is as tall as its nearest size container, which the page
 // lays out, reading no viewport unit and running no script to size itself, and each part keeps a
-// share of that height and scrolls inside it, so no edit, output, or timing changes any part's box. Its arrangement
-// follows its own width, by container queries in go-demo.css: below 44rem, the editor over one
-// output panel whose tablist, Output and Timings, shows the console or the timings; from 44rem to
-// 64rem, the editor over the console and the timings side by side; and from 64rem, the arrangement
-// the page's Arrangement places: the editor left or right of a column of the console over the
-// timings, or the editor top, over the console and the timings side by side, as from 44rem. With no
-// arrangement given, the editor is left. From 64rem, and only given an arrangement, the toolbar
-// shows its Layout menu, whose choice the demo sends on as an arrange request; the page applies it
-// to the arrangement, and the demo, rendering from it, places its parts again. The parts are the
-// same elements in every band and arrangement, only placed again, so a band or arrangement change
-// keeps each part's content and scroll position, and the panel
-// the tablist doesn't show is hidden by visibility, keeping its own. The output tablist is the tabs
+// share of that height and scrolls inside it, so no edit, output, or timing changes any part's box.
+// Its arrangement follows its own width, by container queries in go-demo.css: below 44rem, the
+// editor over one output panel whose tablist, Output and Timings, shows the console or the timings;
+// from 44rem to 64rem, the editor over the console and the timings side by side; and from 64rem,
+// the arrangement the page's Arrangement places: the editor left or right of a column of the
+// console over the timings, or the editor top, over the console and the timings side by side, as
+// from 44rem. With no arrangement given, the editor is left. From 64rem, and only given an
+// arrangement, the toolbar shows its Layout menu, whose choice the demo sends on as an arrange
+// request; the page applies it to the arrangement, and the demo, rendering from it, places its
+// parts again. The parts are the same elements in every band and arrangement, only placed again, so
+// a band or arrangement change keeps each part's content and scroll position, and the panel the
+// tablist doesn't show is hidden by visibility, keeping its own. The output tablist is the tabs
 // pattern, with activation on focus, as the file tabs' (aria.ts's roved, tabs.css's look); its
 // panels are tabpanels only while it shows. The demo reads its band from the one the stylesheet
 // names, --band, as its width changes: whether the output is tabs, and whether Layout shows.
@@ -264,12 +264,12 @@ interface Owned {
  * the light DOM's fences (see the module's note). `editable-files` adds New file, Rename, and
  * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
  * to 8 columns, 4 by default. `fixed` holds the demo to the block size of its nearest size
- * container, which the page lays out (100cqb); each part
- * keeps its share of that height, scrolling inside it, in a layout that follows the demo's width
- * (see the module's note). `arrangement`, an Arrangement the page writes, places a fixed demo's
- * parts from 64rem and shows its toolbar's Layout menu there; with none, the editor is left and
- * the menu isn't shown. `label` names the demo, a region; by default it names the scenario
- * and the handler, "probe format demo", or, on a source demo, "Go source demo".
+ * container, which the page lays out (100cqb); each part keeps its share of that height, scrolling
+ * inside it, in a layout that follows the demo's width (see the module's note). `arrangement`, an
+ * Arrangement the page writes, places a fixed demo's parts from 64rem and shows its toolbar's
+ * Layout menu there; with none, the editor is left and the menu isn't shown. `label` names the
+ * demo, a region; by default it names the scenario and the handler, "probe format demo", or, on a
+ * source demo, "Go source demo".
  *
  * An authoring error, a missing scenario, a source demo naming a scenario or a handler, no fence,
  * more than one fence on a handler demo, a fence's name the file set refuses, or a tab size the
@@ -280,11 +280,11 @@ interface Owned {
  * chose, a request for the page, which owns the arrangement, to apply; until it does, nothing
  * changes. Every other part's request is the demo's to apply, and goes no further.
  *
- * Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a program or source demo, the
- * editor, a fixed demo's output tablist below 44rem, and the console. The output tablist's are
- * the file tabs': Tab reaches the selected tab alone; Left and Right select the previous and the
- * next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter, from anywhere inside
- * the demo, runs it.
+ * Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a
+ * program or source demo, the editor, a fixed demo's output tablist below 44rem, and the console.
+ * The output tablist's are the file tabs': Tab reaches the selected tab alone; Left and Right
+ * select the previous and the next, wrapping, and Home and End the first and the last. Ctrl or
+ * Cmd+Enter, from anywhere inside the demo, runs it.
  */
 export class GoDemo extends LitElement {
   static styles = [reset, elements, tabs, styles];
@@ -322,7 +322,7 @@ export class GoDemo extends LitElement {
   declare tabSize: string | null;
   /** The demo's accessible name, unless the default. */
   declare label: string | null;
-  /** Whether the demo is held to the viewport's height, each part to its share. */
+  /** Whether the demo is held to its size container's block size, each part to its share. */
   declare fixed: boolean;
   /** The page's arrangement, which the demo renders from and never writes; null places the editor
    * left and shows no Layout menu. */

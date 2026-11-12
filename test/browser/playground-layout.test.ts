@@ -3,25 +3,25 @@
 // chrome-headless-shell.
 //
 // The page is one screen, in CSS alone: at the SDK's three capture widths, each at its capture
-// height and at 900px, with the disclosure closed, the demo's container takes every row the
-// header, the heading, the intro, and the disclosure leave, the demo as tall as it, its bottom edge
-// the viewport's, the page scrolling neither way, and no script sizing the demo. Opening the
-// disclosure takes its space from the container, down to its floor, half the viewport's height,
-// where every part stays inside the demo, the editor showing three lines and the console's log two; below the floor the page scrolls
-// down, never sideways; closing it puts the screen back as it was.
+// height and at 900px, with the disclosure closed, the demo's container takes every row the header,
+// the heading, the intro, and the disclosure leave, the demo as tall as it, its bottom edge the
+// viewport's, the page scrolling neither way, and no script sizing the demo. Opening the disclosure
+// takes its space from the container, down to its floor, half the viewport's height, where every
+// part stays inside the demo, the editor showing three lines and the console's log two; below the
+// floor the page scrolls down, never sideways; closing it puts the screen back as it was.
 //
-// The demo's parts keep their shares of its height at every width: at the SDK's three capture widths, 390, 1120, and 1376 px, and at
-// widths that put the demo itself half a rem either side of its two bands' edges, 44rem and 64rem,
-// a paste of 500 lines into the editor, 10,000 lines printed, and a full table of a build's timings
-// change no part's box, in each arrangement from 64rem, each placing the parts as it says; the
-// page never scrolls sideways; and every part lies inside the demo. A Run, a Stop, a failed build,
-// a band change, and an arrangement change keep each part's content and scroll position, and the
-// output tab chosen. Below 44rem, the output panel's tablist is the tabs pattern, its
-// keyboard and accessibility tree the file tabs'; from 44rem it isn't there, and the console and
-// the timings are no tabpanels. A demo without `fixed`, the components page's, has no output
-// tablist and a console that grows. The helpers are go-demos.ts's, go-builds.ts's, and
-// playground-layouts.ts's. playground-arrangement.test.ts proves the Layout menu and the stored
-// choice. Every wait is bounded.
+// The demo's parts keep their shares of its height at every width: at the SDK's three capture
+// widths, 390, 1120, and 1376 px, and at widths that put the demo itself half a rem either side of
+// its two bands' edges, 44rem and 64rem, a paste of 500 lines into the editor, 10,000 lines
+// printed, and a full table of a build's timings change no part's box, in each arrangement from
+// 64rem, each placing the parts as it says; the page never scrolls sideways; and every part lies
+// inside the demo. A Run, a Stop, a failed build, a band change, and an arrangement change keep
+// each part's content and scroll position, and the output tab chosen. Below 44rem, the output
+// panel's tablist is the tabs pattern, its keyboard and accessibility tree the file tabs'; from
+// 44rem it isn't there, and the console and the timings are no tabpanels. A demo without `fixed`,
+// the components page's, has no output tablist and a console that grows. The helpers are
+// go-demos.ts's, go-builds.ts's, and playground-layouts.ts's. playground-arrangement.test.ts proves
+// the Layout menu and the stored choice. Every wait is bounded.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";

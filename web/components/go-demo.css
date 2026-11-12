@@ -90,7 +90,8 @@
   grid-area: controls;
 }
 
-/* The files: the editor alone, or the tabs over the panel holding it, the editor filling the rest. */
+/* The files: the editor alone, or the tabs over the panel holding it, the editor filling the
+   rest. */
 :host([fixed]) .files {
   grid-area: files;
   grid-template-rows: minmax(0, 1fr);

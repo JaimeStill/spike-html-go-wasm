@@ -1,9 +1,9 @@
 // The reader's arrangement, kept for a page: the page, never a demo, is the one owner of the
 // Arrangement its fixed Go demos render from (web/components/arrangement.ts). It reads the
-// placement kept in localStorage under the spike's own key, as the foundation's preferences.js keeps
-// the theme, and builds the one model from it; gives that model to every fixed demo; and applies
-// each demo's arrange request, the Layout menu's choice, to the model, storing the choice. The
-// choice is the only write to storage: reading, and every fallback, writes nothing.
+// placement kept in localStorage under the spike's own key, as the foundation's preferences.js
+// keeps the theme, and builds the one model from it; gives that model to every fixed demo; and
+// applies each demo's arrange request, the Layout menu's choice, to the model, storing the choice.
+// The choice is the only write to storage: reading, and every fallback, writes nothing.
 //
 // Storage throws when blocked or sandboxed, and holds whatever another page wrote, so each access
 // is in a try/catch, and a value that isn't JSON, or that the model refuses, reads as none. With

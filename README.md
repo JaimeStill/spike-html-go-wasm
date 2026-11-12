@@ -112,17 +112,17 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   toolchain into `dist/go/toolchain/` (`scripts/build-toolchain.ts`): Go's compiler and linker
   built for `GOOS=js`, an archive for each standard-library package, and `manifest.json`, the one
   file that names them, each by its content's hash. A bare `vite build` omits the wasm.
-- `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths,
-  390px, 1120px, and 1376px, each component on the components page alone at each of them,
-  `--page components/<component>`, as `--page components/console`, and the playground,
-  `--page playground`, its viewport alone, the page's one screen, in each band of its fixed demo:
-  390px, with the output panel's Output tab and again with its Timings tab, 900px, between 44rem
-  and 64rem, and 1120px and 1376px, each in editor left, top, and right, and with the Layout menu
-  open, each chosen by the menu; and 1376px with the disclosure open, the demo at its floor. `--width <px>`, one of the SDK's three, captures that
-  width alone, every page's, as `mise run screenshots --page components/controls --width 390`
-  (the playground's 900px capture is taken only with every width); any other width is a usage
-  error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
-  know, and hands it to the capture file.
+- `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths, 390px,
+  1120px, and 1376px, each component on the components page alone at each of them, `--page
+  components/<component>`, as `--page components/console`, and the playground, `--page playground`,
+  its viewport alone, the page's one screen, in each band of its fixed demo: 390px, with the output
+  panel's Output tab and again with its Timings tab, 900px, between 44rem and 64rem, and 1120px and
+  1376px, each in editor left, top, and right, and with the Layout menu open, each chosen by the
+  menu; and 1376px with the disclosure open, the demo at its floor. `--width <px>`, one of the SDK's
+  three, captures that width alone, every page's, as `mise run screenshots --page
+  components/controls --width 390` (the playground's 900px capture is taken only with every width);
+  any other width is a usage error naming them. `scripts/screenshots.ts` takes `--width`, which the
+  capture bin doesn't know, and hands it to the capture file.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
 - `mise run live [base URL]`: check that the deployed site, at its Pages URL or the base given,
@@ -354,44 +354,44 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
   - Events: one `change` `Event` for each operation that changes the log, however many lines it
     adds; an empty write, or a clear of an empty log, sends none. The unit tier tests it under
     node.
-- `./controls.js`: `sl-controls`, a demo's controls as one ARIA toolbar: a Run group (Run, Stop,
-  and Reset), under `editable-files` a vertical separator and a Files group (New file, Rename, and
-  Delete), and, given an `Arrangement`, a separator and a Layout group (Layout). Each control is a glyph button named by its name, which shows beside its
-  glyph while the toolbar is 26rem wide or wider, where the widest group fits with its names in
-  any font; narrower, the glyph shows alone and the name as a hint on hover and keyboard focus,
-  as the console's Copy and Clear show theirs. It renders the `FileSet`
-  and the `RunState` it is given, follows each change they send, listening only to the models it
-  holds while it is in the document, and never writes either: every control sends a request its
-  owner applies. Run is always available, as a new run stops the pending one; Stop only while a
-  run is pending; Reset only while a file differs from its text as given; New file and Rename
-  always; Delete unless the set refuses to remove the active file, the last one. An unavailable
-  control is `aria-disabled`, focusable, and sends nothing. New file and Rename each open a form
-  in a popover, a non-modal dialog anchored below its button: a labelled input and a submit,
-  Create or Rename. Rename's input holds the active file's name, its stem, the name before its
-  extension, selected. On submit the name is checked by the set's `nameProblem`; a refused name
-  leaves the form open, the input `aria-invalid` and described by the set's reason in a polite
-  live region, and from then on the reason follows the name as it is typed. A taken name closes
-  the form, returns focus to its button, and sends the request; a rename to the file's own name
-  sends nothing. Escape closes the form, sends nothing, and returns focus to its button. Delete
-  asks for no confirmation. Layout is the APG menu button, `aria-haspopup="menu"` and
-  `aria-expanded`: it opens a menu, a popover anchored below it, of three radio items, Editor
-  left, Editor top, and Editor right, the arrangement's placement checked and ticked. Choosing an
-  item closes the menu, returns focus to Layout, and sends the request, unless the placement is
-  the one held. The status, a polite live region beside the toolbar, says each run's
-  start, "Running hello…", and its end, "Finished format", "Finished hello, exit code 0",
-  "Stopped spin", or "Failed format: <message>", from the run state's transitions alone: the
-  state the toolbar is given is never said, nor a change of the files. The toolbar wraps between
-  its groups, each group's controls together. With `steady`, the status keeps one line whatever
-  it says: it asks the row for 12rem, so whether it shares the toolbar's line or takes its own
-  follows the width alone, and words longer than its line end in an ellipsis, still whole to
-  assistive technology; the controls' box then follows their width alone. Nothing moves.
+- `./controls.js`: `sl-controls`, a demo's controls as one ARIA toolbar: a Run group (Run, Stop, and
+  Reset), under `editable-files` a vertical separator and a Files group (New file, Rename, and
+  Delete), and, given an `Arrangement`, a separator and a Layout group (Layout). Each control is a
+  glyph button named by its name, which shows beside its glyph while the toolbar is 26rem wide or
+  wider, where the widest group fits with its names in any font; narrower, the glyph shows alone and
+  the name as a hint on hover and keyboard focus, as the console's Copy and Clear show theirs. It
+  renders the `FileSet` and the `RunState` it is given, follows each change they send, listening
+  only to the models it holds while it is in the document, and never writes either: every control
+  sends a request its owner applies. Run is always available, as a new run stops the pending one;
+  Stop only while a run is pending; Reset only while a file differs from its text as given; New file
+  and Rename always; Delete unless the set refuses to remove the active file, the last one. An
+  unavailable control is `aria-disabled`, focusable, and sends nothing. New file and Rename each
+  open a form in a popover, a non-modal dialog anchored below its button: a labelled input and a
+  submit, Create or Rename. Rename's input holds the active file's name, its stem, the name before
+  its extension, selected. On submit the name is checked by the set's `nameProblem`; a refused name
+  leaves the form open, the input `aria-invalid` and described by the set's reason in a polite live
+  region, and from then on the reason follows the name as it is typed. A taken name closes the form,
+  returns focus to its button, and sends the request; a rename to the file's own name sends nothing.
+  Escape closes the form, sends nothing, and returns focus to its button. Delete asks for no
+  confirmation. Layout is the APG menu button, `aria-haspopup="menu"` and `aria-expanded`: it opens
+  a menu, a popover anchored below it, of three radio items, Editor left, Editor top, and Editor
+  right, the arrangement's placement checked and ticked. Choosing an item closes the menu, returns
+  focus to Layout, and sends the request, unless the placement is the one held. The status, a polite
+  live region beside the toolbar, says each run's start, "Running hello…", and its end, "Finished
+  format", "Finished hello, exit code 0", "Stopped spin", or "Failed format: <message>", from the
+  run state's transitions alone: the state the toolbar is given is never said, nor a change of the
+  files. The toolbar wraps between its groups, each group's controls together. With `steady`, the
+  status keeps one line whatever it says: it asks the row for 12rem, so whether it shares the
+  toolbar's line or takes its own follows the width alone, and words longer than its line end in an
+  ellipsis, still whole to assistive technology; the controls' box then follows their width alone.
+  Nothing moves.
   - Attributes: `editable-files` (a boolean: show the Files group), `steady` (a boolean: the
     status keeps one line), and `label` (the toolbar's accessible name, "Controls" by default).
   - Properties: `files`, the `FileSet` its owner creates and writes, `null` by default, leaving
     Reset unavailable and the Files group out; `runState`, the `RunState` its owner creates and
     writes, `null` by default, leaving Stop unavailable; `arrangement`, the `Arrangement` its owner
-    writes, `null` by default, leaving the Layout group out; and `editableFiles` and `label`, as their
-    attributes.
+    writes, `null` by default, leaving the Layout group out; and `editableFiles` and `label`, as
+    their attributes.
   - Events, each bubbling and not composed, a request that changes nothing until the owner applies
     it: `run`, `stop`, and `reset` (`Event`s); `new` (a `CustomEvent`, `detail.name`, the new
     file's name), `rename` (`detail.from` and `detail.to`), `delete` (`detail.name`, the active
@@ -540,13 +540,12 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     demo below 44rem also holds the output tablist, "Output panel", its tabs "Output" and
     "Timings", each controlling its part, a tabpanel named by its tab while the tablist shows.
   - Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a
-    program demo, the editor, a
-    fixed demo's output tablist below 44rem, and the console. The output tablist's are the file
-    tabs': Tab reaches the selected tab alone, Left and Right select the previous and the next,
-    wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter, from anywhere inside the demo, the editor included, runs it,
-    as Run's `aria-keyshortcuts` declares; with Alt or Shift also held, Enter runs nothing. From
-    outside every demo the shortcut runs none, and the foundation's shortcut registry holds no
-    entry for it.
+    program demo, the editor, a fixed demo's output tablist below 44rem, and the console. The output
+    tablist's are the file tabs': Tab reaches the selected tab alone, Left and Right select the
+    previous and the next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter,
+    from anywhere inside the demo, the editor included, runs it, as Run's `aria-keyshortcuts`
+    declares; with Alt or Shift also held, Enter runs nothing. From outside every demo the shortcut
+    runs none, and the foundation's shortcut registry holds no entry for it.
   - Layout: one column: the toolbar, the files, then the console and the timings. Once the demo
     is 44rem wide, the console and the timings share a row, the timings in a 16rem column and the
     console taking the rest. Every part stays inside the demo at every width, and the demo fits a
