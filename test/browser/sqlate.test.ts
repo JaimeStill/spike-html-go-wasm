@@ -2,15 +2,18 @@
 // Pages serves it, dist/ under the base by the SDK's served(), Vite's preview, in the pinned
 // chrome-headless-shell, the worker's fetches read through CDP (go-demos.ts).
 //
-// The page holds one source demo with editable files, playground/sqlate's main.go, active, and its
-// .sql files, and requests no Go and starts no worker before a Run. The first Run fetches the
-// manifest, the compiler, the linker, and only the program's closure of archives, the standard
-// library's and the site's pinned modules', sqlate's and PostgreSQL's driver's among them, and
-// prints every statement exactly, with exit 0 and every phase of a build. An edit to a .sql file
-// alone builds nothing: the Run fetches nothing, shows no Go compile or link, and prints the
-// edited statement. A statement with no tier prints sqlate's one stderr line with exit 1; and a
-// pattern file in a namespace of the reader's, added by New file, is included by a statement
-// added after it, each rerun again building nothing.
+// The page holds one source demo with editable files, playground/sqlate's main.go, active, its
+// guard.go, its .sql files, and its input.json, and requests no Go and starts no worker before a
+// Run. The first Run fetches the manifest, the compiler, the linker, and only the program's
+// closure of archives, the standard library's and the site's pinned modules', sqlate's, its
+// sqltest driver's, and PostgreSQL's driver's among them, and prints every statement and the
+// guarded edit's success exactly, with exit 0 and every phase of a build. An edit to input.json
+// alone builds nothing: the Run fetches nothing and shows no Go compile or link, and each outcome
+// the row's stored version sets prints its call log and result, the version mismatch, no row, and
+// the success again. An edit to a .sql file alone builds nothing either, and prints the edited
+// statement. A statement with no tier prints sqlate's one stderr line with exit 1; and a pattern
+// file in a namespace of the reader's, added by New file, is included by a statement added after
+// it, each rerun again building nothing.
 //
 // The cases run in order on one page, each from the files the last left, since every page's first
 // Run is a cold build of about 220 archives; each restores what it changed, and the first page in
@@ -45,12 +48,23 @@ import { paste, PLAYGROUND as DEMO } from "./playground-layouts.ts";
 
 const root = join(import.meta.dirname, "../..");
 
-/** playground/sqlate's files, in the demo's order: main.go, then the .sql files by name. */
-const FILES = ["main.go", "app.identity.sql", "create.sql", "edit.sql", "version.sql"];
+/** playground/sqlate's files, in the demo's order: the Go files, the .sql files by name, and
+ * input.json. */
+const FILES = [
+  "main.go",
+  "guard.go",
+  "app.identity.sql",
+  "create.sql",
+  "edit.sql",
+  "version.sql",
+  "input.json",
+];
 const source = (name: string) => readFileSync(join(root, "playground/sqlate", name), "utf8");
 
-/** The packages main.go imports, whose closure the first Run fetches. */
-const IMPORTS = programImports([{ name: "main.go", text: source("main.go") }]);
+/** The packages the Go files import, whose closure the first Run fetches. */
+const IMPORTS = programImports(
+  ["main.go", "guard.go"].map((name) => ({ name, text: source(name) })),
+);
 
 /** A Run's stdout, as the console shows it, one entry a line. */
 const stdout = (text: string) =>
@@ -72,11 +86,39 @@ SET code = $1, name = $2, updated_at = CURRENT_TIMESTAMP, version = version + 1
 WHERE id = $3 AND version = $4
 `;
 
-/** What sqlate prints for the shipped files, as its own go test holds it. */
-const OUTPUT = `${CREATE_AND_EDIT}
+/** The run's edit, at input.json's arguments and the version read, 3, as the call log shows it. */
+const EXEC_EDIT = `
+-- exec, $1 = "LAB", $2 = "Standards Lab", $3 = 42, $4 = 3
+UPDATE project
+SET code = $1, name = $2, updated_at = CURRENT_TIMESTAMP, version = version + 1
+WHERE id = $3 AND version = $4
+`;
+
+/** The run's version check, when the edit changes no row, as the call log shows it. */
+const QUERY_VERSION = `
+-- query, $1 = 42
+SELECT version FROM project WHERE id = $1
+`;
+
+/** What the run prints for the shipped input.json, the row stored at the version read, as the
+ * program's own go test holds it. */
+const SUCCEEDED = `
+-- run: edit guarded by version, version 3 read; the row stored at version 3
+${EXEC_EDIT}
+-- result: version 4
+`;
+
+/** What sqlate prints for the shipped statements, before the run. */
+const STATEMENTS = `${CREATE_AND_EDIT}
 -- version: standard, parameters $1 id
 SELECT version FROM project WHERE id = $1
 `;
+
+/** What sqlate prints for the shipped files, as its own go test holds it. */
+const OUTPUT = STATEMENTS + SUCCEEDED;
+
+/** input.json as the page opens on it, with no final line break, as the cases paste it. */
+const INPUT = source("input.json").replace(/\n$/, "");
 
 /** The status of a main that exited 1. */
 const FAILED = "Finished main, exit code 1";
@@ -169,7 +211,7 @@ describe("the sqlate page", () => {
     assert.deepEqual(watched.workers, []);
   });
 
-  test("the first Run builds the program from the toolchain and its closure alone, the site's pinned modules' archives among it, and prints every statement exactly, with exit 0", async (t: TestContext) => {
+  test("the first Run builds the program from the toolchain and its closure alone, the site's pinned modules' archives among it, and prints every statement and the guarded edit's success exactly, with exit 0", async (t: TestContext) => {
     const cold = await build(page, DEMO, DONE, SQLATE_BUILD);
     t.diagnostic(`cold: ${timed(cold)}`);
     assert.deepEqual(cold.lines, stdout(OUTPUT));
@@ -182,6 +224,10 @@ describe("the sqlate page", () => {
       closure.some((archive) => archive.startsWith("mod/github.com/standards-lab/sqlate/")),
       "sqlate's archives are in the closure",
     );
+    assert.ok(
+      closure.some((archive) => archive.startsWith("mod/github.com/standards-lab/sqlate/sqltest.")),
+      "sqltest's archive is in the closure",
+    );
     assert.deepEqual(
       fetched.slice(1).sort(),
       [...TOOLS, ...closure].sort(),
@@ -190,6 +236,33 @@ describe("the sqlate page", () => {
     t.diagnostic(
       `closure: ${closure.length} archives, ${closure.filter((archive) => archive.startsWith("mod/")).length} of them the modules'`,
     );
+  });
+
+  test("an edit to input.json alone reruns the program with no Go compile or link and no request, and each stored version prints its call log and outcome", async () => {
+    for (const [stored, run] of [
+      [
+        "5",
+        `
+-- run: edit guarded by version, version 3 read; the row stored at version 5
+${EXEC_EDIT}${QUERY_VERSION}
+-- result: version mismatch: expected 3, current 5
+`,
+      ],
+      [
+        "null",
+        `
+-- run: edit guarded by version, version 3 read; no row stored
+${EXEC_EDIT}${QUERY_VERSION}
+-- result: sql: no rows in result set
+`,
+      ],
+      ["3", SUCCEEDED],
+    ]) {
+      await edit("input.json", INPUT.replace(/"stored": 3/, `"stored": ${stored}`));
+      const shown = await rerun(DONE);
+      assert.deepEqual(shown.lines, stdout(STATEMENTS + run), `stored ${stored}`);
+      assert.deepEqual(shown.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
+    }
   });
 
   test("an edit to a .sql file alone reruns the program with no Go compile or link and no request, printing the edited statement", async () => {
@@ -203,7 +276,7 @@ describe("the sqlate page", () => {
       stdout(`${CREATE_AND_EDIT}
 -- version: standard, parameters $1 id
 SELECT version, updated_at FROM project WHERE id = $1
-`),
+${SUCCEEDED}`),
     );
   });
 
@@ -236,7 +309,7 @@ FROM project WHERE id = $1
 
 -- version: standard, parameters $1 id
 SELECT version FROM project WHERE id = $1
-`),
+${SUCCEEDED}`),
     );
   });
 });

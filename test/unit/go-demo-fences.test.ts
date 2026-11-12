@@ -8,8 +8,8 @@
 // the program's file set from them by the demo's rules: basics, its main.go and shapes.go;
 // generics, its main.go and stack.go; concurrency, its main.go and pipeline.go; and stdlib, its
 // main.go and the input.json it reads. The sqlate page's one demo, a source demo, is
-// playground/sqlate's files byte for byte: main.go, then the pattern app.identity.sql and the
-// statements create.sql, edit.sql, and version.sql. Each program's fences are every file in its
+// playground/sqlate's files byte for byte: main.go and guard.go, the pattern app.identity.sql,
+// the statements create.sql, edit.sql, and version.sql, and the run's input.json. Each program's fences are every file in its
 // directory but its tests, so a file added there and not to the page fails. A fence is a direct-child pre of the demo or the template,
 // its text the pre's text content, as sl-go-demo reads it (web/components/fences.ts); its file is
 // the fence's name, its data-file, on the pre or its code, else the pre's title, else main.go,
@@ -227,7 +227,7 @@ describe("the playground's demo", () => {
 describe("the sqlate page's demo", () => {
   const html = readFileSync(join(root, "sqlate.html"), "utf8");
 
-  test("is one source demo with editable files, its fences playground/sqlate's files byte for byte, main.go first", () => {
+  test("is one source demo with editable files, its fences playground/sqlate's files byte for byte, main.go first and input.json last", () => {
     const demos = writtenDemos(html);
     assert.deepEqual(
       demos.map(({ attrs, fences }) => [
@@ -241,7 +241,15 @@ describe("the sqlate page's demo", () => {
           true,
           true,
           false,
-          ["main.go", "app.identity.sql", "create.sql", "edit.sql", "version.sql"],
+          [
+            "main.go",
+            "guard.go",
+            "app.identity.sql",
+            "create.sql",
+            "edit.sql",
+            "version.sql",
+            "input.json",
+          ],
         ],
       ],
     );

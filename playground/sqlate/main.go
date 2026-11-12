@@ -13,6 +13,9 @@
 // pattern files name. Add a file such as audit.stamp.sql and a statement can include
 // {{> audit.stamp}}.
 //
+// Then it runs the statement edit, guarded by the statement version, over a scripted driver that
+// input.json sets up; guard.go says how.
+//
 // If a pattern or a statement is wrong, a missing tier, an include nothing publishes, a native
 // pattern in a standard statement, or a pattern in the library's own sql namespace, the program
 // prints sqlate's message on stderr and exits 1.
@@ -34,8 +37,8 @@ func main() {
 	os.Exit(run())
 }
 
-// run compiles the working directory's files and prints the statements to stdout, or prints
-// why it can't to stderr, and answers the exit code.
+// run compiles the working directory's files and prints the statements to stdout, then runs the
+// guarded edit, or prints why it can't to stderr, and answers the exit code.
 func run() int {
 	files, namespaces, err := read(".")
 	if err != nil {
@@ -68,7 +71,7 @@ func run() int {
 		}
 		fmt.Printf("-- %s: %s, %s\n%s\n", st.Name(), st.Tier(), parameters(st.Params()), st.Text())
 	}
-	return 0
+	return guarded(statements)
 }
 
 // read loads the .sql files in dir into one in-memory file system, laid out the way sqlate
