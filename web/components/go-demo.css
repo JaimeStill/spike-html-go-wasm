@@ -8,7 +8,8 @@
  * The host is a block, a container its parts lay out against: the toolbar, then the files (the
  * tabs over the editor on a program demo, the editor alone on a handler demo), then the output,
  * the console and the timings, in one column, each part taking the width the demo gives. Where the
- * demo is wide enough, 44rem, the console and the timings share a row, the timings 16rem, the
+ * demo is wide enough, 44rem, the console and the timings share a row, the timings a track of
+ * their table's least width, which sl-timings states once (--sl-timings-min-inline-size), the
  * console taking what they leave, every part within the demo. Every gap is a foundation space. The
  * parts draw their own focus; nothing here moves, so reduced motion has nothing to stop.
  *
@@ -28,9 +29,9 @@
  * part holds changes its box: the toolbar its own line, then the files 3fr, about 60% of what is
  * left, and the output 2fr. Each band places the same parts again, by grid areas, so a band change
  * keeps every part's content and scroll position, and names itself in --band, which the script
- * reads:
- * The editor fills its frame, the console fills its own (sl-console's fill), and the timings
- * scroll in theirs.
+ * reads only where CSS can't follow it: for the output panels' tabpanel roles, which change the
+ * accessibility tree, and for whether the toolbar's Layout group shows. The editor fills its
+ * frame, the console fills its own (sl-console's fill), and the timings scroll in theirs.
  *
  * An authoring error is a block on the page's red mixed into its surface, a red rule at its start,
  * its words in the page's own text color, above the fences as authored.
@@ -61,16 +62,6 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-s);
   align-items: start;
-}
-
-/* Side by side, the timings take a track of their table's least width, 16rem, and the console the
-   rest. The track is sized here, not by its content: the timings and the console each contain
-   their inline size, so an auto track would measure them as nothing and the table would run past
-   the demo's end. */
-@container (min-inline-size: 44rem) {
-  .output {
-    grid-template-columns: minmax(0, 1fr) 16rem;
-  }
 }
 
 /* The fixed layout: the phone band, then the wider bands' changes to it. */
@@ -145,14 +136,27 @@
   overscroll-behavior: contain;
 }
 
-/* From 44rem, no tablist: the console and the timings side by side, both shown. */
+/* From 44rem, side by side: the timings take a track of their table's least width, and the console
+   the rest; a fixed demo shows no tablist, and both parts. The timings contain their inline size,
+   so their content would size an auto track as nothing and the table would run past the demo's
+   end; the track is sized instead by the timings' least width, read on the element, where
+   sl-timings states it, as its min-inline-size: an auto track takes that and no more, the 1fr
+   track taking the rest. One query for every demo, after the fixed layout's phone band, which it
+   changes. */
 @container (min-inline-size: 44rem) {
+  .output {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .output > sl-timings {
+    min-inline-size: var(--sl-timings-min-inline-size);
+  }
+
   :host([fixed]) .demo {
     --band: middle;
   }
 
   :host([fixed]) .output {
-    grid-template-columns: minmax(0, 1fr) 16rem;
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: "console timings";
   }

@@ -55,7 +55,8 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       last, and subscription;
     - the controls: their toolbar in the accessibility tree, keyboard, availability following the
       models, requests that change nothing, the New file and Rename forms' validation and focus
-      return, the status's transitions, target sizes, the glyphs alone and the groups whole at a
+      return, each form inside the viewport at 280px, a phone's width, and wide, the status's
+      transitions, target sizes, the glyphs alone and the groups whole at a
       phone's width in a wide font, the names' hints, motion, and subscription;
     - the Go demo, running real Go over the page's one runner: no Go before a Run, a handler's run
       and a program's, Ctrl or Cmd+Enter from inside a demo alone, Alt or Shift with Enter running
@@ -104,8 +105,12 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       change keep the editor's and the console's content and scroll position and the chosen
       output tab; the phone's output tablist has the expected accessibility tree and keys, and
       no tablist or tabpanel shows from 44rem; a demo without `fixed` keeps its flowing layout;
+      the timings' track is `sl-timings`' least width, 28ch of its table, and the steady status
+      asks for 24ch of its own text, sharing the toolbar's line at 50rem and taking its own at a
+      phone's width, each one property that moves every reader when set on its element;
     - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
-      absent below; the menu has the expected accessibility tree and the APG keys; choosing an
+      absent below; the menu opens below Layout at its inline start, as wide as its items and
+      inside the viewport, and has the expected accessibility tree and the APG keys; choosing an
       arrangement applies it in place, with no reload or request, leaving the run's status,
       output, and timings as they were; the choice is the only write to storage, under the
       spike's key, and a reload and another page open in it; the page follows another tab's
@@ -417,16 +422,22 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   opens a menu in a popover anchored below it, holding three radio items, Editor left, Editor top,
   and Editor right; the arrangement's placement is checked and ticked. Choosing an item closes the
   menu, returns focus to Layout, and sends the request, unless the placement is the one held. The
+  menu is as wide as its items and each form as its content, up to 22rem; each popover is bounded
+  by its containing block, the anchored area between its button and the viewport's side, never by
+  a viewport unit, and opens toward the side with more room, so none reaches past the viewport. The
   status, a polite live region beside the toolbar, says each run's start, "Running hello…", and
   its end, "Finished format", "Finished hello, exit code 0", "Stopped spin", or "Failed format:
   <message>", from the run state's transitions alone: the state the toolbar is given is never
   said, nor a change of the files. The toolbar wraps between its groups, each group's controls
   together. With `steady`, the status keeps to one line whatever it says, so the toolbar's height
-  depends on its width alone: the status asks the row for 12rem, which decides whether it shares
-  the controls' line or takes its own, and text longer than its line ends in an ellipsis, still
-  whole to assistive technology. Nothing moves.
+  depends on its width alone: the status asks the row for its reserved width, which decides
+  whether it shares the controls' line or takes its own, and text longer than its line ends in an
+  ellipsis, still whole to assistive technology. Nothing moves.
   - Attributes: `editable-files` (a boolean: show the Files group), `steady` (a boolean: the
     status keeps one line), and `label` (the toolbar's accessible name, "Controls" by default).
+  - Custom properties: `--sl-controls-status-inline-size`, the steady status's reserved width, a
+    length, `24ch` by default, in the ch of the status's own text; a page may set it on the
+    element.
   - Properties: `files`, the `FileSet` its owner creates and writes, `null` by default, leaving
     Reset unavailable and the Files group out; `runState`, the `RunState` its owner creates and
     writes, `null` by default, leaving Stop unavailable; `arrangement`, the `Arrangement` its owner
@@ -586,8 +597,9 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
     declares; with Alt or Shift also held, Enter runs nothing. From outside every demo the shortcut
     runs none, and the foundation's shortcut registry holds no entry for it.
   - Layout: one column: the toolbar, the files, then the console and the timings. Once the demo
-    is 44rem wide, the console and the timings share a row, the timings in a 16rem column and the
-    console taking the rest. Every part stays inside the demo at every width, and the demo fits a
+    is 44rem wide, the console and the timings share a row, the timings in a column of their
+    table's least width, `sl-timings`'s `--sl-timings-min-inline-size`, read on the element, and
+    the console taking the rest. Every part stays inside the demo at every width, and the demo fits a
     phone's width. Nothing moves.
   - Fixed layout: with `fixed`, the demo is as tall as the box its parent's layout gives it
     (`block-size: 100%`, as a grid row's stretch gives it), never below its floor; it reads no
@@ -607,8 +619,8 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
     - Below 44rem: the toolbar, then the tabs over the editor, 3fr of what the toolbar leaves
       (about 60%), then, 2fr, one output panel whose tablist, "Output" and "Timings", shows the
       console or the timings, the console first.
-    - From 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' 16rem
-      track, 2fr.
+    - From 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' track,
+      their least width, 2fr.
     - From 64rem: the placement the page's `Arrangement` holds, editor left without one. Editor
       left puts the editor, under the toolbar, in 3fr of the width, beside a 2fr column of the
       console, 3fr of the height, over the timings, 2fr; editor right mirrors it, the column
@@ -619,6 +631,14 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
     change, or an arrangement change keeps each part's content and scroll position and the chosen
     output tab. Below 44rem the part not shown is hidden by `visibility`, so it keeps its own
     scroll position. A demo without `fixed` lays out as "Layout" describes.
+
+    The bands are CSS's: each container query places the parts and names its band in `--band`,
+    and the demo's script reads that name, through a `ResizeObserver` on a fixed demo alone, for
+    two things only. Below 44rem the console and the timings are tabpanels of the output tablist,
+    and from 44rem they aren't: a change to the accessibility tree, and CSS can't set a role. From
+    64rem the toolbar shows its Layout group, which `sl-controls` renders only given an
+    arrangement. The read exists because no shipped API reports a container query's state to
+    script; every placement and size stays in the stylesheet.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the
@@ -666,9 +686,13 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   ("4.2 ms") and whole from there, grouped ("1,535 ms"), as `formatMs(ms)` gives them,
   right-aligned in tabular numerals; the total row is set apart by a heavier rule and weight.
   With no run yet the table says "No run yet.", and with a run begun and no phase timed, "No
-  phase timed yet.", with no total. The table is as wide as its content, at least 16rem or its
-  container's width, and never wider than its container. Nothing moves.
+  phase timed yet.", with no total. The table is as wide as its content, at least its least width
+  or its container's width, and never wider than its container. Nothing moves.
   - Attributes: `label` (the table's caption and accessible name, "Timings" by default).
+  - Custom properties: `--sl-timings-min-inline-size`, the table's least width, a length, `28ch`
+    by default, in the ch of the table's text: room for a build's full table, "Wasm compile"
+    beside "12,345 ms". It is stated once, on the element, where an owner laying the timings beside
+    something else reads it for their track, as `sl-go-demo` does; a page may set it there.
   - Properties: `timings`, the `RunTimings` its owner creates and writes; `null`, the default,
     shows no run yet; and `label`, as its attribute.
   - Events: none. Slots: none.

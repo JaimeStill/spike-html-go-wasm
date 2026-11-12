@@ -23,9 +23,13 @@
 // each part's content and scroll position, and the output tab chosen. Below 44rem, the output
 // panel's tablist is the tabs pattern, its keyboard and accessibility tree the file tabs'; from
 // 44rem it isn't there, and the console and the timings are no tabpanels. A demo without `fixed`,
-// the components page's, has no output tablist and a console that grows. The helpers are
-// go-demos.ts's, go-builds.ts's, and playground-layouts.ts's. playground-arrangement.test.ts proves
-// the Layout menu and the stored choice. Every wait is bounded.
+// the components page's, has no output tablist and a console that grows. The reservations are
+// one property each, read where they apply: the timings' track is sl-timings' least width, 28ch of
+// its table, and the steady status asks the row for 24ch of its own text, sharing the toolbar's
+// line at 50rem and taking its own at a phone's width; each property set on its element moves
+// every reader. The helpers are go-demos.ts's, go-builds.ts's, and playground-layouts.ts's.
+// playground-arrangement.test.ts proves the Layout menu and the stored choice. Every wait is
+// bounded.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -504,6 +508,79 @@ describe("the phone's output tablist", () => {
         await settle(page);
         assert.deepEqual(await tabState(page), at(part), `${key} to ${part}`);
       }
+    } finally {
+      await page.close();
+    }
+  });
+});
+
+describe("the reservations", () => {
+  /** The timings' box and the status's, beside the ch of the text each is in: the table's, and the
+   * status's own; the status's line against Run's. */
+  const reserved = (page: Page) =>
+    page.evaluate(`(() => {
+      const root = ${PLAYGROUND}.shadowRoot;
+      const controls = root.querySelector("sl-controls");
+      const status = controls.shadowRoot.querySelector(".status");
+      const run = controls.shadowRoot.querySelector('[data-control="run"]').getBoundingClientRect();
+      const timings = root.querySelector("sl-timings");
+      const table = timings.shadowRoot.querySelector("table");
+      // A ch measured in the element's own text: a probe beside it, styled as it is.
+      const ch = (element) => {
+        const probe = document.createElement("span");
+        const style = getComputedStyle(element);
+        probe.style.cssText = "position: absolute; visibility: hidden; inline-size: 1ch;";
+        probe.style.font = style.font;
+        element.getRootNode().append(probe);
+        const width = probe.getBoundingClientRect().width;
+        probe.remove();
+        return width;
+      };
+      return {
+        timings: timings.getBoundingClientRect().width,
+        table: table.getBoundingClientRect().width,
+        tableCh: ch(table),
+        status: parseFloat(getComputedStyle(status).flexBasis),
+        statusCh: ch(status),
+        ownLine: status.getBoundingClientRect().top >= run.bottom,
+      };
+    })()`);
+
+  test("the timings' track is the least width sl-timings states, 28ch of its table, read on the element; the steady status asks the row for 24ch of its own text, which decides its line by width alone", async () => {
+    const page = await open();
+    try {
+      await viewport(page, await widthFor(page, 50));
+      let laid = await reserved(page);
+      assert.ok(Math.abs(laid.timings - 28 * laid.tableCh) < 0.5, `the track, ${laid.timings}`);
+      assert.ok(Math.abs(laid.table - laid.timings) < 0.5, `the table fills it, ${laid.table}`);
+      assert.ok(Math.abs(laid.status - 24 * laid.statusCh) < 0.5, `the status, ${laid.status}`);
+      assert.equal(laid.ownLine, false, "at 50rem the status shares the toolbar's line");
+
+      // One property each: set on the element, it moves every reader.
+      await page.evaluate(`(() => {
+        const root = ${PLAYGROUND}.shadowRoot;
+        root.querySelector("sl-timings").style.setProperty("--sl-timings-min-inline-size", "20ch");
+        root.querySelector("sl-controls").style.setProperty("--sl-controls-status-inline-size", "200ch");
+      })()`);
+      await settle(page);
+      laid = await reserved(page);
+      assert.ok(Math.abs(laid.timings - 20 * laid.tableCh) < 0.5, `the track set, ${laid.timings}`);
+      assert.ok(Math.abs(laid.table - laid.timings) < 0.5, `the table set, ${laid.table}`);
+      assert.ok(
+        Math.abs(laid.status - 200 * laid.statusCh) < 0.5,
+        `the status set, ${laid.status}`,
+      );
+      assert.equal(laid.ownLine, true, "a reservation wider than the line left takes its own");
+      await page.evaluate(`(() => {
+        const root = ${PLAYGROUND}.shadowRoot;
+        root.querySelector("sl-timings").style.removeProperty("--sl-timings-min-inline-size");
+        root.querySelector("sl-controls").style.removeProperty("--sl-controls-status-inline-size");
+      })()`);
+
+      await viewport(page, PHONE);
+      await settle(page);
+      laid = await reserved(page);
+      assert.equal(laid.ownLine, true, "at a phone's width the status takes a line of its own");
     } finally {
       await page.close();
     }

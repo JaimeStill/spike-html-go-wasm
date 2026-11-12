@@ -80,7 +80,11 @@
 // tablist doesn't show is hidden by visibility, keeping its own. The output tablist is the tabs
 // pattern, with activation on focus, as the file tabs' (aria.ts's roved, tabs.css's look); its
 // panels are tabpanels only while it shows. The demo reads its band from the one the stylesheet
-// names, --band, as its width changes: whether the output is tabs, and whether Layout shows.
+// names, --band, as its width changes, for two things alone, the two CSS can't do: whether the
+// output parts are tabpanels, which changes the accessibility tree, as no stylesheet can set a
+// role; and whether Layout shows, the toolbar's own group, which sl-controls renders only given an
+// arrangement. No shipped API reports a container query's state to script, so the demo reads the
+// name the query sets. Everything else a band changes, the placement and every size, is CSS's.
 //
 // Ctrl or Cmd+Enter runs the demo from inside it: the keydown is the host's, from any of its
 // parts, the editor included, so it reaches no other demo and no page-wide shortcut. Run declares
@@ -350,7 +354,8 @@ export class GoDemo extends LitElement {
   readonly #filesChanged = () => this.#show();
   /** The layout the band was last read from. */
   #layout: Element | null = null;
-  /** Reads the band as the demo's width changes. */
+  /** Reads the band as a fixed demo's width changes; a demo without `fixed` has no band, and isn't
+   * observed. */
   readonly #resized = new ResizeObserver(() => this.#measure());
   /** Builds the models once the document has parsed the demo's children. */
   readonly #parsed = () => {
@@ -391,7 +396,7 @@ export class GoDemo extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#listen();
-    this.#resized.observe(this);
+    if (this.fixed) this.#resized.observe(this);
     if (!this.owned && !this.problem) this.#build();
   }
 
@@ -403,11 +408,10 @@ export class GoDemo extends LitElement {
   }
 
   /** A fixed demo's band: the one go-demo.css's container queries name on the layout, read once it
-   * lays out at a new width or as the demo becomes fixed or not. */
+   * lays out at a new width or as the demo becomes fixed; "" once it isn't, with nothing read. */
   #measure(): void {
-    const layout = this.renderRoot.querySelector(".demo");
-    const named = layout ? getComputedStyle(layout).getPropertyValue("--band").trim() : "";
-    const band = (this.fixed ? named : "") as Band;
+    const layout = this.fixed ? this.renderRoot.querySelector(".demo") : null;
+    const band = (layout ? getComputedStyle(layout).getPropertyValue("--band").trim() : "") as Band;
     if (band !== this.band) this.band = band;
   }
 
@@ -677,7 +681,12 @@ export class GoDemo extends LitElement {
     this.#show();
     // A layout appears with the models, and becomes fixed or not with the attribute, neither of
     // which need change the demo's width, so the band is read again here too.
+    // Only a fixed demo's width is observed.
     const layout = this.renderRoot.querySelector(".demo");
+    if (changed.has("fixed") && this.isConnected) {
+      if (this.fixed) this.#resized.observe(this);
+      else this.#resized.unobserve(this);
+    }
     if (changed.has("fixed") || layout !== this.#layout) {
       this.#layout = layout;
       this.#measure();

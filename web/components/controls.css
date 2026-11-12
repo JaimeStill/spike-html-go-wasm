@@ -9,9 +9,12 @@
  * wraps, the status first, onto a line of its own; then the toolbar wraps between its groups, so a
  * group's controls stay together, and only a group wider than its container wraps inside itself.
  * The separator is a rule the height of the controls. Steady, the status keeps one line whatever
- * it says: it asks the row for 12rem, so whether it shares the toolbar's line or takes its own
- * follows the host's width alone, never its words, and its line is there even empty; words longer
- * than the line end in an ellipsis, still whole to assistive technology.
+ * it says: it asks the row for a reserved width, --sl-controls-status-inline-size, 24ch by default,
+ * in the ch of its own text, so whether it shares the toolbar's line or takes its own follows the
+ * host's width alone, never its words, and its line is there even empty; words longer than the
+ * line end in an ellipsis, still whole to assistive technology. 24ch holds a run's start and most
+ * ends whole ("Finished hello, exit code 0" is 27); the room a phone's toolbar leaves on its line,
+ * about 13ch, would cut most statuses to a word, so there the status takes a line of its own.
  *
  * Each button shows its name beside its glyph only where the toolbar's widest group fits with the
  * names: the host is an inline-size container, and below 26rem the names hide and each glyph shows
@@ -29,16 +32,29 @@
  * with focus on the second elevated surface, and the foundation's outline inside it, so the menu's
  * edge never cuts it. Forced colors mark the focused item in the system's highlight.
  *
- * Each form is a popover anchored below its button, at its inline start, flipped above it where
- * the viewport's foot would cut it, or to its inline end where the viewport's side would: a small
- * panel on the first elevated surface, its label above its input and submit, and a refusal below,
- * led by a red cross, its words in the page's own text color, so it holds its contrast in every
- * palette, and the input's boundary red while it shows.
+ * Each form is a popover anchored below its button: a small panel on the first elevated surface,
+ * its label above its input and submit, and a refusal below, led by a red cross, its words in the
+ * page's own text color, so it holds its contrast in every palette, and the input's boundary red
+ * while it shows. A form is at most 22rem wide, where a long refusal's words wrap.
+ *
+ * Each popover, the menu and the forms, is as wide as its content, its intrinsic width, and its
+ * width is bounded by its containing block, never by a viewport unit. Anchored by position-area,
+ * its containing block is the area's cell: below its button, from the button's inline start to the
+ * viewport's inline end. Where the popover doesn't fit that cell, it flips above the button where
+ * the viewport's foot would cut it, or to the button's inline end where the viewport's side would,
+ * the cell then running from the viewport's inline start to the button's inline end. Where it fits
+ * none of those, the last resort, --within, centres it under its button in a cell the viewport's
+ * whole width, at most that cell's width less a space at each side, the form's 22rem included, so
+ * no popover reaches past the viewport's side.
  *
  * Nothing moves: no transition or animation, and the popover appears in place.
  */
 
+/* The status's reserved width when steady, stated once, in the ch of the status's own text: the
+   property holds a length, and ch resolves where it is read, on the status. A page may set it on
+   the host. */
 :host {
+  --sl-controls-status-inline-size: 24ch;
   display: block;
   container-type: inline-size;
 }
@@ -80,7 +96,7 @@
 
 /* Steady: one line, a share of the row asked by length, not by the words, and kept when empty. */
 :host([steady]) .status {
-  flex: 1 1 12rem;
+  flex: 1 1 var(--sl-controls-status-inline-size);
   min-inline-size: 0;
   min-block-size: 1lh;
   overflow: hidden;
@@ -140,12 +156,12 @@
   position-try-fallbacks:
     flip-block,
     flip-inline,
-    flip-block flip-inline;
+    flip-block flip-inline,
+    --within;
   inset: auto;
   margin: 0;
   margin-block-start: var(--space-3xs);
   inline-size: max-content;
-  max-inline-size: min(22rem, 100vw - 2 * var(--space-s));
   border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-md);
   background-color: var(--bg-1);
@@ -153,11 +169,22 @@
 }
 
 .form-popover {
+  max-inline-size: 22rem;
   padding: var(--space-2xs) var(--space-xs);
 }
 
 .menu-popover {
   padding: var(--space-3xs);
+}
+
+/* The last resort, where a popover fits beside its button on neither side: below it, centred on it,
+   in a cell the containing block's whole width, and no wider than that cell less a --space-s at
+   each side, which the margins keep clear. */
+@position-try --within {
+  position-area: block-end span-all;
+  justify-self: anchor-center;
+  margin-inline: var(--space-s);
+  max-inline-size: calc(100% - 2 * var(--space-s));
 }
 
 /* A non-modal form or menu leaves the page as it is: the foundation veils behind every top-layer
