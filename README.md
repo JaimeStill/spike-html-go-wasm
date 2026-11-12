@@ -40,19 +40,18 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
     hash, and the manifest's import closure equals Go's own `go list -deps`, for
     `playground/sqlate` through the site's pinned modules, whose packages are exactly those the
     repository's own packages depend on. It runs Go's compiler and linker over that toolchain on
-    the in-memory fs: hello built and run, a compile
-    error and a package clause other than main reported as the compiler writes them, an import
-    the manifest lacks refused before the compiler runs, and a non-Go file read from the run's
-    working directory. It tests the components' six models (`Arrangement`, `EditorSettings`,
-    `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change
-    events. It holds each program demo's go fence on the components page to its scenario's source,
-    byte for byte, the playground's demo to the starter's files in `playground/calc/`, its four
-    `.go` files and its `input.txt`, each program template's fences to its files in
-    `playground/<program>/`, and the sqlate page's fences to `playground/sqlate/`'s files. It
-    holds the sqlate scenario's embedded patterns to the program's pattern files, byte for byte
-    (`test/unit/sqlate-patterns.test.ts`), and tests a Go demo's fence naming rules
-    (`web/components/file-names.ts`). It fails if a module under `web/components` or `web/pages`
-    registers a page shortcut through the foundation's `keys.js`.
+    the in-memory fs: hello built and run, a compile error and a package clause other than main
+    reported as the compiler writes them, an import the manifest lacks refused before the compiler
+    runs, and a non-Go file read from the run's working directory. It tests the components' six
+    models (`Arrangement`, `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`):
+    their operations, refusals, and change events. It holds each program demo's go fence on the
+    components page to its scenario's source, byte for byte, the playground's demo to the starter's
+    files in `playground/calc/`, its four `.go` files and its `input.txt`, each program template's
+    fences to its files in `playground/<program>/`, and the sqlate page's fences to
+    `playground/sqlate/`'s files. It holds the sqlate scenario's embedded patterns to the program's
+    pattern files, byte for byte (`test/unit/sqlate-patterns.test.ts`), and tests a Go demo's fence
+    naming rules (`web/components/file-names.ts`). It fails if a module under `web/components` or
+    `web/pages` registers a page shortcut through the foundation's `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's shell checks on every
     hand page and on the rendered Markdown page, the crawl, and the SDK's palette check on the
     rendered page's fences, reads each page's cascade layers (the foundation's, then `site`, then
@@ -244,9 +243,9 @@ are `protocol.ts`'s.
     2`), and the build rejects naming it; an import the manifest doesn't hold rejects before the
     compiler runs (`package example.com/x is not in the manifest`). A failed build holds nothing.
   - The program's limits: one package main from every `.go` file, importing the standard library
-    and the site's pinned modules, the packages the manifest holds, as `GOOS=js GOARCH=wasm`
-    builds it; no `go.mod`, local subpackages, cgo, assembly, or
-    `go:embed`; no argv and no stdin. Its files are one flat directory.
+    and the site's pinned modules, the packages the manifest holds, as `GOOS=js GOARCH=wasm` builds
+    it; no `go.mod`, local subpackages, cgo, assembly, or `go:embed`; no argv and no stdin. Its
+    files are one flat directory.
   - The working directory: each run of a built program gets a fresh in-memory fs whose working
     directory, `/work`, holds every file of the build that isn't Go, so `os.ReadFile("input.txt")`
     reads that file's text. Nothing a run writes outlives the run.
@@ -263,16 +262,15 @@ are `protocol.ts`'s.
 
 Each hand page, and the Markdown shell, `markdown-shell.html`, links the foundation's
 `page-full.css`, the components' `glyph-button.css`, the SDK's `site.css`, and the pages' shared
-sheet, `web/pages/page.css`, in that order; the build
-bundles the four into the one stylesheet every page links. The cascade layers are the
-foundation's (`foundation.tokens.*` through `foundation.theme-menu`), then `site`, then `page`,
-and the browser tier reads that order on each page. Every rule a page adds is in
-`web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
-specificity: the header-actions group at the header's inline end, shrinking and wrapping its
-buttons where the row can't hold them on one line, as the playground's three at a phone's width
-and twice the text size; the space between `main > section`s on every page; the space around a
-rendered Markdown page's Go demo, as around a fence; the components page's specimens; and the app
-page, the playground's one screen, which only a body of class `app` takes.
+sheet, `web/pages/page.css`, in that order; the build bundles the four into the one stylesheet every
+page links. The cascade layers are the foundation's (`foundation.tokens.*` through
+`foundation.theme-menu`), then `site`, then `page`, and the browser tier reads that order on each
+page. Every rule a page adds is in `web/pages/page.css`, inside `@layer page`, so it wins over the
+shell's by layer order, at any specificity: the header-actions group at the header's inline end,
+shrinking and wrapping its buttons where the row can't hold them on one line, as the playground's
+three at a phone's width and twice the text size; the space between `main > section`s on every page;
+the space around a rendered Markdown page's Go demo, as around a fence; the components page's
+specimens; and the app page, the playground's one screen, which only a body of class `app` takes.
 Its spaces are the foundation's `--space-*` steps.
 
 A page holds no inline `<style>`. The build writes a page's inline sheet into its head

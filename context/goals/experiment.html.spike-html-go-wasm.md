@@ -115,7 +115,7 @@ Door          two-way: nothing is released; go.mod gains two requirements, and t
 
 ## Progress
 
-slices 5/5 committed · standards ✓ · spec ✓ · editor —
+slices 5/5 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
@@ -765,6 +765,22 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor —
   Rejected: a separate prebuilt run demo.
 - sqlate: the Markdown page embeds a prebuilt compile handler around a ```sql fence named by
   `file`. Rejected: the multi-file program as raw-HTML pre blocks.
+- sqlate (build): the program prints each statement under a `-- <name>: <tier>, parameters $1 a,
+  …` header and prints sqlate's messages unchanged. sqlate's patterns register first, as in
+  go-web-service, so a reader's `sql.*` file gets sqlate's "registered twice".
+- sqlate (build): the playground's manifest takes the repository's own `go list -deps ./...`
+  closure of non-standard, non-main packages, each as `mod/<path>.<hash>.a`, so a later module
+  joins the manifest by being imported.
+- sqlate (build): a version mismatch and no row are results on stdout with exit 0; `input.json`
+  rejects unknown keys and trailing values; a missing `input.json` exits 1.
+- sqlate (build): the fence naming rules live in the DOM-free `file-names.ts`: a fence's own name,
+  then the demo's `file`, then the language's default (`query.sql`), then the mode's default.
+- sqlate (build): markdownPages takes the spike's `markdown/` directory as its one tree's source
+  (SDK v0.6.2 reads the repository and ref only for an external file's blob link); `content.json`
+  stays `{ "trees": [] }`; the Markdown can't link relatively to the hand pages.
+- sqlate (build): the compile scenario embeds its patterns as
+  `internal/sqlate/patterns/<ns>/<name>.sql`, held byte for byte to the program's by a unit test,
+  and panics at startup if they don't build a catalog, as a composition root should.
 
 ## Notes
 
@@ -824,9 +840,9 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor —
   read the phases with that in mind.
 - A cold playground build, locally, takes ~0.5–0.7 s to fetch, 1.1–1.5 s to Go compile, and
   0.6–0.95 s to link; after an edit, ~0.12–0.24 s to Go compile and ~0.35–0.5 s to link.
-- Whether sqlate, go-core, and go-web-sdk build archives for js/wasm is unknown. The sqlate and
-  scenarios tasks settle it. The newest versions so far come from local tags only, so check
-  them against the remotes when those tasks plan.
+- sqlate v0.7.0 and its dependencies build archives for js/wasm. Whether go-core and go-web-sdk
+  do is unknown; the scenarios task settles it. Their newest versions so far come from local tags
+  only, so check them against the remotes when it plans.
 
 - The playground's floor is counted in lines, so it follows the space and type profiles. On a
   short screen, such as 390x600, the demo holds its floor and the page scrolls down, never
@@ -853,7 +869,9 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor —
   0.65–1.3 s; warm, after an edit to main.go, 0.32–0.66 s. For the measure task.
 - The SDK's crawl fails on a fragment link that names no element on the page, so a deep link to
   a page's state needs an element carrying that id.
-- Pasting into an empty file in the editor stores an extra trailing newline.
+- Pasting into an empty file in the editor stores an extra trailing newline, and pasting a whole
+  file that ends in a newline over the editor's content doubles it; likely an editor bug. Tests
+  paste without a final newline.
 - In browser tests, retyping a whole main.go through CDP may not finish building; appending
   through a paste event works.
 
@@ -867,6 +885,17 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor —
   group shrink and wrap.
 - Intake candidate: the coordinator's architecture or the SDK could offer a browser-test helper
   that runs a suite in a pinned font set.
+
+- The sqlate page's program closure is 219 archives, 96.1 MB raw and 19.8 MB gzip, on top of the
+  toolchain's ~13.8 MB gzip, so a cold Run fetches ~34 MB gzip. Locally, its cold Run takes
+  ~6.8 s and a warm one ~2.0 s in the check, ~2.5 s and ~0.9 s run alone. The prebuilt compile
+  scenario, `go/sqlate.wasm`, is 7.8 MB raw and 2.19 MB gzip. For the measure and answer tasks.
+- `sqltest.Open` requires a `testing.TB`; a constructor that takes no test is a candidate for
+  sqlate's next goal.
+- Intake candidates for the SDK: markdownPages has no notion of a tree the site writes itself; its
+  Shiki markup drops a fence's language; a Markdown fence can't name its file.
+- golang.org/x/text and golang.org/x/sync arrive indirectly through pgx and trail their latest;
+  `mise run currency` reports direct requirements only.
 
 ## Pending edits
 
@@ -889,8 +918,12 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor —
   concurrency, and standard-library programs of the spike's own, edited and run from source in the
   playground, chosen by a Program select and a URL fragment, each keeping its edits within the tab,
   with a report of each one's cold and warm timings and closure. Evidence 12."
-- coordinator · roadmap.toml: the sqlate and scenarios tasks' summaries add "with the module's
-  js/wasm archives added to the playground's manifest".
+- coordinator · roadmap.toml: the sqlate task's summary becomes "sqlate's compile demo: a program
+  the reader composes from sqlate's PostgreSQL patterns and their own, compiled in the page over
+  the pinned modules' archives, with a guarded run over sqltest's scripted driver; and a prebuilt
+  compile handler on a rendered Markdown page. Evidence 2, 3, 11."
+- coordinator · roadmap.toml: the scenarios task's summary adds "with the module's js/wasm
+  archives added to the playground's manifest".
 - coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"
   becomes "cold, cached, and in-place timings, a playground build's Go compile and link among
   them".

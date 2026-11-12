@@ -76,21 +76,21 @@ for the Go packages.
   (`scripts/build-toolchain.ts`), in the worker, and fetches each package's archive per import
   through `go/toolchain/manifest.json`, which names the standard library's, under `std/`, and the
   site's pinned modules', under `mod/`: every package of go.mod's requirements the repository's
-  own packages depend on, sqlate's and its dependencies' today. A program imports the standard
-  library and the site's pinned modules. The runner reuses the last build when
-  only non-Go files change (`isGo` in `build.ts`), so editing `input.txt` alone reruns the program
-  without building. `playground.html` is one screen: the heading with the Program select beside
-  it, a two-sentence lede, and one fixed, source-mode sl-go-demo that shows the chosen program,
-  fills the rest of the viewport, and ends one gutter above its bottom. The select offers the
-  starter and the four programs; the page keeps one `FileSet` per program, built from its fences
-  by the demo's own rules (`web/components/fences.ts`), and gives the chosen one to the demo as
-  its `files` property, so edits survive switching within the tab. The fragment (`#calc`,
-  `#basics`, `#generics`, `#concurrency`, `#stdlib`) names the program shown, and each choice
-  writes it as a new history entry; no fragment, or an unknown one, opens the calculator. The
-  page's detail, what a program can be and how Run and Stop behave, is in an About dialog that the
-  header's About button opens. The check's layout tests run twice: in the machine's fonts, and in
-  a pinned DejaVu font set, the six faces of Ubuntu's fonts-dejavu-core. The scenarios task adds
-  its modules' archives as it first requires them.
+  own packages depend on, which are sqlate's and its dependencies'. A program imports the standard
+  library and the site's pinned modules. The runner reuses the last build when only non-Go files
+  change (`isGo` in `build.ts`), so editing `input.txt` alone reruns the program without building.
+  `playground.html` is one screen: the heading with the Program select beside it, a two-sentence
+  lede, and one fixed, source-mode sl-go-demo that shows the chosen program, fills the rest of the
+  viewport, and ends one gutter above its bottom. The select offers the starter and the four
+  programs; the page keeps one `FileSet` per program, built from its fences by the demo's own rules
+  (`web/components/fences.ts`), and gives the chosen one to the demo as its `files` property, so
+  edits survive switching within the tab. The fragment (`#calc`, `#basics`, `#generics`,
+  `#concurrency`, `#stdlib`) names the program shown, and each choice writes it as a new history
+  entry; no fragment, or an unknown one, opens the calculator. The page's detail, what a program can
+  be and how Run and Stop behave, is in an About dialog that the header's About button opens. The
+  check's layout tests run twice: in the machine's fonts, and in a pinned DejaVu font set, the six
+  faces of Ubuntu's fonts-dejavu-core. The scenarios task adds its modules' archives as it first
+  requires them.
 - **Programs** (`playground/<program>`, each a package main outside `cmd/`, not a scenario): the
   starter, `calc`, a calculator language whose files are the playground demo's own fences, which
   runs the script in `input.txt`; and four programs whose files are templates in the page:
@@ -125,25 +125,24 @@ for the Go packages.
   holds the fence-reading rules, so a page reads a template's fences as the demo would, and
   `file-names.ts` the naming: a fence's own name wins, then sl-go-demo's `file` attribute, which
   names a fence that names none, as a rendered Markdown fence can't, then a default by language
-  (`query.sql` for sql). sl-code-editor highlights Go, JSON, and SQL. No
-  component imports the runtime. `README.md`, "Components", documents each module.
+  (`query.sql` for sql). sl-code-editor highlights Go, JSON, and SQL. No component imports the
+  runtime. `README.md`, "Components", documents each module.
 - **Pages** (`web/pages`, the apps tier, for the scripts and the stylesheet the pages load):
   `web/pages/page.css` holds every hand page's and the Markdown shell's own rules in the `page`
-  cascade layer, which comes
-  after the foundation's layers and the SDK's `site`; a hand page holds no inline `<style>`. A
-  body of class `app` makes the page an app page: one column, main a grid of named lines with the
-  prose (`.prose`) on an 80ch `content` column and the demo on the `full` column, and one gutter,
-  `--page-gutter`, on the inline sides and the block end. `components.html` is a hand page whose
-  script, `web/pages/components.ts`, shows every component's states once; its Go demos run hello
-  and the probe's handlers over the page's one runner. `playground.html` is a hand page whose
-  script, `web/pages/playground.ts`, gives its one source demo the page's runner, the reader's
-  arrangement, and the chosen program's `FileSet`, and keeps the select and the fragment in step.
-  `web/pages/arrangement.ts` owns that stored preference: its `keep()`
-  reads the placement from localStorage under `spike-html-go-wasm.arrangement`, gives one
-  `Arrangement` to every fixed demo on the page, and stores each Layout menu choice.
-  `sqlate.html` is an app page, laid out as the playground is, whose script,
-  `web/pages/sqlate.ts`, gives its one fixed source demo, on the sqlate program's files, the
-  page's runner and the reader's arrangement; Run builds the program in the page.
+  cascade layer, which comes after the foundation's layers and the SDK's `site`; a hand page holds
+  no inline `<style>`. A body of class `app` makes the page an app page: one column, main a grid of
+  named lines with the prose (`.prose`) on an 80ch `content` column and the demo on the `full`
+  column, and one gutter, `--page-gutter`, on the inline sides and the block end. `components.html`
+  is a hand page whose script, `web/pages/components.ts`, shows every component's states once; its
+  Go demos run hello and the probe's handlers over the page's one runner. `playground.html` is a
+  hand page whose script, `web/pages/playground.ts`, gives its one source demo the page's runner,
+  the reader's arrangement, and the chosen program's `FileSet`, and keeps the select and the
+  fragment in step. `web/pages/arrangement.ts` owns that stored preference: its `keep()` reads the
+  placement from localStorage under `spike-html-go-wasm.arrangement`, gives one `Arrangement` to
+  every fixed demo on the page, and stores each Layout menu choice. `sqlate.html` is an app page,
+  laid out as the playground is, whose script, `web/pages/sqlate.ts`, gives its one fixed source
+  demo, on the sqlate program's files, the page's runner and the reader's arrangement; Run builds
+  the program in the page.
 - **Markdown pages** (`markdown/`, the spike's own tree, never copied into `content/`):
   `vite.config.ts` gives the SDK's `markdownPages` the directory as one tree's source, its
   repository URL and a ref it reads only for external links, which the tree has none of, so
