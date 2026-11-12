@@ -7,7 +7,8 @@
 // name, whose fences are playground/<program>'s files byte for byte, as the page's script builds
 // the program's file set from them by the demo's rules: basics, its main.go and shapes.go;
 // generics, its main.go and stack.go; concurrency, its main.go and pipeline.go; and stdlib, its
-// main.go and the input.json it reads. A fence is a direct-child pre of the demo or the template,
+// main.go and the input.json it reads. Each program's fences are every file in its directory but
+// its tests, so a file added there and not to the page fails. A fence is a direct-child pre of the demo or the template,
 // its text the pre's text content, as sl-go-demo reads it (web/components/fences.ts); its file is
 // the fence's name, its data-file, on the pre or its code, else the pre's title, else main.go,
 // under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go. The
@@ -20,11 +21,17 @@
 // doesn't know or a demo it can't close, fails the test rather than pass a fence unread.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, test } from "node:test";
 
 const root = join(import.meta.dirname, "../..");
+
+/** A program's files in playground/<program>, but its tests, sorted: every file its fences show. */
+const shipped = (program: string): string[] =>
+  readdirSync(join(root, "playground", program))
+    .filter((name) => !name.endsWith("_test.go"))
+    .sort();
 
 /** The named character references the reader decodes; any other fails the read. */
 const NAMED: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
@@ -204,6 +211,7 @@ describe("the playground's demo", () => {
       [[true, true, false, ["main.go", "lexer.go", "parser.go", "eval.go", "input.txt"]]],
     );
     const [{ fences }] = demos;
+    assert.deepEqual(fences.map(({ name }) => name).sort(), shipped("calc"), "every starter file");
     for (const { name, text } of fences) {
       assert.equal(
         text,
@@ -228,6 +236,18 @@ describe("the playground's program templates", () => {
         ["stdlib", ["main.go", "input.json"]],
       ],
     );
+  });
+
+  test("are every program in playground/ but the calculator, each with a fence for every file of its directory but its tests", () => {
+    assert.deepEqual(
+      templates.map(({ program }) => program).sort(),
+      readdirSync(join(root, "playground"))
+        .filter((program) => program !== "calc")
+        .sort(),
+    );
+    for (const { program, fences } of templates) {
+      assert.deepEqual(fences.map(({ name }) => name).sort(), shipped(program), program);
+    }
   });
 
   test("each fence equals its program's file in playground/ byte for byte", () => {
