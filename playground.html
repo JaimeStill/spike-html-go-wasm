@@ -7,11 +7,11 @@
      and the reader's arrangement.
      The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
      body of class app (web/pages/page.css): the header, then main across the body's content
-     width, the heading, the intro, and a closed disclosure saying what a program can be on its
-     80ch content column, then the demo on its full column, in the row the prose leaves, a gutter
-     above the viewport's bottom. The demo is fixed, as tall as that row, each part in its share,
-     so opening the disclosure takes its space from the demo, down to the demo's floor, in lines of
-     its editor and console; below that, the page scrolls down. The shell is the index's, the same
+     width, its prose, one block of the heading, the intro, and a closed disclosure saying what a
+     program can be, on its 80ch content column, then the demo on its full column, in the row the
+     prose leaves, a gutter above the viewport's bottom. The demo is fixed, as tall as that row, each
+     part in its share, so opening the disclosure takes its space from the demo, down to the demo's
+     floor, in lines of its editor and console; below that, the page scrolls down. The shell is the index's, the same
      header, dialogs, and shared sheet; see index.html for each. -->
 <html lang="en">
   <head>
@@ -63,32 +63,35 @@
       </div>
     </header>
     <main>
-      <h1>Playground</h1>
-      <p>
-        Edit the Go below and Run it: Go's own compiler and linker, built for
-        <code>GOOS=js</code>, compile and link your files here in the page, then your program's
-        main runs, its output and exit in the console and each phase's time beside it. The first
-        Run fetches the toolchain and the standard library's packages your imports need; later Runs
-        fetch only the packages a new import adds. <a href="./">The spike's question and evidence</a>.
-      </p>
-      <details>
-        <summary>What you can build here</summary>
+      <div class="prose">
+        <h1>Playground</h1>
         <p>
-          Your <code>.go</code> files build together as one <code>main</code> package, using only
-          the standard library. There's no <code>go.mod</code>, no other packages of your own, no
-          cgo or assembly, and nothing passed in as arguments or standard input.
+          Edit the Go below and Run it: Go's own compiler and linker, built for
+          <code>GOOS=js</code>, compile and link your files here in the page, then your program's
+          main runs, its output and exit in the console and each phase's time beside it. The
+          first Run fetches the toolchain and the standard library's packages your imports need;
+          later Runs fetch only the packages a new import adds.
+          <a href="./">The spike's question and evidence</a>.
         </p>
-        <p>
-          Any other file you add sits next to your program, so
-          <code>os.ReadFile("input.txt")</code> will find it. Each Run starts fresh from your files,
-          so anything the program writes is gone by the next one.
-        </p>
-        <p>
-          Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays
-          loaded after a Stop, so the next Run is quick. Your edits live only in this tab: reload,
-          and you're back to hello.
-        </p>
-      </details>
+        <details>
+          <summary>What you can build here</summary>
+          <p>
+            Your <code>.go</code> files build together as one <code>main</code> package, using only
+            the standard library. There's no <code>go.mod</code>, no other packages of your own, no
+            cgo or assembly, and nothing passed in as arguments or standard input.
+          </p>
+          <p>
+            Any other file you add sits next to your program, so
+            <code>os.ReadFile("input.txt")</code> will find it. Each Run starts fresh from your
+            files, so anything the program writes is gone by the next one.
+          </p>
+          <p>
+            Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays
+            loaded after a Stop, so the next Run is quick. Your edits live only in this tab: reload,
+            and you're back to hello.
+          </p>
+        </details>
+      </div>
       <sl-go-demo source editable-files fixed label="Playground">
 <pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
 // standard library and prints one line. It is a program scenario: the components page's Go demo

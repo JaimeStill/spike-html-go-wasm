@@ -109,11 +109,11 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       asks for 24ch of its own text, sharing the toolbar's line at 50rem and taking its own at a
       phone's width, each one property that moves every reader when set on its element;
     - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
-      absent below; the menu opens below Layout at its inline start, as wide as its items and
-      inside the viewport, and has the expected accessibility tree and the APG keys; choosing an
-      arrangement applies it in place, with no reload or request, leaving the run's status,
-      output, and timings as they were; the choice is the only write to storage, under the
-      spike's key, and a reload and another page open in it; the page follows another tab's
+      absent below; the menu opens `--space-3xs` below Layout, at its inline start, as wide as its
+      items and inside the viewport, and has the expected accessibility tree and the APG keys;
+      choosing an arrangement applies it in place, with no reload or request, leaving the run's
+      status, output, and timings as they were; the choice is the only write to storage, under
+      the spike's key, and a reload and another page open in it; the page follows another tab's
       choice and a cleared store; an empty store, text that isn't JSON, a refused value, and
       blocked storage each open with the editor left and write nothing.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
@@ -129,11 +129,12 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   each band of its fixed demo: 390px with the output panel's Output tab and again with its
   Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
   each chosen through the Layout menu, and with the menu open; and 1376px with the disclosure
-  open, the demo yielding its rows, every part's bottom border a gutter above the viewport's. `--width <px>`, one of the SDK's three, captures that width alone
-  on every page, as `mise run screenshots --page components/controls --width 390`; the
-  playground's 900px capture is taken only when no width is given. Any other width is a usage
-  error naming the three. `scripts/screenshots.ts` takes `--width`, which the capture bin
-  doesn't know, and hands it to the capture file.
+  open, the demo yielding its rows, every part's bottom border a gutter above the viewport's.
+  `--width <px>`, one of the SDK's three, captures that width alone on every page, as
+  `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
+  is taken only when no width is given. Any other width is a usage error naming the three.
+  `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't know, and hands it to the
+  capture file.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
 - `mise run live [base URL]`: check that the deployed site, at its Pages URL or the base given,
@@ -188,7 +189,8 @@ and the browser tier reads that order on each page. Every rule a page adds is in
 `web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
 specificity: the header-actions group at the header's inline end, the space between `main >
 section`s on every page, the components page's specimens, and the app page, the playground's
-one screen, which only a body of class `app` takes. Its spaces are the foundation's `--space-*` steps.
+one screen, which only a body of class `app` takes. Its spaces are the foundation's `--space-*`
+steps.
 
 A hand page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
@@ -219,11 +221,12 @@ takes every row the header leaves, where `site.css` packs the rows at the top. A
 spaces the inline sides and the block end alike.
 
 Main spans the body's content width, a grid of named lines: `content`, the prose's 80ch, centered
-between two equal side tracks, and `full`, the content and both sides. The heading, the intro,
-and a closed disclosure ("What you can build here") sit on `content`; the fixed demo sits on
-`full`, in the last row, `1fr`, every row the prose leaves, so it ends a gutter above the
-viewport's bottom, every part's bottom border in view. The demo's own width sets its bands.
-Opening the disclosure takes its rows from the demo, down to the demo's floor (`sl-go-demo`,
+between two equal side tracks, and `full`, the content and both sides. Its rows are two, by name,
+whatever the prose holds: `prose`, its own height, and `demo`, `1fr`, every row the prose leaves.
+The prose, one block (`.prose`) of the heading, the intro, and a closed disclosure ("What you can
+build here"), sits on `content`; the fixed demo sits on `full`, in `demo`, so it ends a gutter
+above the viewport's bottom, every part's bottom border in view. The demo's own width sets its
+bands. Opening the disclosure takes its rows from the demo, down to the demo's floor (`sl-go-demo`,
 "Fixed layout"); below the floor, the page grows and scrolls down, never sideways. The SDK's
 shell checks all run on the page but main's reading width, and the spike's own check holds the
 prose to 80ch, centered. The disclosure says, in the reader's terms, what a program can be, where
@@ -599,18 +602,18 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   - Layout: one column: the toolbar, the files, then the console and the timings. Once the demo
     is 44rem wide, the console and the timings share a row, the timings in a column of their
     table's least width, `sl-timings`'s `--sl-timings-min-inline-size`, read on the element, and
-    the console taking the rest. Every part stays inside the demo at every width, and the demo fits a
-    phone's width. Nothing moves.
+    the console taking the rest. Every part stays inside the demo at every width, and the demo fits
+    a phone's width. Nothing moves.
   - Fixed layout: with `fixed`, the demo is as tall as the box its parent's layout gives it
     (`block-size: 100%`, as a grid row's stretch gives it), never below its floor; it reads no
     viewport or container block unit, runs no script to size itself, and needs no size
-    container. The floor is stated once, in lines of the parts' own text: six of the editor's and
-    two of the console's log (`--sl-go-demo-editor-lines` and `--sl-go-demo-console-lines`, in
-    `lh`), so it follows the type profile and zoom. The editor, the log, and the timings contain
-    their size, so the floor, the demo's `min-content` height, is the toolbar, the tabs, and the
-    gaps as each band lays them out, plus those lines, at the parts' shares: the least height at
-    which both show their lines. In the default profiles, at a phone's width, where the toolbar
-    wraps, it is about 392px, and from 64rem, editor left, about 221px. The parts divide the
+    container. The floor is the demo's own, stated once, in lines of the parts' own text: six of
+    the editor's, enough to read and edit a few statements, and two of the console's log, enough
+    to read a line of output and the exit line under it (`--sl-go-demo-editor-lines` and
+    `--sl-go-demo-console-lines`, in `lh`), so it follows the type profile and zoom. The editor,
+    the log, and the timings contain their size, so the floor, the demo's `min-content` height,
+    is the toolbar, the tabs, and the gaps as each band lays them out, plus those lines, at the
+    parts' shares: the least height at which both show their lines. The parts divide the
     demo's height in fractions, never in lengths, and each scrolls inside its own frame, so typing
     or pasting any number of lines, any output, and a full timings table change no part's box:
     the editor fills its frame, the console fills its own (`fill`), the timings scroll in theirs,

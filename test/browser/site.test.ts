@@ -195,10 +195,12 @@ describe("the site under its base", () => {
             ch,
             viewport,
             gutter: parseFloat(getComputedStyle(document.body).paddingInlineStart),
-            prose: [...main.querySelectorAll(":scope > :is(h1, p, details)")].map((element) => {
-              const { left, right, width } = element.getBoundingClientRect();
-              return [left, viewport - right, width];
-            }),
+            prose: [...main.querySelectorAll(":scope > .prose > :is(h1, p, details)")].map(
+              (element) => {
+                const { left, right, width } = element.getBoundingClientRect();
+                return [left, viewport - right, width];
+              },
+            ),
           };
         })()`);
         assert.equal(read.prose.length, 3, "the heading, the intro, and the disclosure");

@@ -21,17 +21,18 @@
  * tall and the console's log --sl-go-demo-console-lines, each in lh, so the floor follows the type
  * profile and zoom. The editor, the console's log (sl-console's fill), and the timings contain
  * their size, so nothing they hold reaches the demo's min-content height, and the floor is the
- * toolbar's row, the tabs, and the gaps as they lay out in each band, plus those lines, the shares below holding at the floor
- * too: the least height at which the editor and the log each show their lines. Wherever the page
- * gives less, the demo keeps its floor and the page grows. The host's own inline-size container is
- * not its own query container, so the bands follow the demo's own width. Its parts share its
- * height in fractions, never in lengths, each part's share a frame it scrolls inside, so nothing a
- * part holds changes its box: the toolbar its own line, then the files 3fr, about 60% of what is
- * left, and the output 2fr. Each band places the same parts again, by grid areas, so a band change
- * keeps every part's content and scroll position, and names itself in --band, which the script
- * reads only where CSS can't follow it: for the output panels' tabpanel roles, which change the
- * accessibility tree, and for whether the toolbar's Layout group shows. The editor fills its
- * frame, the console fills its own (sl-console's fill), and the timings scroll in theirs.
+ * toolbar's row, the tabs, and the gaps as they lay out in each band, plus those lines, the shares
+ * below holding at the floor too: the least height at which the editor and the log each show their
+ * lines. Wherever the page gives less, the demo keeps its floor and the page grows. The host's own
+ * inline-size container is not its own query container, so the bands follow the demo's own width.
+ * Its parts share its height in fractions, never in lengths, each part's share a frame it scrolls
+ * inside, so nothing a part holds changes its box: the toolbar its own line, then the files 3fr,
+ * about 60% of what is left, and the output 2fr. Each band places the same parts again, by grid
+ * areas, so a band change keeps every part's content and scroll position, and names itself in
+ * --band, which the script reads only where CSS can't follow it: for the output panels' tabpanel
+ * roles, which change the accessibility tree, and for whether the toolbar's Layout group shows. The
+ * editor fills its frame, the console fills its own (sl-console's fill), and the timings scroll in
+ * theirs.
  *
  * An authoring error is a block on the page's red mixed into its surface, a red rule at its start,
  * its words in the page's own text color, above the fences as authored.
@@ -65,10 +66,9 @@
 }
 
 /* The fixed layout: the phone band, then the wider bands' changes to it. */
-/* The floor's two counts: six lines of the editor and two of the console's log, the most that fit
-   the page's one screen at a phone's capture size, 390x844, where the toolbar wraps to two rows and
-   the output panel has its tablist, so the closed playground never scrolls; wider, the same counts
-   leave the parts more. */
+/* The floor's two counts, the least a reader can work in: six lines of the editor, enough to read
+   and edit a few statements, and two of the console's log, enough to read a line of output and
+   the exit line under it. Any page that places a fixed demo gets the same floor. */
 :host([fixed]) {
   --sl-go-demo-editor-lines: 6;
   --sl-go-demo-console-lines: 2;

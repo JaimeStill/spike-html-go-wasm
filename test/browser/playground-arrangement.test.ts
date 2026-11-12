@@ -4,12 +4,13 @@
 //
 // From 64rem the toolbar shows Layout, a menu button in its own group after Files, and below 64rem
 // the group isn't there. Its menu is the APG menu button's: its accessibility tree, a menu of three
-// radio items, the placement checked, and its keyboard, each key in turn. It opens below Layout at
-// its inline start, as wide as its items, inside the viewport, at the band's edge and at 1376px. Choosing an item places
-// the parts again in place, with no reload and no change to the run state. The choice is kept in
-// localStorage under the spike's key and nothing else is written: a reload, and another page on the
-// origin, open in it; another tab's choice moves this one; and blocked storage, an empty store, a
-// value that isn't JSON, and one the model refuses all open with the editor left, writing nothing.
+// radio items, the placement checked, and its keyboard, each key in turn. It opens --space-3xs
+// below Layout, at its inline start, as wide as its items, inside the viewport, at the band's edge
+// and at 1376px. Choosing an item places the parts again in place, with no reload and no change to
+// the run state. The choice is kept in localStorage under the spike's key and nothing else is
+// written: a reload, and another page on the origin, open in it; another tab's choice moves this
+// one; and blocked storage, an empty store, a value that isn't JSON, and one the model refuses all
+// open with the editor left, writing nothing.
 // The helpers are go-demos.ts's, go-builds.ts's, and playground-layouts.ts's. Every wait is bounded.
 
 import assert from "node:assert/strict";
@@ -188,6 +189,7 @@ describe("the Layout menu button", () => {
         await menu(page, true);
         const placed: {
           below: number;
+          margin: number;
           start: number;
           right: number;
           viewport: number;
@@ -201,8 +203,14 @@ describe("the Layout menu button", () => {
           const style = getComputedStyle(menu);
           const inner = box.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
             - parseFloat(style.borderLeftWidth) - parseFloat(style.borderRightWidth);
+          const probe = document.createElement("div");
+          probe.style.blockSize = "var(--space-3xs)";
+          root.append(probe);
+          const margin = probe.getBoundingClientRect().height;
+          probe.remove();
           return {
             below: box.top - button.bottom,
+            margin,
             start: box.left - button.left,
             right: box.right,
             viewport: document.documentElement.clientWidth,
@@ -211,7 +219,11 @@ describe("the Layout menu button", () => {
           };
         })()`);
         const at = `at ${width}px`;
-        assert.ok(placed.below >= 0 && placed.below < 16, `${at}: below Layout, ${placed.below}`);
+        assert.ok(placed.margin > 0, "--space-3xs resolves");
+        assert.ok(
+          Math.abs(placed.below - placed.margin) <= 1,
+          `${at}: --space-3xs, ${placed.margin}, below Layout, ${placed.below}`,
+        );
         assert.equal(Math.round(placed.start), 0, `${at}: at Layout's inline start`);
         assert.ok(placed.right <= placed.viewport, `${at}: inside the viewport, ${placed.right}`);
         assert.ok(

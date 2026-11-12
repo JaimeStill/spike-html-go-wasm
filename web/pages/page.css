@@ -86,12 +86,13 @@
   }
   /* Main spans the body's content width, a grid of named lines: the content column, the prose's
      80ch, centered between two equal side tracks, which take what the content leaves and none below
-     80ch; and the full column, the content and both sides. The heading, the intro, and the
-     disclosure sit on the content column, each its own height; the demo on the full column, in the
-     last row, 1fr, every row the prose leaves, as a stretched grid item. Opening the disclosure
-     grows its row and takes the space from the demo's, down to the demo's own floor; past it, main
-     and the body grow by the rest, and the page scrolls down, never sideways. The gutter below is
-     the body's, so main ends on its last row. */
+     80ch; and the full column, the content and both sides. Its rows are two, by name, whatever the
+     prose holds: the prose, its own height, then the demo, 1fr, every row the prose leaves, which
+     the demo takes as a stretched grid item, a --space-m gap apart. The prose, one block holding
+     the heading, the intro, and the disclosure in reading flow, sits on the content column.
+     Opening the disclosure grows the prose's row and takes the space from the demo's, down to the
+     demo's own floor; past it, main and the body grow by the rest, and the page scrolls down, never
+     sideways. The gutter below is the body's, so main ends on its last row. */
   body.app > main {
     grid-area: 2 / 1;
     display: grid;
@@ -100,19 +101,17 @@
       [content-start] minmax(0, 80ch)
       [content-end] minmax(0, 1fr)
       [full-end];
-    grid-template-rows: repeat(3, auto) [demo-start] 1fr [demo-end];
+    grid-template-rows: [prose-start] auto [prose-end demo-start] 1fr [demo-end];
+    row-gap: var(--space-m);
     max-inline-size: none;
     margin-inline: 0;
     padding-block-end: 0;
   }
-  body.app > main > * {
+  body.app > main > .prose {
     grid-column: content;
+    grid-row: prose;
   }
-  /* The disclosure sits apart from the demo below it, open or closed. */
-  body.app > main > details {
-    margin-block-end: var(--space-m);
-  }
-  /* The demo: the full column, its own width setting its bands, and the last row's whole height,
+  /* The demo: the full column, its own width setting its bands, and the demo row's whole height,
      which a fixed demo fills (go-demo.css). */
   body.app > main > sl-go-demo {
     grid-column: full;

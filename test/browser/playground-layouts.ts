@@ -113,7 +113,7 @@ export const screen = async (page: Page): Promise<Screen> => {
     };
     const html = document.documentElement;
     const body = getComputedStyle(document.body);
-    const details = document.querySelector("main > details");
+    const details = document.querySelector("main > .prose > details");
     const demo = ${PLAYGROUND}.getBoundingClientRect();
     return {
       viewport: innerHeight,
@@ -150,10 +150,10 @@ export const frameLines = (page: Page): Promise<{ editor: number; log: number }>
  * resolving once it is open or closed. */
 export async function disclose(page: Page, open: boolean): Promise<void> {
   await page.evaluate(`(() => {
-    const details = document.querySelector("main > details");
+    const details = document.querySelector("main > .prose > details");
     if (details.open !== ${open}) details.querySelector("summary").click();
   })()`);
-  await until(page, `document.querySelector("main > details").open === ${open}`, 5000);
+  await until(page, `document.querySelector("main > .prose > details").open === ${open}`, 5000);
 }
 
 /** Asserts that the page doesn't scroll sideways and every part shown lies inside the demo. */
