@@ -130,8 +130,9 @@ export const screen = async (page: Page): Promise<Screen> => {
   })()`);
 };
 
-/** The fixed demo's floor, in lines of each part's own text, go-demo.css's --editor-lines and
- * --console-lines: the editor's frame and the console's log frame are never shorter. */
+/** The fixed demo's floor, in lines of each part's own text, go-demo.css's
+ * --sl-go-demo-editor-lines and --sl-go-demo-console-lines: the editor's frame and the console's
+ * log frame are never shorter. */
 export const FLOOR = { editor: 6, log: 2 };
 
 /** The editor's frame's and the console's log frame's heights, each in lines of its own text. */

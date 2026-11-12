@@ -605,14 +605,14 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
     (`block-size: 100%`, as a grid row's stretch gives it), never below its floor; it reads no
     viewport or container block unit, runs no script to size itself, and needs no size
     container. The floor is stated once, in lines of the parts' own text: six of the editor's and
-    two of the console's log (`--editor-lines` and `--console-lines`, in `lh`), so it follows the
-    type profile and zoom. The editor, the log, and the timings contain their size, so the floor,
-    the demo's `min-content` height, is the toolbar, the tabs, and the gaps as each band lays them
-    out, plus those lines, at the parts' shares: the least height at which both show their lines.
-    In the default profiles, at a phone's width, where the toolbar wraps, it is about 392px, and
-    from 64rem, editor left, about 221px. The parts divide the demo's height in fractions, never in lengths, and each scrolls
-    inside its own frame, so typing or pasting any number of lines, any output, and a full timings
-    table change no part's box:
+    two of the console's log (`--sl-go-demo-editor-lines` and `--sl-go-demo-console-lines`, in
+    `lh`), so it follows the type profile and zoom. The editor, the log, and the timings contain
+    their size, so the floor, the demo's `min-content` height, is the toolbar, the tabs, and the
+    gaps as each band lays them out, plus those lines, at the parts' shares: the least height at
+    which both show their lines. In the default profiles, at a phone's width, where the toolbar
+    wraps, it is about 392px, and from 64rem, editor left, about 221px. The parts divide the
+    demo's height in fractions, never in lengths, and each scrolls inside its own frame, so typing
+    or pasting any number of lines, any output, and a full timings table change no part's box:
     the editor fills its frame, the console fills its own (`fill`), the timings scroll in theirs,
     and the toolbar's status is `steady`. Container queries on the demo's own width choose one
     of three bands:

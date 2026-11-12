@@ -17,11 +17,11 @@
  * or flex parent's stretch, or a parent of definite height, resolves. It reads no viewport or
  * container block unit, runs no script to size itself, and needs no size container around it. It
  * is never below its floor, its min-content height, which the floor's two counts set, stated once
- * on the host, in lines of the parts' own text: the editor's frame --editor-lines tall and the
- * console's log --console-lines, each in lh, so the floor follows the type profile and zoom. The
- * editor, the console's log (sl-console's fill), and the timings contain their size, so nothing
- * they hold reaches the demo's min-content height, and the floor is the toolbar's row, the tabs, and
- * the gaps as they lay out in each band, plus those lines, the shares below holding at the floor
+ * on the host, in lines of the parts' own text: the editor's frame --sl-go-demo-editor-lines
+ * tall and the console's log --sl-go-demo-console-lines, each in lh, so the floor follows the type
+ * profile and zoom. The editor, the console's log (sl-console's fill), and the timings contain
+ * their size, so nothing they hold reaches the demo's min-content height, and the floor is the
+ * toolbar's row, the tabs, and the gaps as they lay out in each band, plus those lines, the shares below holding at the floor
  * too: the least height at which the editor and the log each show their lines. Wherever the page
  * gives less, the demo keeps its floor and the page grows. The host's own inline-size container is
  * not its own query container, so the bands follow the demo's own width. Its parts share its
@@ -70,8 +70,8 @@
    the output panel has its tablist, so the closed playground never scrolls; wider, the same counts
    leave the parts more. */
 :host([fixed]) {
-  --editor-lines: 6;
-  --console-lines: 2;
+  --sl-go-demo-editor-lines: 6;
+  --sl-go-demo-console-lines: 2;
   block-size: 100%;
   min-block-size: min-content;
 }
@@ -104,13 +104,13 @@
 :host([fixed]) :is(.files, #panel) > sl-code-editor {
   contain: size;
   block-size: 100%;
-  min-block-size: calc(var(--editor-lines) * 1lh);
+  min-block-size: calc(var(--sl-go-demo-editor-lines) * 1lh);
   line-height: var(--leading-code);
 }
 
 /* The console's log is at least the floor's lines tall, in its own lines (console.css). */
 :host([fixed]) sl-console {
-  --sl-console-min-lines: var(--console-lines);
+  --sl-console-min-lines: var(--sl-go-demo-console-lines);
 }
 
 :host([fixed]) .output {

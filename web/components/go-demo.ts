@@ -271,9 +271,9 @@ interface Owned {
  * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
  * to 8 columns, 4 by default. `fixed` makes the demo as tall as the box its parent's layout gives
  * it, never below its floor in lines of its parts (go-demo.css); each part keeps its share of that
- * height, scrolling inside it, in a layout that follows the demo's width (see the module's note). `arrangement`, an
- * Arrangement the page writes, places a fixed demo's parts from 64rem and shows its toolbar's
- * Layout menu there; with none, the editor is left and the menu isn't shown. `label` names the
+ * height, scrolling inside it, in a layout that follows the demo's width (see the module's note).
+ * `arrangement`, an Arrangement the page writes, places a fixed demo's parts from 64rem and shows
+ * its toolbar's Layout menu there; with none, the editor is left and the menu isn't shown. `label` names the
  * demo, a region; by default it names the scenario and the handler, "probe format demo", or, on a
  * source demo, "Go source demo".
  *
@@ -679,9 +679,9 @@ export class GoDemo extends LitElement {
 
   protected override updated(changed: PropertyValues<this>): void {
     this.#show();
-    // A layout appears with the models, and becomes fixed or not with the attribute, neither of
-    // which need change the demo's width, so the band is read again here too.
-    // Only a fixed demo's width is observed.
+    // Only a fixed demo's width is observed, so the observation follows the attribute. A layout
+    // appears with the models, and becomes fixed or not with the attribute, neither of which need
+    // change the demo's width, so the band is read again here too.
     const layout = this.renderRoot.querySelector(".demo");
     if (changed.has("fixed") && this.isConnected) {
       if (this.fixed) this.#resized.observe(this);
