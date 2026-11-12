@@ -220,8 +220,9 @@ export class Runner {
     });
   }
 
-  /** Stops the pending load, build, or run, if any, so the request about to start runs alone. A Stop's
-   * own adopt is no caller's: it stays, and the request queues behind it in the fresh worker. */
+  /** Stops the pending load, build, or run, if any, so the request about to start runs alone. A
+   * Stop's own adopt is no caller's: it stays, and the request queues behind it in the fresh
+   * worker. */
   #preempt() {
     for (const { stop } of this.#pending.values()) {
       if (!stop) return this.#stop();

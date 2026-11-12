@@ -58,8 +58,9 @@
 // which panics outside any handler; a handler demo whose fence is the SDK's Shiki markup, as
 // a Markdown page renders it; a handler demo holding two fences, an authoring error; and two
 // demos, spin and format, sharing the runner; and a source demo, built in the page from its
-// editable files, a main.go reading its input.txt. The page gives every demo the page's one runner, the runtime's Runner, which
-// TypeScript checks against the demo's declared subset, DemoRunner, where the page creates it.
+// editable files, a main.go reading its input.txt. The page gives every demo the page's one
+// runner, the runtime's Runner, which TypeScript checks against the demo's declared subset,
+// DemoRunner, where the page creates it.
 // Nothing runs until a Run is pressed, so a capture of the page is the same every time.
 
 import "../components/code-editor.ts";

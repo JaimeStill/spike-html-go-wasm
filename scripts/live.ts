@@ -3,8 +3,9 @@
 // Accept-Encoding: gzip, comes back Content-Encoding: gzip. The playground's manifest,
 // <base>go/toolchain/manifest.json, answers 200, and the compiler it names, at its path relative to
 // the manifest, answers 200 as application/wasm and gzip-encoded, as the module does. The base is
-// the Pages URL, or the URL given as the first argument. One line per assertion on stdout, `✓ NAME` or `✗ NAME`; on stderr,
-// what each failed one got instead, a failed request's reason among them, and the failed names.
+// the Pages URL, or the URL given as the first argument. One line per assertion on stdout,
+// `✓ NAME` or `✗ NAME`; on stderr, what each failed one got instead, a failed request's reason
+// among them, and the failed names.
 // Exits 0 when every assertion holds, and 1 when any fails. Reads the network; writes nothing.
 // Never a part of mise run check: test/unit/live.test.ts runs held() against local servers.
 

@@ -6,8 +6,8 @@
 // send. The parts render from the models and re-render on their change events; none writes one.
 //
 // The runner: the demo reads a structural subset of the runtime's Runner, DemoRunner, its load,
-// build, run, stop, and listen, with the output, exit, and timing events re-declared here, since the
-// components tier imports nothing from the runtime (the boundaries table holds it). The page,
+// build, run, stop, and listen, with the output, exit, and timing events re-declared here, since
+// the components tier imports nothing from the runtime (the boundaries table holds it). The page,
 // which may import both, assigns the runtime's Runner to a DemoRunner, so TypeScript checks the
 // runner and its events against this subset there. A callback's parameter is compared strictly,
 // so a runner sending an event, or a field's value, the demo doesn't declare fails the check.
@@ -19,10 +19,11 @@
 // `data-file`, on the pre or its code, else the pre's `title`; else a default from its language,
 // a `data-language` on either, or a `language-<name>` class, as marked writes it: main.go for go,
 // input.json for json, input.txt for any other; and, with no language, as Shiki's output carries
-// none, main.go on a program or source demo and input.json on a handler demo. Each file's grammar follows
-// its name's extension, .go or .json, any other plain. The fences are read once the document has
-// parsed the demo's children, and again when `handler` changes, which rebuilds the files, or, while
-// an authoring error shows, when an attribute it validates changes, which may mend it.
+// none, main.go on a program or source demo and input.json on a handler demo. Each file's grammar
+// follows its name's extension, .go or .json, any other plain. The fences are read once the
+// document has parsed the demo's children, and again when `handler` or `source` changes, which
+// rebuilds the files, or, while an authoring error shows, when an attribute it validates changes,
+// which may mend it.
 //
 // The fences stay in the light DOM, never moved or changed: before the element upgrades, and
 // without script, they render as the page's code, as any fence does. Once upgraded, the shadow
@@ -47,9 +48,9 @@
 // Event attribution: the runner runs one request at a time, and a new one stops the pending one
 // first, so every event between a request's start and its settling is that request's. A demo
 // takes the runner's events only while a request of its own is pending, from its load's or
-// build's call to its run's settling; every other event, another demo's, it ignores. When another demo's Run stops
-// this demo's pending run, its promise rejects with "stopped", and the demo records the run as
-// stopped. A Run while the demo's own run is pending supersedes it, as the RunState does: the
+// build's call to its run's settling; every other event, another demo's, it ignores. When another
+// demo's Run stops this demo's pending run, its promise rejects with "stopped", and the demo
+// records the run as stopped. A Run while the demo's own run is pending supersedes it, as the RunState does: the
 // superseded run's late settling changes nothing.
 //
 // Each Run clears the console and begins the timings afresh, so they show the latest run alone.
@@ -119,9 +120,10 @@ export type DemoEvent = DemoOutputEvent | DemoExitEvent | DemoTimingEvent;
 
 /**
  * The runner as the demo reads it, the runtime's Runner's structural subset: `load` a scenario by
- * name, or `build` a program from its files, held as the scenario loaded; `run` its program's main, with no handler, resolving with the exit code, or call a
- * handler with input, resolving with its answer; `stop` whatever runs; and `listen` to every
- * event, answering the function that stops listening. A request started while another is pending
+ * name, or `build` a program from its files, held as the scenario loaded; `run` its program's
+ * main, with no handler, resolving with the exit code, or call a handler with input, resolving
+ * with its answer; `stop` whatever runs; and `listen` to every event, answering the function that
+ * stops listening. A request started while another is pending
  * stops that one first, which rejects with "stopped".
  */
 export interface DemoRunner {
@@ -227,8 +229,7 @@ interface Owned {
  * Events: none of its own; every part's request is the demo's to apply, and goes no further.
  *
  * Keyboard: each part's own, in order: the toolbar, the tabs on a program or source demo, the
- * editor, and
- * the console. Ctrl or Cmd+Enter, from anywhere inside the demo, runs it.
+ * editor, and the console. Ctrl or Cmd+Enter, from anywhere inside the demo, runs it.
  */
 export class GoDemo extends LitElement {
   static styles = [reset, elements, styles];
@@ -254,7 +255,7 @@ export class GoDemo extends LitElement {
   declare handler: string | null;
   /** Whether Run builds the program from the files, then runs its main. */
   declare source: boolean;
-  /** Whether a program demo's files group shows. */
+  /** Whether a program or source demo's files group shows. */
   declare editableFiles: boolean;
   /** Whether long lines wrap. */
   declare wrap: boolean;
