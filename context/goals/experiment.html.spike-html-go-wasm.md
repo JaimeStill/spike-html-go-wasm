@@ -91,12 +91,13 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   program's limits, and the working directory's files), and the playground page.
                   The context's capabilities list the playground as built, and the direction
                   checks hold every tier unchanged.
-              13. sl-go-demo gains a `fixed` attribute. A fixed demo is as tall as the dynamic
-                  viewport less the page header, at every width, and each part keeps a reserved
-                  share of that height, set as a fraction of the demo, never as an absolute
-                  length: pasting or typing any number of lines, a run's output of any length,
-                  and a full timings table change no part's box, and each part scrolls inside
-                  its own frame. A demo without `fixed` lays out as before.
+              13. sl-go-demo gains a `fixed` attribute. A fixed demo is as tall as
+                  its container: it fills the block size of its nearest size container and
+                  reads no viewport unit and runs no script to size itself. Each part keeps a
+                  reserved share of that height, set as a fraction of the demo, never as an
+                  absolute length: pasting or typing any number of lines, a run's output of any
+                  length, and a full timings table change no part's box, and each part scrolls
+                  inside its own frame. A demo without `fixed` lays out as before.
               14. A fixed demo's layout follows its own width. Below 44rem: the toolbar, the
                   tabs over the editor (about 60% of the height), then one output panel whose
                   tablist, "Output" and "Timings", selects the console or the timings, the
@@ -127,6 +128,29 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   The captures show each band, each wide arrangement, and the phone's Output and
                   Timings tabs. The README documents `fixed`, the bands, the Layout menu, and
                   the stored preference.
+              18. The playground is one screen, laid out in CSS alone: the header, the heading,
+                  the intro, a closed disclosure, then the demo's container, which takes every
+                  row of the viewport that is left. At 390, 1120, and 1376 px, with the
+                  disclosure closed, the demo's bottom edge meets the viewport's and the page
+                  scrolls neither way. Opening the disclosure takes its space from the demo's
+                  container, down to a floor at which every part stays usable (stated as a
+                  share, not a length); below that floor the page scrolls. The page runs no
+                  script to measure its header.
+              19. The disclosure's summary and text say plainly, in a person's voice, what a
+                  program can be, where its other files go, how Run and Stop behave, and that
+                  edits last only as long as the tab, starting from the wording approved with
+                  this brief:
+
+                  summary: What you can build here
+                  Your .go files build together as one main package, using only the standard
+                  library. There's no go.mod, no other packages of your own, no cgo or
+                  assembly, and nothing passed in as arguments or standard input.
+                  Any other file you add sits next to your program, so
+                  os.ReadFile("input.txt") will find it. Each Run starts fresh from your files,
+                  so anything the program writes is gone by the next one.
+                  Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The
+                  compiler stays loaded after a Stop, so the next Run is quick. Your edits live
+                  only in this tab: reload, and you're back to hello.
 Test seams    mise run check: the unit tier for 1 and the fence equality in 9, and the build's
               compile and link steps over the runtime's in-memory fs under node for 2, 4, and 5.
               The browser tier, the built site under its base in chrome-headless-shell with the
@@ -155,6 +179,11 @@ Slices        1. Upgrade: chrome-headless-shell 157.0.8103.78 (its sha256 and si
               7. The reader's arrangement: the preference model and its unit tests, the Layout
                  menu button and menu in the toolbar from 64rem, editor top and editor right,
                  the stored choice read on load, with browser tests, captures, and docs.
+              8. The demo's height from its container: `fixed` fills its size container, the
+                 header-measuring script and its custom property are removed, the playground
+                 becomes one screen with the disclosure under the intro, and the box-stability,
+                 one-screen, and disclosure tests run at every width, along with the captures
+                 and the docs.
 Out of scope  persisting files, sharing, and a Format button; workspace modules' archives (the
               sqlate and scenarios tasks add them as they first require them); go.mod, local
               subpackages, cgo, assembly, and go:embed in a built program; argv and stdin for a
@@ -168,7 +197,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 6/7 committed · standards — · spec — · editor — (redirect: fixed layout)
+slices 6/8 committed · standards — · spec — · editor — (redirect: fixed layout)
 
 ## Decisions
 
@@ -555,6 +584,15 @@ slices 6/7 committed · standards — · spec — · editor — (redirect: fixed
   row in the page's Settings dialog, the SDK's sl-settings in a reference repository.
 - playground (redirect): the arrangement is kept in localStorage under the spike's own key, as
   the foundation keeps the theme. Rejected: forgetting it on reload.
+- playground (redirect 2): a fixed demo is as tall as its size container, and the page decides
+  that height. Rejected: `100dvh` less a measured header inset, which ignores the content
+  around the demo (round 2's viewport-height decision, reversed).
+- playground (redirect 2): the playground is one screen: the header, the heading, the intro,
+  then the demo taking the rest, in CSS alone. Rejected: a viewport-tall demo with the prose
+  scrolling past it.
+- playground (redirect 2): the program's limits sit in a disclosure under the intro, written in
+  a plain voice ("What you can build here"). Rejected: the "What a program holds" section below
+  the demo.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
