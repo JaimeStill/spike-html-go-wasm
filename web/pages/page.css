@@ -84,9 +84,6 @@
     padding-inline: var(--page-gutter);
     padding-block-end: var(--page-gutter);
   }
-  body.app > header {
-    grid-column: 1;
-  }
   /* Main spans the body's content width, a grid of named lines: the content column, the prose's
      80ch, centered between two equal side tracks, which take what the content leaves and none below
      80ch; and the full column, the content and both sides. The heading, the intro, and the
@@ -104,7 +101,6 @@
       [content-end] minmax(0, 1fr)
       [full-end];
     grid-template-rows: repeat(3, auto) [demo-start] 1fr [demo-end];
-    inline-size: auto;
     max-inline-size: none;
     margin-inline: 0;
     padding-block-end: 0;

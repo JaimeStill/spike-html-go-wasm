@@ -169,7 +169,8 @@
 }
 
 .form-popover {
-  max-inline-size: 22rem;
+  --popover-max-inline-size: 22rem;
+  max-inline-size: var(--popover-max-inline-size);
   padding: var(--space-2xs) var(--space-xs);
 }
 
@@ -179,12 +180,13 @@
 
 /* The last resort, where a popover fits beside its button on neither side: below it, centred on it,
    in a cell the containing block's whole width, and no wider than that cell less a --space-s at
-   each side, which the margins keep clear. */
+   each side, which the margins keep clear, nor than its own cap, a form's 22rem: a try's
+   max-inline-size replaces the element's, so the cap is read here again, the menu having none. */
 @position-try --within {
   position-area: block-end span-all;
   justify-self: anchor-center;
   margin-inline: var(--space-s);
-  max-inline-size: calc(100% - 2 * var(--space-s));
+  max-inline-size: min(var(--popover-max-inline-size, 100%), 100% - 2 * var(--space-s));
 }
 
 /* A non-modal form or menu leaves the page as it is: the foundation veils behind every top-layer
