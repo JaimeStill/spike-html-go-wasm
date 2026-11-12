@@ -168,7 +168,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 5/7 committed · standards — · spec — · editor — (redirect: fixed layout)
+slices 6/7 committed · standards — · spec — · editor — (redirect: fixed layout)
 
 ## Decisions
 
