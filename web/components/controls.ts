@@ -1,10 +1,12 @@
 // The controls, Lit with a shadow root: one ARIA toolbar of a demo's controls, a run group (Run,
-// Stop, and Reset) and, under editable-files, a separator and a files group (New file, Rename, and
-// Delete). It renders from two models its owner, the page or the element composing the controls
-// over a runner, writes: a FileSet (file-set.ts), for Reset's and Delete's availability and the
-// names the forms validate, and a RunState (run-state.ts), for Stop's availability and the status.
-// It re-renders on each one's change event and never writes either: every control sends a request
-// the owner applies, so a request no owner applies changes nothing.
+// Stop, and Reset), under editable-files a separator and a files group (New file, Rename, and
+// Delete), and, given an arrangement, a separator and a layout group (Layout). It renders from the
+// models its owner, the page or the element composing the controls over a runner, writes: a
+// FileSet (file-set.ts), for Reset's and Delete's availability and the names the forms validate; a
+// RunState (run-state.ts), for Stop's availability and the status; and an Arrangement
+// (arrangement.ts), for the placement the Layout menu checks. It re-renders on each one's change
+// event and never writes one: every control sends a request the owner applies, so a request no
+// owner applies changes nothing.
 //
 // The keyboard is the APG toolbar's: one tab stop, the control last focused, a roving tabindex;
 // Left and Right move focus to the previous and next control, wrapping, and Home and End to the
@@ -25,10 +27,21 @@
 // itself, so focus is back on the button before the page's key handling (keys.js) sees the key,
 // which would otherwise blur the field and leave focus nowhere; the keydown is marked handled.
 //
+// Layout is the APG menu button: it opens a menu, a popover anchored to it as the forms are, of
+// three radio items, Editor left, Editor top, and Editor right, the arrangement's placement
+// checked. Enter, Space, or Down on the button opens the menu with focus on the checked item; in
+// it, Up and Down move focus, wrapping, and Home and End to the first and the last; Enter or Space,
+// or a click, chooses the item, closes the menu, returns focus to the button, and sends the
+// request; Escape closes it and returns focus to the button; Tab closes it and moves on from the
+// button. Every key the menu takes is marked handled, as the forms' Escape is, so no page shortcut
+// fires from it. The button keeps its place in the toolbar's roving tabindex; the menu's items
+// rove by their own keys, outside the toolbar's.
+//
 // The status, a polite live region beside the toolbar, says a run's start and its end, derived
 // from the RunState's transitions: a run beginning, or a pending run ending. The state as it is
 // when the controls first hold it is never said, so a page that loads with a run pending, or one
-// finished, announces nothing until something changes.
+// finished, announces nothing until something changes. With `steady`, as a fixed Go demo sets it,
+// the status keeps one line, so what it says never changes the toolbar's box (controls.css).
 
 import { html, LitElement, nothing, type PropertyDeclarations, type TemplateResult } from "lit";
 
@@ -39,8 +52,20 @@ import glyphButton from "@jaimestill/spike-html-hosting-components/glyph-button.
 
 import { roved } from "./aria.ts";
 import styles from "./controls.css" with { type: "css" };
+import type { Arrangement, Placement } from "./arrangement.ts";
+import { PLACEMENTS } from "./arrangement.ts";
 import type { FileSet } from "./file-set.ts";
-import { fileAdded, pencil, play, squareFill, trash, undo, xCircle } from "./glyphs.ts";
+import {
+  check,
+  fileAdded,
+  pencil,
+  play,
+  splitView,
+  squareFill,
+  trash,
+  undo,
+  xCircle,
+} from "./glyphs.ts";
 import type { Finished, RunState } from "./run-state.ts";
 import { Subscription } from "./subscription.ts";
 
@@ -48,7 +73,7 @@ import { Subscription } from "./subscription.ts";
 export const tagName = "sl-controls";
 
 /** The controls, by key, in the toolbar's order. */
-export type Control = "run" | "stop" | "reset" | "new" | "rename" | "delete";
+export type Control = "run" | "stop" | "reset" | "new" | "rename" | "delete" | "layout";
 
 /** The detail of a new request: the new file's name. */
 export interface NewDetail {
@@ -66,6 +91,11 @@ export interface DeleteDetail {
   name: string;
 }
 
+/** The detail of an arrange request: the placement chosen for the editor. */
+export interface ArrangeDetail {
+  placement: Placement;
+}
+
 /** Each control's name: its accessible name, the words beside its glyph, and its hint. */
 const names: Record<Control, string> = {
   run: "Run",
@@ -74,6 +104,14 @@ const names: Record<Control, string> = {
   new: "New file",
   rename: "Rename",
   delete: "Delete",
+  layout: "Layout",
+};
+
+/** Each placement's menu item, as the Layout menu names it. */
+const placementNames: Record<Placement, string> = {
+  left: "Editor left",
+  top: "Editor top",
+  right: "Editor right",
 };
 
 /** The forms, by the control that opens each. */
@@ -112,6 +150,12 @@ export function stem(name: string): string {
  * Reset while a file differs from its text as given; and, under `editable-files`, New file and
  * Rename always, and Delete unless the set refuses to remove the active file, as the last. With no
  * set, Reset is unavailable and the files group isn't shown; with no run state, Stop is.
+ * `arrangement`, an Arrangement the owner writes, shows the layout group, after the files group,
+ * its Layout menu checking the arrangement's placement; with none, the group isn't shown.
+ *
+ * `steady` keeps the status to one line whatever it says, beside the toolbar where the row leaves
+ * it room, else on a line of its own, its words cut short with an ellipsis where they outrun it, so
+ * the controls' box follows their width alone.
  *
  * The toolbar is named by `label`, "Controls" by default. Run carries aria-keyshortcuts,
  * "Control+Enter Meta+Enter", the shortcut its owner handles from inside the demo.
@@ -119,12 +163,16 @@ export function stem(name: string): string {
  * Events, each bubbling and not composed, a request that changes nothing until the owner applies
  * it: `run`, `stop`, and `reset`, Events; `new`, a CustomEvent whose detail names the new file;
  * `rename`, whose detail names the active file and the name it is to take, sent only when the name
- * differs; and `delete`, whose detail names the active file. An unavailable control sends nothing.
+ * differs; `delete`, whose detail names the active file; and `arrange`, whose detail names the
+ * placement the Layout menu chose, sent only when it differs from the arrangement's. An unavailable
+ * control sends nothing.
  *
  * Keyboard: Tab reaches the toolbar's one tab stop, the control last focused, Run at first. Left
  * and Right move to the previous and next control, wrapping, and Home and End to the first and the
  * last; Enter and Space press the focused one. In a form, Enter submits and Escape closes it, each
- * returning focus to the control that opened it.
+ * returning focus to the control that opened it. On Layout, Enter, Space, and Down open its menu on
+ * the checked item; in the menu, Up and Down move, wrapping, Home and End go to the first and the
+ * last, Enter and Space choose and close, and Escape closes, each returning focus to Layout.
  */
 export class Controls extends LitElement {
   static styles = [reset, elements, glyphButton, styles];
@@ -132,12 +180,15 @@ export class Controls extends LitElement {
   static properties = {
     files: { attribute: false },
     runState: { attribute: false },
+    arrangement: { attribute: false },
     editableFiles: { type: Boolean, attribute: "editable-files" },
     label: { type: String },
+    steady: { type: Boolean, reflect: true },
     status: { state: true },
     current: { state: true },
     renaming: { state: true },
     problems: { state: true },
+    menuOpen: { state: true },
   } satisfies PropertyDeclarations;
 
   /** The files, which the owner writes and the controls never do; null leaves Reset unavailable
@@ -146,10 +197,15 @@ export class Controls extends LitElement {
   /** The run state, which the owner writes and the controls never do; null leaves Stop
    * unavailable. */
   declare runState: RunState | null;
+  /** The arrangement, which the owner writes and the controls never do; null leaves the layout
+   * group out. */
+  declare arrangement: Arrangement | null;
   /** Whether the files group shows. */
   declare editableFiles: boolean;
   /** The toolbar's accessible name. */
   declare label: string;
+  /** Whether the status keeps one line, so its words never change the controls' box. */
+  declare steady: boolean;
   /** What the status says: the last transition's words, or nothing. */
   declare private status: string;
   /** The control holding the toolbar's tab stop. */
@@ -158,28 +214,40 @@ export class Controls extends LitElement {
   declare private renaming: string;
   /** Each form's refusal, while it shows. */
   declare private problems: Record<Form, string | null>;
+  /** Whether the Layout menu is open. */
+  declare private menuOpen: boolean;
 
   /** The run state as last seen, whose change from it is a transition. */
   #seen = { pending: false, run: 0 };
   /** Each form, whether focus was in it as it began to close, so its closing returns focus. */
   readonly #restore: Record<Form, boolean> = { new: false, rename: false };
+  /** Whether focus was in the Layout menu as it began to close, so its closing returns focus. */
+  #menuRestore = false;
 
   constructor() {
     super();
     this.files = null;
     this.runState = null;
+    this.arrangement = null;
     this.editableFiles = false;
     this.label = "Controls";
+    this.steady = false;
     this.status = "";
     this.current = "run";
     this.renaming = "";
     this.problems = { new: null, rename: null };
+    this.menuOpen = false;
     // Renders again as the files it holds change, and says each transition of the run state it
     // holds, while it is in the document. Taking a run state, from no state or another, starts
     // from it as it is: nothing is said of it.
     new Subscription(
       this,
       () => this.files,
+      () => this.requestUpdate(),
+    );
+    new Subscription(
+      this,
+      () => this.arrangement,
       () => this.requestUpdate(),
     );
     new Subscription(
@@ -214,9 +282,11 @@ export class Controls extends LitElement {
 
   /** The controls shown, in the toolbar's order. */
   get #shown(): Control[] {
-    return this.#filesShown
-      ? ["run", "stop", "reset", "new", "rename", "delete"]
-      : ["run", "stop", "reset"];
+    return [
+      ...(["run", "stop", "reset"] as const),
+      ...(this.#filesShown ? (["new", "rename", "delete"] as const) : []),
+      ...(this.arrangement ? (["layout"] as const) : []),
+    ];
   }
 
   /** Whether the files group shows: under editable-files, with a set. */
@@ -231,6 +301,7 @@ export class Controls extends LitElement {
       case "run":
       case "new":
       case "rename":
+      case "layout":
         return true;
       case "stop":
         return this.runState?.pending ?? false;
@@ -368,8 +439,93 @@ export class Controls extends LitElement {
     this.#popover(form)?.hidePopover();
   }
 
+  /** The Layout menu's popover and its items, once rendered. */
+  get #menu(): HTMLElement | null {
+    return this.renderRoot.querySelector("#layout-menu");
+  }
+
+  get #items(): HTMLElement[] {
+    return [
+      ...this.renderRoot.querySelectorAll<HTMLElement>('#layout-menu [role="menuitemradio"]'),
+    ];
+  }
+
+  /** Down on Layout opens its menu, as Enter and Space do by their click; the key is handled. */
+  #layoutKeydown(event: KeyboardEvent): void {
+    if (event.key !== "ArrowDown" || event.altKey || event.ctrlKey || event.metaKey) return;
+    event.preventDefault();
+    this.#menu?.showPopover();
+  }
+
+  /** The menu about to close notes whether focus was in it; opened, it focuses the checked item. */
+  #menuBeforetoggle(event: ToggleEvent): void {
+    if (event.newState === "closed") {
+      this.#menuRestore = this.#menu?.contains(this.shadowRoot?.activeElement ?? null) ?? false;
+    }
+  }
+
+  /** The menu opened takes focus on its checked item; closed with focus in it, it gives focus back
+   * to Layout. aria-expanded follows it either way. */
+  #menuToggle(event: ToggleEvent): void {
+    this.menuOpen = event.newState === "open";
+    if (this.menuOpen) {
+      const items = this.#items;
+      (items.find((item) => item.ariaChecked === "true") ?? items[0])?.focus();
+    } else if (this.#menuRestore) {
+      this.#menuRestore = false;
+      this.#button("layout")?.focus();
+    }
+  }
+
+  /** Closes the menu, focus back on Layout, during the key or click that closes it. */
+  #closeMenu(): void {
+    this.#menu?.hidePopover();
+    this.#menuRestore = false;
+    this.#button("layout")?.focus();
+  }
+
+  /** Chooses the placement: the menu closes, and the request goes when it differs. */
+  #choose(placement: Placement): void {
+    this.#closeMenu();
+    if (this.arrangement && placement !== this.arrangement.placement) {
+      this.#request("arrange", { placement } satisfies ArrangeDetail);
+    }
+  }
+
+  /** The menu's keys: Up and Down move, wrapping, Home and End to the ends; Enter and Space choose;
+   * Escape closes; Tab closes and moves on from Layout. Each but Tab is marked handled. */
+  #menuKeydown(event: KeyboardEvent): void {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.isComposing) return;
+    const items = this.#items;
+    const from = items.indexOf(event.target as HTMLElement);
+    if (event.key === "Tab") {
+      // Focus goes back to Layout before the key's default moves it on, from there.
+      this.#closeMenu();
+      return;
+    }
+    const to = {
+      ArrowUp: from - 1,
+      ArrowDown: from + 1,
+      Home: 0,
+      End: items.length - 1,
+    }[event.key];
+    if (to !== undefined) {
+      event.preventDefault();
+      items[(to + items.length) % items.length]?.focus();
+    } else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      const placement = items[from]?.dataset.placement as Placement | undefined;
+      if (placement) this.#choose(placement);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      this.#closeMenu();
+    }
+  }
+
   protected override willUpdate(): void {
     if (!this.#shown.includes(this.current)) this.current = "run";
+    // With no arrangement the menu is gone, and with it whatever it showed.
+    if (!this.arrangement) this.menuOpen = false;
   }
 
   /** A control's button: its glyph and its name, the tab stop's tabindex, and its availability.
@@ -401,6 +557,58 @@ export class Controls extends LitElement {
     >
       ${glyph}<span class="name">${name}</span>
     </button>`;
+  }
+
+  /** Layout, the menu button: its glyph and name as every control's, the tab stop's tabindex, and
+   * the menu it opens, whether open or not. */
+  #layoutControl(): TemplateResult {
+    const name = names.layout;
+    return html`<button
+      type="button"
+      class="glyph-button"
+      data-control="layout"
+      aria-label=${name}
+      interestfor="layout-hint"
+      aria-description=""
+      tabindex=${this.current === "layout" ? "0" : "-1"}
+      aria-haspopup="menu"
+      aria-expanded=${this.menuOpen ? "true" : "false"}
+      aria-controls="layout-menu"
+      commandfor="layout-menu"
+      command="toggle-popover"
+      @keydown=${this.#layoutKeydown}
+    >
+      ${splitView}<span class="name">${name}</span>
+    </button>`;
+  }
+
+  /** The Layout menu: a popover menu of a radio item for each placement, the arrangement's checked,
+   * each item focused by the menu's keys alone. */
+  #layoutMenu(arrangement: Arrangement): TemplateResult {
+    return html`<div
+      id="layout-menu"
+      class="menu-popover"
+      popover="auto"
+      role="menu"
+      aria-label="Layout"
+      @beforetoggle=${this.#menuBeforetoggle}
+      @toggle=${this.#menuToggle}
+      @keydown=${this.#menuKeydown}
+    >
+      ${PLACEMENTS.map((placement) => {
+        const checked = placement === arrangement.placement;
+        return html`<div
+          role="menuitemradio"
+          class="item"
+          tabindex="-1"
+          data-placement=${placement}
+          aria-checked=${checked ? "true" : "false"}
+          @click=${() => this.#choose(placement)}
+        >
+          <span class="check">${checked ? check : nothing}</span>${placementNames[placement]}
+        </div>`;
+      })}
+    </div>`;
   }
 
   /** A control's hint: its name, shown under its button while the glyph shows alone. */
@@ -446,6 +654,7 @@ export class Controls extends LitElement {
 
   render() {
     const filesShown = this.#filesShown;
+    const arrangement = this.arrangement;
     return html`<div class="bar">
         <div
           class="toolbar"
@@ -472,6 +681,12 @@ export class Controls extends LitElement {
                 </div>`
               : nothing
           }
+          ${
+            arrangement
+              ? html`<div class="separator" role="separator" aria-orientation="vertical"></div>
+                <div class="group" role="group" aria-label="Layout">${this.#layoutControl()}</div>`
+              : nothing
+          }
         </div>
         <p class="status" role="status">${this.status}</p>
       </div>
@@ -481,7 +696,8 @@ export class Controls extends LitElement {
           ? html`${this.#form("new", "New file", "New file's name", "Create")}
           ${this.#form("rename", `Rename ${this.renaming}`, `Rename ${this.renaming} to`, "Rename")}`
           : nothing
-      }`;
+      }
+      ${arrangement ? this.#layoutMenu(arrangement) : nothing}`;
   }
 }
 

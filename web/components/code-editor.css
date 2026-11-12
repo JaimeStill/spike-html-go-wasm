@@ -44,6 +44,9 @@
   anchor-name: --sl-code-editor;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
+  /* The rows pack at the top: in a frame taller than its lines, rows left to stretch would share
+     the room left over, each number then standing apart from its line. */
+  align-content: start;
   box-sizing: border-box;
   block-size: 100%;
   overflow: auto;

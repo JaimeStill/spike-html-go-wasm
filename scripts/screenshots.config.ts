@@ -1,16 +1,26 @@
 // mise run screenshots' capture file, which the tooling's spike-html-apps-screenshots bin runs,
 // through scripts/screenshots.ts, which takes the task's --width: the SDK's description of the
-// index, --page index, captured whole at the SDK's widths, 390px, 1120px, and 1376px, and also
-// with Help open and with Settings open at each; and the components page as one capture name per
+// index, --page index, captured whole at the SDK's widths, 390px, 1120px, and 1376px, and also with
+// Help open and with Settings open at each; and the components page as one capture name per
 // component, --page components/<component>, each the page whole at each of the same widths, one
 // state per width, with every other component's section hidden, and the controls' with New file's
-// form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run,
-// and no Go loads. The page shows each state once and its layout follows the viewport, so the
-// narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the
-// index's and each component's, takes only that width's states. The SDK's widths over the whole
-// components page grew with every component, so each component is captured alone. The
-// description's facets, --all's profiles, the registry's profiles, and its server, which serves
-// the site as the browser tier serves it, by the SDK's served(), under the base, are the SDK's.
+// form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run, and
+// no Go loads; and the playground, --page playground, its demo as before a Run, on the starter:
+// the viewport alone, the page's one screen, not the page whole, since the page fits its viewport
+// by its demo's row, and a viewport grown to the page would grow the demo with it. It is captured
+// in each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
+// again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and 1376px,
+// the wide band in each arrangement, editor left, top, and right, and with the Layout menu open,
+// each chosen by the menu as a reader chooses, so no state depends on what an earlier one stored;
+// and at 1376px with the disclosure open, the demo yielding the disclosure's rows, still above its
+// floor, so every part's bottom border shows a gutter above the viewport's. The components page
+// shows each state once and its layout follows the viewport, so the narrow layout is the 390px
+// capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, and
+// the playground's, takes only that width's states, so the 900px capture, at no SDK width, is taken
+// only when every width is. The SDK's widths over the whole components page grew with every
+// component, so each component is captured alone. The description's facets, --all's profiles, the
+// registry's profiles, and its server, which serves the site as the browser tier serves it, by the
+// SDK's served(), under the base, are the SDK's.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/scripts/screenshots.config.ts, its pages
@@ -19,6 +29,7 @@
 
 import { join } from "node:path";
 
+import { until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type {
   DescribedPage,
@@ -90,7 +101,92 @@ const opened =
     if (step) await page.evaluate(step);
   };
 
-const described = description({ root, pages: ["index.html", "components.html"] });
+/** The width that puts the playground's fixed demo between its 44rem and 64rem bands, at the 1120px
+ * capture's height. */
+export const MIDDLE = { width: 900, height: 700 };
+
+/** Opens the playground's disclosure by a click on its summary, resolving once it is open. */
+const disclosed: Step = async (page: Page) => {
+  await page.evaluate(`document.querySelector("main > .prose > details > summary").click()`);
+  await until(page, `document.querySelector("main > .prose > details").open`, 5000);
+};
+
+/** Selects the playground demo's Timings tab, its phone band's output panel. */
+const timingsTab: Step = async (page: Page) => {
+  await page.evaluate(
+    `document.querySelector("sl-go-demo").shadowRoot.querySelector('.output-tabs [data-part="timings"]').click()`,
+  );
+};
+
+/** The playground demo's toolbar's shadow root, as an expression. */
+const CONTROLS = `document.querySelector("sl-go-demo").shadowRoot.querySelector("sl-controls").shadowRoot`;
+
+/** Whether the Layout menu is open, as an expression. */
+const MENU_OPEN = `${CONTROLS}.querySelector("#layout-menu").matches(":popover-open")`;
+
+/** Opens the playground demo's Layout menu by a click on Layout, resolving once it is open. */
+const openMenu = async (page: Page) => {
+  await page.evaluate(`${CONTROLS}.querySelector('[data-control="layout"]').click()`);
+  await until(page, MENU_OPEN, 5000);
+};
+
+/** The wide band's arrangements the playground is captured in, by the placement's name. */
+const PLACEMENTS = ["left", "top", "right"] as const;
+
+/** Chooses the placement by the playground demo's Layout menu, resolving once the menu closes. */
+const arranged =
+  (placement: (typeof PLACEMENTS)[number]): Step =>
+  async (page: Page) => {
+    await openMenu(page);
+    await page.evaluate(
+      `${CONTROLS}.querySelector('#layout-menu [data-placement="${placement}"]').click()`,
+    );
+    await until(page, `!${MENU_OPEN}`, 5000);
+  };
+
+/** The Layout menu open on editor left. */
+const menuOpen: Step = async (page: Page) => {
+  await arranged("left")(page);
+  await openMenu(page);
+};
+
+/** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
+ * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
+ * Layout menu open; and the widest with the disclosure open, each named as the SDK names a page's,
+ * the width last. */
+const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
+  const [phone, ...wide] = WIDTHS;
+  const state = (
+    viewport: { width: number; height: number },
+    open?: Step,
+    variant = "",
+    said = "",
+  ) => ({
+    name: `playground-${variant}${viewport.width}`,
+    caption: `${path}, ${said}${viewport.width}px`,
+    viewport,
+    full: false,
+    open,
+  });
+  return [
+    state(phone),
+    state(phone, timingsTab, "timings-", "Timings tab, "),
+    state(MIDDLE),
+    ...wide.flatMap((viewport) => [
+      state(viewport, arranged("left")),
+      ...PLACEMENTS.slice(1).map((placement) =>
+        state(viewport, arranged(placement), `${placement}-`, `editor ${placement}, `),
+      ),
+      state(viewport, menuOpen, "menu-", "Layout menu, "),
+    ]),
+    state(wide.at(-1) ?? phone, disclosed, "disclosure-", "disclosure open, "),
+  ];
+};
+
+const described = description({
+  root,
+  pages: ["index.html", "components.html", "playground.html"],
+});
 
 /** The components page as a page per component: its path, and a state whole at each of the SDK's
  * widths with the component's section alone, the state's name its files', with no slash, the
@@ -113,5 +209,8 @@ export default {
   ...described,
   pages: described.pages
     .flatMap((page) => (page.name === "components" ? perComponent(page) : [page]))
+    .map((page) =>
+      page.name === "playground" ? { ...page, states: playgroundStates(page) } : page,
+    )
     .map((page) => ({ ...page, states: page.states?.filter(kept) })),
 };

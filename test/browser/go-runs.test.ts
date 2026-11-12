@@ -153,7 +153,7 @@ describe("the runs", () => {
 
       const first = await run(page, HELLO, HELLO_DONE);
       const second = await run(page, HELLO, HELLO_DONE);
-      assert.deepEqual(first.phases, ["Fetch", "Compile", "Instantiate", "Run"]);
+      assert.deepEqual(first.phases, ["Fetch", "Wasm compile", "Instantiate", "Run"]);
       // A program's exit ends its instance; the next run instantiates the held module afresh.
       assert.deepEqual(second.phases, ["Instantiate", "Run"]);
       assert.match(second.lines.map(({ text }) => text).join(""), helloLine);
@@ -173,7 +173,7 @@ describe("the runs", () => {
       assert.deepEqual(probe.result, { ok: true, text: "[\n  5\n]\n" });
       // probe's module is fetched again, over the HTTP cache, since the switch to hello replaced
       // it; its instance starts afresh.
-      assert.deepEqual(probe.phases, ["Fetch", "Compile", "Instantiate", "Start", "Call"]);
+      assert.deepEqual(probe.phases, ["Fetch", "Wasm compile", "Instantiate", "Start", "Call"]);
       assert.deepEqual(goRequests(watched), [
         "assets/worker.js",
         "go/probe.wasm",
@@ -200,7 +200,7 @@ describe("Stop", () => {
       await says(page, SPIN, "Stopped spin", 5000);
       const spun = await shown(page, SPIN);
       // spin's call never answered, so it posted no call timing, and no exit or result shows.
-      assert.deepEqual(spun.phases, ["Fetch", "Compile", "Instantiate", "Start"]);
+      assert.deepEqual(spun.phases, ["Fetch", "Wasm compile", "Instantiate", "Start"]);
       assert.deepEqual(spun.rows, [{ kind: "line", text: "spin: looping until Stop" }]);
 
       const next = await run(page, FORMAT5, "Finished format");
@@ -297,7 +297,7 @@ describe("one request at a time", () => {
       await spin(page, SPIN);
       const hello = await run(page, HELLO, HELLO_DONE);
       assert.match(hello.lines.map(({ text }) => text).join(""), helloLine);
-      assert.deepEqual(hello.phases, ["Fetch", "Compile", "Instantiate", "Run"]);
+      assert.deepEqual(hello.phases, ["Fetch", "Wasm compile", "Instantiate", "Run"]);
       assert.equal(await page.evaluate(`window.demos.status(${SPIN})`), "Stopped spin");
       assert.deepEqual((await shown(page, SPIN)).rows, [
         { kind: "line", text: "spin: looping until Stop" },
@@ -324,7 +324,7 @@ describe("one request at a time", () => {
       const hello = await run(page, HELLO, HELLO_DONE);
       assert.equal(await loading, "stopped");
       assert.match(hello.lines.map(({ text }) => text).join(""), helloLine);
-      assert.deepEqual(hello.phases, ["Fetch", "Compile", "Instantiate", "Run"]);
+      assert.deepEqual(hello.phases, ["Fetch", "Wasm compile", "Instantiate", "Run"]);
       // The stopped load's response, released now, reaches no worker and changes nothing.
       await held.release();
       assert.equal(await page.evaluate(`${FORMAT}.runner.scenario`), "hello");

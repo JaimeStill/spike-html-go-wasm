@@ -1,15 +1,38 @@
 /*
  * The Go demo's layout in a shadow root: go-demo.ts adopts this sheet after the foundation's reset
- * and elements sheets (baseline/reset.css and elements.css). It reads only the foundation's
- * tokens, which a shadow root takes by inheritance from the page's entry. Unlayered, it sits above
- * the adopted layers in the root.
+ * and elements sheets (baseline/reset.css and elements.css) and the shared tablist sheet
+ * (tabs.css), which draws a fixed demo's output tabs. It reads only the foundation's tokens, which
+ * a shadow root takes by inheritance from the page's entry. Unlayered, it sits above the adopted
+ * layers in the root.
  *
  * The host is a block, a container its parts lay out against: the toolbar, then the files (the
  * tabs over the editor on a program demo, the editor alone on a handler demo), then the output,
  * the console and the timings, in one column, each part taking the width the demo gives. Where the
- * demo is wide enough, 44rem, the console and the timings share a row, the timings 16rem, the
+ * demo is wide enough, 44rem, the console and the timings share a row, the timings a track of
+ * their table's least width, which sl-timings states once (--sl-timings-min-inline-size), the
  * console taking what they leave, every part within the demo. Every gap is a foundation space. The
  * parts draw their own focus; nothing here moves, so reduced motion has nothing to stop.
+ *
+ * A fixed demo is as tall as the box its parent's layout gives it: block-size 100%, which a grid
+ * or flex parent's stretch, or a parent of definite height, resolves. It reads no viewport or
+ * container block unit, runs no script to size itself, and needs no size container around it. It
+ * is never below its floor, its min-content height, which the floor's two counts set, stated once
+ * on the host, in lines of the parts' own text: the editor's frame --sl-go-demo-editor-lines
+ * tall and the console's log --sl-go-demo-console-lines, each in lh, so the floor follows the type
+ * profile and zoom. The editor, the console's log (sl-console's fill), and the timings contain
+ * their size, so nothing they hold reaches the demo's min-content height, and the floor is the
+ * toolbar's row, the tabs, and the gaps as they lay out in each band, plus those lines, the shares
+ * below holding at the floor too: the least height at which the editor and the log each show their
+ * lines. Wherever the page gives less, the demo keeps its floor and the page grows. The host's own
+ * inline-size container is not its own query container, so the bands follow the demo's own width.
+ * Its parts share its height in fractions, never in lengths, each part's share a frame it scrolls
+ * inside, so nothing a part holds changes its box: the toolbar its own line, then the files 3fr,
+ * about 60% of what is left, and the output 2fr. Each band places the same parts again, by grid
+ * areas, so a band change keeps every part's content and scroll position, and names itself in
+ * --band, which the script reads only where CSS can't follow it: for the output panels' tabpanel
+ * roles, which change the accessibility tree, and for whether the toolbar's Layout group shows. The
+ * editor fills its frame, the console fills its own (sl-console's fill), and the timings scroll in
+ * theirs.
  *
  * An authoring error is a block on the page's red mixed into its surface, a red rule at its start,
  * its words in the page's own text color, above the fences as authored.
@@ -42,13 +65,145 @@
   align-items: start;
 }
 
-/* Side by side, the timings take a track of their table's least width, 16rem, and the console the
-   rest. The track is sized here, not by its content: the timings and the console each contain
-   their inline size, so an auto track would measure them as nothing and the table would run past
-   the demo's end. */
+/* The fixed layout: the phone band, then the wider bands' changes to it. */
+/* The floor's two counts, the least a reader can work in: six lines of the editor, enough to read
+   and edit a few statements, and two of the console's log, enough to read a line of output and
+   the exit line under it. Any page that places a fixed demo gets the same floor. */
+:host([fixed]) {
+  --sl-go-demo-editor-lines: 6;
+  --sl-go-demo-console-lines: 2;
+  block-size: 100%;
+  min-block-size: min-content;
+}
+
+:host([fixed]) .demo {
+  --band: phone;
+  block-size: 100%;
+  grid-template-rows: auto minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-areas: "controls" "files" "output";
+}
+
+:host([fixed]) sl-controls {
+  grid-area: controls;
+}
+
+/* The files: the editor alone, or the tabs over the panel holding it, the editor filling the
+   rest. */
+:host([fixed]) .files {
+  grid-area: files;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+:host([fixed]) .files:has(> sl-file-tabs) {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+/* The editor fills its row, its size contained, so its lines never size the demo, and its frame
+   is at least the floor's lines tall: the host takes the code's leading, which its frame's text
+   has, so 1lh here is one of the editor's lines. */
+:host([fixed]) :is(.files, #panel) > sl-code-editor {
+  contain: size;
+  block-size: 100%;
+  min-block-size: calc(var(--sl-go-demo-editor-lines) * 1lh);
+  line-height: var(--leading-code);
+}
+
+/* The console's log is at least the floor's lines tall, in its own lines (console.css). */
+:host([fixed]) sl-console {
+  --sl-console-min-lines: var(--sl-go-demo-console-lines);
+}
+
+:host([fixed]) .output {
+  grid-area: output;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "tabs" "part";
+  align-items: stretch;
+}
+
+:host([fixed]) .output > :is(sl-console, sl-timings) {
+  grid-area: part;
+}
+
+:host([fixed]) .output > .unselected {
+  visibility: hidden;
+}
+
+/* The timings scroll in their share, their size contained, so a full table never sizes the demo;
+   the table keeps its own width rules. */
+:host([fixed]) sl-timings {
+  contain: size;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* From 44rem, side by side: the timings take a track of their table's least width, and the console
+   the rest; a fixed demo shows no tablist, and both parts. The timings contain their inline size,
+   so their content would size an auto track as nothing and the table would run past the demo's
+   end; the track is sized instead by the timings' least width, read on the element, where
+   sl-timings states it, as its min-inline-size: an auto track takes that and no more, the 1fr
+   track taking the rest. One query for every demo, after the fixed layout's phone band, which it
+   changes. */
 @container (min-inline-size: 44rem) {
   .output {
-    grid-template-columns: minmax(0, 1fr) 16rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .output > sl-timings {
+    min-inline-size: var(--sl-timings-min-inline-size);
+  }
+
+  :host([fixed]) .demo {
+    --band: middle;
+  }
+
+  :host([fixed]) .output {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "console timings";
+  }
+
+  :host([fixed]) .output-tabs {
+    display: none;
+  }
+
+  :host([fixed]) .output > sl-console {
+    grid-area: console;
+  }
+
+  :host([fixed]) .output > sl-timings {
+    grid-area: timings;
+  }
+
+  :host([fixed]) .output > .unselected {
+    visibility: visible;
+  }
+}
+
+/* From 64rem, editor left or right: the files beside a column of the console over the timings,
+   right its mirror. Editor top keeps the middle band's layout. */
+@container (min-inline-size: 64rem) {
+  :host([fixed]) .demo {
+    --band: wide;
+  }
+
+  :host([fixed]) .demo:not([data-placement="top"]) {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "controls controls"
+      "files output";
+  }
+
+  :host([fixed]) .demo[data-placement="right"] {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-areas:
+      "controls controls"
+      "output files";
+  }
+
+  :host([fixed]) .demo:not([data-placement="top"]) .output {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-areas: "console" "timings";
   }
 }
 

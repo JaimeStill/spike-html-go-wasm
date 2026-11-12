@@ -159,7 +159,7 @@ describe("the timings' rendering", () => {
       assert.deepEqual(await rows(page, `window.timings.at("cold")`), {
         body: [
           ["Fetch", "182 ms"],
-          ["Compile", "96 ms"],
+          ["Wasm compile", "96 ms"],
           ["Instantiate", "4.2 ms"],
           ["Start", "13 ms"],
           ["Call", "0.6 ms"],
@@ -177,6 +177,19 @@ describe("the timings' rendering", () => {
           ["Run", "1,535 ms"],
         ],
         total: ["Total", "1,538 ms"],
+      });
+      // A built program's run: the build's phases arrived first; WebAssembly's compile, the
+      // toolchain's and the program's summed, is "Wasm compile", apart from Go's.
+      assert.deepEqual(await rows(page, `window.timings.at("built")`), {
+        body: [
+          ["Fetch", "641 ms"],
+          ["Wasm compile", "1,289 ms"],
+          ["Go compile", "1,843 ms"],
+          ["Link", "913 ms"],
+          ["Instantiate", "6.4 ms"],
+          ["Run", "2.2 ms"],
+        ],
+        total: ["Total", "4,694 ms"],
       });
       assert.deepEqual(await rows(page, `window.timings.at("after-stop")`), {
         body: [

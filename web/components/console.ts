@@ -14,7 +14,8 @@
 // again only if it is the last and changed, a line a later write continued. The frame is sized by
 // its own max-block-size, never as a flex item of the host: a flex column sizes an item by its
 // content, laying out every row again on each append, which cost a frame about 50 ms at the limit
-// in Chrome 157; a block's layout steps over the rows that didn't change.
+// in Chrome 157; a block's layout steps over the rows that didn't change. A filling console's
+// frame is a grid item, its size contained, so no container measures its rows at all.
 //
 // The log is quiet: role log, which would announce every addition, with aria-live off, so no write
 // is read out as it arrives; a reader moves through it as through any text. It is in the tab order,
@@ -128,7 +129,9 @@ function row(entry: ConsoleEntry): HTMLElement {
  * log is described by it. With no log, it shows the empty state.
  *
  * The log is named by `label`, "Output" by default. It grows with its lines up to 24rem, or the
- * length the page sets as --sl-console-max-block-size on the host, and scrolls inside.
+ * length the page sets as --sl-console-max-block-size on the host, and scrolls inside. With `fill`,
+ * it grows with nothing: the console fills the block size its container gives the host, the bar
+ * above and the log taking the rest, whatever it holds, and the log scrolls inside that.
  *
  * Copy, a glyph button, puts the log's text (ConsoleLog's text()) on the clipboard and confirms it
  * in a polite status for two seconds. Clear, another, sends a clear request. Both are named, show
@@ -147,6 +150,7 @@ export class ConsoleView extends LitElement {
   static properties = {
     log: { attribute: false },
     label: { type: String },
+    fill: { type: Boolean, reflect: true },
     status: { state: true },
   } satisfies PropertyDeclarations;
 
@@ -155,6 +159,8 @@ export class ConsoleView extends LitElement {
   declare log: ConsoleLog | null;
   /** The log's accessible name. */
   declare label: string;
+  /** Whether the console fills the host's given block size, rather than growing with its log. */
+  declare fill: boolean;
   /** Copy's confirmation, while it shows. */
   declare private status: string;
 
@@ -181,6 +187,7 @@ export class ConsoleView extends LitElement {
     super();
     this.log = null;
     this.label = "Output";
+    this.fill = false;
     this.status = "";
     // Follows the log it holds, while it is in the document, a frame at a time.
     new Subscription(this, () => this.log, this.#changed);

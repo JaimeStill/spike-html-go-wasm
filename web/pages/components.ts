@@ -32,8 +32,9 @@
 // with no Go, and applies the console's clear requests to it.
 //
 // The timings' states (sl-timings): a cold load's five phases, a held instance's call alone, a
-// program's instantiate and run, the call after Stop, which instantiates and starts afresh with no
-// fetch, and no run yet. The page owns each state's RunTimings,
+// program's instantiate and run, a program built from source, its build's four phases before its
+// run's two, the call after Stop, which instantiates and starts afresh with no fetch, and no run
+// yet. The page owns each state's RunTimings,
 // fresh for each list, recording a script of the timing events a runner would send, with no Go,
 // some out of the phase order, as a runner's can arrive. One state's specimen aid, a button,
 // begins a new run in place of the last when pressed, so a capture of the page never catches it
@@ -56,8 +57,10 @@
 // it; a program demo with editable files; handler demos for files, its text input, and for crash,
 // which panics outside any handler; a handler demo whose fence is the SDK's Shiki markup, as
 // a Markdown page renders it; a handler demo holding two fences, an authoring error; and two
-// demos, spin and format, sharing the runner. The page gives every demo the page's one runner, the runtime's Runner, which
-// TypeScript checks against the demo's declared subset, DemoRunner, where the page creates it.
+// demos, spin and format, sharing the runner; and a source demo, built in the page from its
+// editable files, a main.go reading its input.txt. The page gives every demo the page's one
+// runner, the runtime's Runner, which TypeScript checks against the demo's declared subset,
+// DemoRunner, where the page creates it.
 // Nothing runs until a Run is pressed, so a capture of the page is the same every time.
 
 import "../components/code-editor.ts";
@@ -603,6 +606,18 @@ const COLD: [Phase, number][] = [
   ["call", 0.62],
 ];
 
+/** A built program's cold run: the manifest, the toolchain, and the archives fetched, the
+ * toolchain's and the program's modules compiled, summed in one compile, Go's compile and link,
+ * then the program instantiated and run. */
+const BUILT: [Phase, number][] = [
+  ["go-compile", 1843.2],
+  ["link", 912.7],
+  ["fetch", 640.5],
+  ["compile", 1288.9],
+  ["instantiate", 6.4],
+  ["run", 2.18],
+];
+
 /** A held instance's call: the handler's answer alone. */
 const HELD: [Phase, number][] = [["call", 0.38]];
 
@@ -621,6 +636,13 @@ specimens("timings", [
     key: "program",
     label: "A program's run: instantiate and run, arriving run first, shown in phase order",
     build: () => [table(timed(["run", 1534.6], ["instantiate", 3.08]))],
+  },
+  {
+    key: "built",
+    label:
+      "A program built from source: fetch, Wasm compile, Go compile, link, instantiate, and run, " +
+      "the build's phases arriving first, shown in phase order",
+    build: () => [table(timed(...BUILT))],
   },
   {
     key: "after-stop",

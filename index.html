@@ -4,10 +4,13 @@
      page entry and its registrations, every built-in profile, so the settings offer each, its
      preferences module, and its keys module, render-blocking, as the build makes every module
      script one entry; then the components' glyph-button.css and the SDK's site.css, each by its
-     package's name, in that order after the entry. The components' shortcuts list and settings,
+     package's name, and the pages' shared sheet, web/pages/page.css, in that order after the
+     entry, so the page's own rules sit in its page layer, after the SDK's site layer, with no
+     inline sheet: the build writes an inline sheet before the linked ones, which would put its
+     layer ahead of the foundation's. The components' shortcuts list and settings,
      their modules render-blocking too, which the two shortcut dialogs hold. The header is one group
      of buttons, header-actions: Help and Settings, in that order, at the header's inline end at
-     every width, by the page's own rule; the site has no other site to list, so the header has no
+     every width, by the shared sheet's rule; the site has no other site to list, so the header has no
      site nav. Help and Settings are the
      openers of the components' shortcut dialogs, each sending show-modal to its dialog by the
      invoker command, keys.js clicking it on its key: Help, on ?, opens dialog#help, headed
@@ -38,16 +41,7 @@
     <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
     <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
     <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
-    <style>
-      /* With no site nav to take the header's row, site.css leaves the header-actions group at the
-         row's inline start; the group goes to the inline end at every width, where the SDK's
-         header check holds the buttons when the header has no nav. Unlayered: the build writes this
-         sheet before the linked ones, so an @layer here would declare its layer ahead of the
-         foundation's and reorder every layer on the page. */
-      body > header > .header-actions {
-        margin-inline-start: auto;
-      }
-    </style>
+    <link rel="stylesheet" href="./web/pages/page.css" />
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
@@ -99,6 +93,10 @@
         <a href="components.html">The components page</a> shows the spike's components in each of
         their states, its Go demos running hello and the probe's handlers in a worker, loading Go
         only on a Run.
+      </p>
+      <p>
+        <a href="playground.html">The playground</a> compiles and runs the Go you write, with Go's
+        own compiler and linker in the page, fetching the toolchain only on a Run.
       </p>
       <h2 id="the-question">The question</h2>
       <p>

@@ -5,22 +5,30 @@
  * which a shadow root takes by inheritance from the page's entry. Unlayered, it sits above the
  * adopted layers in the root.
  *
- * The table is as wide as its content, at least 16rem or the container's width when that is
- * narrower, and never wider than the container. The phases' names lead each row; the times keep to
- * the end of their column in tabular numerals, so the digits of each place line up, and never
- * break between a number and its unit. The total row stands apart from the phases above it by a
- * heavier rule and weight, not by color. Nothing moves.
+ * The table is as wide as its content, at least its least width or the container's width when that
+ * is narrower, and never wider than the container. The least width, --sl-timings-min-inline-size,
+ * 28ch by default, is stated once, on the host, in the ch of the table's own text: room for a
+ * build's full table, its longest phase name, "Wasm compile", beside a five-digit time,
+ * "12,345 ms", with the cells' padding, so a run's table never grows past it as its rows arrive.
+ * An owner that lays the timings out beside something else reads the same property on the element
+ * for their track (go-demo.css), so no length is kept in step across sheets. The phases' names
+ * lead each row; the times keep to the end of their column in tabular numerals, so the digits of
+ * each place line up, and never break between a number and its unit. The total row stands apart
+ * from the phases above it by a heavier rule and weight, not by color. Nothing moves.
  */
 
-/* The table takes the width its container gives and asks for no more. */
+/* The table takes the width its container gives and asks for no more. The least width is a length
+   in ch, which resolves where it is read: on the table, or on the host where an owner reads it,
+   both in the table's text. A page may set it on the host. */
 :host {
+  --sl-timings-min-inline-size: 28ch;
   display: block;
   contain: inline-size;
 }
 
 table {
   inline-size: max-content;
-  min-inline-size: min(16rem, 100%);
+  min-inline-size: min(var(--sl-timings-min-inline-size), 100%);
   max-inline-size: 100%;
   margin: 0;
 }

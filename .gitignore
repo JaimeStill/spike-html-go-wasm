@@ -5,8 +5,10 @@
 # the Go build's .wasm and marathon's working files.
 node_modules
 dist/
-# The Go build's output, written to dist/go/; never committed (mise run lint:go).
+# The Go build's output, written to dist/go/, the toolchain's archives among it; never committed
+# (mise run lint:go).
 *.wasm
+*.a
 
 # marathon working files.
 .claude/plans/

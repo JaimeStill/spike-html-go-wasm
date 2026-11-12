@@ -7,7 +7,8 @@
 // name, says what it means.
 // From spike-html-hosting-icons (v0.1.0): dist/octicon/copy-16.js, trash-16.js,
 // check-circle-16.js, x-circle-16.js, play-16.js, square-fill-16.js, undo-16.js, file-added-16.js,
-// and pencil-16.js; Octicons, primer/octicons @primer/octicons@19.42.0, MIT.
+// pencil-16.js, split-view-16.js, and check-16.js; Octicons, primer/octicons
+// @primer/octicons@19.42.0, MIT.
 
 import { html, type TemplateResult } from "lit";
 
@@ -147,5 +148,35 @@ export const pencil: TemplateResult = html`<svg
   <path
     fill="currentColor"
     d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm.176 4.823L9.75 4.81l-6.286 6.287a.25.25 0 0 0-.064.108l-.558 1.953l1.953-.558a.25.25 0 0 0 .108-.064Zm1.238-3.763a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44l1.263-1.263a.25.25 0 0 0 0-.354Z"
+  />
+</svg>`;
+
+/** Octicons' split-view-16: a frame split down its middle, for a layout. */
+export const splitView: TemplateResult = html`<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1em"
+  height="1em"
+  viewBox="0 0 16 16"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path
+    fill="currentColor"
+    d="M1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5c0 .464-.184.909-.513 1.237A1.75 1.75 0 0 1 14.25 16H1.75c-.464 0-.909-.184-1.237-.513A1.75 1.75 0 0 1 0 14.25V1.75C0 .784.784 0 1.75 0M1.5 1.75v12.5c0 .138.112.25.25.25H7.5v-13H1.75a.25.25 0 0 0-.25.25M9 14.5h5.25a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25H9Z"
+  />
+</svg>`;
+
+/** Octicons' check-16: a tick. */
+export const check: TemplateResult = html`<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1em"
+  height="1em"
+  viewBox="0 0 16 16"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path
+    fill="currentColor"
+    d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 .018-1.042a.75.75 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0"
   />
 </svg>`;

@@ -42,8 +42,29 @@ describe("RunTimings", () => {
     for (const phase of [...PHASES].reverse()) timings.record({ phase, ms: 1 });
     assert.deepEqual(
       timings.phases.map(({ phase }) => phase),
-      ["fetch", "compile", "instantiate", "start", "call", "run"],
+      ["fetch", "compile", "go-compile", "link", "instantiate", "start", "call", "run"],
     );
+  });
+
+  test("holds a build's phases before its program's run, in phase order", () => {
+    const timings = new RunTimings();
+    timings.begin();
+    // As a build reports them: Go's steps first, then its summed fetch and compile, then the run.
+    timings.record({ phase: "go-compile", ms: 812 });
+    timings.record({ phase: "link", ms: 240 });
+    timings.record({ phase: "fetch", ms: 95 });
+    timings.record({ phase: "compile", ms: 1310 });
+    timings.record({ phase: "instantiate", ms: 4 });
+    timings.record({ phase: "run", ms: 3 });
+    assert.deepEqual(pairs(timings), [
+      ["fetch", 95],
+      ["compile", 1310],
+      ["go-compile", 812],
+      ["link", 240],
+      ["instantiate", 4],
+      ["run", 3],
+    ]);
+    assert.equal(timings.total, 2464);
   });
 
   test("holds only the phases recorded, in the phase order whatever order they arrive in", () => {
@@ -130,7 +151,11 @@ describe("RunTimings", () => {
     timings.record({ phase: "call", ms: 1 });
     const seen = heard(timings);
     const refused: [unknown, ErrorConstructor, RegExp][] = [
-      ["link", RangeError, /one of fetch, compile, instantiate, start, call, run, not "link"$/],
+      [
+        "wasm",
+        RangeError,
+        /one of fetch, compile, go-compile, link, instantiate, start, call, run, not "wasm"$/,
+      ],
       ["Fetch", RangeError, /not "Fetch"$/],
       ["", RangeError, /not ""$/],
       [undefined, TypeError, /not undefined$/],

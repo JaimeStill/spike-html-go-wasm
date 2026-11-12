@@ -9,7 +9,8 @@
 // focused; Left and Right wrapping, Home and End, unavailable controls reached; Enter and Space
 // pressing. Availability follows the models; every press sends a request and changes neither
 // model, an unavailable one sending nothing. The forms: opened anchored below their buttons, the
-// input focused, a rename's stem selected; refused on submit and checked again as typed; taken on
+// input focused, a rename's stem selected; inside the viewport at 280px, a phone's width, and wide,
+// at most 22rem; refused on submit and checked again as typed; taken on
 // submit; Escape closing with nothing sent; focus back on the button either way. The status says
 // only transitions. Sizes; at a phone's width the glyphs alone, the groups whole and a name's hint
 // on hover, wider the names, in every profile and a wide font; motion; and the subscription.
@@ -822,6 +823,52 @@ describe("the forms", () => {
         `${shadow(controls)}.querySelector("#new-problem svg").checkVisibility()`,
       );
       assert.ok(shown, "the refusal is led by its glyph");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("each form lies inside the viewport, at a phone's width, a narrower one, and wide, bounded by its containing block, never past 22rem", async () => {
+    const page = await open();
+    try {
+      const controls = `window.controls.at("editable")`;
+      for (const width of [280, PHONE, WIDE]) {
+        await viewport(page, width);
+        for (const form of ["new", "rename"]) {
+          await page.evaluate(`(async () => {
+            const button = window.controls.button(${controls}, "${form}");
+            button.scrollIntoView({ block: "center" });
+            button.click();
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          })()`);
+          assert.equal(await isOpen(page, controls, form), true, `${form} at ${width}px`);
+          const placed: {
+            left: number;
+            right: number;
+            width: number;
+            viewport: number;
+            rem: number;
+          } = await page.evaluate(`(() => {
+            const box = ${popover(controls, form)}.getBoundingClientRect();
+            return {
+              left: box.left,
+              right: box.right,
+              width: box.width,
+              viewport: document.documentElement.clientWidth,
+              rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
+            };
+          })()`);
+          const at = `${form} at ${width}px`;
+          assert.ok(placed.left >= 0, `${at}: its inline start in view, ${placed.left}`);
+          assert.ok(
+            placed.right <= placed.viewport + 0.5,
+            `${at}: its inline end in view, ${placed.right} of ${placed.viewport}`,
+          );
+          assert.ok(placed.width <= 22 * placed.rem + 0.5, `${at}: at most 22rem, ${placed.width}`);
+          await press(page, "Escape");
+          await until(page, `!${popover(controls, form)}.matches(":popover-open")`, 3000);
+        }
+      }
     } finally {
       await page.close();
     }

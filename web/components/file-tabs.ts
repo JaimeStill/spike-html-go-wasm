@@ -26,6 +26,7 @@ import { idrefs, roved } from "./aria.ts";
 import styles from "./file-tabs.css" with { type: "css" };
 import type { FileSet } from "./file-set.ts";
 import { Subscription } from "./subscription.ts";
+import tabs from "./tabs.css" with { type: "css" };
 
 /** The tag the element defines. */
 export const tagName = "sl-file-tabs";
@@ -55,7 +56,7 @@ export interface SelectDetail {
  * selection. Enter and Space, and a click, request the selection of the focused tab.
  */
 export class FileTabs extends LitElement {
-  static styles = [reset, elements, styles];
+  static styles = [reset, elements, tabs, styles];
 
   static properties = {
     files: { attribute: false },

@@ -13,12 +13,12 @@ export const PHONE = Math.min(...WIDTHS.map(({ width }) => width));
 /** The browser's own page width, in CSS px, which a page opens at. */
 export const WIDE = 1280;
 
-/** Lays the page out at the width, 900px tall, resolving once its fonts are ready and two frames
- * have painted. */
-export async function viewport(page: Page, width: number): Promise<void> {
+/** Lays the page out at the width, 900px tall unless another height is given, resolving once its
+ * fonts are ready and two frames have painted. */
+export async function viewport(page: Page, width: number, height = 900): Promise<void> {
   await page.cdp("Emulation.setDeviceMetricsOverride", {
     width,
-    height: 900,
+    height,
     deviceScaleFactor: 1,
     mobile: false,
   });

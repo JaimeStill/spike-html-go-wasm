@@ -2,8 +2,9 @@
 // the last run's phases, each phase's time in ms, and their total. The timings' owner, the page or
 // the element composing the timings over a runner, writes them; the table renders from them,
 // re-renders on their change event, and never writes them. It shows only the phases the run had,
-// in the runtime's phase order, so a held instance's call is one row and a cold load five; a new
-// run replaces the last, as the timings do.
+// in the runtime's phase order, so a held instance's call is one row, a cold load five, and a
+// built program's cold run six; a new run replaces the last, as the timings do. The runtime's
+// compile phase, WebAssembly's, is "Wasm compile", apart from a build's "Go compile".
 //
 // The table is a table to assistive technology: named by its caption, the phases' names its row
 // headers, under a column header for each. The times are right-aligned in tabular numerals, so
@@ -26,7 +27,9 @@ export const tagName = "sl-timings";
 /** Each phase's name as the table's row header gives it. */
 const NAMES: Readonly<Record<Phase, string>> = Object.freeze({
   fetch: "Fetch",
-  compile: "Compile",
+  compile: "Wasm compile",
+  "go-compile": "Go compile",
+  link: "Link",
   instantiate: "Instantiate",
   start: "Start",
   call: "Call",

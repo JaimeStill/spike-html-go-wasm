@@ -14,9 +14,9 @@
      exits of 0 and 2, a handler's answer and error, ANSI escapes, long lines, a log past its limit,
      empty, and one streaming on a button's press, each log the script's own, written from scripted
      events, its clear requests applied by the script. sl-timings: a cold load, a held instance's
-     call, a program's run, the call after Stop, and no run yet, each run's timings the script's
-     own, recorded from scripted events, and one whose specimen aid begins a new run in place of the
-     last on a button's press. sl-controls: idle with nothing modified, a file modified, a run
+     call, a program's run, a program built from source, the call after Stop, and no run yet, each
+     run's timings the script's own, recorded from scripted events, and one whose specimen aid
+     begins a new run in place of the last on a button's press. sl-controls: idle with nothing modified, a file modified, a run
      pending, a run that fails, the files group, New file's form refusing a name on a specimen aid's
      press, and the last file, each over the file tabs and an editor, the script owning each file
      set and run state and applying the toolbar's requests, a run ending on its own after a moment.
@@ -25,9 +25,12 @@
      JSON input; a program demo, hello's main.go as cmd/hello/main.go holds it; a program demo with
      editable files; handler demos for files, its text input, and for crash, which panics; a
      handler demo whose fence is the SDK's Shiki markup, as a Markdown page renders it; a handler
-     demo with two fences, an authoring error; and two demos, spin and format, sharing the runner. The
+     demo with two fences, an authoring error; two demos, spin and format, sharing the runner; and
+     a source demo, editable files built from source in the page, a main.go reading its input.txt
+     from the working directory. The
      script gives every demo the page's one runner, which loads Go only on a Run. The shell is the index's, the same header, dialogs,
-     and unlayered header-actions rule; see index.html for each. -->
+     and shared sheet, web/pages/page.css, which also holds the states' layout and sets each
+     section apart; see index.html for each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -36,48 +39,7 @@
     <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
     <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
     <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
-    <style>
-      /* With no site nav to take the header's row, site.css leaves the header-actions group at the
-         row's inline start; the group goes to the inline end at every width, where the SDK's
-         header check holds the buttons when the header has no nav. Unlayered: the build writes this
-         sheet before the linked ones, so an @layer here would declare its layer ahead of the
-         foundation's and reorder every layer on the page. */
-      body > header > .header-actions {
-        margin-inline-start: auto;
-      }
-      /* A section opens on its heading, which the foundation's elements layer gives no top margin
-         as its container's first child, and the foundation leaves the space between sections to
-         the page: the section takes it. From spike-html-apps-components (19d4f59): demo/demo.css,
-         its main > section rule. */
-      main > section {
-        margin-block-start: var(--space-xl);
-      }
-      /* A component's states, one figure each, stacked. */
-      .states {
-        display: grid;
-        gap: var(--space-m);
-        margin-block-start: var(--space-s);
-      }
-      .state {
-        margin: 0;
-      }
-      .state > figcaption {
-        margin-block-end: var(--space-2xs);
-      }
-      /* A state of several instances sets them apart. */
-      .state > * + :not(figcaption) {
-        margin-block-start: var(--space-s);
-      }
-      /* A specimen aid, beside the component it observes, quieter than the component. */
-      /* The panel the file tabs control, holding the editor that shows the active file. */
-      .state > .panel {
-        margin-block-start: var(--space-2xs);
-      }
-      .readout {
-        color: var(--fg-2);
-        font-size: var(--text-s);
-      }
-    </style>
+    <link rel="stylesheet" href="./web/pages/page.css" />
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
@@ -289,6 +251,34 @@ func main() {
             </sl-go-demo>
             <sl-go-demo scenario="probe" handler="format" label="format demo, sharing the runner">
 <pre><code class="language-json">[5]
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="source">
+            <figcaption>
+              Built from source: Run compiles and links the files in the page, then runs main, which
+              reads input.txt from its working directory
+            </figcaption>
+            <sl-go-demo source editable-files label="source demo">
+<pre><code class="language-go">// A program built in the page: Run compiles and links these files with Go's own compiler and
+// linker, then runs main. Edit it, or input.txt, and Run again.
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	text, err := os.ReadFile("input.txt")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	fmt.Printf("main read %d bytes: %s", len(text), text)
+}
+</code></pre>
+<pre data-file="input.txt"><code class="language-text">hello from the working directory
 </code></pre>
             </sl-go-demo>
           </figure>

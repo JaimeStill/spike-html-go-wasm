@@ -5,11 +5,12 @@
 
 The GitHub Pages site of spike-html-go-wasm, made from the template of
 [spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.2. Its index,
-`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside one more hand page,
+`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside two more hand pages:
 `components.html`, the components page, which shows each component in `web/components/` in each
-of its states; its Go demos run Go through the runtime in `web/runtime/`. The site copies no
-Markdown tree: `content.json` records none, and `content/` holds nothing. The spike's question,
-evidence, and path are in `context/README.md`.
+of its states, its Go demos running Go through the runtime in `web/runtime/`; and
+`playground.html`, the playground, where the reader edits Go and builds and runs it in the page
+(see "Playground"). The site copies no Markdown tree: `content.json` records none, and `content/`
+holds nothing. The spike's question, evidence, and path are in `context/README.md`.
 
 ## Tasks
 
@@ -18,19 +19,29 @@ evidence, and path are in `context/README.md`.
 - `mise run check`: run every check, reading no network. It lints with ESLint (the web tiers'
   import direction, and the check that the build left no CSS module script), Prettier,
   shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm` and fails unless
-  `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` is tracked. It runs the
-  Go tests as wasm under node twice: on node's fs, and on the runtime's in-memory fs, where
-  `test/memfs` drives it through package `os`. It type-checks the configs, the web tiers, and the
-  suite with tsc and runs `mise run build`.
+  `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` or `.a` archive is
+  tracked. It runs the Go tests as wasm under node twice: on node's fs, and on the runtime's
+  in-memory fs, where `test/memfs` drives it through package `os`. Among them, `playground/calc`'s
+  tests run the playground's starter over its shipped `input.txt` and over a script with failing
+  lines, and hold its output and its exit code. It type-checks the configs, the web tiers, and
+  the suite with tsc and runs `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
-    tests the components' five models (`EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`,
-    and `RunState`): their operations, refusals, and change events. It holds each program demo's
-    go fence on the components page to its scenario's source, byte for byte. It fails if a module
-    under `web/components` or `web/pages` registers a page shortcut through the foundation's
-    `keys.js`.
+    checks the playground's toolchain: each file its manifest names exists under its content's
+    hash, and the manifest's import closure equals Go's own `go list -deps`. It runs Go's
+    compiler and linker over that toolchain on the in-memory fs: hello built and run, a compile
+    error and a package clause other than main reported as the compiler writes them, an import
+    the manifest lacks refused before the compiler runs, and a non-Go file read from the run's
+    working directory. It tests the components' six models (`Arrangement`, `EditorSettings`,
+    `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change
+    events. It holds each program demo's go fence on the components page to its scenario's source,
+    byte for byte, and the playground's demo to the starter's files in `playground/calc/`, its four
+    `.go` files and its `input.txt`. It fails if a module under `web/components` or `web/pages`
+    registers a page shortcut through the foundation's `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
-    and the crawl, and proves each component on the components page:
+    and the crawl, reads each hand page's cascade layers (the foundation's, then `site`, then
+    `page`) and finds no inline `<style>` in its source, and proves each component on the
+    components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
       accessibility tree, its gutter, its loading, its editing keys and events, its settings,
       paste, and read-only;
@@ -45,7 +56,8 @@ evidence, and path are in `context/README.md`.
       last, and subscription;
     - the controls: their toolbar in the accessibility tree, keyboard, availability following the
       models, requests that change nothing, the New file and Rename forms' validation and focus
-      return, the status's transitions, target sizes, the glyphs alone and the groups whole at a
+      return, each form inside the viewport at 280px, a phone's width, and wide, the status's
+      transitions, target sizes, the glyphs alone and the groups whole at a
       phone's width in a wide font, the names' hints, motion, and subscription;
     - the Go demo, running real Go over the page's one runner: no Go before a Run, a handler's run
       and a program's, Ctrl or Cmd+Enter from inside a demo alone, Alt or Shift with Enter running
@@ -57,23 +69,202 @@ evidence, and path are in `context/README.md`.
       module reused and scenarios switched in place with no fetch, Stop ending the probe's spin
       with the next call fetching nothing new and one worker live, a Run while another run or a
       load is pending stopping it first, and the probe's crash, a panic outside any handler,
-      printing to stderr and exiting 2.
+      printing to stderr and exiting 2;
+    - building in the page, through the components page's source demo: a cold build fetching the
+      manifest, the compiler, the linker, and only its import closure's archives, then running
+      main, which reads `input.txt` from its working directory, with every phase of a build; the
+      same files again building nothing; an edit fetching only the archives its new imports add;
+      a compile error as the compiler writes it, with its exit, running nothing; an import the
+      manifest lacks refused before the compiler runs; and Stop, while idle, during a built
+      program's busy loop, and during a build, the next build fetching and compiling no toolchain
+      module; a build started while spin is pending stopping spin first, each console holding only
+      its own output; a program's Run, or the runner's load or run, while a build is pending
+      stopping the build, which rejects as stopped, the source demo's console holding none of the
+      other request's events; and Ctrl+Enter and Cmd+Enter building and running the edited
+      program, and Reset restoring the source as given;
+    - the playground: the starter's five files, `main.go` active, and no Go before a Run; the
+      first Run fetching the manifest, the compiler, the linker, and only the starter's closure of
+      archives, and printing its results with exit 0 and every phase of a build; an edit to
+      `input.txt` alone building nothing, the Run fetching nothing and printing the new input's
+      results, a failing line's `input.txt:<n>: <reason>` on stderr with exit 1; a Run after an
+      edit to `main.go` fetching no toolchain module and no archive held, a new standard import
+      only the archives its closure adds, and the edited program's output; a compile error; Stop
+      ending a busy loop, the next build fetching no toolchain module; and a file the reader adds
+      read through `os.ReadFile` from the working directory, nothing a run writes outliving it;
+    - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
+      at 900px, at 1120x800, and at 900x700: with the disclosure closed, the demo takes every row
+      left and ends a gutter above the viewport's bottom edge, the one gutter that holds the page
+      off both sides, every part's bottom border inside the demo and in view, in each arrangement
+      from 64rem; the page doesn't scroll, and no script sizes the demo; opening the disclosure
+      takes its rows from the demo, down to its floor, where the editor's frame holds six of its
+      lines and the console's log two, one of them exactly, and the page scrolls down, the demo a
+      gutter above its end, but never sideways; closing it restores the screen; on a short
+      screen, 390x600 or 1376x500, the demo holds its floor, closed or open;
+    - the playground's fixed layout, at 390px, 1120px, and 1376px, and with the demo half a rem
+      either side of 44rem and 64rem: each width lays out its band, and from 64rem each
+      arrangement places the parts as it says; a paste of 500 lines, 10,000 printed lines, and a
+      full timings table change no part's box; the page never scrolls sideways and every part
+      stays inside the demo; a Run, a Stop, a failed build, a band change, and an arrangement
+      change keep the editor's and the console's content and scroll position and the chosen
+      output tab; the phone's output tablist has the expected accessibility tree and keys, and
+      no tablist or tabpanel shows from 44rem; a demo without `fixed` keeps its flowing layout;
+      the timings' track is `sl-timings`' least width, 28ch of its table, and the steady status
+      asks for 24ch of its own text, sharing the toolbar's line at 50rem and taking its own at a
+      phone's width, each one property that moves every reader when set on its element;
+    - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
+      absent below; the menu opens `--space-3xs` below Layout, at its inline start, as wide as its
+      items and inside the viewport, and has the expected accessibility tree and the APG keys;
+      choosing an arrangement applies it in place, with no reload or request, leaving the run's
+      status, output, and timings as they were; the choice is the only write to storage, under
+      the spike's key, and a reload and another page open in it; the page follows another tab's
+      choice and a cleared store; an empty store, text that isn't JSON, a refused value, and
+      blocked storage each open with the editor left and write nothing.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
-  (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`. A bare `vite build`
-  omits the wasm.
-- `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths,
-  390px, 1120px, and 1376px, and each component on the components page alone at each of them,
-  `--page components/<component>`, as `--page components/console`. `--width <px>`, one of the
-  three, captures that width alone, the index's and each component's, as
-  `mise run screenshots --page components/controls --width 390`; any other width is a usage
-  error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
-  know, and hands it to the capture file.
+  (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`, and the playground's
+  toolchain into `dist/go/toolchain/` (`scripts/build-toolchain.ts`): Go's compiler and linker
+  built for `GOOS=js`, an archive for each standard-library package, and `manifest.json`, the one
+  file that names them, each by its content's hash. A bare `vite build` omits the wasm.
+- `mise run screenshots`: capture the pages, light and dark. The index and each component on the
+  components page, alone, are captured at the SDK's widths, 390px, 1120px, and 1376px; a
+  component's capture is `--page components/<component>`, as `--page components/console`. The
+  playground, `--page playground`, is captured as its viewport alone, the page's one screen, in
+  each band of its fixed demo: 390px with the output panel's Output tab and again with its
+  Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
+  each chosen through the Layout menu, and with the menu open; and 1376px with the disclosure
+  open, the demo yielding its rows, every part's bottom border a gutter above the viewport's.
+  `--width <px>`, one of the SDK's three, captures that width alone on every page, as
+  `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
+  is taken only when no width is given. Any other width is a usage error naming the three.
+  `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't know, and hands it to the
+  capture file.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
 - `mise run live [base URL]`: check that the deployed site, at its Pages URL or the base given,
-  serves the index as HTML and `go/hello.wasm` as `application/wasm`, gzip-encoded. It reads the
-  network and isn't part of the check.
+  serves the index as HTML, `go/hello.wasm` as `application/wasm`, gzip-encoded, the playground's
+  `go/toolchain/manifest.json`, and the compiler it names as `application/wasm`, gzip-encoded. It
+  reads the network and isn't part of the check; the unit tier holds its assertions against local
+  servers.
+
+## Runtime
+
+The runtime, `web/runtime/`, runs Go in one dedicated worker per page. A page creates one
+`Runner` (`runner.ts`) and passes it to every Go demo; its events and the messages to its worker
+are `protocol.ts`'s.
+
+- `load(scenario)`: fetch and compile `go/<scenario>.wasm`, a prebuilt entrypoint, and hold it.
+- `build(files)`: build a program from its files, each `{ name, text }`, and hold it as the
+  scenario `main`, so the next `run()` runs its main to its exit. In the worker, the build reads
+  `go/toolchain/manifest.json`, revalidated on every build; resolves the imports of the `.go`
+  files to their closure through it; fetches the compiler, the linker, and each archive of the
+  closure the worker doesn't hold yet, under their content-hashed names; compiles every `.go` file
+  as package main with Go's own compiler and links it with Go's own linker, each step its own
+  phase, `go-compile` and `link`; and compiles the linked module. `.go` files identical to the
+  last successful build's, the same names and texts in the same order, hold that program again,
+  fetching, compiling, and linking nothing, whatever the non-Go files are: the runs that follow
+  read this build's non-Go files, so editing `input.txt` alone builds nothing.
+  - A failed step's output, the compiler's diagnostics (to stdout) or the linker's (to stderr),
+    reaches the runner's listeners as written, positions relative to the file's name
+    (`main.go:5:27: undefined: x`), then an exit event naming the step (`compile exited with code
+    2`), and the build rejects naming it; an import the manifest doesn't hold rejects before the
+    compiler runs (`package example.com/x is not in the manifest`). A failed build holds nothing.
+  - The program's limits: one package main from every `.go` file, importing the standard library
+    alone, as `GOOS=js GOARCH=wasm` builds it; no `go.mod`, local subpackages, cgo, assembly, or
+    `go:embed`; no argv and no stdin. Its files are one flat directory.
+  - The working directory: each run of a built program gets a fresh in-memory fs whose working
+    directory, `/work`, holds every file of the build that isn't Go, so `os.ReadFile("input.txt")`
+    reads that file's text. Nothing a run writes outlives the run.
+- `run(handler?, input?)`: run the held program's main, or call one of its handlers.
+- `stop()`: terminate the worker and start a fresh one that adopts the held program and the
+  compiled compiler and linker, so the next run needs no load or build and the next build
+  compiles no toolchain module. The archives aren't kept across a Stop, being large (`fmt`'s
+  closure is 22 MB): the next build fetches them again, over the HTTP cache.
+- `listen(listener)`: every output, exit, and timing event. The runner runs one load, build, or
+  run at a time; one started while another is pending stops it first, which rejects with
+  `"stopped"`, so every event between a request's start and its settling is that request's.
+
+## Pages
+
+Each hand page links the foundation's `page-full.css`, the components' `glyph-button.css`, the
+SDK's `site.css`, and the pages' shared sheet, `web/pages/page.css`, in that order; the build
+bundles the four into the one stylesheet every page links. The cascade layers are the
+foundation's (`foundation.tokens.*` through `foundation.theme-menu`), then `site`, then `page`,
+and the browser tier reads that order on each page. Every rule a page adds is in
+`web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
+specificity: the header-actions group at the header's inline end, the space between `main >
+section`s on every page, the components page's specimens, and the app page, the playground's
+one screen, which only a body of class `app` takes. Its spaces are the foundation's `--space-*`
+steps.
+
+A hand page holds no inline `<style>`. The build writes a page's inline sheet into its head
+before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
+foundation's and reorders every layer on the page, and an unlayered rule there sits above every
+layer. A page rule goes in `web/pages/page.css`.
+
+## Playground
+
+`playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
+opening on the starter program's files as `playground/calc/` holds them. Its script,
+`web/pages/playground.ts`, gives the demo the page's one `Runner` and the reader's arrangement.
+Nothing loads Go until a Run: the first fetches the manifest, the compiler, the linker, and the
+archives of the program's import closure, and a later Run fetches the manifest again and only the
+archives a new import adds (see "Runtime", `build(files)`). A Run after an edit to non-Go files
+alone, such as `input.txt`, builds nothing: it reruns the last program built over the edited
+files. The program's limits and its working directory are the build's. New file adds a file, so
+the program can read a non-Go file through `os.ReadFile`. Stop keeps the compiled toolchain. The
+reader's files live only in the page: a reload opens on the starter again, and no file is shared
+or stored.
+
+The starter is a calculator language. `main.go`, the active file, reads `input.txt` from the
+working directory and runs it line by line; `lexer.go`, `parser.go`, and `eval.go` turn each line
+into tokens, a syntax tree, and a value. A script line is an expression or a `let` binding, over
+decimal numbers, `+ - * /`, unary minus, and parentheses; `#` starts a comment. Each result prints
+on stdout, a binding as `name = value`. A failing line prints `input.txt:<line>: <reason>` on
+stderr, the run goes on, and the program exits 1. The shipped `input.txt` works out a shopping
+total, and its top comment suggests a line to try that fails.
+
+The starter isn't a scenario and no page loads it prebuilt, so it lives outside `cmd/` and the
+build never writes it to `dist/`. The check vets it and runs its Go tests under `GOOS=js`, on
+node's fs and on the in-memory fs.
+
+### The one-screen page
+
+The playground is an app page, a workspace rather than an article, laid out in CSS alone by the
+shared sheet's rules for its body, of class `app` (see "Pages"). It keeps the SDK's shell, the
+header and the body's inline gutter, and changes three things about it. The body is one column
+at every width, the header over main, where `site.css` gives it three from 70rem, with main a
+reading column in the middle. The body is at least the viewport's height (`100dvh`), and main
+takes every row the header leaves, where `site.css` packs the rows at the top. And one gutter,
+`--page-gutter`, the `--space-m` the shell already holds the body off the viewport's sides with,
+spaces the inline sides and the block end alike.
+
+Main spans the body's content width, a grid of named lines: `content`, the prose's 80ch, centered
+between two equal side tracks, and `full`, the content and both sides. Its rows are two, by name,
+whatever the prose holds: `prose`, its own height, and `demo`, `1fr`, every row the prose leaves.
+The prose, one block (`.prose`) of the heading, the intro, and a closed disclosure ("What you can
+build here"), sits on `content`; the fixed demo sits on `full`, in `demo`, so it ends a gutter
+above the viewport's bottom, every part's bottom border in view. The demo's own width sets its
+bands. Opening the disclosure takes its rows from the demo, down to the demo's floor (`sl-go-demo`,
+"Fixed layout"); below the floor, the page grows and scrolls down, never sideways. The SDK's
+shell checks all run on the page but main's reading width, and the spike's own check holds the
+prose to 80ch, centered. The disclosure says, in the reader's terms, what a program can be, where
+its other files go, how Run and Stop behave, and that edits last only as long as the tab.
+
+### The Layout menu and the stored arrangement
+
+From 64rem the demo's toolbar shows Layout, a menu of Editor left, Editor top, and Editor right,
+which places the editor left of the output, above it, or right of it (`sl-go-demo`, "Fixed
+layout"). The arrangement is the reader's preference, so the page owns it, not the demo.
+`keep()` in `web/pages/arrangement.ts` builds one `Arrangement` from the placement stored in
+localStorage under `spike-html-go-wasm.arrangement` as a JSON string (`"left"`, `"top"`, or
+`"right"`), gives it to every fixed demo on the page, and applies each demo's `arrange` request
+to it, storing the choice. The page's script blocks render, so the stored arrangement applies
+before first paint, on a reload and on every playground on the origin. Each storage access runs
+in a try/catch, as the foundation's `preferences.js` reads the theme: blocked storage, an empty
+store, text that isn't JSON, and a value the model refuses each open with the editor left. The
+choice is the only write: nothing is stored until the reader chooses, and choosing the
+placement already held stores nothing. Another tab's choice moves this page's demo too, and a
+cleared store moves it back to left.
 
 ## Components
 
@@ -82,9 +273,21 @@ module defines its element when it is imported and exports its tag name as `tagN
 element's shadow root adopts the foundation's reset and elements sheets, then its own, a CSS
 module script beside it. A page imports a component's module, and the build bundles it.
 `components.html` shows each component's states once, labelled, its layout following the
-viewport, and focused by the keyboard. The directory's other modules are the components' internals, each documented in its own
-comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-themes.ts`, and
-`tokenizer.ts`.
+viewport, and focused by the keyboard. The directory's other modules are the components'
+internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `reasons.ts`,
+`subscription.ts`, `syntax-themes.ts`, and `tokenizer.ts`, and one shared sheet, `tabs.css`, the
+tablist's look, which the file tabs and a fixed demo's output tabs adopt.
+
+- `./arrangement.js`: `Arrangement`, where a fixed Go demo places its editor from 64rem, the
+  reader's preference. It is a model with no document, element, or storage, an `EventTarget` its
+  owner, the page, writes. `placement` holds `"left"` (the default, `DEFAULT_PLACEMENT`),
+  `"top"`, or `"right"`; `PLACEMENTS` lists them, frozen, in the Layout menu's order.
+  `new Arrangement(placement?)` starts from the placement given, validated. A value it can't hold
+  is refused, naming the reason, and changes nothing: a `TypeError` for a value that isn't a
+  string, a `RangeError` for a string that isn't a placement. `placementProblem(value)` gives that
+  reason, or `null`, without setting anything, so an owner reading storage tests a value before
+  taking it. Each set that changes the placement sends one `change` `Event`; a set to the
+  placement held sends none. The unit tier tests it under node.
 
 - `./code-editor.js`: `sl-code-editor`, a plain-text source editor: a `contenteditable` element
   in plaintext-only mode, exposed as a multiline textbox, beside a gutter of line numbers. Its Go
@@ -165,9 +368,15 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
   whole log: 10,000 writes, each its own task, render in a few frames. The log grows with its
   lines up to 24rem, or the length the page sets as `--sl-console-max-block-size` on the host,
   and scrolls inside; it is no flex item, which would lay out every row again on each append.
-  - Attributes: `label` (the log's accessible name, "Output" by default).
+  With `fill`, the console takes the block size its container gives it, whatever the log holds:
+  the bar sits on top and the log takes the rest, scrolling inside. The log's frame has
+  `contain: size`, so no row is measured to size it, and is at least as many of its own lines tall
+  as the host's `--sl-console-min-lines` gives, none by default; a fixed Go demo sets its floor's
+  there.
+  - Attributes: `label` (the log's accessible name, "Output" by default) and `fill` (a boolean:
+    fill the given block size rather than grow with the log).
   - Properties: `log`, the `ConsoleLog` its owner creates and writes; `null`, the default, shows
-    the empty state; and `label`, as its attribute.
+    the empty state; and `label` and `fill`, as their attributes.
   - Events: `clear`, an `Event` that bubbles and is not composed, when Clear is pressed with
     entries shown: a request, which changes nothing until the owner applies it with
     `log.clear()`. Copy sends none: it puts the log's `text()` on the clipboard itself, changing
@@ -211,42 +420,57 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
   - Events: one `change` `Event` for each operation that changes the log, however many lines it
     adds; an empty write, or a clear of an empty log, sends none. The unit tier tests it under
     node.
-- `./controls.js`: `sl-controls`, a demo's controls as one ARIA toolbar: a Run group (Run, Stop,
-  and Reset) and, under `editable-files`, a vertical separator and a Files group (New file,
-  Rename, and Delete). Each control is a glyph button named by its name, which shows beside its
-  glyph while the toolbar is 26rem wide or wider, where the widest group fits with its names in
-  any font; narrower, the glyph shows alone and the name as a hint on hover and keyboard focus,
-  as the console's Copy and Clear show theirs. It renders the `FileSet`
-  and the `RunState` it is given, follows each change they send, listening only to the models it
-  holds while it is in the document, and never writes either: every control sends a request its
-  owner applies. Run is always available, as a new run stops the pending one; Stop only while a
-  run is pending; Reset only while a file differs from its text as given; New file and Rename
-  always; Delete unless the set refuses to remove the active file, the last one. An unavailable
-  control is `aria-disabled`, focusable, and sends nothing. New file and Rename each open a form
-  in a popover, a non-modal dialog anchored below its button: a labelled input and a submit,
-  Create or Rename. Rename's input holds the active file's name, its stem, the name before its
-  extension, selected. On submit the name is checked by the set's `nameProblem`; a refused name
-  leaves the form open, the input `aria-invalid` and described by the set's reason in a polite
-  live region, and from then on the reason follows the name as it is typed. A taken name closes
-  the form, returns focus to its button, and sends the request; a rename to the file's own name
-  sends nothing. Escape closes the form, sends nothing, and returns focus to its button. Delete
-  asks for no confirmation. The status, a polite live region beside the toolbar, says each run's
-  start, "Running hello…", and its end, "Finished format", "Finished hello, exit code 0",
-  "Stopped spin", or "Failed format: <message>", from the run state's transitions alone: the
-  state the toolbar is given is never said, nor a change of the files. The toolbar wraps between
-  its groups, each group's controls together. Nothing moves.
-  - Attributes: `editable-files` (a boolean: show the Files group) and `label` (the toolbar's
-    accessible name, "Controls" by default).
+- `./controls.js`: `sl-controls`, a demo's controls as one ARIA toolbar: a Run group (Run, Stop, and
+  Reset), under `editable-files` a vertical separator and a Files group (New file, Rename, and
+  Delete), and, given an `Arrangement`, a separator and a Layout group (Layout). Each control is a
+  glyph button named by its name, which shows beside its glyph while the toolbar is 26rem wide or
+  wider, where the widest group fits with its names in any font; narrower, the glyph shows alone and
+  the name as a hint on hover and keyboard focus, as the console's Copy and Clear show theirs. It
+  renders the `FileSet` and the `RunState` it is given, follows each change they send, listening
+  only to the models it holds while it is in the document, and never writes either: every control
+  sends a request its owner applies. Run is always available, as a new run stops the pending one;
+  Stop only while a run is pending; Reset only while a file differs from its text as given; New file
+  and Rename always; Delete unless the set refuses to remove the active file, the last one. An
+  unavailable control is `aria-disabled`, focusable, and sends nothing. New file and Rename each
+  open a form in a popover, a non-modal dialog anchored below its button: a labelled input and a
+  submit, Create or Rename. Rename's input holds the active file's name, its stem, the name before
+  its extension, selected. On submit the name is checked by the set's `nameProblem`; a refused name
+  leaves the form open, the input `aria-invalid` and described by the set's reason in a polite live
+  region, and from then on the reason follows the name as it is typed. A taken name closes the form,
+  returns focus to its button, and sends the request; a rename to the file's own name sends nothing.
+  Escape closes the form, sends nothing, and returns focus to its button. Delete asks for no
+  confirmation. Layout is an APG menu button, with `aria-haspopup="menu"` and `aria-expanded`. It
+  opens a menu in a popover anchored below it, holding three radio items, Editor left, Editor top,
+  and Editor right; the arrangement's placement is checked and ticked. Choosing an item closes the
+  menu, returns focus to Layout, and sends the request, unless the placement is the one held. The
+  menu is as wide as its items and each form as its content, up to 22rem; each popover is bounded
+  by its containing block, the anchored area between its button and the viewport's side, never by
+  a viewport unit, and opens toward the side with more room, so none reaches past the viewport. The
+  status, a polite live region beside the toolbar, says each run's start, "Running hello…", and
+  its end, "Finished format", "Finished hello, exit code 0", "Stopped spin", or "Failed format:
+  <message>", from the run state's transitions alone: the state the toolbar is given is never
+  said, nor a change of the files. The toolbar wraps between its groups, each group's controls
+  together. With `steady`, the status keeps to one line whatever it says, so the toolbar's height
+  depends on its width alone: the status asks the row for its reserved width, which decides
+  whether it shares the controls' line or takes its own, and text longer than its line ends in an
+  ellipsis, still whole to assistive technology. Nothing moves.
+  - Attributes: `editable-files` (a boolean: show the Files group), `steady` (a boolean: the
+    status keeps one line), and `label` (the toolbar's accessible name, "Controls" by default).
+  - Custom properties: `--sl-controls-status-inline-size`, the steady status's reserved width, a
+    length, `24ch` by default, in the ch of the status's own text; a page may set it on the
+    element.
   - Properties: `files`, the `FileSet` its owner creates and writes, `null` by default, leaving
     Reset unavailable and the Files group out; `runState`, the `RunState` its owner creates and
-    writes, `null` by default, leaving Stop unavailable; and `editableFiles` and `label`, as their
-    attributes.
+    writes, `null` by default, leaving Stop unavailable; `arrangement`, the `Arrangement` its owner
+    writes, `null` by default, leaving the Layout group out; and `editableFiles` and `label`, as
+    their attributes.
   - Events, each bubbling and not composed, a request that changes nothing until the owner applies
     it: `run`, `stop`, and `reset` (`Event`s); `new` (a `CustomEvent`, `detail.name`, the new
-    file's name), `rename` (`detail.from` and `detail.to`), and `delete` (`detail.name`, the
-    active file's). The owner applies them as `runState.start(what)` with its runner's run,
-    `runState.finish(run, { kind: "stopped" })` with its runner's stop, `files.resetAll()`,
-    `files.add(name)`, `files.rename(from, to)`, and `files.remove(name)`.
+    file's name), `rename` (`detail.from` and `detail.to`), `delete` (`detail.name`, the active
+    file's), and `arrange` (`detail.placement`, the placement chosen). The owner applies them as
+    `runState.start(what)` with its runner's run, `runState.finish(run, { kind: "stopped" })` with
+    its runner's stop, `files.resetAll()`, `files.add(name)`, `files.rename(from, to)`,
+    `files.remove(name)`, and `arrangement.placement = placement`.
   - Slots: none.
   - Keyboard: Tab reaches the toolbar's one tab stop, the control last focused, Run at first, a
     roving tabindex. Left and Right move to the previous and next control, wrapping, and Home and
@@ -254,7 +478,13 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
     focused control. Run declares `aria-keyshortcuts="Control+Enter Meta+Enter"`, the shortcut
     the demo composing it handles from inside itself. In a form, Enter submits and Escape closes
     it, each returning focus to the control that opened it; the form closes on Escape's keydown,
-    so focus is back on the control before the page's keys see it.
+    so focus is back on the control before the page's keys see it. On Layout, Enter, Space, and
+    Down open its menu, focus on the checked item. In the menu, Down and Up move focus to the next
+    and the previous item, wrapping, and Home and End to the first and the last; Enter or Space
+    chooses the focused item and closes the menu; Escape closes it; each returns focus to Layout,
+    and each is marked handled, so no page shortcut fires. Tab closes the menu and moves on from
+    Layout. Layout keeps its place in the toolbar's roving tabindex; the items rove by the menu's
+    keys alone.
 - `./editor-settings.js`: `EditorSettings`, the code editor's settings, a model with no document
   or element, an `EventTarget` its owner writes: `wrap` (a boolean, `false` by default: long lines
   scroll sideways) and `tabSize` (a whole number from 1 to 8, 4 by default, how many columns a tab
@@ -311,70 +541,125 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
     last, each requesting that tab's selection: activation follows focus. Enter, Space, and a
     click request the focused tab's selection.
 - `./glyphs.js`: the glyphs the components draw in their shadow roots, Octicons' copy, trash,
-  check-circle, x-circle, play, square-fill, undo, file-added, and pencil from the icons layer,
-  written out as Lit templates with the same paths: the build fills the icons layer into a page's
-  own markup, and no tier imports it.
+  check-circle, x-circle, play, square-fill, undo, file-added, pencil, split-view, and check from
+  the icons layer, written out as Lit templates with the same paths: the build fills the icons
+  layer into a page's own markup, and no tier imports it.
 - `./go-demo.js`: `sl-go-demo`, live Go: the element composing `sl-controls`, `sl-file-tabs`,
   `sl-code-editor`, `sl-console`, and `sl-timings` over the page's runner, and the one owner of
   their models. It builds a `FileSet` from its fences, an `EditorSettings` from its attributes,
   and a `ConsoleLog`, a `RunTimings`, and a `RunState` of its own; it is the only writer of each,
   and applies every request its parts send. It imports nothing from the runtime and fetches
-  nothing: it reads `DemoRunner`, the runtime's `Runner`'s structural subset, `load`, `run`,
-  `stop`, and `listen`, with the output, exit, and timing events re-declared (`DemoEvent`), and
-  the page that passes it the runtime's `Runner` has TypeScript check the one against the other
-  there (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
+  nothing: it reads `DemoRunner`, the runtime's `Runner`'s structural subset, `load`, `build`,
+  `run`, `stop`, and `listen`, with the output, exit, and timing events re-declared
+  (`DemoEvent`), and the page that passes it the runtime's `Runner` has TypeScript check the one
+  against the other there (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
   - Modes: with `handler` named, Run loads the scenario and calls that handler with the one file's
     text, editable; its answer, a string as it is or anything else as indented JSON, or its error,
     shows as the console's result block. With none, Run runs the prebuilt program's main: the
     fences are read-only, the file tabs show over the editor, a tabpanel they control, and the
-    exit shows as the console's status line. Each Run clears the console and begins the timings
-    afresh; the toolbar's status says how it ended.
+    exit shows as the console's status line. With `source`, Run builds the files through the
+    runner's `build`, every `.go` file as package main and every other file in the program's
+    working directory (see "Runtime" for the program's limits), then runs its main as the program
+    mode does, the status naming it `main`; the fences are editable.
+    A failed build shows the compiler's or linker's output, its exit, and the error as the result
+    block, and runs nothing. Each Run clears the console and begins the timings afresh; the
+    toolbar's status says how it ended.
   - Runs on one runner: the runner runs one request at a time, a new one stopping the pending
     one. A demo takes the runner's events only while a request of its own is pending, from its
     load to its run's settling, so each console holds only its own demo's output, and a demo
     whose run another demo's Run stops records it as stopped. Stop stops the runner only while
     the demo's own run is pending.
-  - Attributes: `scenario` (required: the Go scenario Run loads), `handler` (the handler Run
-    calls; absent, Run runs the program's main), `editable-files` (a boolean: New file, Rename,
-    and Delete on a program demo; a handler demo, holding its one input, ignores it), `wrap` (a
-    boolean: long lines wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), and
-    `label` (the demo's accessible name, "<scenario> <handler> demo" by default). A change to
-    `handler` rebuilds the files from the fences; `wrap` and `tab-size` change the settings in
-    place; while an authoring error shows, a change to `scenario`, `wrap`, or `tab-size` builds
-    the demo again, so a mended attribute mends it.
+  - Attributes: `scenario` (the Go scenario Run loads, required except on a source demo),
+    `handler` (the handler Run calls; absent, Run runs the program's main), `source` (a boolean:
+    Run builds the files and runs the built program's main; a source demo names no scenario and
+    no handler), `editable-files` (a boolean: New file, Rename, and Delete on a program or source
+    demo; a handler demo, holding its one input, ignores it), `wrap` (a boolean: long lines
+    wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), `fixed` (a boolean: the
+    fixed layout, below), and `label` (the demo's accessible name, "<scenario> <handler> demo" by
+    default, "Go source demo" on a source demo).
+    A change to `handler` or `source` rebuilds the files from the fences; `wrap` and `tab-size`
+    change the settings in place; while an authoring error shows, a change to `scenario`,
+    `wrap`, or `tab-size` builds the demo again, so a mended attribute mends it.
   - Properties: `runner`, a `DemoRunner`, the page's one runner, `null` by default, which runs
-    nothing; `problem`, read-only, the authoring error's reason, or `null`; and the attributes'.
+    nothing; `arrangement`, an `Arrangement`, the page's, which a fixed demo renders from and never
+    writes, `null` by default, placing the editor left with no Layout menu; `problem`, read-only,
+    the authoring error's reason, or `null`; and the attributes'.
   - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
     the pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
     Shiki-rendered `<pre class="shiki">` read alike. A file's name is the pre's or its code's
     `data-file`, else the pre's `title`, else a default from the fence's language, a
     `data-language` or a `language-<name>` class on either: `main.go` for go, `input.json` for
     json, `input.txt` for any other; with no language, as Shiki's markup carries none, `main.go`
-    on a program demo and `input.json` on a handler demo. Each file's grammar follows its name's
-    extension. The fences are read once the document has parsed them, and stay in the light DOM
-    unchanged: before the element upgrades, and without script, they render as the page's code;
-    once upgraded they are no part of the flat tree, neither rendered nor in the accessibility
-    tree, and the editor alone shows their text.
-  - Authoring errors: no scenario, no fence, more than one fence on a handler demo, a name the
-    file set refuses (two fences both defaulting to `main.go` among them), or a tab size the
-    settings refuse. The demo shows "Authoring error:" and the reason, on the page's red mixed
-    into its surface, describes its region with it, slots the fences back as written, and
-    doesn't run.
+    on a program or source demo and `input.json` on a handler demo. Each file's grammar follows
+    its name's extension. The fences are read once the document has parsed them, and stay in
+    the light DOM unchanged: before the element upgrades, and without script, they render as the
+    page's code; once upgraded they are no part of the flat tree, neither rendered nor in the
+    accessibility tree, and the editor alone shows their text.
+  - Authoring errors: no scenario, a source demo naming a scenario or a handler, no fence, more
+    than one fence on a handler demo, a name the file set refuses (two fences both defaulting to
+    `main.go` among them), or a tab size the settings refuse. The demo shows "Authoring error:"
+    and the reason, on the page's red mixed into its surface, describes its region with it,
+    slots the fences back as written, and doesn't run.
   - Files: New file adds the file, selects it, and focuses the editor; Rename renames the active
     file, focus staying on Rename; Delete removes the active file, unless the last, and focuses
     the tab now active; Reset restores every file's text as given.
-  - Events: none of its own; its parts' requests stop at it. Slots: none, but the fences above.
+  - Events: `arrange`, a bubbling `CustomEvent` whose `detail.placement` is the placement the
+    Layout menu chose. The page, which owns the arrangement, applies it; until then nothing
+    changes. Its parts' other requests stop at it. Slots: none, but the fences above.
   - Accessibility: a region named by `label`, holding the toolbar, the tabs and their tabpanel on
-    a program demo, the editor, named by the active file's name, the log, and the timings.
-  - Keyboard: each part's own, in order: the toolbar, the tabs on a program demo, the editor, and
-    the console. Ctrl or Cmd+Enter, from anywhere inside the demo, the editor included, runs it,
-    as Run's `aria-keyshortcuts` declares; with Alt or Shift also held, Enter runs nothing. From
-    outside every demo the shortcut runs none, and the foundation's shortcut registry holds no
-    entry for it.
+    a program demo, the editor, named by the active file's name, the log, and the timings. A fixed
+    demo below 44rem also holds the output tablist, "Output panel", its tabs "Output" and
+    "Timings", each controlling its part, a tabpanel named by its tab while the tablist shows.
+  - Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a
+    program demo, the editor, a fixed demo's output tablist below 44rem, and the console. The output
+    tablist's are the file tabs': Tab reaches the selected tab alone, Left and Right select the
+    previous and the next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter,
+    from anywhere inside the demo, the editor included, runs it, as Run's `aria-keyshortcuts`
+    declares; with Alt or Shift also held, Enter runs nothing. From outside every demo the shortcut
+    runs none, and the foundation's shortcut registry holds no entry for it.
   - Layout: one column: the toolbar, the files, then the console and the timings. Once the demo
-    is 44rem wide, the console and the timings share a row, the timings in a 16rem column and the
-    console taking the rest. Every part stays inside the demo at every width, and the demo fits a
-    phone's width. Nothing moves.
+    is 44rem wide, the console and the timings share a row, the timings in a column of their
+    table's least width, `sl-timings`'s `--sl-timings-min-inline-size`, read on the element, and
+    the console taking the rest. Every part stays inside the demo at every width, and the demo fits
+    a phone's width. Nothing moves.
+  - Fixed layout: with `fixed`, the demo is as tall as the box its parent's layout gives it
+    (`block-size: 100%`, as a grid row's stretch gives it), never below its floor; it reads no
+    viewport or container block unit, runs no script to size itself, and needs no size
+    container. The floor is the demo's own, stated once, in lines of the parts' own text: six of
+    the editor's, enough to read and edit a few statements, and two of the console's log, enough
+    to read a line of output and the exit line under it (`--sl-go-demo-editor-lines` and
+    `--sl-go-demo-console-lines`, in `lh`), so it follows the type profile and zoom. The editor,
+    the log, and the timings contain their size, so the floor, the demo's `min-content` height,
+    is the toolbar, the tabs, and the gaps as each band lays them out, plus those lines, at the
+    parts' shares: the least height at which both show their lines. The parts divide the
+    demo's height in fractions, never in lengths, and each scrolls inside its own frame, so typing
+    or pasting any number of lines, any output, and a full timings table change no part's box:
+    the editor fills its frame, the console fills its own (`fill`), the timings scroll in theirs,
+    and the toolbar's status is `steady`. Container queries on the demo's own width choose one
+    of three bands:
+    - Below 44rem: the toolbar, then the tabs over the editor, 3fr of what the toolbar leaves
+      (about 60%), then, 2fr, one output panel whose tablist, "Output" and "Timings", shows the
+      console or the timings, the console first.
+    - From 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' track,
+      their least width, 2fr.
+    - From 64rem: the placement the page's `Arrangement` holds, editor left without one. Editor
+      left puts the editor, under the toolbar, in 3fr of the width, beside a 2fr column of the
+      console, 3fr of the height, over the timings, 2fr; editor right mirrors it, the column
+      first; editor top is the layout from 44rem. In this band alone, and only given an
+      arrangement, the toolbar shows Layout, and the demo sends its choice on as `arrange`.
+
+    Every band and arrangement places the same parts, so a run, a Stop, a failed build, a band
+    change, or an arrangement change keeps each part's content and scroll position and the chosen
+    output tab. Below 44rem the part not shown is hidden by `visibility`, so it keeps its own
+    scroll position. A demo without `fixed` lays out as "Layout" describes.
+
+    The bands are CSS's: each container query places the parts and names its band in `--band`,
+    and the demo's script reads that name, through a `ResizeObserver` on a fixed demo alone, for
+    two things only. Below 44rem the console and the timings are tabpanels of the output tablist,
+    and from 44rem they aren't: a change to the accessibility tree, and CSS can't set a role. From
+    64rem the toolbar shows its Layout group, which `sl-controls` renders only given an
+    arrangement. The read exists because no shipped API reports a container query's state to
+    script; every placement and size stays in the stylesheet.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the
@@ -402,9 +687,10 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
   - Operations: `begin()` begins a new run, clearing the last's phases; `record({ phase, ms })`
     adds the phase's time to the current run, or replaces the time it has.
   - Reading: `phases`, the current run's phases as frozen snapshots, `{ phase, ms }`, only those
-    recorded, in the runtime's phase order (`PHASES`: fetch, compile, instantiate, start, call,
-    run) whatever order they arrived in, the same array until the timings change; `total`, their
-    sum in ms; `ms(phase)`; and `runs`, how many runs have begun, 0 before the first.
+    recorded, in the runtime's phase order (`PHASES`: fetch, compile, go-compile, link,
+    instantiate, start, call, run) whatever order they arrived in, the same array until the
+    timings change; `total`, their sum in ms; `ms(phase)`; and `runs`, how many runs have
+    begun, 0 before the first.
   - Refusals: a record it can't apply throws, naming the reason, and changes nothing: a
     `TypeError` for a phase that isn't a string or a time that isn't a number, a `RangeError` for
     a phase the runtime doesn't name or a time that is negative, NaN, or infinite.
@@ -413,16 +699,21 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
     and a record that adds a phase or changes its time; a record of the time a phase has sends
     none. The unit tier tests it under node.
 - `./timings.js`: `sl-timings`, the last run's phases as a table: a row for each phase the run
-  had, in phase order, its name and its time, and a total row. It renders the `RunTimings` it is
-  given, follows each change it sends, listening only to the timings it holds while it is in the
-  document, and never writes them; a new run replaces the last as the timings do. Times are
-  formatted by `Intl.NumberFormat` as ms, to a tenth while they round under 10 ms ("4.2 ms") and
-  whole from there, grouped ("1,535 ms"), as `formatMs(ms)` gives them, right-aligned in tabular
-  numerals; the total row is set apart by a heavier rule and weight. With no run yet the table
-  says "No run yet.", and with a run begun and no phase timed, "No phase timed yet.", with no
-  total. The table is as wide as its content, at least 16rem or its container's width, and never
-  wider than its container. Nothing moves.
+  had, in phase order, its name and its time, and a total row. It labels WebAssembly's compile
+  phase "Wasm compile", to tell it from a build's "Go compile" and "Link". It renders the
+  `RunTimings` it is given, follows each change it sends, listening only to the timings it holds
+  while it is in the document, and never writes them; a new run replaces the last as the timings
+  do. Times are formatted by `Intl.NumberFormat` as ms, to a tenth while they round under 10 ms
+  ("4.2 ms") and whole from there, grouped ("1,535 ms"), as `formatMs(ms)` gives them,
+  right-aligned in tabular numerals; the total row is set apart by a heavier rule and weight.
+  With no run yet the table says "No run yet.", and with a run begun and no phase timed, "No
+  phase timed yet.", with no total. The table is as wide as its content, at least its least width
+  or its container's width, and never wider than its container. Nothing moves.
   - Attributes: `label` (the table's caption and accessible name, "Timings" by default).
+  - Custom properties: `--sl-timings-min-inline-size`, the table's least width, a length, `28ch`
+    by default, in the ch of the table's text: room for a build's full table, "Wasm compile"
+    beside "12,345 ms". It is stated once, on the element, where an owner laying the timings beside
+    something else reads it for their track, as `sl-go-demo` does; a page may set it there.
   - Properties: `timings`, the `RunTimings` its owner creates and writes; `null`, the default,
     shows no run yet; and `label`, as its attribute.
   - Events: none. Slots: none.

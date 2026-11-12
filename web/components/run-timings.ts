@@ -10,22 +10,29 @@
 // unread.
 //
 // A run has only the phases it went through, each once: a cold load's fetch, compile,
-// instantiate, start, and call; a held instance's call alone; a program's instantiate and run.
+// instantiate, start, and call; a held instance's call alone; a program's instantiate and run; a
+// build's fetch, compile, go-compile, and link before its program's instantiate and run. A phase
+// the runtime times in several parts, a build's compile of the toolchain and of the program, it
+// reports once, their sum, so the model takes each phase's time as it comes.
 // The model holds them in the runtime's phase order, whatever order they arrive in, and the total
 // is their sum, derived on each read. A new run replaces the last: begin clears every phase.
 
 import { shown } from "./reasons.ts";
 
 /** A run's phases as the runtime names them, in the order a run goes through them: fetch and
- * compile on a load; instantiate for a fresh instance; start, a handler scenario's main running
- * until its handlers are registered; and call, one handler's answer, or run, a program's main
- * running to its exit. */
-export type Phase = "fetch" | "compile" | "instantiate" | "start" | "call" | "run";
+ * compile, WebAssembly's, on a load or a build; go-compile and link, Go's compiler and linker, on
+ * a build; instantiate for a fresh instance; start, a handler scenario's main running until its
+ * handlers are registered; and call, one handler's answer, or run, a program's main running to its
+ * exit. */
+export type Phase =
+  "fetch" | "compile" | "go-compile" | "link" | "instantiate" | "start" | "call" | "run";
 
 /** Every phase, in the order a run goes through them, which the timings keep. */
 export const PHASES: readonly Phase[] = Object.freeze([
   "fetch",
   "compile",
+  "go-compile",
+  "link",
   "instantiate",
   "start",
   "call",

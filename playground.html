@@ -1,0 +1,515 @@
+<!doctype html>
+<!-- The playground, a hand page: one sl-go-demo in the source mode, its files editable and
+     editable-files on, which opens on the starter, a tiny calculator language: playground/calc's
+     main.go, lexer.go, parser.go, and eval.go, main.go active, then the input.txt it reads, each
+     fence equal byte for byte to its file in playground/calc/ (the unit tier holds it). Run
+     compiles and links the reader's files with Go's own compiler and linker in the page's worker,
+     then runs main; nothing loads Go, or starts the worker, until a Run. Its script,
+     web/pages/playground.ts, gives the demo the page's one runner and the reader's arrangement.
+     The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
+     body of class app (web/pages/page.css): the header, then main across the body's content
+     width, its prose, one block of the heading, the intro, and a closed disclosure saying what a
+     program can be, on its 80ch content column, then the demo on its full column, in the row the
+     prose leaves, a gutter above the viewport's bottom. The demo is fixed, as tall as that row, each
+     part in its share, so opening the disclosure takes its space from the demo, down to the demo's
+     floor, in lines of its editor and console; below that, the page scrolls down. The shell is the index's, the same
+     header, dialogs, and shared sheet; see index.html for each. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Playground · spike-html-go-wasm</title>
+    <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
+    <link rel="stylesheet" href="./web/pages/page.css" />
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/shortcuts.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/settings.js"></script>
+    <script type="module" blocking="render" src="./web/pages/playground.ts"></script>
+  </head>
+  <body class="app">
+    <header>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="show-modal"
+          aria-label="Help"
+          data-keys="?"
+          interestfor="help-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/question-16"></svg>
+          <span aria-hidden="true"><kbd>?</kbd></span>
+        </button>
+        <div id="help-hint" class="glyph-hint" popover="hint" aria-hidden="true">Help</div>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="show-modal"
+          aria-label="Settings"
+          data-keys="s"
+          interestfor="settings-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/gear-16"></svg>
+          <span aria-hidden="true"><kbd>S</kbd></span>
+        </button>
+        <div id="settings-hint" class="glyph-hint" popover="hint" aria-hidden="true">Settings</div>
+      </div>
+    </header>
+    <main>
+      <div class="prose">
+        <h1>Playground</h1>
+        <p>
+          Edit the Go below and Run it: Go's own compiler and linker, built for
+          <code>GOOS=js</code>, compile and link your files here in the page, then your program's
+          main runs, its output and exit in the console and each phase's time beside it. The
+          first Run fetches the toolchain and the standard library's packages your imports need;
+          later Runs fetch only the packages a new import adds.
+          <a href="./">The spike's question and evidence</a>.
+        </p>
+        <details>
+          <summary>What you can build here</summary>
+          <p>
+            Your <code>.go</code> files build together as one <code>main</code> package, using only
+            the standard library. There's no <code>go.mod</code>, no other packages of your own, no
+            cgo or assembly, and nothing passed in as arguments or standard input.
+          </p>
+          <p>
+            Any other file you add sits next to your program, so
+            <code>os.ReadFile("input.txt")</code> will find it. Each Run starts fresh from your
+            files, so anything the program writes is gone by the next one.
+          </p>
+          <p>
+            Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays
+            loaded after a Stop, so the next Run is quick. Your edits live only in this tab: reload,
+            and you're back to where you started.
+          </p>
+        </details>
+      </div>
+      <sl-go-demo source editable-files fixed label="Playground">
+<pre data-file="main.go"><code class="language-go">// Command calc runs a tiny calculator language, one line at a time, over the script in input.txt.
+//
+// A line is an expression, such as (2 + 3) * 4, whose value it prints, or a binding,
+// such as let rate = 0.07, which names a value for the lines after it and prints
+// rate = 0.07. Numbers are decimal and may have a fraction; the operators are + - * /,
+// with * and / binding tighter than + and -, a leading - to negate, and parentheses to
+// group. A # starts a comment that runs to the end of the line.
+//
+// A line that fails prints input.txt:&lt;line>: &lt;reason> on stderr, and the run goes on with
+// the next line. calc exits 1 if any line failed, and 0 otherwise.
+//
+// Each line goes through three steps, one file each: lexer.go splits it into tokens,
+// parser.go builds a syntax tree from them, and eval.go works out its value.
+package main
+
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
+// script is the file calc reads, from the working directory.
+const script = "input.txt"
+
+func main() {
+	os.Exit(run())
+}
+
+// run runs the script, printing each line's result to stdout and each failure to stderr, and
+// answers the exit code.
+func run() int {
+	src, err := os.ReadFile(script)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	vars := env{}
+	code := 0
+	for i, line := range strings.Split(string(src), "\n") {
+		result, err := vars.exec(line)
+		switch {
+		case err != nil:
+			fmt.Fprintf(os.Stderr, "%s:%d: %v\n", script, i+1, err)
+			code = 1
+		case result != "":
+			fmt.Println(result)
+		}
+	}
+	return code
+}
+</code></pre>
+<pre data-file="lexer.go"><code class="language-go">package main
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"unicode"
+)
+
+// A kind says what sort of token a token is.
+type kind int
+
+const (
+	number   kind = iota // 4.25
+	name                 // subtotal
+	keyword              // let
+	operator             // + - * / ( ) =
+	end                  // the end of the line, after the last token
+)
+
+// A token is one word of a line: its kind, its text as written, and a number's value.
+type token struct {
+	kind  kind
+	text  string
+	value float64
+}
+
+// operators are the characters that stand alone as tokens.
+const operators = "+-*/()="
+
+// lex splits a line into its tokens, the last one always end. Spaces only separate tokens, and a
+// # ends the line: everything after it is a comment.
+func lex(line string) ([]token, error) {
+	var tokens []token
+	chars := []rune(line)
+	for i := 0; i &lt; len(chars); {
+		c, start := chars[i], i
+		switch {
+		case c == '#':
+			i = len(chars)
+		case unicode.IsSpace(c):
+			i++
+		case unicode.IsDigit(c) || c == '.':
+			for i &lt; len(chars) &amp;&amp; (unicode.IsDigit(chars[i]) || chars[i] == '.') {
+				i++
+			}
+			text := string(chars[start:i])
+			value, err := strconv.ParseFloat(text, 64)
+			if err != nil {
+				return nil, fmt.Errorf("bad number %q", text)
+			}
+			tokens = append(tokens, token{kind: number, text: text, value: value})
+		case unicode.IsLetter(c) || c == '_':
+			for i &lt; len(chars) &amp;&amp; (unicode.IsLetter(chars[i]) || unicode.IsDigit(chars[i]) || chars[i] == '_') {
+				i++
+			}
+			t := token{kind: name, text: string(chars[start:i])}
+			if t.text == "let" {
+				t.kind = keyword
+			}
+			tokens = append(tokens, t)
+		case strings.ContainsRune(operators, c):
+			i++
+			tokens = append(tokens, token{kind: operator, text: string(c)})
+		default:
+			return nil, fmt.Errorf("unexpected %q", string(c))
+		}
+	}
+	return append(tokens, token{kind: end}), nil
+}
+</code></pre>
+<pre data-file="parser.go"><code class="language-go">package main
+
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
+
+// An expr is a node of a line's syntax tree: a literal, a variable, a negation, or a binary
+// operation, each holding the smaller expressions it is made of.
+type expr any
+
+type (
+	// A literal is a number as written, such as 4.25.
+	literal float64
+	// A variable is a name to look up, such as subtotal.
+	variable string
+	// A negation is a leading minus, such as -discount.
+	negation struct{ operand expr }
+	// A binary is an operation on two expressions, such as price * 3.
+	binary struct {
+		op          string
+		left, right expr
+	}
+)
+
+// A statement is one line's syntax tree: an expression to print, bound to a name first when the
+// line starts with let.
+type statement struct {
+	name  string // the name a let binds, or "" for a plain expression
+	value expr
+}
+
+// parse builds the statement a line's tokens spell, or nil for a line with none, by this grammar,
+// one method each, so * and / bind tighter than + and -:
+//
+//	statement = [ "let" name "=" ] sum
+//	sum       = product { ( "+" | "-" ) product }
+//	product   = factor { ( "*" | "/" ) factor }
+//	factor    = "-" factor | number | name | "(" sum ")"
+func parse(tokens []token) (*statement, error) {
+	p := &amp;parser{tokens: tokens}
+	if p.peek().kind == end {
+		return nil, nil
+	}
+	var s statement
+	if p.peek().kind == keyword {
+		p.next()
+		t := p.next()
+		if t.kind != name {
+			return nil, unexpected(t)
+		}
+		s.name = t.text
+		if t := p.next(); t.text != "=" {
+			return nil, unexpected(t)
+		}
+	}
+	value, err := p.sum()
+	if err != nil {
+		return nil, err
+	}
+	if t := p.next(); t.kind != end {
+		return nil, unexpected(t)
+	}
+	s.value = value
+	return &amp;s, nil
+}
+
+// A parser reads a line's tokens from first to last.
+type parser struct {
+	tokens []token
+	pos    int
+}
+
+// peek answers the next token without reading it.
+func (p *parser) peek() token {
+	return p.tokens[p.pos]
+}
+
+// next reads the next token; past the last, it answers end again.
+func (p *parser) next() token {
+	t := p.tokens[p.pos]
+	if t.kind != end {
+		p.pos++
+	}
+	return t
+}
+
+// sum parses products joined by + and -.
+func (p *parser) sum() (expr, error) { return p.chain("+-", p.product) }
+
+// product parses factors joined by * and /.
+func (p *parser) product() (expr, error) { return p.chain("*/", p.factor) }
+
+// chain parses operands joined by any of ops, grouping from the left, so 8 - 2 - 1 is 5.
+func (p *parser) chain(ops string, operand func() (expr, error)) (expr, error) {
+	left, err := operand()
+	if err != nil {
+		return nil, err
+	}
+	for p.peek().kind == operator &amp;&amp; strings.Contains(ops, p.peek().text) {
+		op := p.next().text
+		right, err := operand()
+		if err != nil {
+			return nil, err
+		}
+		left = binary{op, left, right}
+	}
+	return left, nil
+}
+
+// factor parses a negation, a number, a name, or a sum in parentheses.
+func (p *parser) factor() (expr, error) {
+	t := p.next()
+	switch {
+	case t.text == "-":
+		operand, err := p.factor()
+		if err != nil {
+			return nil, err
+		}
+		return negation{operand}, nil
+	case t.kind == number:
+		return literal(t.value), nil
+	case t.kind == name:
+		return variable(t.text), nil
+	case t.text == "(":
+		inner, err := p.sum()
+		if err != nil {
+			return nil, err
+		}
+		if t := p.next(); t.text != ")" {
+			return nil, unexpected(t)
+		}
+		return inner, nil
+	}
+	return nil, unexpected(t)
+}
+
+// unexpected is the error for a token the grammar has no place for.
+func unexpected(t token) error {
+	if t.kind == end {
+		return errors.New("unexpected end of line")
+	}
+	return fmt.Errorf("unexpected %q", t.text)
+}
+</code></pre>
+<pre data-file="eval.go"><code class="language-go">package main
+
+import (
+	"errors"
+	"fmt"
+	"strconv"
+)
+
+// An env holds the values that let has bound so far, by name, for the lines after.
+type env map[string]float64
+
+// exec runs one line: it lexes, parses, and evaluates it, binds a let's name, and answers what
+// the line prints, or "" for a line with nothing to run. A line that fails binds nothing.
+func (e env) exec(line string) (string, error) {
+	tokens, err := lex(line)
+	if err != nil {
+		return "", err
+	}
+	s, err := parse(tokens)
+	if err != nil || s == nil {
+		return "", err
+	}
+	value, err := e.eval(s.value)
+	if err != nil {
+		return "", err
+	}
+	if s.name == "" {
+		return format(value), nil
+	}
+	e[s.name] = value
+	return s.name + " = " + format(value), nil
+}
+
+// errDivisionByZero is the error for dividing by zero, which would otherwise give an infinity.
+var errDivisionByZero = errors.New("division by zero")
+
+// eval works out an expression's value, its smaller expressions first.
+func (e env) eval(x expr) (float64, error) {
+	switch x := x.(type) {
+	case literal:
+		return float64(x), nil
+	case variable:
+		value, ok := e[string(x)]
+		if !ok {
+			return 0, fmt.Errorf("undefined: %s", x)
+		}
+		return value, nil
+	case negation:
+		value, err := e.eval(x.operand)
+		if err != nil {
+			return 0, err
+		}
+		return -value, nil
+	case binary:
+		left, err := e.eval(x.left)
+		if err != nil {
+			return 0, err
+		}
+		right, err := e.eval(x.right)
+		if err != nil {
+			return 0, err
+		}
+		switch x.op {
+		case "+":
+			return left + right, nil
+		case "-":
+			return left - right, nil
+		case "*":
+			return left * right, nil
+		case "/":
+			if right == 0 {
+				return 0, errDivisionByZero
+			}
+			return left / right, nil
+		}
+	}
+	panic(fmt.Sprintf("eval: no rule for %#v", x))
+}
+
+// format writes a value to 12 significant digits, enough to hide floating point's last-digit
+// noise, so 0.1 + 0.2 prints 0.3. Negative zero, as 0 * -1 gives, prints 0: -0 == 0, so the
+// comparison folds it into positive zero.
+func format(value float64) string {
+	if value == 0 {
+		value = 0
+	}
+	return strconv.FormatFloat(value, 'g', 12, 64)
+}
+</code></pre>
+<pre data-file="input.txt"><code class="language-text"># A weekend's shopping, worked out by calc. Each line prints its value; a
+# line starting with let names its value for the lines after. A # starts a
+# comment, like this one.
+#
+# Try a line that fails, such as:  let each = total / 0
+
+let apples = 6 * 0.50
+let bread = 4.25
+let coffee = 2 * 8.75
+let subtotal = apples + bread + coffee
+
+# A coupon takes 4.75 off, then sales tax is 8%.
+let coupon = -4.75
+let rate = 0.08
+let total = (subtotal + coupon) * (1 + rate)
+
+# Split four ways, and what's left on a 25 gift card.
+total / 4
+25 - total
+</code></pre>
+      </sl-go-demo>
+    </main>
+    <dialog id="help" aria-labelledby="help-title">
+      <header class="dialog-header">
+        <h2 id="help-title" tabindex="-1" autofocus>Keyboard shortcuts</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="close"
+          aria-label="Close"
+          interestfor="help-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="help-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-shortcuts></sl-shortcuts>
+    </dialog>
+    <dialog id="settings" aria-labelledby="settings-title">
+      <header class="dialog-header">
+        <h2 id="settings-title">Settings</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="close"
+          aria-label="Close"
+          interestfor="settings-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="settings-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-settings></sl-settings>
+    </dialog>
+  </body>
+</html>

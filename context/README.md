@@ -56,28 +56,59 @@ for the Go packages.
   `cmd/probe`), which imports only the standard library and the bridge and serves four handlers
   that prove the runtime: format, files, spin, and crash. Planned: sqlate, go-core graph, and
   go-web-sdk handlers in-process.
-- **Runtime** (`web/runtime`, the SDK tier): `runner.ts` exports the `Runner` type (load, run,
-  stop; output, exit, and timing events), and starts one dedicated worker, `worker.ts`, on the
-  first load. The worker fetches a module over the HTTP cache, compiles it, and runs instances of
-  it through `wasm_exec.js` over the in-memory fs in `fs.ts`, which `install-fs.ts` installs
-  first. `protocol.ts` holds the events and the messages between the runner and the worker. The
-  runner runs one load or run at a time: a new request first stops the pending one, so every event
-  belongs to the request that is pending. Stop terminates the worker and posts the compiled module
-  to a fresh one.
+- **Runtime** (`web/runtime`, the SDK tier): `runner.ts` exports the `Runner` type (load, build,
+  run, stop; output, exit, and timing events), and starts one dedicated worker, `worker.ts`, on
+  the first load or build. The worker fetches a module over the HTTP cache, compiles it, and runs
+  instances of it through `wasm_exec.js` over the in-memory fs in `fs.ts`, which `install-fs.ts`
+  installs first. `protocol.ts` holds the events and the messages between the runner and the
+  worker. The runner runs one load, build, or run at a time: a new request first stops the
+  pending one, so every event belongs to the request that is pending. Stop terminates the worker
+  and posts the compiled program, compiler, and linker to a fresh one. `README.md`, "Runtime",
+  documents each request.
 - **Go tests on the in-memory fs** (`test/memfs`): a Go test program that the check runs under
   node on the runtime's fs, through package `os`.
-- **Playground** (planned): `cmd/compile` and `cmd/link` built to wasm and run in the worker,
-  with per-package standard-library and workspace archives fetched per import through a manifest.
+- **Playground**: the runner's build request (`web/runtime/build.ts`) runs Go's own
+  `cmd/compile` and `cmd/link`, built by the pinned Go for `GOOS=js`
+  (`scripts/build-toolchain.ts`), in the worker, and fetches each standard-library package's
+  archive per import through `go/toolchain/manifest.json`. The runner reuses the last build when
+  only non-Go files change (`isGo` in `build.ts`), so editing `input.txt` alone reruns the program
+  without building. `playground.html` is one screen: a heading, an intro, a closed disclosure of
+  what a program can be, and one fixed, source-mode sl-go-demo that opens on the starter program,
+  fills the rest of the viewport, and ends one gutter above its bottom. Planned: workspace
+  modules' archives, added when the sqlate and scenarios tasks first require them.
+- **Starter program** (`playground/calc`, a package main outside `cmd/`, not a scenario): a
+  calculator language whose files the playground opens on; it runs the script in `input.txt`. The
+  check vets it and runs its tests under `GOOS=js` on both filesystems; the build never writes it
+  to `dist/`.
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
-  over a runner the page passes in. No component holds authoritative state: DOM-free models,
-  `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`, hold it, each written by
-  one owner, sl-go-demo or the page. No component imports the runtime. `README.md`, "Components",
-  documents each module.
-- **Pages** (`web/pages`, the apps tier, for the scripts a page loads): `components.html`, a hand
-  page whose script, `web/pages/components.ts`, shows every component's states, again at 20rem;
-  its Go demos run hello and the probe's handlers over the page's one runner. Planned: hand pages
-  and rendered Markdown embedding `<sl-go-demo>` around a go fence.
+  over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its parent's layout
+  makes it, never below a floor of six editor lines and two console lines
+  (`--sl-go-demo-editor-lines`, `--sl-go-demo-console-lines`), and divides that height among its
+  parts in three width bands. For it, sl-console's `fill` takes the height given, at least
+  `--sl-console-min-lines` lines tall; sl-controls' `steady` keeps the status to one line of a
+  reserved width, `--sl-controls-status-inline-size`; and sl-controls, given an `Arrangement`,
+  shows a Layout group, which the demo shows from 64rem. sl-timings states its table's least
+  width once, `--sl-timings-min-inline-size`, and the demo's timings track reads it. Popovers
+  (the Layout menu and the New file and Rename forms) are as wide as their content, bounded by
+  their containing block and a form's `--popover-max-inline-size`. The file tabs and the fixed
+  demo's output tabs share one sheet, `tabs.css`. No component holds authoritative state:
+  DOM-free models, `Arrangement`, `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and
+  `RunState`, hold it, each written by one owner, sl-go-demo or the page. No component imports
+  the runtime. `README.md`, "Components", documents each module.
+- **Pages** (`web/pages`, the apps tier, for the scripts and the stylesheet the pages load):
+  `web/pages/page.css` holds every hand page's own rules in the `page` cascade layer, which comes
+  after the foundation's layers and the SDK's `site`; a hand page holds no inline `<style>`. A
+  body of class `app` makes the page an app page: one column, main a grid of named lines with the
+  prose (`.prose`) on an 80ch `content` column and the demo on the `full` column, and one gutter,
+  `--page-gutter`, on the inline sides and the block end. `components.html` is a hand page whose
+  script, `web/pages/components.ts`, shows every component's states once; its Go demos run hello
+  and the probe's handlers over the page's one runner. `playground.html` is a hand page whose
+  script, `web/pages/playground.ts`, gives its one source demo the page's runner and the reader's
+  arrangement. `web/pages/arrangement.ts` owns that stored preference: its `keep()`
+  reads the placement from localStorage under `spike-html-go-wasm.arrangement`, gives one
+  `Arrangement` to every fixed demo on the page, and stores each Layout menu choice. Planned: hand
+  pages and rendered Markdown embedding `<sl-go-demo>` around a go fence.
 
 ## Path
 
