@@ -1,0 +1,65 @@
+/*
+ * The Go demo's layout in a shadow root: go-demo.ts adopts this sheet after the foundation's reset
+ * and elements sheets (baseline/reset.css and elements.css). It reads only the foundation's
+ * tokens, which a shadow root takes by inheritance from the page's entry. Unlayered, it sits above
+ * the adopted layers in the root.
+ *
+ * The host is a block, a container its parts lay out against: the toolbar, then the files (the
+ * tabs over the editor on a program demo, the editor alone on a handler demo), then the output,
+ * the console and the timings, in one column, each part taking the width the demo gives. Where the
+ * demo is wide enough, 44rem, the console and the timings share a row, the timings 16rem, the
+ * console taking what they leave, every part within the demo. Every gap is a foundation space. The
+ * parts draw their own focus; nothing here moves, so reduced motion has nothing to stop.
+ *
+ * An authoring error is a block on the page's red mixed into its surface, a red rule at its start,
+ * its words in the page's own text color, above the fences as authored.
+ */
+
+:host {
+  display: block;
+  container-type: inline-size;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-s);
+}
+
+.files {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.output {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-s);
+  align-items: start;
+}
+
+/* Side by side, the timings take a track of their table's least width, 16rem, and the console the
+   rest. The track is sized here, not by its content: the timings and the console each contain
+   their inline size, so an auto track would measure them as nothing and the table would run past
+   the demo's end. */
+@container (min-inline-size: 44rem) {
+  .output {
+    grid-template-columns: minmax(0, 1fr) 16rem;
+  }
+}
+
+.error {
+  margin-block-end: var(--space-s);
+  padding: var(--space-xs) var(--space-s);
+  border-inline-start: var(--line-m) solid var(--red);
+  background-color: color-mix(in oklab, var(--red) 12%, var(--bg));
+  color: var(--fg);
+}
+
+.error p {
+  margin: 0;
+}

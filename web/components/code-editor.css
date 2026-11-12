@@ -1,0 +1,161 @@
+/*
+ * The code editor's layout in a shadow root: code-editor.ts adopts this sheet after the
+ * foundation's reset and elements sheets (baseline/reset.css and elements.css), and the shared
+ * ::highlight() rules after it (highlights.ts). It reads only the foundation's tokens, which a
+ * shadow root takes by inheritance from the page's entry. Unlayered, it sits above the adopted
+ * layers in the root.
+ *
+ * The editor is one frame, a text field's outline, holding a two-column grid: the gutter's numbers
+ * and the lines. Each line of the value is a row: its number, drawn by a counter, and the line
+ * again, invisible, which lays out exactly as the editable element lays out the same line, since
+ * both sit in the second column with the same font, tab size, and wrapping. The editable element
+ * lies over that column across every row (--lines, the row count, is set on the frame) and adds
+ * nothing to the rows' heights (contain: size), so each row is as tall as its line, and each
+ * number sits beside its line's first row at any width, wrapped or not, in every space and type
+ * profile.
+ *
+ * The editor's settings choose the mode, which the script sets on the frame: a tab's width as
+ * --tab-size, and wrapping as the wrap class. Without it, each line is one row and long lines
+ * overflow the column, so the frame scrolls sideways; the gutter is sticky at the frame's inline
+ * start, on the frame's own background, so the lines pass beneath it and it never scrolls away,
+ * and the space between the numbers and the lines is the gutter's own padding, so no scrolled text
+ * shows through it. The frame's scroll padding is the gutter's width (--digits, the widest
+ * number's digit count, is set on the frame), so a caret the browser reveals at a line's start
+ * stops clear of it. With wrap, long lines wrap, anywhere if they must, and nothing scrolls
+ * sideways.
+ *
+ * While an editable editor has focus, a hint below the frame shows its Tab model, the foundation's
+ * glyph hint drawn again: a small label in the page's colors reversed, in the top layer, anchored
+ * below the frame at its inline end, flipped above it where the viewport's foot would cut it.
+ *
+ * The frame grows with the text. A page that holds the host to a block size gets a frame that
+ * fills it and scrolls inside, the gutter scrolling up and down with its lines. Nothing moves, so
+ * reduced motion has nothing to stop.
+ */
+
+:host {
+  display: block;
+}
+
+.editor {
+  /* The gutter's inline padding: before the numbers, and between them and the lines. */
+  --gutter-start: var(--space-2xs);
+  --gutter-end: var(--space-xs);
+  anchor-name: --sl-code-editor;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  box-sizing: border-box;
+  block-size: 100%;
+  overflow: auto;
+  padding-block: var(--space-3xs);
+  padding-inline: 0 var(--space-2xs);
+  scroll-padding-inline-start: calc(var(--gutter-start) + var(--digits) * 1ch + var(--gutter-end));
+  border: var(--line-s) solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-code);
+  line-height: var(--leading-code);
+  counter-reset: line;
+  cursor: text;
+}
+
+/* Hovered, the frame's boundary takes the interaction color, as a text field's does. */
+.editor:hover {
+  border-color: var(--interaction-color, var(--blue));
+}
+
+/* Focus is the frame's: the editable element is only the text column, so the frame draws the
+   outline the foundation gives a focused control, and the element draws none. */
+.editor:has(.text:focus-visible) {
+  outline: var(--line-m) solid var(--interaction-color, var(--blue));
+  outline-offset: 2px;
+}
+.text:focus-visible {
+  outline: none;
+}
+
+/* Read-only, the frame sits on the first elevated surface, as a field that takes no edit. */
+:host([readonly]) .editor {
+  background-color: var(--bg-1);
+}
+
+/* The number: the row's counter, quiet, at the gutter's inline end, beside its line's first row.
+   It is generated content, so no selection or copy reaches it. Sticky at the frame's inline start
+   and on its background, it stays in place over the lines as they scroll sideways; positioned, it
+   paints above them. */
+.number {
+  grid-column: 1;
+  position: sticky;
+  inset-inline-start: 0;
+  padding-inline: var(--gutter-start) var(--gutter-end);
+  background-color: inherit;
+  counter-increment: line;
+  color: var(--fg-3);
+  text-align: end;
+  user-select: none;
+}
+.number::before {
+  content: counter(line);
+}
+
+/* The line's copy and the text: the same box, font, tab size, and wrapping, so they lay out
+   alike. Unwrapped, a line is one row however long, overflowing the column into the frame's
+   scroll. */
+.ghost,
+.text {
+  grid-column: 2;
+  min-inline-size: 0;
+  white-space: pre;
+  tab-size: var(--tab-size);
+}
+.wrap > :is(.ghost, .text) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* An empty line is still a row one line tall. */
+.ghost {
+  min-block-size: 1lh;
+  visibility: hidden;
+  user-select: none;
+}
+
+.text {
+  grid-row: 1 / span var(--lines);
+  contain: size;
+  caret-color: var(--interaction-color, var(--blue));
+}
+
+/* A value ending in a line break ends on an empty line, which a block lays out only when something
+   follows the break: a zero-width space after the text, never part of it, gives that line its
+   box, matching the gutter's last row. */
+.text::after {
+  content: "\200b";
+}
+
+/* The keyboard hint, shown by script while the text has focus, no wider than the frame; its keys
+   outlined in its own text color. */
+.hint {
+  position-anchor: --sl-code-editor;
+  position-area: block-end span-inline-start;
+  position-try-fallbacks: flip-block;
+  inset: auto;
+  margin: 0;
+  margin-block-start: var(--space-3xs);
+  padding: var(--space-3xs) var(--space-2xs);
+  border: none;
+  background-color: var(--fg);
+  color: var(--bg);
+  font-family: var(--font-ui);
+  font-size: var(--text-s);
+  line-height: var(--leading-ui);
+  max-inline-size: anchor-size(inline);
+  --kbd-color: var(--bg);
+}
+
+/* A popover in the top layer has a backdrop, which the elements layer veils as a modal dialog's;
+   the hint veils nothing. */
+.hint::backdrop {
+  background-color: transparent;
+}

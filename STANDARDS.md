@@ -21,6 +21,9 @@ The architecture pages that apply, in the architecture repository:
   passes go-demo its runner.
 - A piece used by one scenario stays in that scenario; it moves down a layer only once a second
   scenario uses it unchanged.
+- A component holds no authoritative state: it renders what it's given and sends its intent as
+  request events. The state, its rules, and its validation live in a DOM-free model below it,
+  unit-tested without a browser and written by one owner, the composing element or the page.
 
 ## Go
 
@@ -33,8 +36,9 @@ The architecture pages that apply, in the architecture repository:
 ## Editor
 
 - The editor is `contenteditable="plaintext-only"` with Custom Highlight ranges, never an overlay
-  on a textarea; Tab inserts through `execCommand("insertText")`, obsolete in the editing spec but
-  the only insertion that keeps the browser's undo history.
+  on a textarea; every edit goes through `execCommand("insertText")`, with line breaks through
+  `execCommand("insertLineBreak")`, obsolete in the editing spec but the only insertions that keep
+  the browser's undo history.
 
 ## Sites
 

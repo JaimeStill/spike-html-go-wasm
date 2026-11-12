@@ -1,0 +1,200 @@
+/*
+ * The console's layout in a shadow root: console.ts adopts this sheet after the foundation's reset
+ * and elements sheets (baseline/reset.css and elements.css) and the hosting components' glyph
+ * button sheet (glyph-button.css), which draw its buttons and their hints. It reads only the
+ * foundation's tokens, which a shadow root takes by inheritance from the page's entry. Unlayered,
+ * it sits above the adopted layers in the root.
+ *
+ * The host is a block: a bar, holding the dropped count at its start and Copy's status and the
+ * buttons at its end, over the log, one frame that grows with its lines up to its max block size,
+ * 24rem unless the page sets --sl-console-max-block-size on the host, and scrolls up and down
+ * inside it. The frame is no flex or grid item, whose size would be measured from every row on
+ * each append (console.ts). Lines wrap, anywhere if they must, so nothing
+ * scrolls sideways, and keep their spaces, tabs, and blank lines as written.
+ *
+ * Every line has a gutter at its start, as wide as the stderr cue, so stdout and stderr text start
+ * in one column. stdout is the page's text on the log's surface. stderr's line is the palette's red
+ * mixed into that surface, with a rule of the red at its start and its cue, "err", in the gutter;
+ * its text stays the page's own text color, which holds its contrast on the tinted surface in
+ * every palette and scheme, where the red itself, as text, falls under 4.5:1 in some (Everforest's
+ * light red is 3.2:1 on its page). An exit is a status line between rules, in the interface font,
+ * led by a glyph, green for 0 and red for any other; a result is a block on the first elevated
+ * surface, an error's tinted as stderr is, led by a head naming it, its glyph in the same colors.
+ * Whether each went well is said in words, so the colors and glyphs only add to it.
+ *
+ * Focus is the foundation's outline, drawn inside the frame, which scrolls and so would clip one
+ * drawn outside. Nothing moves: the jump to the tail is instant, so reduced motion has nothing to
+ * stop.
+ */
+
+/* The console takes the width its container gives and asks for none, so a long line wraps rather
+   than widens a grid or flex item holding it. */
+:host {
+  display: block;
+  contain: inline-size;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  min-block-size: 1lh;
+  margin-block-end: var(--space-3xs);
+}
+
+/* The bar's words are small; its buttons keep the page's size, so each glyph, 1em, makes a 24px
+   target at the smallest space and type. */
+.bar > p {
+  margin: 0;
+  font-size: var(--text-s);
+}
+
+/* The dropped count leads the bar; the status and the buttons keep to its end. */
+.dropped {
+  color: var(--fg-2);
+}
+
+.status {
+  margin-inline-start: auto;
+  color: var(--fg-2);
+}
+
+/* An aria-disabled button stays focusable and keeps its hint, but reads as unavailable. */
+.glyph-button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.frame {
+  --gutter: 3.5ch;
+  /* The containing block of the visually hidden cues (.hidden), which are absolutely placed: so
+     they scroll and clip with the log, rather than lie at their place in it on the page's own
+     block, growing the page by the log's height. */
+  position: relative;
+  max-block-size: var(--sl-console-max-block-size, 24rem);
+  min-block-size: 3lh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3xs) var(--space-2xs);
+  border: var(--line-s) solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-code);
+  line-height: var(--leading-code);
+}
+
+.frame:focus-visible {
+  outline-offset: calc(-1 * var(--line-m));
+}
+
+.empty {
+  margin: 0;
+  color: var(--fg-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-s);
+}
+
+/* A line: its text as written, wrapping, a blank one a line high. */
+.line {
+  min-block-size: 1lh;
+  padding-inline-start: var(--gutter);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The tint, the rule, and the cue mark stderr; the text keeps the page's color. */
+.line[data-stream="stderr"] {
+  border-inline-start: var(--line-m) solid var(--red);
+  margin-inline-start: calc(-1 * var(--line-m));
+  background-color: color-mix(in oklab, var(--red) 12%, var(--bg));
+}
+
+/* The cue sits in the gutter, the line's padding, in a smaller face; it is the line's prefix to
+   assistive technology and never selected with its text. */
+.cue {
+  display: inline-block;
+  inline-size: var(--gutter);
+  margin-inline-start: calc(-1 * var(--gutter));
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  user-select: none;
+}
+
+/* Visually hidden, read by assistive technology. */
+.hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* An exit: a status line between rules, its glyph in color. */
+.exit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  margin-block: var(--space-3xs);
+  padding-block: var(--space-3xs);
+  border-block: var(--line-s) dashed var(--border-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-s);
+}
+
+.exit > svg,
+.result svg {
+  flex: none;
+}
+
+[data-ok="true"] svg {
+  color: var(--green);
+}
+
+[data-ok="false"] svg {
+  color: var(--red);
+}
+
+/* A result: a block of its own, headed, its text as written. */
+.result {
+  margin-block: var(--space-3xs);
+  padding: var(--space-3xs) var(--space-2xs);
+  border: var(--line-s) solid var(--border-2);
+  border-inline-start: var(--line-m) solid var(--green);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-1);
+}
+
+.result[data-ok="false"] {
+  border-inline-start-color: var(--red);
+  background-color: color-mix(in oklab, var(--red) 12%, var(--bg));
+}
+
+.result > .head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  font-family: var(--font-ui);
+  font-size: var(--text-s);
+  font-weight: 600;
+}
+
+.result > .body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Forced colors drop the tint and the hues: the rules and the glyphs take the system's text
+   color, and the words still say each kind. */
+@media (forced-colors: active) {
+  .line[data-stream="stderr"],
+  .result {
+    border-inline-start-color: CanvasText;
+  }
+  [data-ok] svg {
+    color: CanvasText;
+  }
+}

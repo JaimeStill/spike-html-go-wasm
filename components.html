@@ -1,0 +1,342 @@
+<!doctype html>
+<!-- The components page, a hand page: each of the spike's components in every state, each state
+     labelled in its figure's caption, once, the layout following the viewport, and, for a
+     component that takes focus, one instance reached by the keyboard, its focus shown. Its script,
+     web/pages/components.ts, defines the components and builds the states into each list; nothing
+     runs Go, or loads it, until a Go demo's Run. sl-code-editor: Go and JSON highlighted, another
+     language plain, read-only, long lines scrolled sideways (the default) and wrapped, a tab two
+     columns wide, empty and named by its caption through aria-labelledby, two editors sharing the
+     document's highlights, an editable editor for the keyboard model, and an editor whose events a
+     readout counts, a specimen aid. The script creates each editor's settings and owns them. sl-
+     file-tabs: several files, one modified, one read-only, sixteen overflowing the row, and one
+     alone, each over an editor showing the active file, the script owning each file set and
+     applying the tabs' requests and the editor's edits to it. sl-console: interleaved streams,
+     exits of 0 and 2, a handler's answer and error, ANSI escapes, long lines, a log past its limit,
+     empty, and one streaming on a button's press, each log the script's own, written from scripted
+     events, its clear requests applied by the script. sl-timings: a cold load, a held instance's
+     call, a program's run, the call after Stop, and no run yet, each run's timings the script's
+     own, recorded from scripted events, and one whose specimen aid begins a new run in place of the
+     last on a button's press. sl-controls: idle with nothing modified, a file modified, a run
+     pending, a run that fails, the files group, New file's form refusing a name on a specimen aid's
+     press, and the last file, each over the file tabs and an editor, the script owning each file
+     set and run state and applying the toolbar's requests, a run ending on its own after a moment.
+     sl-go-demo: written here, not by the script, each demo's files the fences inside it, which read
+     as the page's code before the element upgrades and without script: a handler demo, format's
+     JSON input; a program demo, hello's main.go as cmd/hello/main.go holds it; a program demo with
+     editable files; handler demos for files, its text input, and for crash, which panics; a
+     handler demo whose fence is the SDK's Shiki markup, as a Markdown page renders it; a handler
+     demo with two fences, an authoring error; and two demos, spin and format, sharing the runner. The
+     script gives every demo the page's one runner, which loads Go only on a Run. The shell is the index's, the same header, dialogs,
+     and unlayered header-actions rule; see index.html for each. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Components · spike-html-go-wasm</title>
+    <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
+    <style>
+      /* With no site nav to take the header's row, site.css leaves the header-actions group at the
+         row's inline start; the group goes to the inline end at every width, where the SDK's
+         header check holds the buttons when the header has no nav. Unlayered: the build writes this
+         sheet before the linked ones, so an @layer here would declare its layer ahead of the
+         foundation's and reorder every layer on the page. */
+      body > header > .header-actions {
+        margin-inline-start: auto;
+      }
+      /* A component's states, one figure each, stacked. */
+      .states {
+        display: grid;
+        gap: var(--space-m);
+        margin-block-start: var(--space-s);
+      }
+      .state {
+        margin: 0;
+      }
+      .state > figcaption {
+        margin-block-end: var(--space-2xs);
+      }
+      /* A state of several instances sets them apart. */
+      .state > * + :not(figcaption) {
+        margin-block-start: var(--space-s);
+      }
+      /* A specimen aid, beside the component it observes, quieter than the component. */
+      /* The panel the file tabs control, holding the editor that shows the active file. */
+      .state > .panel {
+        margin-block-start: var(--space-2xs);
+      }
+      .readout {
+        color: var(--fg-2);
+        font-size: var(--text-s);
+      }
+    </style>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/shortcuts.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/settings.js"></script>
+    <script type="module" blocking="render" src="./web/pages/components.ts"></script>
+  </head>
+  <body>
+    <header>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="show-modal"
+          aria-label="Help"
+          data-keys="?"
+          interestfor="help-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/question-16"></svg>
+          <span aria-hidden="true"><kbd>?</kbd></span>
+        </button>
+        <div id="help-hint" class="glyph-hint" popover="hint" aria-hidden="true">Help</div>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="show-modal"
+          aria-label="Settings"
+          data-keys="s"
+          interestfor="settings-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/gear-16"></svg>
+          <span aria-hidden="true"><kbd>S</kbd></span>
+        </button>
+        <div id="settings-hint" class="glyph-hint" popover="hint" aria-hidden="true">Settings</div>
+      </div>
+    </header>
+    <main>
+      <h1>Components</h1>
+      <p>
+        The spike's components, each in every state it has, and reached by the keyboard. <a href="./">The spike's question and evidence</a>.
+      </p>
+      <section id="code-editor" aria-labelledby="code-editor-heading">
+        <h2 id="code-editor-heading">Code editor</h2>
+        <p>
+          <code>sl-code-editor</code>, a plain-text editor whose Go and JSON are highlighted in the
+          page's palette and scheme, beside a gutter of line numbers.
+        </p>
+        <h3 id="code-editor-states">States</h3>
+        <div class="states"></div>
+        <h3 id="code-editor-focus">Focus visible</h3>
+        <p>The editor, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus"></div>
+      </section>
+      <section id="file-tabs" aria-labelledby="file-tabs-heading">
+        <h2 id="file-tabs-heading">File tabs</h2>
+        <p>
+          <code>sl-file-tabs</code>, tabs for a set of files, over the editor showing the active
+          one. The page owns each set: it applies a tab's request to select its file, and the
+          editor's edits, and the tabs follow the set.
+        </p>
+        <h3 id="file-tabs-states">States</h3>
+        <div class="states"></div>
+        <h3 id="file-tabs-focus">Focus visible</h3>
+        <p>The tabs, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus"></div>
+      </section>
+      <section id="console" aria-labelledby="console-heading">
+        <h2 id="console-heading">Console</h2>
+        <p>
+          <code>sl-console</code>, a run's output, exits, and answers as a quiet log. The page owns
+          each log, written here from scripted events with no Go: it applies Clear's request, and
+          the console follows the log.
+        </p>
+        <h3 id="console-states">States</h3>
+        <div class="states"></div>
+        <h3 id="console-focus">Focus visible</h3>
+        <p>The log, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus"></div>
+      </section>
+      <section id="timings" aria-labelledby="timings-heading">
+        <h2 id="timings-heading">Timings</h2>
+        <p>
+          <code>sl-timings</code>, the last run's phases as a table in ms, with their total. The
+          page owns each run's timings, recorded here from scripted events with no Go, and the
+          table follows them. It holds nothing to operate, so the keyboard passes it by.
+        </p>
+        <h3 id="timings-states">States</h3>
+        <div class="states"></div>
+      </section>
+      <section id="controls" aria-labelledby="controls-heading">
+        <h2 id="controls-heading">Controls</h2>
+        <p>
+          <code>sl-controls</code>, a demo's toolbar: Run, Stop, and Reset, and, where a demo's
+          files are editable, New file, Rename, and Delete. The page owns each state's files and run
+          state, here with no Go: it applies each control's request, a run ending on its own after
+          a moment, and the toolbar follows them.
+        </p>
+        <h3 id="controls-states">States</h3>
+        <div class="states"></div>
+        <h3 id="controls-focus">Focus visible</h3>
+        <p>The toolbar, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus"></div>
+      </section>
+      <section id="go-demo" aria-labelledby="go-demo-heading">
+        <h2 id="go-demo-heading">Go demo</h2>
+        <p>
+          <code>sl-go-demo</code>, live Go composed from the parts above over the page's one
+          runner: its files are the fences written inside it, which read as the page's code before
+          it upgrades. Nothing runs, and no Go loads, until a Run.
+        </p>
+        <h3 id="go-demo-states">States</h3>
+        <div class="states">
+          <figure class="state" data-state="handler">
+            <figcaption>A handler demo: Run calls probe's format with the JSON below</figcaption>
+            <sl-go-demo scenario="probe" handler="format" label="format demo">
+<pre><code class="language-json">{"name": "probe", "handlers": ["format", "files", "spin", "crash"]}
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="program">
+            <figcaption>A program demo: Run runs hello's main, its source read-only</figcaption>
+            <sl-go-demo scenario="hello" label="hello demo">
+<pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
+// standard library and prints one line. It is a program scenario: the components page's Go demo
+// runs its main to completion in the runtime's worker, which reports the line as stdout output
+// and the exit code 0. It stays the standard-library baseline.
+package main
+
+import (
+	"fmt"
+	"runtime"
+)
+
+func main() {
+	fmt.Printf("hello from Go %s on %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+}
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="editable-files">
+            <figcaption>Editable files: New file, Rename, and Delete on a program demo</figcaption>
+            <sl-go-demo scenario="hello" editable-files label="hello demo, editable files">
+<pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
+// standard library and prints one line. It is a program scenario: the components page's Go demo
+// runs its main to completion in the runtime's worker, which reports the line as stdout output
+// and the exit code 0. It stays the standard-library baseline.
+package main
+
+import (
+	"fmt"
+	"runtime"
+)
+
+func main() {
+	fmt.Printf("hello from Go %s on %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+}
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="files">
+            <figcaption>
+              A handler demo: Run calls probe's files with the text below, through the in-memory fs
+            </figcaption>
+            <sl-go-demo scenario="probe" handler="files" label="files demo">
+<pre><code class="language-text">hello, files
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="crash">
+            <figcaption>
+              A handler demo whose Go panics outside any handler: its stderr and its exit 2
+            </figcaption>
+            <sl-go-demo scenario="probe" handler="crash" label="crash demo">
+<pre><code class="language-text">boom</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="markdown">
+            <figcaption>A fence as the SDK's Markdown renders it, highlighted at build</figcaption>
+            <sl-go-demo scenario="probe" handler="format" label="format demo, rendered fence">
+<pre class="shiki shiki-themes flexoki primer catppuccin everforest" tabindex="0"><code><span class="line"><span class="__shiki_rhvcs7">{</span><span class="__shiki_y6j4i8"> "</span><span class="__shiki_1cgxug">shiki</span><span class="__shiki_y6j4i8">"</span><span class="__shiki_45ki97">:</span><span class="__shiki_1ahg5l"> true</span><span class="__shiki_45ki97">,</span><span class="__shiki_y6j4i8"> "</span><span class="__shiki_1cgxug">list</span><span class="__shiki_y6j4i8">"</span><span class="__shiki_45ki97">:</span><span class="__shiki_rhvcs7"> [</span><span class="__shiki_swpwtl">3</span><span class="__shiki_45ki97">,</span><span class="__shiki_swpwtl"> 1</span><span class="__shiki_45ki97">,</span><span class="__shiki_swpwtl"> 2</span><span class="__shiki_rhvcs7">]</span><span class="__shiki_rhvcs7"> }</span></span>
+<span class="line"></span></code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="authoring-error">
+            <figcaption>An authoring error: a handler demo holding two fences, which doesn't run</figcaption>
+            <sl-go-demo scenario="probe" handler="format" label="format demo, two fences">
+<pre><code class="language-json">[1, 2]
+</code></pre>
+<pre><code class="language-json">[3, 4]
+</code></pre>
+            </sl-go-demo>
+          </figure>
+          <figure class="state" data-state="shared">
+            <figcaption>
+              Two demos, one runner: a Run in one stops the other's pending run, and each console
+              holds only its own output
+            </figcaption>
+            <sl-go-demo scenario="probe" handler="spin" label="spin demo">
+<pre><code class="language-text">spin until stopped
+</code></pre>
+            </sl-go-demo>
+            <sl-go-demo scenario="probe" handler="format" label="format demo, sharing the runner">
+<pre><code class="language-json">[5]
+</code></pre>
+            </sl-go-demo>
+          </figure>
+        </div>
+        <h3 id="go-demo-focus">Focus visible</h3>
+        <p>The demo's toolbar, reached by the keyboard.</p>
+        <span tabindex="-1" data-focus-start="1"></span>
+        <div class="focus">
+          <figure class="state" data-state="focus">
+            <figcaption>Focused by Tab</figcaption>
+            <sl-go-demo scenario="probe" handler="format" label="format demo, focused">
+<pre><code class="language-json">[1]
+</code></pre>
+            </sl-go-demo>
+          </figure>
+        </div>
+      </section>
+    </main>
+    <dialog id="help" aria-labelledby="help-title">
+      <header class="dialog-header">
+        <h2 id="help-title" tabindex="-1" autofocus>Keyboard shortcuts</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="close"
+          aria-label="Close"
+          interestfor="help-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="help-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-shortcuts></sl-shortcuts>
+    </dialog>
+    <dialog id="settings" aria-labelledby="settings-title">
+      <header class="dialog-header">
+        <h2 id="settings-title">Settings</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="close"
+          aria-label="Close"
+          interestfor="settings-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="settings-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-settings></sl-settings>
+    </dialog>
+  </body>
+</html>

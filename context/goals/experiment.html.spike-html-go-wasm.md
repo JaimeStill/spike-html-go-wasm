@@ -8,7 +8,7 @@
 
 1. [x] site
 2. [x] runtime
-3. [ ] components
+3. [x] components
 4. [ ] playground
 5. [ ] programs
 6. [ ] sqlate
@@ -17,86 +17,170 @@
 9. [ ] review
 10. [ ] answer
 
-## Task brief · runtime
+## Task brief · components
 
-Problem       hello runs only by hand on the main thread, through wasm_exec.js's stub fs, and
-              nothing can call Go, stream its output, give it files, or stop it. Every later task
-              needs the Go bridge, the on-demand loader, one worker per page, the in-memory fs,
-              and Stop, used unchanged by every scenario (evidence 6, 11).
-Behaviors     1. The bridge registers named Go handlers on one long-lived instance; each call runs
-                 in its own goroutine and answers a Promise: a string in, JSON out, a Go error a
-                 rejection carrying its message. A handler that blocks (a channel, a sleep, a
-                 file call) resolves without deadlock; an unknown name rejects naming it.
-              2. A panic in a handler rejects that call with the panic's message, and the instance
-                 keeps answering later calls.
-              3. The bridge's Go tests run in the check as GOOS=js go test under node, with an
-                 environment trimmed below wasm_exec.js's 12 KB argv+env cap; reads no network.
-              4. The runtime's own in-memory fs implements every call Go's syscall package makes:
-                 open (Node's O_* constants), close, read and write (positional too), fstat with
-                 isDirectory, stat, lstat, mkdir, readdir, rmdir, unlink, rename, truncate,
-                 ftruncate, fsync, chmod, fchmod, utimes, and process.cwd and chdir. link,
-                 symlink, readlink, and the chown calls answer ENOSYS; every error carries a Node
-                 code Go maps (ENOENT, EEXIST, ENOTDIR, EISDIR, ENOTEMPTY, EBADF, ENOSYS). It
-                 imports nothing beyond the runtime's own files.
-              5. Under node in the check, a Go test program running on the in-memory fs in place
-                 of node's passes: create, read, write, seek, stat, readdir, rename, remove,
-                 MkdirTemp, and Getwd/Chdir through package os.
-              6. Writes to fds 1 and 2, through writeSync (runtime prints, panics) or write
-                 (os.Stdout, os.Stderr), become output events labelled stdout or stderr, in order,
-                 as written and unbuffered.
-              7. A page requests no .wasm and no worker script on load. The first run starts one
-                 dedicated worker, and the page never has more than one. The worker loads
-                 wasm_exec.js bundled after the in-memory fs, so the shim's stub fs never
-                 installs.
-              8. The runtime exports a runner type with load (a scenario's module by name), run,
-                 and stop, and with output, exit, and timing events. Timings per run: fetch,
-                 compile, instantiate, start (main running to handlers registered), and call or
-                 run. A cached load fetches over the HTTP cache. Switching scenarios happens in
-                 place in the one worker, dropping the previous instance.
-              9. A program scenario runs main to completion: hello, moved onto the runtime,
-                 prints its one line as stdout output and exits 0. A Go program that exits
-                 (os.Exit, or a panic outside a handler) emits its stderr and its exit code, and
-                 the next run instantiates afresh from the held module, with no new fetch.
-              10. Stop terminates the worker and reposts the held compiled module to a fresh
-                  one. After Stop ends probe's spin, a format call answers with no new .wasm
-                  request; Stop while idle leaves the runner ready.
-              11. The probe scenario, an entrypoint and its composition root on the bridge,
-                  imports only the standard library and the bridge. Its handlers: format (JSON
-                  text in, indented JSON or the parse error out, one line to stdout); files
-                  (writes, lists, reads back, and removes files under a temporary directory
-                  through package os, reporting each step); spin (a busy loop with no yield
-                  that only Stop ends). The build writes probe's wasm beside hello's.
-              12. A published runtime hand page, linked from the index, runs hello and probe's
-                  three handlers through the runner with plain controls (no components): an
-                  input, Run per handler, Stop, the output, and the timings. It passes every SDK
-                  shell check, the crawl reaches it, and it loads Go only on a Run.
-              13. Both direction checks still pass. The runtime imports only its own files, the
-                  runtime page's script imports only the runtime and the shell's packages, and
-                  the probe's layers hold under the go list test.
-Test seams    `mise run check`: the Go tests under node for 1–5; the browser tier, the runtime page
-              in chrome-headless-shell over the built site under its base, for 6–12; the lint and
-              unit tiers for 13.
-Slices        1. Bridge: the handler registry and probe's format handler, with the Go tests under
-                 node in the check.
-              2. In-memory fs: every call, the Go test program under node in the check, and
-                 probe's files handler.
-              3. Worker and runner: the runner type, the on-demand loader, one worker with
-                 wasm_exec.js bundled after the fs, the long-lived instance, output, exit, and
-                 timing events. hello moves onto the runtime, and the runtime page runs hello,
-                 format, and files, proven in the browser tier.
-              4. Stop: probe's spin handler, terminate and repost, and the browser tier's proof
-                 of no refetch and a working next call.
-              5. Upgrade (added by escalation, after brief ready): spike-html-hosting-sdk v0.6.2,
-                 Help's heading taking focus as it opens, on both pages; node 26.13.1.
-Out of scope  the six components and the specimen page; the playground's toolchain, archives,
-              manifest, and compiling or linking in the page; persistence (OPFS, IndexedDB, Cache
-              Storage); any workspace module or go.mod requirement; sizes, TinyGo, and timings on
-              the live site; Markdown pages; Firefox and Safari runs; any change to the live
-              command, or a reference repository other than the help dialog fix escalation 1
-              approved.
-Door          one-way for the SDK tag (released); the rest two-way: the runtime page is a public
-              page that can be removed.
-Release       spike-html-hosting-sdk v0.6.2 (released during BUILD, by escalation 1).
+Problem       Go runs in the page only through the runtime page's plain controls: a textarea,
+              a button per handler, and bare output, timings, and result. No scenario can show
+              editable, highlighted Go beside its live output. sl-go-demo needs a source editor
+              in every palette, a file set, a console, controls, and timings, composed over the
+              page's runner and used unchanged by every later scenario, hand page and Markdown
+              page alike (evidence 11). Two demos on one page also share one runner whose
+              output events name no caller, so the runner must run one request at a time.
+              The architect asked for well-crafted components: each one finished in every
+              state, palette, and space profile, with its keyboard model, accessibility tree,
+              and documentation.
+Behaviors     1. The runner runs one load or run at a time. A load or run started while another
+                 is pending first stops the pending one, which rejects with "stopped", and then
+                 proceeds, so every event between a request's start and its settling belongs to
+                 that request. A load of the scenario already held, with nothing pending, stays
+                 a no-op, and Stop behaves as before.
+              2. The editor's colours are each palette's syntax theme, merged per palette into
+                 light-dark() colours by a build step adapted from the SDK's merge of its
+                 built-in syntax themes. In each palette and each scheme, every token of a go
+                 fence and of a JSON input paints in the editor the same colour the SDK's
+                 rendered fence gives the same code, through Custom Highlight ranges, with no
+                 span in the editor's text. A palette with no syntax theme paints plain text.
+                 Several editors on one page share the document's highlight registry, and
+                 removing one leaves the others painted.
+              3. sl-code-editor is a plaintext-only contenteditable in its shadow root, exposed
+                 as a labelled multiline textbox, named by its label or aria-labelledby.
+                 Highlighting loads lazily on first upgrade: Shiki 4.6.0's core, its
+                 JavaScript regex engine, and the Go and JSON grammars, the build emitting no
+                 other grammar. Until it loads, and for any other language, the text shows
+                 plain. A re-highlight after an edit never blocks typing or moves the caret or
+                 the selection.
+              4. The editor's line-number gutter is hidden from assistive technology and holds
+                 no text the editor's value includes. It stays aligned with each line at every
+                 space and type profile, and with wrapped and long lines.
+              5. Enter inserts a line break carrying the current line's leading whitespace. Tab
+                 inserts a tab, or with a selection indents every selected line. Shift+Tab
+                 outdents the current or selected lines. Each edit goes through insertText, so
+                 one undo reverts it and redo restores it. Escape releases Tab, so the next Tab
+                 or Shift+Tab moves focus out of the editor, never trapping it; typing or a
+                 click re-arms it. IME composition commits as typed.
+              6. A read-only editor keeps its highlighting, selection, copy, and focus. It
+                 rejects every edit, Tab and Enter included, and is exposed as read-only.
+                 The editor sends input on every edit and change once focus leaves with its
+                 value changed. value reads and sets the whole text, and setting it sends
+                 neither event.
+              7. A DOM-free file set in the components tier holds files (name, text, the text
+                 as given, modified, read-only) and the active file, and sends a change event
+                 on each change. It refuses an empty name, a duplicate, or a name holding a
+                 path separator, naming the reason. Reset restores a file's text as given.
+                 Under the unit tier, select, edit, reset, new, rename, and delete each change
+                 it as stated, and deleting the active file activates its neighbour.
+              8. sl-file-tabs renders a file set it never writes, as the ARIA tabs pattern:
+                 a tablist with one tab per file, roving tabindex, Left and Right wrapping,
+                 Home and End, and activation on focus. A modified file shows a marker that is
+                 also exposed in its accessible name. Each tab controls the editor panel.
+                 Selecting a tab sends a select request, and the element changes only when the
+                 set does.
+              9. sl-console shows output in order, as written, keeping Go's line breaks and
+                 wrapping long lines. stdout is plain. stderr has its own colour plus a cue
+                 that doesn't depend on colour, exposed to assistive technology. An exit shows
+                 as a status line naming the scenario and its code, and a handler's result or
+                 error shows as its own block. ANSI escapes show as text. The console keeps
+                 the latest 10,000 lines and a count of those dropped. It follows the tail
+                 unless the reader has scrolled up, and follows again once they return to the
+                 end. Copy puts the kept text on the clipboard; Clear empties it. It is a log
+                 that announces no write.
+              10. sl-timings shows the last run's phases (fetch, compile, instantiate, start,
+                  call or run) as a table in ms with a total, and only the phases the run had.
+                  A new run replaces it.
+              11. sl-controls is an ARIA toolbar with arrow-key movement between its controls:
+                  a run group (Run, Stop, Reset), a separator, and a files group (New file,
+                  Rename, Delete) present only under editable-files. Stop is enabled only
+                  while a run is pending, and Reset only when a file differs from its text as
+                  given. New file and Rename open a small form in a popover anchored to their
+                  button, validating as the file set does and naming the reason in the form,
+                  with Escape or a submit returning focus to the button. Delete sends a delete
+                  request. The toolbar announces a run's start and finish through a polite
+                  status. Every control sends a request event and changes nothing itself.
+              12. sl-go-demo declares the runner's structural subset it reads (load, run, stop,
+                  and listen, with the output, exit, and timing events re-declared) and takes
+                  the runner as a runner property, which TypeScript checks against the
+                  runtime's Runner in the page. It imports nothing from the runtime and fetches
+                  nothing. It builds its file set from its light-DOM go fences, the only writer
+                  of that set, and applies the requests its parts send. Before the element
+                  upgrades, and without script, the fence reads as the page's code.
+              13. With a handler named, Run loads the scenario and calls the handler with the
+                  one file's text, and the result or error shows in the console. A handler
+                  demo with more than one fence shows a visible authoring error and does not
+                  run. With no handler named, Run runs the prebuilt program's main, its fences
+                  read-only, its tabs shown, its exit in the console. Ctrl or Cmd+Enter runs
+                  only from inside the focused demo, declared by aria-keyshortcuts on Run. The
+                  foundation's shortcut registry is untouched.
+              14. Under editable-files, New file, Rename, and Delete change the demo's file set
+                  as the file set validates them. After a delete, focus moves to the tab now
+                  active, and the last file can't be deleted.
+              15. A components page, linked from the index, replaces the runtime page. It shows
+                  each component's states, every state labelled, again at 20rem, with keyboard
+                  focus shown on one instance of each control. Its sl-go-demo elements run
+                  hello, format, files, spin, and crash, and Stop, over one runner. Two demos
+                  on it prove behavior 1: starting a run in one stops the other's pending run,
+                  and each console holds only its own output. Go loads only on a Run. The page
+                  passes every SDK shell check, and the crawl reaches the index and the
+                  components page alone.
+              16. Every proof the runtime page held still holds through sl-go-demo on the
+                  components page: hello's line and exit 0; format's answer and its parse
+                  error; files' steps; timings by phase; a held module reused with no fetch;
+                  scenarios switched in place in one worker; Stop ending spin with no refetch
+                  and one live worker; crash's stderr and exit 2, and the next call afresh.
+              17. Every program demo's go fence on the components page equals its scenario's
+                  entrypoint source byte for byte.
+              18. Each element is defined by its module, exports its tag name, adopts the
+                  foundation's reset and elements sheets and then its own as a CSS module
+                  script, takes its spacing from the foundation's tokens, keeps focus visible,
+                  and runs no motion under reduced motion. Each has a README entry covering its
+                  attributes, properties, events, slots, and keyboard. The direction check
+                  admits shiki to the components tier, and nothing else new, and still holds
+                  every other tier.
+Test seams    `mise run check`: the unit tier for 7 and 17 and the direction table in 18; the
+              browser tier, the components page in chrome-headless-shell over the built site
+              under its base, for 1–6 and 8–16 and the rest of 18, each component's
+              accessibility tree read through CDP, its keyboard driven through CDP input, and
+              reduced motion and each palette and scheme emulated or set through Settings.
+Slices        1. One request at a time: the runner stops a pending request before a new one,
+                 proven on the runtime page in the browser tier.
+              2. Highlighting: Shiki pinned and admitted to the components tier, the
+                 per-palette merge as a build step, and sl-code-editor's rendering (the
+                 lazily loaded tokenizer, ranges, gutter, read-only, label). The components
+                 page is created beside the runtime page with the editor's states, and the
+                 colour test runs in every palette and scheme. README entry.
+              3. Editing: Enter, Tab, Shift+Tab, Escape's release, undo and redo, IME, the
+                 events, and value, each proven in the browser tier with its specimen states.
+              3b. Editor settings (added after approval): a DOM-free EditorSettings model (wrap,
+                 default off so long lines scroll; tab size, default 4, 1 to 8) that
+                 sl-code-editor renders from and never writes, the gutter aligned in both
+                 modes, Tab and Shift+Tab reading the tab size, specimen states for each; with
+                 paste inserting plain text through the editor's own edit path and a read-only
+                 editor not firing the page's single-key shortcuts.
+              4. The file set and sl-file-tabs: the model under the unit tier, and the tabs'
+                 keyboard model, modified marker, and accessibility tree on the components
+                 page. README entry.
+              5. sl-console: streams, the exit line, the result block, the cap and dropped
+                 count, tail following, Copy and Clear, and the quiet log, with specimen
+                 states fed by scripted events. README entry.
+              6. sl-timings: the phase table and total, its specimen states. README entry.
+              7. sl-controls: the toolbar, both groups, the popover forms and their
+                 validation, enabled states, the status announcements, and focus return.
+                 README entry.
+              8. sl-go-demo: the runner subset, the fence contract, both Run modes, the
+                 authoring error, Ctrl/Cmd+Enter, editable-files actions with focus after a
+                 delete, and two demos sharing the runner, on the components page. README
+                 entry.
+              9. The takeover: the runtime page's runs and their proofs move onto sl-go-demo,
+                 the runtime page goes, and the index link, shell checks, crawl, captures, and
+                 docs follow. The fence-equality unit test runs.
+Out of scope  compiling or linking source in the page, and running an edited program; argv
+              and stdin for programs; persisting files; any Markdown page and the Markdown
+              shell's entry (the sqlate task), though the light-DOM fence contract holds for
+              it; bracket auto-close and matching, completion, find, and folding; grammars
+              beyond Go and JSON; a timings history; ANSI colour; axe-core; Firefox and Safari
+              runs; any release, or any change to a reference repository; moving any
+              component to a shared layer.
+Door          two-way: the components stay in this repository unreleased, the runtime change
+              is local, and the components page is a public page that can be removed.
 
 ## Decisions
 
@@ -271,6 +355,145 @@ Release       spike-html-hosting-sdk v0.6.2 (released during BUILD, by escalatio
   spike-html-hosting (PR #13), spike-html-hosting-architecture (PR #10), and
   spike-html-hosting-sqlate (PR #11), each site's Pages deploy green.
 
+- components: one task of nine slices, the editor in two. Rejected: a separate components-editor
+  task, which adds a branch and pull request and retires no unknown.
+- components: the runner runs one load or run at a time, and a new request first stops the
+  pending one, because output events name no caller. Rejected: each demo showing every event
+  while a run of its own is pending, and one live demo per page.
+- components: sl-go-demo has two Run modes: with a handler named, the editor's text is the
+  handler's input; with none, Run runs the prebuilt program's main, its go fence read-only.
+  Rejected: handler demos only until the playground.
+- components: a components page replaces the runtime page, and the runtime page's runs and
+  proofs move onto sl-go-demo. Rejected: keeping the plain-controls page beside it.
+- components: sl-code-editor lazily imports Shiki 4.6.0's core, its JavaScript regex engine,
+  and its grammars itself; shiki is pinned directly and admitted to the components tier.
+  Rejected: the page passing a tokenize function, which every page would have to wire.
+- components: the editor's per-palette colours come from a build step adapted from the SDK's
+  light-dark() merge, held by a test that each editor token matches the SDK fence's colour in
+  each palette and scheme, in place of highlightsEachPalette for the editor. Rejected: an SDK
+  release exporting the merged themes (a one-way release from a spike task), and Shiki's bundled
+  themes named in the spike.
+- components: the editor's scope: Go and JSON grammars, other languages plain; an aria-hidden
+  line-number gutter; Enter keeping indentation; Tab and Shift+Tab indenting and outdenting
+  through insertText; Escape releasing Tab; read-only; label, value, input and change events.
+  Rejected: bracket auto-close and matching, which fight plaintext-only editing and IME.
+- components: sl-console: stdout plain, stderr in colour plus a non-colour cue, the exit as a
+  status line, the handler's result as its own block, ANSI as text, the latest 10,000 lines with
+  a dropped count, tail following, Copy and Clear, a log announcing no write. Rejected: no cap,
+  Copy, or Clear; @xterm/xterm 6.0.0, a terminal emulator for plain-text output.
+- components: sl-timings shows the last run's phases in ms with a total. Rejected: a history;
+  the measure task reads the runner's events itself.
+- components: accessibility is proven by CDP accessibility-tree and keyboard assertions.
+  Rejected: axe-core 4.14.0.
+- components: a DOM-free file set in the components tier holds the files and the active file;
+  sl-go-demo builds it from its go fences and is its only writer; sl-file-tabs,
+  sl-code-editor, and sl-controls are controlled and send request events sl-go-demo applies.
+  Rejected: sl-file-tabs owning the file list with read-only and editable modes.
+- components: New file, Rename, and Delete are built now, on the file set and in the UI,
+  validated for empty, duplicate, and path-separator names, shown only under editable-files.
+  Rejected: leaving file actions to the playground.
+- components: a handler demo holds exactly one file; more than one fence is a visible authoring
+  error; tabs show only on program demos.
+- components: a unit test holds each program demo's go fence to its scenario's entrypoint source.
+- components: one sl-controls ARIA toolbar, a run group and a files group, replaces
+  sl-run-controls; New file and Rename open a validated form in a popover anchored to their
+  button. Rejected: a separate sl-file-actions toolbar, and actions in a tab context menu (a tab
+  can't contain a button).
+- components: Ctrl/Cmd+Enter runs only from inside the focused demo, declared by
+  aria-keyshortcuts on Run; the foundation's shortcut registry is untouched. Rejected: a
+  page-wide shortcut listed in Help, which can't choose between demos.
+- components: the editor and tabs are the spike's own. Rejected: CodeMirror (@codemirror/view
+  6.43.15) and Monaco (@shikijs/monaco 4.6.0), which bring their own model and theming; Web
+  Awesome 3.14.0, Shoelace 2.20.1, and Material Web 2.5.0 tabs, which bring their own tokens.
+
+- components (after approval): the editor's wrap and tab size live in a DOM-free EditorSettings
+  model that sl-code-editor renders from and never writes; each sl-go-demo builds its own from
+  its `wrap` and `tab-size` attributes. Long lines scroll unless wrap is set; tab size defaults to
+  4. Rejected: attributes owned by the editor, a Settings-dialog preference (an SDK change), and
+  one page-wide model.
+- components (after approval): the architect promoted the state rule to a web principle: a
+  component holds no authoritative state; a DOM-free model below it, written by one owner, holds
+  the state, its rules, and its validation. It lands in STANDARDS.md now and is offered to
+  experiment.html's intake as a page for the web standard, not the Go standard or the
+  cross-language principles.
+- components: line breaks go through execCommand("insertLineBreak"), since insertText of "\n" in
+  plaintext-only splits the text into divs; one edit's insertions form one undo step.
+- components: Escape works in two steps in the editor: the first releases Tab and keeps focus;
+  the next passes to the page (keys.js blur, a dialog's close). Tab is re-armed on focus, typing,
+  or a click.
+- components: the Tab model is described by aria-description on the textbox and a visible
+  aria-hidden hint popover while focused, not aria-keyshortcuts, which names activating keys.
+- components: a read-only editor is contenteditable="false" with tabindex 0, role textbox, and
+  aria-readonly, because Chrome ignores aria-readonly on an editable element; it has no keyboard
+  caret.
+- components: lit 3.3.3 and vite-plugin-standard-css-modules 0.3.0 are pinned at the root, the
+  latter for the components' own CSS module scripts; the boundaries table gains only shiki.
+- components (after approval): the components are captured one capture name per component over
+  the one components page, `--page components/<component>`, each whole at 1280px, an open step
+  hiding the other sections; the index stays on the SDK's description. Rejected: one specimen page
+  per component (changes the one components page), and the page whole at one width (still grows
+  with every component). The SDK's three widths wrote 68 images for the editor alone.
+- components: ConsoleLog caps entries, not visual lines; a write joins the previous line only when
+  it's the same stream's open last entry, so no line mixes streams.
+- components: the console's frame is a block with its own max block size
+  (--sl-console-max-block-size, 24rem), because as a flex item each append re-laid every row
+  (~50 ms against ~3 ms at 10,000 rows). Rejected: content-visibility, which drops rows from the
+  accessibility tree.
+- components: stderr keeps the foreground colour on a red tint with a red rule and a hidden
+  "stderr: " for assistive technology, because red text falls below 4.5:1 in some palettes.
+- components: Octicons glyphs are copied into the components tier, since no tier may import the
+  icons layer and the boundaries table gains only shiki.
+- components: sl-go-demo reads each `pre` child as one file, its text the pre's text content, so
+  marked's plain fence and the SDK's Shiki markup read alike. A file's name is `data-file` on the
+  pre or its code, else the pre's `title`, else its language's default (`main.go`, `input.json`,
+  `input.txt`), and its grammar follows the name's extension.
+- components: an authoring error (no scenario, no fence, two fences on a handler demo, a name the
+  file set refuses, a tab size the settings refuse) shows its reason in the demo and its region's
+  description, slots the fences back as written, and never runs; mending the attribute rebuilds
+  the demo.
+- components: each Run clears the console and begins the timings afresh, so both show that run
+  alone.
+- components: after New file, sl-go-demo selects the new file and focuses the editor; the session
+  accepted this over behavior 11's focus return. Rejected: focus staying on New file.
+- components: Delete removes the active file with no confirmation.
+- components: Run stays available while a run is pending, since a new run stops the pending one;
+  Stop is available only then.
+- components: RunState numbers each run; `start` returns the number, and `finish` for any run but
+  the pending one changes nothing, so a superseded run settling late can't overwrite the newer
+  run's state. A superseded run is recorded as stopped.
+- components: a read-only editor marks a character key handled, so the foundation's keys fire no
+  single-key shortcut from it; Ctrl or Cmd+A selects its text alone, and Escape is the page's at
+  once.
+- components: in scroll mode the editor's gutter is sticky at the frame's inline start, and the
+  frame's scroll padding is the gutter's width, so a caret revealed at a line's start stops clear
+  of it.
+- components: the editor refuses a drop, since the browser's own inserts a block per line; text
+  enters by paste.
+- components: the components page's files and crash demos take plain-text fences ("hello, files",
+  "boom"), named `input.txt`.
+- components: the fence-equality unit test reads components.html with a small reader held to the
+  HTML parser's rules for a fence's text (comments, the newline after `<pre>`, character
+  references), and fails on anything it can't read. Rejected: an HTML parser dependency.
+- components: the components tier shares three internal modules: `subscription.ts`, a Lit
+  reactive controller listening to a held model only while the host is connected; `aria.ts`, id
+  references across the shadow boundary and the roving focus keys; and `reasons.ts`, how a
+  model's refusal names a value. Rejected: each component repeating them.
+- components: side by side, from the demo's 44rem container query, the timings take a fixed 16rem
+  track and the console the rest. Rejected: an auto track, which measured the inline-size-contained
+  timings as 0 and let the table run past the demo.
+- components: the file tabs' rule is the row's background, which the selected tab's bar paints
+  over, so every tab stays inside the row. Rejected: a border overlapped by each tab's negative
+  margin, which overflowed the row by a line and drew a vertical scrollbar.
+- components (after brief, CI redirect): below the width where a toolbar group's labels fit,
+  measured by a container query, sl-controls' buttons show the glyph alone, the name kept as the
+  accessible name and shown as a hint. Rejected: a group wrapping onto rows of its own, and
+  shorter labels, both still dependent on the font's width (CI's monospace fallback is wider
+  than the local font and split the files group at 20rem).
+- components (after brief, architect): the components page shows each state once, with no 20rem
+  copies; the layout responds to the viewport, and the tests and captures prove the narrow
+  layout at real widths. `mise run screenshots` takes an optional `--width <px>` (one of 390,
+  1120, 1376, the SDK's widths) and captures each component at every width otherwise, one pass
+  per width. Rejected: labelled breakpoint copies on the page, which doubled its height.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
@@ -278,26 +501,43 @@ Release       spike-html-hosting-sdk v0.6.2 (released during BUILD, by escalatio
 - spike-html-hosting-sdk's markdownPages has no hook for marked extensions; an intake candidate.
 - A browser running a wasm build is another runtime layer; this spike's answer bears on the
   `elemental-runtime-layers` backlog goal.
-- `GOOS=js` go test under node needs a trimmed environment: wasm_exec.js caps argv+env at 12 KB,
-  and mise's environment overflows it.
+- wasm_exec.js caps argv and the environment together at 12 KB; `GOOS=js` go test under node
+  needs a trimmed environment, and the playground's compile and link argv must fit too.
 - SDK v0.6.1's site.css places header-actions at the inline end only beside a site nav; an
   intake candidate.
 - Vite's preview doesn't gzip, so the live command alone proves the gzip assertion, against the
   deployed site.
-- After Stop, a handler call's timings are instantiate, start, and call; a program's are
-  instantiate and run.
-- Switching back to a scenario refetches it over the HTTP cache, because the worker holds only the
-  current module.
-- The page's CDP Network domain doesn't see the worker's requests, so the browser tests auto-attach
-  to workers through CDP to count them.
-- When Go exits during a call, wasm_exec.js deletes the instance, so the worker races the exit's
-  rejection ahead of the call.
 - The SDK's Release workflow tags a release itself, on a release commit above the merge; pushing
   the tag by hand is rejected as already existing.
 - The SDK removes the focus outline on Help's heading, which isn't a control; spike-html-hosting-
   sqlate's STANDARDS.md says "Focus is always visible", so its next review may raise it.
-- staticcheck SA5002 flags an empty `for {}`; the probe's spin loops on a counter.
+
+- The state-outside-components principle is a native web principle for the intake's web
+  standard; the answer section carries it.
+- Chrome exposes an editing host as editable whatever aria-readonly says; a read-only textbox must
+  not be contenteditable.
+- In a plaintext-only contenteditable, execCommand insertText of "\n" splits the text into a div
+  per line; insertLineBreak writes "\n" as text.
+- A scroller laid out as a flex item lays out every row again on each append (~50 ms against
+  ~3 ms at 10,000 rows); a block with its own max block size doesn't.
+- Visually hidden text placed `position: absolute` inside a scroller needs a positioned ancestor
+  inside the scroller; otherwise its containing block is the page's, and it grows the page.
+- An element with `contain: inline-size` measures 0 in an auto grid track; size the track.
+- The foundation's elements layer veils `::backdrop`, which a popover in the top layer has too; a
+  popover that veils nothing sets its backdrop transparent.
+- The foundation's keys.js passes over a keydown whose default is prevented, so a component keeps
+  a key from firing a page shortcut by preventing its default.
+- node --test sets no timeout by default, so a browser-tier wait that never resolves hangs the
+  check; every wait needs its own bound.
+- CDP Fetch enabled on the page intercepts the worker's .wasm fetch, which the page's Network
+  domain doesn't see; a paused request of a terminated worker may be gone when continued.
 
 ## Pending edits
 
-- none
+- coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", a candidate principle
+  for the web standard experiment.html's intake may found: a component holds no authoritative
+  state; a DOM-free model below it, written by one owner (the composing element or the page),
+  holds the state, its rules, and its validation. Evidence: this spike's FileSet and
+  EditorSettings.
+- coordinator · roadmap.toml: in the components task's summary, "sl-run-controls" becomes
+  "sl-controls", and "with a specimen page" becomes "with a components page".

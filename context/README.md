@@ -60,19 +60,24 @@ for the Go packages.
   stop; output, exit, and timing events), and starts one dedicated worker, `worker.ts`, on the
   first load. The worker fetches a module over the HTTP cache, compiles it, and runs instances of
   it through `wasm_exec.js` over the in-memory fs in `fs.ts`, which `install-fs.ts` installs
-  first. `protocol.ts` holds the events and the messages between the runner and the worker. Stop
-  terminates the worker and posts the compiled module to a fresh one.
+  first. `protocol.ts` holds the events and the messages between the runner and the worker. The
+  runner runs one load or run at a time: a new request first stops the pending one, so every event
+  belongs to the request that is pending. Stop terminates the worker and posts the compiled module
+  to a fresh one.
 - **Go tests on the in-memory fs** (`test/memfs`): a Go test program that the check runs under
   node on the runtime's fs, through package `os`.
 - **Playground** (planned): `cmd/compile` and `cmd/link` built to wasm and run in the worker,
   with per-package standard-library and workspace archives fetched per import through a manifest.
-- **Components** (planned; `web/components`, the component tier, Lit, `sl-` prefix):
-  sl-code-editor, sl-file-tabs, sl-console, sl-run-controls, sl-timings, and sl-go-demo composing
-  them over a runner the page passes in.
-- **Pages** (`web/pages`, the apps tier, for the scripts a page loads): `runtime.html`, a hand
-  page whose script, `web/pages/runtime.ts`, runs hello and the probe's handlers through the
-  runner with plain controls. Planned: hand pages and rendered Markdown embedding `<sl-go-demo>`
-  around a go fence.
+- **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
+  sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
+  over a runner the page passes in. No component holds authoritative state: DOM-free models,
+  `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`, hold it, each written by
+  one owner, sl-go-demo or the page. No component imports the runtime. `README.md`, "Components",
+  documents each module.
+- **Pages** (`web/pages`, the apps tier, for the scripts a page loads): `components.html`, a hand
+  page whose script, `web/pages/components.ts`, shows every component's states, again at 20rem;
+  its Go demos run hello and the probe's handlers over the page's one runner. Planned: hand pages
+  and rendered Markdown embedding `<sl-go-demo>` around a go fence.
 
 ## Path
 
@@ -82,7 +87,7 @@ The tasks, in the order they run; each cites the evidence it proves.
    checks, Go built for `GOOS=js`, deployed by Pages (evidence 1, 6).
 2. `runtime`: the Go bridge, the loader, the worker, the in-memory filesystem, and Stop
    (evidence 6, 11).
-3. `components`: the six elements and a specimen page (evidence 11).
+3. `components`: the six elements and the components page (evidence 11).
 4. `playground`: the toolchain, the archives and manifest, and the playground page (evidence 9).
 5. `programs`: the four programs, run from source in the playground (evidence 12).
 6. `sqlate`: the compile demo and the in-process sqltest run, on a hand page and a Markdown page

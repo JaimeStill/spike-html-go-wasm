@@ -1,0 +1,100 @@
+/*
+ * The file tabs' layout in a shadow root: file-tabs.ts adopts this sheet after the foundation's
+ * reset and elements sheets (baseline/reset.css and elements.css). It reads only the foundation's
+ * tokens, which a shadow root takes by inheritance from the page's entry. Unlayered, it sits above
+ * the adopted layers in the root.
+ *
+ * The tablist is one row of tabs over a rule, as wide as the host's container. Tabs keep their
+ * names whole on one line, so when they outnumber the row's width the row scrolls sideways, inside
+ * itself, and the script scrolls the focused or newly active tab into view. The selected tab stands out by more than color: a bar in
+ * the interaction color under it, over the rule, and its name in the page's full text color where
+ * the others are quieter. A modified file's dot follows its name.
+ *
+ * Focus is the foundation's outline, drawn inside the tab, since a scroller clips what overflows
+ * it and an outline outside a tab at the row's end would be cut. The row scrolls smoothly only
+ * when the reader allows motion; under reduced motion it jumps, and nothing else moves.
+ */
+
+/* The tabs take the width their container gives and ask for none: contained, the row's tabs add
+   nothing to the host's intrinsic width, so a narrow container keeps its width and the row
+   scrolls, where a grid or flex item would otherwise grow to hold every tab. */
+:host {
+  display: block;
+  contain: inline-size;
+}
+
+/* The rule is the row's background, a line at its block end, not a border: a tab's bar paints over
+   its own background, so the bar overlaps the rule with every tab inside the row's box. A border,
+   overlapped by a tab's negative margin, put the tabs past the scroller's padding box, a line's
+   overflow up and down that drew a vertical scrollbar beside a single tab. */
+.tablist {
+  display: flex;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scroll-padding-inline: var(--space-s);
+  background: linear-gradient(var(--border), var(--border)) bottom / 100% var(--line-s) no-repeat;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tablist {
+    scroll-behavior: smooth;
+  }
+}
+
+/* A tab: the foundation's neutral button undone, a name in the code font, and a bar under it that
+   only the selected tab colors. The bar lies over the row's rule. */
+.tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-3xs) var(--space-s);
+  border: none;
+  border-block-end: var(--line-m) solid transparent;
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--fg-2);
+  font-family: var(--font-code);
+  font-size: var(--text-s);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background-color: var(--bg-1);
+  color: var(--fg);
+}
+
+.tab[aria-selected="true"] {
+  border-block-end-color: var(--interaction-color, var(--blue));
+  color: var(--fg);
+}
+
+.tab:focus-visible {
+  outline-offset: calc(-2 * var(--line-m));
+}
+
+/* A modified file's marker: a dot in the tab's text color, its name's height centred. */
+.marker {
+  flex: none;
+  inline-size: 0.5em;
+  block-size: 0.5em;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+}
+
+/* Forced colors drop the transparent bar's color and the dot's background: the selected tab keeps
+   its bar in the system's highlight, the dot is drawn as a border, and the rule takes the system's
+   text color. */
+@media (forced-colors: active) {
+  .tablist {
+    background-image: linear-gradient(CanvasText, CanvasText);
+  }
+  .tab[aria-selected="true"] {
+    border-block-end-color: Highlight;
+  }
+  .marker {
+    border: 0.25em solid CanvasText;
+  }
+}

@@ -4,6 +4,11 @@
 // starts on its first load, so a page that never runs Go requests no worker script and no .wasm.
 // A page holds one runner, and the runner never holds more than one worker.
 //
+// The runner runs one load or run at a time. Output events name no caller, so a load or run
+// started while another is pending first stops the pending one, which rejects with "stopped", and
+// then proceeds: every event between a request's start and its settling belongs to that request,
+// and several callers can share one runner, each attributing the events to its own request.
+//
 // The worker answers each load with the compiled WebAssembly.Module, and the runner keeps it. Stop
 // is the one way to end Go that never yields (GOMAXPROCS is 1 under js, and nothing preempts a
 // busy loop): it terminates the worker, starts a fresh one, and posts it the kept module, so the
@@ -32,9 +37,17 @@ type Body = Request extends infer R ? (R extends unknown ? Omit<R, "id"> : never
 
 export class Runner {
   #worker: Worker | undefined;
-  #pending = new Map<number, { resolve(value: unknown): void; reject(error: Error): void }>();
+  /** Every request posted and not yet answered, by id; op tells a caller's load or run from the
+   * adopt a Stop posts itself. */
+  #pending = new Map<
+    number,
+    { op: Body["op"]; resolve(value: unknown): void; reject(error: Error): void }
+  >();
   #listeners = new Set<Listener>();
   #lastId = 0;
+  /** How many loads have started: a load settling after a later one started, the one that stopped
+   * it, leaves the later one's scenario alone. */
+  #loads = 0;
   #scenario: string | undefined;
   /** The compiled module of the scenario loaded, as the worker answered its load. */
   #held: { scenario: string; url: string; module: WebAssembly.Module } | undefined;
@@ -59,20 +72,27 @@ export class Runner {
   }
 
   /** Loads the scenario's module by name, fetched over the HTTP cache and compiled in the worker,
-   * dropping the scenario before it; resolves at once when it is the one loaded. Starts the
-   * worker on the first load. */
+   * dropping the scenario before it; resolves at once when it is the one loaded and nothing is
+   * pending. Stops a pending load or run first, as Stop does. Starts the worker on the first
+   * load. */
   async load(scenario: string): Promise<void> {
+    this.#preempt();
     if (scenario === this.#scenario) return;
     const url = new URL(`${encodeURIComponent(scenario)}.wasm`, this.#modules).href;
+    const load = ++this.#loads;
     this.#scenario = scenario;
     this.#held = undefined;
     try {
       const module = await this.#send({ op: "load", scenario, url });
-      if (module instanceof WebAssembly.Module && this.#scenario === scenario) {
+      if (
+        module instanceof WebAssembly.Module &&
+        this.#loads === load &&
+        this.#scenario === scenario
+      ) {
         this.#held = { scenario, url, module };
       }
     } catch (error) {
-      if (this.#scenario === scenario) this.#scenario = undefined;
+      if (this.#loads === load && this.#scenario === scenario) this.#scenario = undefined;
       throw error;
     }
   }
@@ -80,8 +100,10 @@ export class Runner {
   /** With no handler, runs the loaded program's main afresh to its exit, resolving with its exit
    * code. With one, calls that handler of the loaded scenario's live instance, starting it first
    * when it has none, and resolves with the handler's parsed JSON result, or rejects with its
-   * error's message. */
+   * error's message. Stops a pending load or run first, as Stop does, so a run started during a
+   * load finds no scenario loaded. */
   run(handler?: string, input = ""): Promise<unknown> {
+    this.#preempt();
     if (this.#scenario === undefined) {
       return Promise.reject(new Error("no scenario is loaded; load one first"));
     }
@@ -95,6 +117,11 @@ export class Runner {
    * loaded, and the next load fetches. Stopping while nothing runs rejects nothing and leaves the
    * runner ready with the same scenario; an idle handler instance goes with its worker. */
   async stop(): Promise<void> {
+    this.#stop();
+  }
+
+  /** Stop's work, done before the caller's next line, which load and run rely on. */
+  #stop() {
     const worker = this.#worker;
     if (!worker) return;
     // The old worker goes first, so the page never has two.
@@ -117,11 +144,19 @@ export class Runner {
     });
   }
 
+  /** Stops the pending load or run, if any, so the request about to start runs alone. A Stop's
+   * own adopt is no caller's: it stays, and the request queues behind it in the fresh worker. */
+  #preempt() {
+    for (const { op } of this.#pending.values()) {
+      if (op !== "adopt") return this.#stop();
+    }
+  }
+
   #send(body: Body): Promise<unknown> {
     const id = ++this.#lastId;
     const worker = this.#start();
     return new Promise((resolve, reject) => {
-      this.#pending.set(id, { resolve, reject });
+      this.#pending.set(id, { op: body.op, resolve, reject });
       worker.postMessage({ ...body, id } satisfies Request);
     });
   }
