@@ -14,8 +14,13 @@
 // package before the compiler runs or the toolchain is fetched. Stop: after the runner's Stop while
 // idle, a Run of the same files runs with no build and no request; Stop ends a built busy loop and
 // a build whose archive fetch CDP's Fetch holds, and the next build fetches and compiles no
-// toolchain module, one worker live. The build's helpers are go-builds.ts's. Every wait is bounded.
-// Nothing here names the site: its base is package.json's name.
+// toolchain module, one worker live. A build runs alone: started while spin is pending, it stops
+// spin first, each console holding only its own output; a program's Run, or the runner's load or
+// run, started while a build is pending stops the build, which rejects with "stopped", the source
+// demo's console holding none of the other request's events. Ctrl+Enter and Cmd+Enter, Meta, from
+// the source demo's editor build and run the edited program, and Reset restores the source as
+// given. The build's helpers are go-builds.ts's. Every wait is bounded. Nothing here names the
+// site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -38,7 +43,16 @@ import {
   TOOLS,
   toolchainRequests,
 } from "./go-builds.ts";
-import { demo, open as openPage, pressControl, says, settles, type Shown } from "./go-demos.ts";
+import {
+  demo,
+  open as openPage,
+  pressControl,
+  says,
+  settles,
+  shown,
+  spin,
+  type Shown,
+} from "./go-demos.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -55,6 +69,11 @@ after(async () => {
 });
 
 const SOURCE = demo("source");
+const SPIN = demo("shared", 0);
+const HELLO = demo("program");
+
+/** hello's line, as the prebuilt program demo prints it. */
+const helloLine = /^hello from Go go1\.\d+\.\d+ on js\/wasm$/;
 
 /** The source demo's input.txt, as components.html gives it. */
 const INPUT = "hello from the working directory\n";
@@ -64,6 +83,47 @@ const open = () => openPage(browser, server.origin);
 
 /** Replaces the source demo's active file's text. */
 const retype = (page: Page, text: string) => retypeIn(page, SOURCE, text);
+
+/** CDP's modifier bits. */
+const CTRL = 2;
+const META = 4;
+
+/** Enter pressed and released on the focused element, carrying its text as a keyboard's does,
+ * with the modifiers, CDP's bits. */
+async function enter(page: Page, modifiers: number) {
+  for (const type of ["keyDown", "keyUp"]) {
+    await page.cdp("Input.dispatchKeyEvent", {
+      type,
+      key: "Enter",
+      code: "Enter",
+      windowsVirtualKeyCode: 13,
+      modifiers,
+      ...(type === "keyDown" ? { text: "\r" } : {}),
+    });
+  }
+}
+
+/** Holds back the compiler's fetch with CDP's Fetch, so a cold build stays pending; release lets
+ * every held request go, a terminated worker's among them. */
+async function holdCompiler(page: Page): Promise<{ paused: string[]; release(): Promise<void> }> {
+  const paused: string[] = [];
+  page.on("Fetch.requestPaused", ({ requestId }) => paused.push(requestId));
+  await page.cdp("Fetch.enable", {
+    patterns: [{ urlPattern: `*/go/toolchain/${manifest.compile}` }],
+  });
+  let released = false;
+  return {
+    paused,
+    async release() {
+      if (released) return;
+      released = true;
+      await page.cdp("Fetch.disable").catch(() => {});
+      for (const requestId of paused) {
+        await page.cdp("Fetch.continueRequest", { requestId }).catch(() => {});
+      }
+    },
+  };
+}
 
 /** Presses the source demo's Run and answers what it shows once its status says the text. */
 const run = (page: Page, finished: string): Promise<Shown> => build(page, SOURCE, finished);
@@ -245,6 +305,112 @@ describe("Stop and a built program", () => {
       await settles(() => watched.live.size === 1, `one live worker, not ${watched.live.size}`);
     } finally {
       await page.cdp("Fetch.disable").catch(() => {});
+      await page.close();
+    }
+  });
+});
+
+describe("a build runs alone", () => {
+  test("a build started while spin is pending stops spin first; each console holds only its own output", async () => {
+    const { page } = await open();
+    try {
+      await spin(page, SPIN);
+      await pressControl(page, SOURCE, "run");
+      await says(page, SPIN, "Stopped spin", 10_000);
+      await says(page, SOURCE, DONE, BUILD);
+      assert.deepEqual((await shown(page, SPIN)).rows, [
+        { kind: "line", text: "spin: looping until Stop" },
+      ]);
+      const built = await shown(page, SOURCE);
+      assert.deepEqual(built.lines, [
+        { stream: "stdout", text: `main read ${INPUT.length} bytes: ${INPUT.trimEnd()}` },
+      ]);
+      assert.deepEqual(built.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
+      assert.deepEqual(built.phases, BUILT_PHASES);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("a program's Run while a build is pending stops the build; the source demo's console holds none of its events", async () => {
+    const { page } = await open();
+    const held = await holdCompiler(page);
+    try {
+      await pressControl(page, SOURCE, "run");
+      await settles(() => held.paused.length === 1, "the compiler requested and held", BUILD);
+      await pressControl(page, HELLO, "run");
+      await says(page, SOURCE, "Stopped main", 10_000);
+      await says(page, HELLO, "Finished hello, exit code 0", BUILD);
+      const hello = await shown(page, HELLO);
+      assert.match(hello.lines.map(({ text }) => text).join(""), helloLine);
+      assert.deepEqual(hello.phases, ["Fetch", "Wasm compile", "Instantiate", "Run"]);
+      // The stopped build showed nothing of hello's: no line, exit, result, or phase past its own.
+      const stopped = await shown(page, SOURCE);
+      assert.deepEqual(stopped.rows, []);
+      assert.ok(
+        stopped.phases.every((phase) => !["Instantiate", "Run"].includes(phase)),
+        `the build's phases alone: ${stopped.phases}`,
+      );
+    } finally {
+      await held.release();
+      await page.close();
+    }
+  });
+
+  for (const [what, next] of [
+    ["the runner's load", `runner.load("hello")`],
+    ["the runner's run", `runner.run().catch(() => {})`],
+  ]) {
+    test(`${what} while a build is pending stops the build, which rejects with "stopped"`, async () => {
+      const { page } = await open();
+      const held = await holdCompiler(page);
+      try {
+        const building = page.evaluate(`${SOURCE}.runner
+          .build([{ name: "main.go", text: 'package main; func main() {}' }])
+          .then(() => "built", (error) => error.message)`);
+        await settles(() => held.paused.length === 1, "the compiler requested and held", BUILD);
+        await page.evaluate(`(() => { const runner = ${SOURCE}.runner; return ${next}; })()`);
+        assert.equal(await building, "stopped");
+        // The direct calls are no demo's: the source demo shows nothing of them.
+        assert.deepEqual((await shown(page, SOURCE)).rows, []);
+      } finally {
+        await held.release();
+        await page.close();
+      }
+    });
+  }
+});
+
+describe("a source demo's keys and Reset", () => {
+  test("Ctrl+Enter and Cmd+Enter, Meta, build and run the edited program; Reset restores the source as given", async () => {
+    const { page } = await open();
+    try {
+      const given: string = await page.evaluate(`window.demos.editor(${SOURCE}).value`);
+      await retype(
+        page,
+        'package main; import "fmt"; func main() { fmt.Println("by Ctrl+Enter") }',
+      );
+      await enter(page, CTRL);
+      await says(page, SOURCE, DONE, BUILD);
+      assert.deepEqual((await shown(page, SOURCE)).lines, [
+        { stream: "stdout", text: "by Ctrl+Enter" },
+      ]);
+
+      await retype(page, 'package main; import "fmt"; func main() { fmt.Println("by Cmd+Enter") }');
+      await enter(page, META);
+      await until(
+        page,
+        `window.demos.lines(${SOURCE}).some((line) => line.text === "by Cmd+Enter")`,
+        BUILD,
+      );
+      await says(page, SOURCE, DONE, BUILD);
+      assert.deepEqual((await shown(page, SOURCE)).lines, [
+        { stream: "stdout", text: "by Cmd+Enter" },
+      ]);
+
+      await pressControl(page, SOURCE, "reset");
+      await until(page, `window.demos.editor(${SOURCE}).value === ${JSON.stringify(given)}`, 2000);
+    } finally {
       await page.close();
     }
   });

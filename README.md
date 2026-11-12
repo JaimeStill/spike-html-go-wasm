@@ -73,7 +73,11 @@ evidence, and path are in `context/README.md`.
       a compile error as the compiler writes it, with its exit, running nothing; an import the
       manifest lacks refused before the compiler runs; and Stop, while idle, during a built
       program's busy loop, and during a build, the next build fetching and compiling no toolchain
-      module;
+      module; a build started while spin is pending stopping spin first, each console holding only
+      its own output; a program's Run, or the runner's load or run, while a build is pending
+      stopping the build, which rejects as stopped, the source demo's console holding none of the
+      other request's events; and Ctrl+Enter and Cmd+Enter building and running the edited
+      program, and Reset restoring the source as given;
     - the playground: no Go before a Run; the first Run fetching the manifest, the compiler, the
       linker, and only hello's closure of archives, and printing hello with exit 0 and every phase
       of a build; a Run after an edit fetching no toolchain module and no archive held, a new
