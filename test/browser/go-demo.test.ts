@@ -121,7 +121,7 @@ describe("loading", () => {
     const watched = await open();
     try {
       const { page } = watched;
-      assert.equal(await page.evaluate(`document.querySelectorAll("sl-go-demo").length`), 10);
+      assert.equal(await page.evaluate(`document.querySelectorAll("sl-go-demo").length`), 11);
       assert.deepEqual(goRequests(watched), []);
       assert.deepEqual(watched.workers, []);
       await pressControl(page, demo("program"), "run");
@@ -151,7 +151,7 @@ describe("Run", () => {
         },
         { kind: "result", text: `Result ${answer.replace(/\s+/g, " ")}` },
       ]);
-      assert.deepEqual(result.phases, ["Fetch", "Compile", "Instantiate", "Start", "Call"]);
+      assert.deepEqual(result.phases, ["Fetch", "Wasm compile", "Instantiate", "Start", "Call"]);
       assert.ok(
         result.times.length === 5 && result.times.every((ms) => Number.isFinite(ms) && ms >= 0),
         `each phase's time is a duration: ${result.times}`,
@@ -177,7 +177,7 @@ describe("Run", () => {
         ["stdout"],
       );
       assert.deepEqual(result.rows[1], { kind: "exit", text: "hello exited with code 0" });
-      assert.deepEqual(result.phases, ["Fetch", "Compile", "Instantiate", "Run"]);
+      assert.deepEqual(result.phases, ["Fetch", "Wasm compile", "Instantiate", "Run"]);
       assert.ok(
         result.times.length === 4 && result.times.every((ms) => Number.isFinite(ms) && ms >= 0),
         `each phase's time is a duration: ${result.times}`,
@@ -670,7 +670,7 @@ describe("the fences", () => {
           pre.textContent,
         ]))`);
       // The states list and the focus state.
-      assert.equal(fences.length, 10);
+      assert.equal(fences.length, 11);
       for (const demoFences of fences) {
         for (const [visible, tall] of demoFences) assert.ok(visible && tall);
       }

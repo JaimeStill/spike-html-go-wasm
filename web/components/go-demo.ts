@@ -6,7 +6,7 @@
 // send. The parts render from the models and re-render on their change events; none writes one.
 //
 // The runner: the demo reads a structural subset of the runtime's Runner, DemoRunner, its load,
-// run, stop, and listen, with the output, exit, and timing events re-declared here, since the
+// build, run, stop, and listen, with the output, exit, and timing events re-declared here, since the
 // components tier imports nothing from the runtime (the boundaries table holds it). The page,
 // which may import both, assigns the runtime's Runner to a DemoRunner, so TypeScript checks the
 // runner and its events against this subset there. A callback's parameter is compared strictly,
@@ -19,7 +19,7 @@
 // `data-file`, on the pre or its code, else the pre's `title`; else a default from its language,
 // a `data-language` on either, or a `language-<name>` class, as marked writes it: main.go for go,
 // input.json for json, input.txt for any other; and, with no language, as Shiki's output carries
-// none, main.go on a program demo and input.json on a handler demo. Each file's grammar follows
+// none, main.go on a program or source demo and input.json on a handler demo. Each file's grammar follows
 // its name's extension, .go or .json, any other plain. The fences are read once the document has
 // parsed the demo's children, and again when `handler` changes, which rebuilds the files, or, while
 // an authoring error shows, when an attribute it validates changes, which may mend it.
@@ -31,18 +31,23 @@
 // demo can't run, an authoring error, the shadow root shows the error and slots the fences back,
 // so the page still reads the code as written.
 //
-// The two modes: with `handler` named, Run loads the scenario and calls that handler with the one
-// file's text, editable, and its answer or error shows as the console's result block. A handler
-// demo holds exactly one fence, so more than one is an authoring error: the demo shows it and
-// doesn't run. With no handler, Run runs the prebuilt program's main; the fences are read-only,
-// the file tabs show over the editor, a tabpanel, and the exit shows as the console's status line.
-// `editable-files` adds New file, Rename, and Delete on a program demo; a handler demo, holding
-// its one input, ignores it.
+// The three modes: with `handler` named, Run loads the scenario and calls that handler with the
+// one file's text, editable, and its answer or error shows as the console's result block. A
+// handler demo holds exactly one fence, so more than one is an authoring error: the demo shows it
+// and doesn't run. With no handler, Run runs the prebuilt program's main; the fences are
+// read-only, the file tabs show over the editor, a tabpanel, and the exit shows as the console's
+// status line. With `source`, the demo is built from source: Run builds its files through the
+// runner, every .go file as package main, then runs the built program's main, as the program mode
+// runs the prebuilt one; the fences are editable. A source demo names no scenario and no handler:
+// the program is its files. A failed build shows the compiler's or linker's output and its exit
+// in the console, and its error as the result block, and runs nothing. `editable-files` adds New
+// file, Rename, and Delete on a program or source demo; a handler demo, holding its one input,
+// ignores it.
 //
 // Event attribution: the runner runs one request at a time, and a new one stops the pending one
 // first, so every event between a request's start and its settling is that request's. A demo
-// takes the runner's events only while a request of its own is pending, from its load's call to
-// its run's settling; every other event, another demo's, it ignores. When another demo's Run stops
+// takes the runner's events only while a request of its own is pending, from its load's or
+// build's call to its run's settling; every other event, another demo's, it ignores. When another demo's Run stops
 // this demo's pending run, its promise rejects with "stopped", and the demo records the run as
 // stopped. A Run while the demo's own run is pending supersedes it, as the RunState does: the
 // superseded run's late settling changes nothing.
@@ -95,6 +100,12 @@ export interface DemoExitEvent {
   code: number;
 }
 
+/** A program's file as the runtime's build takes it: its name and its text. */
+export interface DemoFile {
+  name: string;
+  text: string;
+}
+
 /** A phase's timing, as the runtime's timing event carries it. */
 export interface DemoTimingEvent {
   type: "timing";
@@ -108,13 +119,14 @@ export type DemoEvent = DemoOutputEvent | DemoExitEvent | DemoTimingEvent;
 
 /**
  * The runner as the demo reads it, the runtime's Runner's structural subset: `load` a scenario by
- * name; `run` its program's main, with no handler, resolving with the exit code, or call a
+ * name, or `build` a program from its files, held as the scenario loaded; `run` its program's main, with no handler, resolving with the exit code, or call a
  * handler with input, resolving with its answer; `stop` whatever runs; and `listen` to every
  * event, answering the function that stops listening. A request started while another is pending
  * stops that one first, which rejects with "stopped".
  */
 export interface DemoRunner {
   load(scenario: string): Promise<void>;
+  build(files: readonly DemoFile[]): Promise<void>;
   run(handler?: string, input?: string): Promise<unknown>;
   stop(): Promise<void>;
   listen(listener: (event: DemoEvent) => void): () => void;
@@ -125,6 +137,9 @@ interface Fence {
   name: string;
   text: string;
 }
+
+/** What a source demo's run runs, as its status names it: the built program's main package. */
+const SOURCE_PROGRAM = "main";
 
 /** The fences' default names, by language. */
 const DEFAULT_NAMES: Readonly<Record<string, string>> = Object.freeze({
@@ -151,7 +166,8 @@ function fenceLanguage(pre: HTMLPreElement): string | undefined {
 }
 
 /** A fence's file name: data-file on the pre or its code, else the pre's title, else a default
- * from its language, or, with none named, the mode's. */
+ * from its language, or, with none named, the mode's: main.go when program, a program or source
+ * demo. */
 function fenceName(pre: HTMLPreElement, program: boolean): string {
   const code = pre.querySelector(":scope > code");
   const named = pre.dataset.file ?? code?.getAttribute("data-file") ?? (pre.title || undefined);
@@ -196,19 +212,22 @@ interface Owned {
 /**
  * A live Go demo. `runner`, the page's runner, a DemoRunner, runs it; with none, Run does nothing.
  * `scenario` names the scenario Run loads; `handler`, when given, the handler Run calls with the
- * one file's text, else Run runs the program's main. The files are the light DOM's fences (see
- * the module's note). `editable-files` adds New file, Rename, and Delete on a program demo. `wrap`
- * wraps long lines, and `tab-size` sets a tab's width, 1 to 8 columns, 4 by default. `label`
- * names the demo, a region; by default it names the scenario and the handler, "probe format demo".
+ * one file's text, else Run runs the program's main. `source` builds the program from the files
+ * instead, every .go file as package main, and runs its main, naming no scenario. The files are
+ * the light DOM's fences (see the module's note). `editable-files` adds New file, Rename, and
+ * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
+ * to 8 columns, 4 by default. `label` names the demo, a region; by default it names the scenario
+ * and the handler, "probe format demo", or, on a source demo, "Go source demo".
  *
- * An authoring error, a missing scenario, no fence, more than one fence on a handler demo, a
- * fence's name the file set refuses, or a tab size the settings refuse, shows in place of the
- * demo, naming the reason, as the region's description too, over the fences as authored; the demo
- * doesn't run. `problem` gives the reason, or null.
+ * An authoring error, a missing scenario, a source demo naming a scenario or a handler, no fence,
+ * more than one fence on a handler demo, a fence's name the file set refuses, or a tab size the
+ * settings refuse, shows in place of the demo, naming the reason, as the region's description too,
+ * over the fences as authored; the demo doesn't run. `problem` gives the reason, or null.
  *
  * Events: none of its own; every part's request is the demo's to apply, and goes no further.
  *
- * Keyboard: each part's own, in order: the toolbar, the tabs on a program demo, the editor, and
+ * Keyboard: each part's own, in order: the toolbar, the tabs on a program or source demo, the
+ * editor, and
  * the console. Ctrl or Cmd+Enter, from anywhere inside the demo, runs it.
  */
 export class GoDemo extends LitElement {
@@ -218,6 +237,7 @@ export class GoDemo extends LitElement {
     runner: { attribute: false },
     scenario: { type: String },
     handler: { type: String },
+    source: { type: Boolean },
     editableFiles: { type: Boolean, attribute: "editable-files" },
     wrap: { type: Boolean },
     tabSize: { type: String, attribute: "tab-size" },
@@ -232,6 +252,8 @@ export class GoDemo extends LitElement {
   declare scenario: string | null;
   /** The handler Run calls; null, or empty, runs the program's main. */
   declare handler: string | null;
+  /** Whether Run builds the program from the files, then runs its main. */
+  declare source: boolean;
   /** Whether a program demo's files group shows. */
   declare editableFiles: boolean;
   /** Whether long lines wrap. */
@@ -264,6 +286,7 @@ export class GoDemo extends LitElement {
     this.runner = null;
     this.scenario = null;
     this.handler = null;
+    this.source = false;
     this.editableFiles = false;
     this.wrap = false;
     this.tabSize = null;
@@ -274,7 +297,7 @@ export class GoDemo extends LitElement {
     this.addEventListener("keydown", (event) => this.#keydown(event));
   }
 
-  /** Whether the demo runs a program's main, naming no handler. */
+  /** Whether the demo runs a program's main, prebuilt or built from source, naming no handler. */
   get #program(): boolean {
     return !this.handler;
   }
@@ -349,7 +372,15 @@ export class GoDemo extends LitElement {
 
   /** The models, built afresh; throws the reason when the demo can't run. */
   #models(): Owned {
-    if (!this.scenario) throw new Error("a demo names its Go scenario in its scenario attribute");
+    if (this.source) {
+      if (this.scenario || this.handler) {
+        throw new Error(
+          "a source demo builds its program from its fences, so it names no scenario and no handler",
+        );
+      }
+    } else if (!this.scenario) {
+      throw new Error("a demo names its Go scenario in its scenario attribute");
+    }
     const program = this.#program;
     const fences: Fence[] = this.#fences.map((pre) => ({
       name: fenceName(pre, program),
@@ -363,7 +394,9 @@ export class GoDemo extends LitElement {
         `a handler demo holds one fence, its handler's input; this one holds ${fences.length}`,
       );
     }
-    const given: GivenFile[] = fences.map(({ name, text }) => ({ name, text, readonly: program }));
+    // A prebuilt program's source is what it was built from; a source demo's is the reader's.
+    const readonly = program && !this.source;
+    const given: GivenFile[] = fences.map(({ name, text }) => ({ name, text, readonly }));
     return {
       files: new FileSet(given),
       settings: new EditorSettings({ wrap: this.wrap, tabSize: tabSizeOf(this.tabSize) }),
@@ -405,12 +438,14 @@ export class GoDemo extends LitElement {
     if (editor && files && !files.activeFile.readonly) files.edit(files.active, editor.value);
   }
 
-  /** Run: loads the scenario and runs it, a handler called with the one file's text or the
-   * program's main, its events the console's and the timings' until it settles. */
+  /** Run: loads the scenario, or builds the files, and runs it, a handler called with the one
+   * file's text or the program's main, its events the console's and the timings' until it
+   * settles. */
   async #run(): Promise<void> {
     const owned = this.owned;
     const runner = this.runner;
-    const scenario = this.scenario;
+    const source = this.source;
+    const scenario = source ? SOURCE_PROGRAM : this.scenario;
     if (!owned || !runner || !scenario) return;
     const handler = this.handler || undefined;
     const run = owned.state.start(handler ?? scenario);
@@ -420,7 +455,12 @@ export class GoDemo extends LitElement {
     /** Whether this run is still the demo's pending one: a later Run, or a rebuild, ends it. */
     const mine = () => this.#current === run && this.owned === owned;
     try {
-      await runner.load(scenario);
+      if (source) {
+        // The files as they stand at the Run, each its name and text.
+        await runner.build(owned.files.files.map(({ name, text }) => ({ name, text })));
+      } else {
+        await runner.load(scenario);
+      }
       if (!mine()) return;
       if (handler === undefined) {
         const code = await runner.run();
@@ -486,10 +526,12 @@ export class GoDemo extends LitElement {
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     if (changed.has("runner")) this.#listen();
-    // The handler sets the mode, so a change rebuilds the files from the fences; so does a change
-    // to anything the demo validates while it shows an authoring error, which may mend it.
+    // The handler and source set the mode, so a change to either rebuilds the files from the
+    // fences; so does a change to anything the demo validates while it shows an authoring error,
+    // which may mend it.
     const validated = changed.has("scenario") || changed.has("wrap") || changed.has("tabSize");
-    if (this.hasUpdated && (changed.has("handler") || (this.problem !== null && validated))) {
+    const mode = changed.has("handler") || changed.has("source");
+    if (this.hasUpdated && (mode || (this.problem !== null && validated))) {
       this.#build();
     }
     const owned = this.owned;
@@ -504,7 +546,8 @@ export class GoDemo extends LitElement {
       }
     }
     const named = [this.scenario, this.handler].filter((part) => part).join(" ");
-    this.#internals.ariaLabel = this.label || (named ? `${named} demo` : "Go demo");
+    const fallback = this.source ? "Go source demo" : "Go demo";
+    this.#internals.ariaLabel = this.label || (named ? `${named} demo` : fallback);
     this.#internals.ariaDescription = this.problem ? `Authoring error: ${this.problem}` : null;
   }
 

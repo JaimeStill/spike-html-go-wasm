@@ -1,6 +1,6 @@
 // Every program demo's go fence on the components page is its scenario's source, byte for byte:
-// each sl-go-demo in components.html with no handler attribute runs the prebuilt program, so the
-// code it shows must be the code that program was built from. A fence is a direct-child pre of the
+// each sl-go-demo in components.html with no handler and no source attribute runs the prebuilt
+// program, so the code it shows must be the code that program was built from. A fence is a direct-child pre of the
 // demo, its text the pre's text content, as sl-go-demo reads it (web/components/go-demo.ts); its
 // file is the fence's name, its data-file, on the pre or its code, else the pre's title, else
 // main.go, under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go.
@@ -108,7 +108,8 @@ function fences(content: string): { name: string; text: string }[] {
   return found;
 }
 
-/** The page's program demos, each sl-go-demo with no handler attribute, in order. */
+/** The page's program demos, each sl-go-demo with no handler attribute and no source attribute,
+ * in order: a source demo's fences are the reader's program, which no scenario was built from. */
 function programDemos(html: string): ProgramDemo[] {
   const page = html.replace(/<!--[\s\S]*?-->/g, "");
   const demos: ProgramDemo[] = [];
@@ -118,7 +119,7 @@ function programDemos(html: string): ProgramDemo[] {
     const end = page.indexOf("</sl-go-demo>", from);
     if (end < 0) throw new Error(`a demo the reader can't close: ${start[0]}`);
     const attrs = attributes(start[0]);
-    if (attrs.has("handler")) continue;
+    if (attrs.has("handler") || attrs.has("source")) continue;
     demos.push({ scenario: attrs.get("scenario") ?? "", fences: fences(page.slice(from, end)) });
   }
   return demos;
@@ -150,11 +151,12 @@ describe("the components page's program demos", () => {
 
 describe("the reader", () => {
   test("reads a fence as the parser does: its newline after <pre> dropped, its markup stripped, its references decoded", () => {
-    const [demo] = programDemos(
+    const [demo, ...rest] = programDemos(
       `<!-- <sl-go-demo scenario="no"> --><sl-go-demo scenario="x" label="a &amp; b"><pre data-file="a.go">
 <code><span>if a &lt; b &amp;&amp; c &#62; d &#x26; "</span>
 </code></pre><pre title="b.go"><code>b</code></pre></sl-go-demo>
-<sl-go-demo scenario="y" handler="format"><pre><code>[]</code></pre></sl-go-demo>`,
+<sl-go-demo scenario="y" handler="format"><pre><code>[]</code></pre></sl-go-demo>
+<sl-go-demo source><pre><code>package main</code></pre></sl-go-demo>`,
     );
     assert.deepEqual(demo, {
       scenario: "x",
@@ -163,6 +165,7 @@ describe("the reader", () => {
         { name: "b.go", text: "b" },
       ],
     });
+    assert.deepEqual(rest, [], "a handler demo and a source demo are no program demos");
   });
 
   test("refuses a reference it doesn't know, rather than pass the fence unread", () => {
