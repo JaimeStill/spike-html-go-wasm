@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** building
+- **State:** brief ready
 - **Task:** sqlate
 - **Branch:** sqlate
 
