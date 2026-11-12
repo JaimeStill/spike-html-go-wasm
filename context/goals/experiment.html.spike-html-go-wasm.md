@@ -77,7 +77,7 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                  imports nothing from the runtime and fetches nothing itself.
               9. A playground page, linked from the index, holds one editable-files sl-go-demo
                  in the source mode. It opens on the starter program (behavior 21), its fences
-                 equal byte for byte to cmd/calc's files and its input.txt under the unit tier.
+                 equal byte for byte to playground/calc's files and its input.txt under the unit tier.
                  The page requests no Go before a Run. It passes every SDK shell check except
                  reading width, its prose holds 80ch, centred, and the crawl reaches the index,
                  the components page, and the playground alone.
@@ -171,18 +171,19 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   existing tests and captures), and a browser test reads the layer order:
                   the foundation's layers, then `site`, then `page`.
               21. The starter is a small calculator language in one package main, in
-                  cmd/calc: main.go reads input.txt from the working directory, and lexer.go,
-                  parser.go, and eval.go turn each line into tokens, a syntax tree, and a value.
-                  The script has `let` bindings, the four arithmetic operators, parentheses, and
+                  playground/calc: main.go reads input.txt from the working directory, and lexer.go,
+                  parser.go, and eval.go turn each line into tokens, a syntax tree, and a value. The
+                  script has `let` bindings, the four arithmetic operators, parentheses, and
                   comments. Each line's result prints on stdout. A line that fails prints
-                  "input.txt:<line>: <reason>" on stderr, and the run goes on to the next line;
-                  the program exits 1 if any line failed and 0 otherwise. The shipped input.txt
-                  runs clean, and a comment at its top suggests a line to try that fails. It
-                  imports only light standard packages (no encoding/json or net/http), and reads
-                  plainly, about 200 lines with doc comments. `go test` in the check proves its
-                  output and exit for the shipped input.txt and for a failing script. Under
-                  GOOS=js it builds like the other entrypoints and follows the Go module's layer
-                  rules.
+                  "input.txt:<line>: <reason>" on stderr, and the run goes on to the next line; the
+                  program exits 1 if any line failed and 0 otherwise. The shipped input.txt runs
+                  clean, and a comment at its top suggests a line to try that fails. It imports only
+                  light standard packages (no encoding/json or net/http), and reads plainly, about
+                  200 lines with doc comments. `go test` in the check proves its output and exit for
+                  the shipped input.txt and for a failing script. Under GOOS=js it is vetted and
+                  tested in the check, never built to dist/, and follows the Go module's layer rules
+                  (a root-level package that imports only the standard library). A result of
+                  negative zero prints 0.
 Test seams    mise run check: the unit tier for 1 and the fence equality in 9, and the build's
               compile and link steps over the runtime's in-memory fs under node for 2, 4, and 5.
               The browser tier, the built site under its base in chrome-headless-shell with the
@@ -230,12 +231,13 @@ Slices        1. Upgrade: chrome-headless-shell 157.0.8103.78 (its sha256 and si
               11. The reservations: the status's width in ch and the timings' track, each as one
                   property; the Layout menu's width bound; the band read limited as behavior 14
                   says, with a README note; box-stability tests rerun; captures.
-              12. The starter program: cmd/calc with its tests in the check; the playground's
-                  fences replaced by its four files and input.txt, with the fence check; the
-                  build-reuse rule for non-Go files in the runner, with a browser test where an
-                  input.txt edit runs with no Go compile or link; behavior 10's first-Run proofs
-                  moved to the starter's closure and output; the captures; the docs (README
-                  Playground, the disclosure stays as approved).
+              12. The starter program: cmd/calc with its tests in the check; the playground's fences
+                  replaced by its four files and input.txt, with the fence check; the build-reuse
+                  rule for non-Go files in the runner, with a browser test where an input.txt edit
+                  runs with no Go compile or link; behavior 10's first-Run proofs moved to the
+                  starter's closure and output; the captures; the docs (README Playground, the
+                  disclosure stays as approved); the starter moved from cmd/calc to playground/calc,
+                  out of the build's entrypoints and dist/; negative zero printed as 0.
 Out of scope  persisting files, sharing, and a Format button; workspace modules' archives (the
               sqlate and scenarios tasks add them as they first require them); go.mod, local
               subpackages, cgo, assembly, and go:embed in a built program; argv and stdin for a
@@ -753,6 +755,15 @@ slices 12/12 committed · standards done · spec — · editor — (starter prog
 - playground (starter, architect): the disclosure's last sentence ends "reload, and you're back
   to where you started". Rejected: "back to the calculator", which a later starter would make
   untrue.
+- playground (starter placement): the starter lives in playground/calc, a root-level package
+  main outside cmd/, since it isn't a scenario and no page loads it prebuilt. Rejected: keeping
+  cmd/calc with a STANDARDS.md exception to "`cmd/<scenario>` holds only the entrypoint".
+- playground (starter placement): the starter is only vetted and tested under GOOS=js in the
+  check, never written to dist/. Rejected: building calc.wasm like hello, which ships bytes no
+  page loads (minimal-footprint).
+- playground (starter placement): a result of negative zero prints 0. Rejected: -0, as Go's
+  float formatting gives it.
+
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
