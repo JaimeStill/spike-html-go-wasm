@@ -30,8 +30,9 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
     compiler and linker over that toolchain on the in-memory fs: hello built and run, a compile
     error and a package clause other than main reported as the compiler writes them, an import
     the manifest lacks refused before the compiler runs, and a non-Go file read from the run's
-    working directory. It tests the components' five models (`EditorSettings`, `FileSet`,
-    `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change events.
+    working directory. It tests the components' six models (`Arrangement`, `EditorSettings`,
+    `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change
+    events.
     It holds each program demo's go fence on the components page to its scenario's source, byte
     for byte, and the playground's demo to hello's, `cmd/hello/main.go`. It fails if a module
     under `web/components` or `web/pages` registers a page shortcut through the foundation's
@@ -84,45 +85,46 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       compile error; Stop ending a busy loop, the next build fetching no toolchain module; and a
       file the reader adds read through `os.ReadFile` from the working directory, nothing a run
       writes outliving it;
-    - the playground's one screen: at 390px, 1120px, and 1376px, each at its capture height and at
-      900px, the disclosure closed, the demo's container taking every row left, the demo as tall
-      as it, its bottom edge the viewport's, the page scrolling neither way, and no script sizing
-      the demo; the disclosure opened taking its rows from the container, down to its floor, half
-      the viewport's height, where every part lies inside the demo, the editor showing three
-      lines and the console's log two, and the page scrolls down, never sideways; and closing it
-      putting the screen back;
-    - the playground's fixed layout: at 390px, 1120px, and 1376px, and with the demo half a rem
-      either side of 44rem and 64rem, each width in its band, a paste of 500 lines into the
-      editor, 10,000 lines printed, and a full timings table changing no part's box, the page
-      never scrolling sideways, and every part inside the demo, from 64rem in each arrangement,
-      each placing the parts as it says; a Run, a Stop, a failed build, a band change, and an
-      arrangement change keeping the editor's and the console's content and scroll position and
-      the output tab chosen; the phone's output tablist's accessibility tree and keys, and no
-      tablist or tabpanel from 44rem; and a demo without `fixed` laid out as before;
-    - the playground's arrangement: Layout a menu button in its own group from 64rem and absent
-      below; its menu's accessibility tree and its APG keys, each in turn; choosing each
-      arrangement in place, with no reload, no request, and the run's status, output, and timings
-      as they were; the choice the only write to storage, under the spike's key, which a reload
-      and another page open in; another tab's choice, and a cleared store, followed; and an empty
-      store, text that isn't JSON, a refused value, and blocked storage opening with the editor
-      left, writing nothing.
+    - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
+      at 900px: with the disclosure closed, the demo's container takes every row left, the demo
+      is as tall as the container and ends at the viewport's bottom edge, the page doesn't
+      scroll, and no script sizes the demo; opening the disclosure shrinks the container down to
+      its floor, half the viewport's height, where every part stays inside the demo, the editor
+      shows three lines, the console's log shows two, and the page scrolls down but never
+      sideways; closing it restores the screen;
+    - the playground's fixed layout, at 390px, 1120px, and 1376px, and with the demo half a rem
+      either side of 44rem and 64rem: each width lays out its band, and from 64rem each
+      arrangement places the parts as it says; a paste of 500 lines, 10,000 printed lines, and a
+      full timings table change no part's box; the page never scrolls sideways and every part
+      stays inside the demo; a Run, a Stop, a failed build, a band change, and an arrangement
+      change keep the editor's and the console's content and scroll position and the chosen
+      output tab; the phone's output tablist has the expected accessibility tree and keys, and
+      no tablist or tabpanel shows from 44rem; a demo without `fixed` keeps its flowing layout;
+    - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
+      absent below; the menu has the expected accessibility tree and the APG keys; choosing an
+      arrangement applies it in place, with no reload or request, leaving the run's status,
+      output, and timings as they were; the choice is the only write to storage, under the
+      spike's key, and a reload and another page open in it; the page follows another tab's
+      choice and a cleared store; an empty store, text that isn't JSON, a refused value, and
+      blocked storage each open with the editor left and write nothing.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
   (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`, and the playground's
   toolchain into `dist/go/toolchain/` (`scripts/build-toolchain.ts`): Go's compiler and linker
   built for `GOOS=js`, an archive for each standard-library package, and `manifest.json`, the one
   file that names them, each by its content's hash. A bare `vite build` omits the wasm.
-- `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths, 390px,
-  1120px, and 1376px, each component on the components page alone at each of them, `--page
-  components/<component>`, as `--page components/console`, and the playground, `--page playground`,
-  its viewport alone, the page's one screen, in each band of its fixed demo: 390px, with the output
-  panel's Output tab and again with its Timings tab, 900px, between 44rem and 64rem, and 1120px and
-  1376px, each in editor left, top, and right, and with the Layout menu open, each chosen by the
-  menu; and 1376px with the disclosure open, the demo at its floor. `--width <px>`, one of the SDK's
-  three, captures that width alone, every page's, as `mise run screenshots --page
-  components/controls --width 390` (the playground's 900px capture is taken only with every width);
-  any other width is a usage error naming them. `scripts/screenshots.ts` takes `--width`, which the
-  capture bin doesn't know, and hands it to the capture file.
+- `mise run screenshots`: capture the pages, light and dark. The index and each component on the
+  components page, alone, are captured at the SDK's widths, 390px, 1120px, and 1376px; a
+  component's capture is `--page components/<component>`, as `--page components/console`. The
+  playground, `--page playground`, is captured as its viewport alone, the page's one screen, in
+  each band of its fixed demo: 390px with the output panel's Output tab and again with its
+  Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
+  each chosen through the Layout menu, and with the menu open; and 1376px with the disclosure
+  open, the demo at its floor. `--width <px>`, one of the SDK's three, captures that width alone
+  on every page, as `mise run screenshots --page components/controls --width 390`; the
+  playground's 900px capture is taken only when no width is given. Any other width is a usage
+  error naming the three. `scripts/screenshots.ts` takes `--width`, which the capture bin
+  doesn't know, and hands it to the capture file.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
 - `mise run live [base URL]`: check that the deployed site, at its Pages URL or the base given,
@@ -171,37 +173,42 @@ are `protocol.ts`'s.
 
 `playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
 opening on hello's source, `cmd/hello/main.go` as it is. Its script, `web/pages/playground.ts`,
-gives the demo the page's one `Runner` and the reader's arrangement. The page is one screen, laid
-out in CSS alone: the body at least the viewport's height, a
-grid of the header over main, and main a grid of the heading, the intro, a closed disclosure,
-"What you can build here", then the demo's container, a size container in a `1fr` row taking
-every row they leave, which the fixed demo fills (`100cqb`). Opening the disclosure takes its
+gives the demo the page's one `Runner` and the reader's arrangement. Nothing loads Go until a
+Run: the first fetches the manifest, the compiler, the linker, and the archives of the program's
+import closure, and a later Run fetches the manifest again and only the archives a new import
+adds (see "Runtime", `build(files)`). The program's limits and its working directory are the
+build's. New file adds a file, so the program can read a non-Go file such as `input.txt` through
+`os.ReadFile`. Stop keeps the compiled toolchain. The reader's files live only in the page: a
+reload opens on hello again, and no file is shared or stored.
+
+### The one-screen page
+
+The page fits one screen, laid out in CSS alone. The body is at least the viewport's height, a
+grid of the header over main. Main is a grid of the heading, the intro, a closed disclosure
+("What you can build here"), and the demo's container, a size container whose `1fr` row takes
+every row the others leave; the fixed demo fills it (`100cqb`). Opening the disclosure takes its
 rows from the container, down to a floor of half the viewport's height (`minmax(50dvh, 1fr)`),
-where the editor still shows seven lines and the console two and a half at a phone's width;
-below the floor the page grows and scrolls. The container takes the body's whole content width,
+where a phone's width still shows seven lines of the editor and two and a half of the console;
+below the floor the page grows and scrolls. The container spans the body's whole content width,
 beyond main's 80ch, so the demo reaches its wide band, while main and the page's prose keep
 their reading width. The disclosure says, in the reader's terms, what a program can be, where its
-other files go, how Run and Stop behave, and that edits last only as long as the tab. Nothing
-loads Go until a Run: the first fetches the manifest, the
-compiler, the linker, and the archives of the program's import closure, and a later Run fetches
-the manifest again and only the archives a new import adds (see "Runtime", `build(files)`). The
-program's limits and its working directory are the build's. New file adds a file, so the program
-can read a non-Go file such as `input.txt` through `os.ReadFile`. Stop keeps the compiled
-toolchain. The reader's files live only in the page: a reload opens on hello again, and no file
-is shared or stored.
+other files go, how Run and Stop behave, and that edits last only as long as the tab.
+
+### The Layout menu and the stored arrangement
 
 From 64rem the demo's toolbar shows Layout, a menu of Editor left, Editor top, and Editor right,
-which places the editor beside the output, above it, or on its other side (`sl-go-demo`, "Fixed
-layout"). The arrangement is the reader's preference, which the page owns, not the demo:
-`web/pages/arrangement.ts`'s `keep()` builds one `Arrangement` from the placement kept in
-localStorage under `spike-html-go-wasm.arrangement`, a JSON string, `"left"`, `"top"`, or
-`"right"`; gives it to every fixed demo on the page; and applies each demo's `arrange` request to
-it, storing the choice. Reading runs in a try/catch, as the foundation's `preferences.js` reads
-the theme, before first paint, so a reload, and every playground on the origin, opens in the
-stored arrangement; blocked storage, an empty store, text that isn't JSON, or a value the model
-refuses opens with the editor left. The choice is the only write: nothing is stored until the
-reader chooses, and choosing the placement already held stores nothing. Another tab's choice
-moves this page's demo too, and a cleared store moves it back to left.
+which places the editor left of the output, above it, or right of it (`sl-go-demo`, "Fixed
+layout"). The arrangement is the reader's preference, so the page owns it, not the demo.
+`keep()` in `web/pages/arrangement.ts` builds one `Arrangement` from the placement stored in
+localStorage under `spike-html-go-wasm.arrangement` as a JSON string (`"left"`, `"top"`, or
+`"right"`), gives it to every fixed demo on the page, and applies each demo's `arrange` request
+to it, storing the choice. The page's script blocks render, so the stored arrangement applies
+before first paint, on a reload and on every playground on the origin. Each storage access runs
+in a try/catch, as the foundation's `preferences.js` reads the theme: blocked storage, an empty
+store, text that isn't JSON, and a value the model refuses each open with the editor left. The
+choice is the only write: nothing is stored until the reader chooses, and choosing the
+placement already held stores nothing. Another tab's choice moves this page's demo too, and a
+cleared store moves it back to left.
 
 ## Components
 
@@ -212,18 +219,19 @@ module script beside it. A page imports a component's module, and the build bund
 `components.html` shows each component's states once, labelled, its layout following the
 viewport, and focused by the keyboard. The directory's other modules are the components'
 internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `reasons.ts`,
-`subscription.ts`, `syntax-themes.ts`, and `tokenizer.ts`.
+`subscription.ts`, `syntax-themes.ts`, and `tokenizer.ts`, and one shared sheet, `tabs.css`, the
+tablist's look, which the file tabs and a fixed demo's output tabs adopt.
 
-- `./arrangement.js`: `Arrangement`, a fixed Go demo's arrangement from 64rem, the reader's
-  preference, a model with no document, element, or storage, an `EventTarget` its owner, the page,
-  writes: `placement`, where the editor sits, `"left"` (the default, `DEFAULT_PLACEMENT`), `"top"`,
-  or `"right"`, `PLACEMENTS` in the Layout menu's order, frozen. `new Arrangement(placement?)`
-  starts from the placement given, validated. A value it can't hold is refused, a `TypeError` for
-  one that isn't a string or a `RangeError` for a string that isn't a placement, naming the
-  reason, and changes nothing; `placementProblem(value)` gives that reason, or `null`, without
-  setting anything, so an owner reading storage tests a value before taking it. Each set that
-  changes the placement sends one `change` `Event`; a set to the placement held sends none. The
-  unit tier tests it under node.
+- `./arrangement.js`: `Arrangement`, where a fixed Go demo places its editor from 64rem, the
+  reader's preference. It is a model with no document, element, or storage, an `EventTarget` its
+  owner, the page, writes. `placement` holds `"left"` (the default, `DEFAULT_PLACEMENT`),
+  `"top"`, or `"right"`; `PLACEMENTS` lists them, frozen, in the Layout menu's order.
+  `new Arrangement(placement?)` starts from the placement given, validated. A value it can't hold
+  is refused, naming the reason, and changes nothing: a `TypeError` for a value that isn't a
+  string, a `RangeError` for a string that isn't a placement. `placementProblem(value)` gives that
+  reason, or `null`, without setting anything, so an owner reading storage tests a value before
+  taking it. Each set that changes the placement sends one `change` `Event`; a set to the
+  placement held sends none. The unit tier tests it under node.
 
 - `./code-editor.js`: `sl-code-editor`, a plain-text source editor: a `contenteditable` element
   in plaintext-only mode, exposed as a multiline textbox, beside a gutter of line numbers. Its Go
@@ -304,9 +312,9 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
   whole log: 10,000 writes, each its own task, render in a few frames. The log grows with its
   lines up to 24rem, or the length the page sets as `--sl-console-max-block-size` on the host,
   and scrolls inside; it is no flex item, which would lay out every row again on each append.
-  With `fill`, it grows with nothing: the console fills the block size its container gives it,
-  the bar above and the log the rest, whatever the log holds, and the log scrolls inside; its
-  frame's size is contained, so no row is measured to size it.
+  With `fill`, the console takes the block size its container gives it, whatever the log holds:
+  the bar sits on top and the log takes the rest, scrolling inside. The log's frame has
+  `contain: size`, so no row is measured to size it.
   - Attributes: `label` (the log's accessible name, "Output" by default) and `fill` (a boolean:
     fill the given block size rather than grow with the log).
   - Properties: `log`, the `ConsoleLog` its owner creates and writes; `null`, the default, shows
@@ -373,18 +381,18 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
   region, and from then on the reason follows the name as it is typed. A taken name closes the form,
   returns focus to its button, and sends the request; a rename to the file's own name sends nothing.
   Escape closes the form, sends nothing, and returns focus to its button. Delete asks for no
-  confirmation. Layout is the APG menu button, `aria-haspopup="menu"` and `aria-expanded`: it opens
-  a menu, a popover anchored below it, of three radio items, Editor left, Editor top, and Editor
-  right, the arrangement's placement checked and ticked. Choosing an item closes the menu, returns
-  focus to Layout, and sends the request, unless the placement is the one held. The status, a polite
-  live region beside the toolbar, says each run's start, "Running hello…", and its end, "Finished
-  format", "Finished hello, exit code 0", "Stopped spin", or "Failed format: <message>", from the
-  run state's transitions alone: the state the toolbar is given is never said, nor a change of the
-  files. The toolbar wraps between its groups, each group's controls together. With `steady`, the
-  status keeps one line whatever it says: it asks the row for 12rem, so whether it shares the
-  toolbar's line or takes its own follows the width alone, and words longer than its line end in an
-  ellipsis, still whole to assistive technology; the controls' box then follows their width alone.
-  Nothing moves.
+  confirmation. Layout is an APG menu button, with `aria-haspopup="menu"` and `aria-expanded`. It
+  opens a menu in a popover anchored below it, holding three radio items, Editor left, Editor top,
+  and Editor right; the arrangement's placement is checked and ticked. Choosing an item closes the
+  menu, returns focus to Layout, and sends the request, unless the placement is the one held. The
+  status, a polite live region beside the toolbar, says each run's start, "Running hello…", and
+  its end, "Finished format", "Finished hello, exit code 0", "Stopped spin", or "Failed format:
+  <message>", from the run state's transitions alone: the state the toolbar is given is never
+  said, nor a change of the files. The toolbar wraps between its groups, each group's controls
+  together. With `steady`, the status keeps to one line whatever it says, so the toolbar's height
+  depends on its width alone: the status asks the row for 12rem, which decides whether it shares
+  the controls' line or takes its own, and text longer than its line ends in an ellipsis, still
+  whole to assistive technology. Nothing moves.
   - Attributes: `editable-files` (a boolean: show the Files group), `steady` (a boolean: the
     status keeps one line), and `label` (the toolbar's accessible name, "Controls" by default).
   - Properties: `files`, the `FileSet` its owner creates and writes, `null` by default, leaving
@@ -470,9 +478,8 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     click request the focused tab's selection.
 - `./glyphs.js`: the glyphs the components draw in their shadow roots, Octicons' copy, trash,
   check-circle, x-circle, play, square-fill, undo, file-added, pencil, split-view, and check from
-  the icons layer,
-  written out as Lit templates with the same paths: the build fills the icons layer into a page's
-  own markup, and no tier imports it.
+  the icons layer, written out as Lit templates with the same paths: the build fills the icons
+  layer into a page's own markup, and no tier imports it.
 - `./go-demo.js`: `sl-go-demo`, live Go: the element composing `sl-controls`, `sl-file-tabs`,
   `sl-code-editor`, `sl-console`, and `sl-timings` over the page's runner, and the one owner of
   their models. It builds a `FileSet` from its fences, an `EditorSettings` from its attributes,
@@ -532,8 +539,8 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
   - Files: New file adds the file, selects it, and focuses the editor; Rename renames the active
     file, focus staying on Rename; Delete removes the active file, unless the last, and focuses
     the tab now active; Reset restores every file's text as given.
-  - Events: `arrange`, a `CustomEvent`, bubbling, `detail.placement` the placement the Layout
-    menu chose: the page, which owns the arrangement, applies it, and until it does nothing
+  - Events: `arrange`, a bubbling `CustomEvent` whose `detail.placement` is the placement the
+    Layout menu chose. The page, which owns the arrangement, applies it; until then nothing
     changes. Its parts' other requests stop at it. Slots: none, but the fences above.
   - Accessibility: a region named by `label`, holding the toolbar, the tabs and their tabpanel on
     a program demo, the editor, named by the active file's name, the log, and the timings. A fixed
@@ -551,27 +558,28 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     console taking the rest. Every part stays inside the demo at every width, and the demo fits a
     phone's width. Nothing moves.
   - Fixed layout: with `fixed`, the demo is as tall as its nearest size container (`100cqb`),
-    which the page lays out; it reads no viewport unit and runs no script to size itself. With
-    no size container the unit falls back to the small viewport's height. Its parts share that
-    height in fractions of the demo, never in lengths, each in a frame it
-    scrolls inside, so typing or pasting any number of lines, any output, and a full timings table
-    change no part's box: the editor fills its frame, the console fills its own (`fill`), the
-    timings scroll in theirs, and the toolbar's status is `steady`. Its arrangement follows its
-    own width, by container queries, in three bands:
-    - below 44rem: the toolbar, the tabs over the editor, 3fr of what the toolbar leaves (about
-      60%), then, 2fr, one output panel whose tablist, "Output" and "Timings", shows the console
-      or the timings, the console first;
-    - from 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' 16rem
-      track, 2fr;
-    - from 64rem, the arrangement the page's `Arrangement` places, editor left with none: editor
-      left, under the toolbar, the editor, 3fr of the width, beside a column, 2fr, of the console,
-      3fr of the height, over the timings, 2fr; editor right, its mirror, the column first; and
-      editor top, the layout from 44rem. Here alone, and only given an arrangement, the toolbar
-      shows Layout, whose choice the demo sends on as `arrange`.
+    which the page lays out; the demo reads no viewport unit and runs no script to size itself.
+    With no size container, the unit falls back to the small viewport's height. The parts divide
+    that height in fractions, never in lengths, and each scrolls inside its own frame, so typing
+    or pasting any number of lines, any output, and a full timings table change no part's box:
+    the editor fills its frame, the console fills its own (`fill`), the timings scroll in theirs,
+    and the toolbar's status is `steady`. Container queries on the demo's own width choose one
+    of three bands:
+    - Below 44rem: the toolbar, then the tabs over the editor, 3fr of what the toolbar leaves
+      (about 60%), then, 2fr, one output panel whose tablist, "Output" and "Timings", shows the
+      console or the timings, the console first.
+    - From 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' 16rem
+      track, 2fr.
+    - From 64rem: the placement the page's `Arrangement` holds, editor left without one. Editor
+      left puts the editor, under the toolbar, in 3fr of the width, beside a 2fr column of the
+      console, 3fr of the height, over the timings, 2fr; editor right mirrors it, the column
+      first; editor top is the layout from 44rem. In this band alone, and only given an
+      arrangement, the toolbar shows Layout, and the demo sends its choice on as `arrange`.
+
     Every band and arrangement places the same parts, so a run, a Stop, a failed build, a band
-    change, or an arrangement change keeps each part's content and scroll position, and the output
-    tab chosen; below 44rem the part not
-    shown is hidden by visibility, keeping its own. A demo without `fixed` lays out as above.
+    change, or an arrangement change keeps each part's content and scroll position and the chosen
+    output tab. Below 44rem the part not shown is hidden by `visibility`, so it keeps its own
+    scroll position. A demo without `fixed` lays out as "Layout" describes.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the

@@ -70,20 +70,28 @@ for the Go packages.
 - **Playground**: the runner's build request (`web/runtime/build.ts`) runs Go's own
   `cmd/compile` and `cmd/link`, built by the pinned Go for `GOOS=js`
   (`scripts/build-toolchain.ts`), in the worker, and fetches each standard-library package's
-  archive per import through `go/toolchain/manifest.json`. `playground.html` holds one
-  source-mode sl-go-demo that opens on hello's source. Planned: workspace modules' archives, added
-  when the sqlate and scenarios tasks first require them.
+  archive per import through `go/toolchain/manifest.json`. `playground.html` is one screen: a
+  heading, an intro, a closed disclosure of what a program can be, and one fixed, source-mode
+  sl-go-demo, opening on hello's source, that fills the rest of the viewport. Planned: workspace
+  modules' archives, added when the sqlate and scenarios tasks first require them.
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
-  over a runner the page passes in. No component holds authoritative state: DOM-free models,
-  `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`, hold it, each written by
-  one owner, sl-go-demo or the page. No component imports the runtime. `README.md`, "Components",
-  documents each module.
+  over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its size container and
+  divides that height among its parts in three width bands; for it, sl-console's `fill` takes the
+  height given, sl-controls' `steady` keeps the status to one line, and sl-controls, given an
+  `Arrangement`, shows a Layout group, which the demo shows from 64rem. The file tabs and the
+  fixed demo's output tabs share one sheet, `tabs.css`. No component holds authoritative state:
+  DOM-free models, `Arrangement`, `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and
+  `RunState`, hold it, each written by one owner, sl-go-demo or the page. No component imports
+  the runtime. `README.md`, "Components", documents each module.
 - **Pages** (`web/pages`, the apps tier, for the scripts a page loads): `components.html`, a hand
-  page whose script, `web/pages/components.ts`, shows every component's states once;
-  its Go demos run hello and the probe's handlers over the page's one runner. `playground.html`,
-  a hand page whose script, `web/pages/playground.ts`, gives its one source demo the page's
-  runner. Planned: hand pages and rendered Markdown embedding `<sl-go-demo>` around a go fence.
+  page whose script, `web/pages/components.ts`, shows every component's states once; its Go
+  demos run hello and the probe's handlers over the page's one runner. `playground.html`, a hand
+  page whose script, `web/pages/playground.ts`, gives its one source demo the page's runner and
+  the reader's arrangement. `web/pages/arrangement.ts` owns that stored preference: its `keep()`
+  reads the placement from localStorage under `spike-html-go-wasm.arrangement`, gives one
+  `Arrangement` to every fixed demo on the page, and stores each Layout menu choice. Planned: hand
+  pages and rendered Markdown embedding `<sl-go-demo>` around a go fence.
 
 ## Path
 

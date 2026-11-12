@@ -197,7 +197,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 8/8 committed · standards done · spec done · editor — (redirect: fixed layout)
+slices 8/8 committed · standards done · spec done · editor done (redirect: fixed layout)
 
 ## Decisions
 
@@ -593,6 +593,39 @@ slices 8/8 committed · standards done · spec done · editor — (redirect: fix
 - playground (redirect 2): the program's limits sit in a disclosure under the intro, written in
   a plain voice ("What you can build here"). Rejected: the "What a program holds" section below
   the demo.
+- playground (slice 6): the demo's container breaks out of main's 80ch to the body's width
+  through an inline-size container on the body, so the 64rem band is reachable; main keeps 80ch.
+  Rejected: widening main, which failed the SDK's shell check.
+- playground (slice 6): sl-console gains `fill`: the console takes the height it is given, its
+  frame `contain: size`, at ~4 ms an append at 10,000 rows.
+- playground (slice 6): sl-controls gains `steady`: the status keeps one line, asks for 12rem,
+  ends in an ellipsis, and stays whole to assistive technology. Rejected: a wrapping status, which
+  grew the toolbar.
+- playground (slice 6): the demo learns its band from a `--band` custom property its container
+  queries set, so the breakpoints live in CSS alone.
+- playground (slice 6): below 44rem the unselected output panel is hidden by `visibility`, so it
+  keeps its scroll position.
+- playground (slice 6): the code editor's rows are `align-content: start`, which fixes line
+  numbers drifting in a frame taller than its text.
+- playground (slice 6): the playground's captures are the viewport alone.
+- playground (slice 7): the page owns the stored arrangement (`web/pages/arrangement.ts`,
+  `keep()`), one `Arrangement` per page given to every fixed demo, as the state-outside-components
+  principle asks.
+- playground (slice 7): the page follows another tab's choice through the storage event, and
+  stores the placement as a bare JSON string.
+- playground (slice 7): a fixed demo given no arrangement places the editor left and shows no
+  Layout group.
+- playground (slice 7): on the Layout button, Up doesn't open the menu; the menu has no
+  typeahead; Home and End move within it.
+- playground (slice 8): the floor is `minmax(50dvh, 1fr)` on main's grid row, a page rule.
+  Rejected: `min-block-size` on the size container, which Chrome laid out with the demo 0px tall.
+- playground (slice 8): the demo reads no viewport unit: it is `100cqb`, which falls back to the
+  small viewport with no size container. The size container is a `.demo-container` div carrying
+  slice 6's breakout.
+- playground (reviews): the standards review cut the tests in `arrangement.test.ts` that asserted
+  constants and merged the Layout menu's duplicated close into `closeMenu`; the spec review found
+  no gaps.
+
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
@@ -654,18 +687,29 @@ slices 8/8 committed · standards done · spec done · editor — (redirect: fix
   scenarios tasks settle it. The newest versions so far come from local tags only, so check
   them against the remotes when those tasks plan.
 
+- The playground's one screen is proven at the default space and type profiles only. At short
+  heights, such as 390x600, the page with its disclosure closed scrolls, because the floor of half
+  the viewport's height holds, as briefed.
+- CDP's Input.insertText loses line breaks in the editor, so browser tests set the editor's text
+  through a paste event.
+- In Chrome, an element with `min-block-size` on a size container in a grid row laid out 0px
+  tall; set the floor on the grid track instead.
+
 ## Pending edits
 
 - coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", a candidate principle
   for the web standard experiment.html's intake may found: a component holds no authoritative
   state; a DOM-free model below it, written by one owner (the composing element or the page),
   holds the state, its rules, and its validation. Evidence: this spike's FileSet and
-  EditorSettings.
+  EditorSettings, written by sl-go-demo, and its Arrangement, a reader's stored preference the
+  page owns and gives to every fixed demo.
 - coordinator · roadmap.toml: in the components task's summary, "sl-run-controls" becomes
   "sl-controls", and "with a specimen page" becomes "with a components page".
 - coordinator · roadmap.toml: in the playground task's summary, "per-package standard-library
   and workspace archives" becomes "per-package standard-library archives", since the sqlate and
-  scenarios tasks add their modules' archives.
+  scenarios tasks add their modules' archives; and "the playground page" becomes "the playground
+  page, one screen around sl-go-demo's fixed layout with a Layout menu whose choice the page
+  stores", since the summary otherwise omits the redirect's work.
 - coordinator · roadmap.toml: the sqlate and scenarios tasks' summaries add "with the module's
   js/wasm archives added to the playground's manifest".
 - coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"
