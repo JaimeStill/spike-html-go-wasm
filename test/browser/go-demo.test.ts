@@ -18,7 +18,8 @@
 // program demo given a FileSet as its files property renders that set, and its fences again when
 // given none; a handler demo refuses a set as an authoring error. A demo's accessibility tree: a region named by its label, the toolbar, the tabs and the panel on
 // a program demo, the editor, the log, and the timings, its fences no part of it. The fences: the
-// SDK's Shiki markup read as plain text and run, and without script, every fence shows as the
+// SDK's Shiki markup read as plain text and run, named by the demo's file attribute while it is
+// set, and without script, every fence shows as the
 // page's code. At a phone's width each demo fits its column, and at 1280px and 1120px, either side
 // of the 44rem at which the console and timings share a row, and a phone's width, every part of
 // every demo lies within it, run or not, the console and timings side by side from the 44rem on. The rest of the runtime's proofs, through the same demos, are go-runs.test.ts's;
@@ -718,6 +719,28 @@ describe("the fences", () => {
         kind: "result",
         text: `Result ${answer.replace(/\s+/g, " ")}`,
       });
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the file attribute names the SDK's Shiki fence, which names none: query.sql, SQL's grammar, and removing it names input.json again", async () => {
+    const { page } = await open();
+    try {
+      const target = demo("markdown");
+      /** The editor's text, label, and grammar, once the demo has rebuilt with file set or not. */
+      const named = (file: string | null) =>
+        page.evaluate(`(async () => {
+          const demo = ${target};
+          ${file === null ? `demo.removeAttribute("file");` : `demo.setAttribute("file", ${JSON.stringify(file)});`}
+          await demo.updateComplete;
+          const editor = window.demos.editor(demo);
+          await editor.updateComplete;
+          return [editor.value, editor.label, editor.language];
+        })()`);
+      const input = '{ "shiki": true, "list": [3, 1, 2] }\n';
+      assert.deepEqual(await named("query.sql"), [input, "query.sql", "sql"]);
+      assert.deepEqual(await named(null), [input, "input.json", "json"]);
     } finally {
       await page.close();
     }

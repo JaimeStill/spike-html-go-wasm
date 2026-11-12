@@ -5,9 +5,9 @@
 // highlights (highlights.ts) and never touches the text, so it never moves the caret or the
 // selection and never enters the undo history.
 //
-// The tokenizer (tokenizer.ts: Shiki's core, its JavaScript regex engine, the Go and JSON grammars,
-// and the palettes' merged themes) loads lazily, once, as the first editor upgrades. Until it has,
-// and for any language but Go and JSON, the text shows plain. After an edit the editor
+// The tokenizer (tokenizer.ts: Shiki's core, its JavaScript regex engine, the Go, JSON, and SQL
+// grammars, and the palettes' merged themes) loads lazily, once, as the first editor upgrades.
+// Until it has, and for any language but Go, JSON, and SQL, the text shows plain. After an edit the editor
 // re-highlights once typing pauses, from a timer, so a keystroke never waits on the tokenizer.
 //
 // The gutter is layout, not text: each line of the value has a row in the editor's grid, its
@@ -139,10 +139,10 @@ const typesCharacter = (event: KeyboardEvent) =>
 
 /**
  * A source editor. `value` is the whole text: reading it gives the text as edited, and setting it
- * replaces the text and sends no event. `language`, reflected, names the grammar, `go` or `json`,
- * any other showing the text plain. The editor is a multiline textbox named by `label`, or by the
- * elements its host's `aria-labelledby` names in the host's tree, which take precedence. While
- * `readonly`, reflected, it keeps its highlighting, selection, copy, and focus, rejects every
+ * replaces the text and sends no event. `language`, reflected, names the grammar, `go`, `json`, or
+ * `sql`, any other showing the text plain. The editor is a multiline textbox named by `label`, or
+ * by the elements its host's `aria-labelledby` names in the host's tree, which take precedence.
+ * While `readonly`, reflected, it keeps its highlighting, selection, copy, and focus, rejects every
  * edit, and is exposed as read-only: its element is then no editing host, since a browser exposes
  * an editing host as editable whatever aria-readonly says, but a focusable read-only textbox whose
  * Ctrl or Cmd+A selects its text.

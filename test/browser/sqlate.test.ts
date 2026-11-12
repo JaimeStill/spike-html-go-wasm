@@ -4,7 +4,7 @@
 //
 // The page holds one source demo with editable files, playground/sqlate's main.go, active, its
 // guard.go, its .sql files, and its input.json, and requests no Go and starts no worker before a
-// Run. The first Run fetches the manifest, the compiler, the linker, and only the program's
+// Run. Each .sql file shows in SQL's grammar, its comments painted apart from its statement. The first Run fetches the manifest, the compiler, the linker, and only the program's
 // closure of archives, the standard library's and the site's pinned modules', sqlate's, its
 // sqltest driver's, and PostgreSQL's driver's among them, and prints every statement and the
 // guarded edit's success exactly, with exit 0 and every phase of a build. An edit to input.json
@@ -209,6 +209,40 @@ describe("the sqlate page", () => {
     });
     assert.deepEqual(goRequests(watched), []);
     assert.deepEqual(watched.workers, []);
+  });
+
+  test("each .sql file shows in SQL's grammar: its comments and its statement painted apart", async () => {
+    for (const name of FILES.filter((file) => file.endsWith(".sql"))) {
+      await select(name);
+      const editor = `window.demos.editor(${DEMO})`;
+      // The ranges painted in the editor's text, each its highlight's name and its text, once the
+      // tokenizer, loaded lazily, has painted them.
+      const ranges = `(() => {
+        const text = ${editor}.shadowRoot.querySelector(".text");
+        const found = [];
+        for (const [name, highlight] of CSS.highlights) {
+          for (const range of highlight) {
+            if (text.contains(range.startContainer)) found.push({ name, text: range.toString() });
+          }
+        }
+        return found;
+      })()`;
+      await until(page, `${ranges}.length > 0`, 10000);
+      const shown: { language: string; value: string; ranges: { name: string; text: string }[] } =
+        await page.evaluate(
+          `({ language: ${editor}.language, value: ${editor}.value, ranges: ${ranges} })`,
+        );
+      assert.equal(shown.value, source(name), name);
+      assert.equal(shown.language, "sql", name);
+      const comment = shown.ranges.filter(({ text }) => text.startsWith("--"));
+      assert.ok(comment.length > 0, `${name}: a -- comment is painted`);
+      const comments = new Set(comment.map(({ name }) => name));
+      assert.ok(
+        shown.ranges.some(({ name }) => !comments.has(name)),
+        `${name}: its statement is painted apart from its comments`,
+      );
+    }
+    await select("main.go");
   });
 
   test("the first Run builds the program from the toolchain and its closure alone, the site's pinned modules' archives among it, and prints every statement and the guarded edit's success exactly, with exit 0", async (t: TestContext) => {

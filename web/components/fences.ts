@@ -7,22 +7,23 @@
 // is one file, in order: its text is the pre's text content, so marked's plain
 // `<pre><code class="language-go">` and the SDK's Shiki-rendered `<pre class="shiki">`, its tokens
 // in spans, read alike. A fence's name is its `data-file`, on the pre or its code, else the pre's
-// `title`; else a default from its language, a `data-language` on either, or a `language-<name>`
-// class, as marked writes it: main.go for go, input.json for json, input.txt for any other; and,
-// with no language, as Shiki's output carries none, main.go on a program or source demo and
-// input.json on a handler demo.
+// `title`; else the demo's `file` attribute, which names every fence that names none, since the
+// SDK's highlighted Markdown fences can carry no name, keeping no info string past its language
+// and Shiki's markup dropping even that; else a default from its language, a `data-language` on
+// either, or a `language-<name>` class, as marked writes it: main.go for go, input.json for json,
+// query.sql for sql, input.txt for any other; and, with no language, as Shiki's output carries
+// none, main.go on a program or source demo and input.json on a handler demo.
+//
+// The naming rules themselves, and each file's grammar by its name, are file-names.ts's, which
+// holds no DOM, so the unit tier reads them under node.
+
+import { type FenceMarkup, fenceName } from "./file-names.ts";
 
 /** A fence's file, as read from the markup, before a set holds it: its name and its text. */
 export interface Fence {
   name: string;
   text: string;
 }
-
-/** The fences' default names, by language. */
-const DEFAULT_NAMES: Readonly<Record<string, string>> = Object.freeze({
-  go: "main.go",
-  json: "input.json",
-});
 
 /** The language a fence's markup names: a data-language on the pre or its code, else a
  * language-<name> class on either, as marked writes it; undefined when it names none, as the
@@ -42,16 +43,11 @@ function fenceLanguage(pre: HTMLPreElement): string | undefined {
   return undefined;
 }
 
-/** A fence's file name: data-file on the pre or its code, else the pre's title, else a default
- * from its language, or, with none named, the mode's: main.go when program, a program or source
- * demo, else input.json. */
-function fenceName(pre: HTMLPreElement, program: boolean): string {
+/** A fence's markup: data-file on the pre or its code, else the pre's title, and its language. */
+function fenceMarkup(pre: HTMLPreElement): FenceMarkup {
   const code = pre.querySelector(":scope > code");
   const named = pre.dataset.file ?? code?.getAttribute("data-file") ?? (pre.title || undefined);
-  if (named !== undefined) return named;
-  const language = fenceLanguage(pre);
-  if (language === undefined) return program ? DEFAULT_NAMES.go : DEFAULT_NAMES.json;
-  return DEFAULT_NAMES[language] ?? "input.txt";
+  return { named, language: fenceLanguage(pre) };
 }
 
 /** The fences' pres: the parent's pre children, in order. The parent is an element, the demo's
@@ -61,6 +57,9 @@ const fencesOf = (parent: ParentNode): HTMLPreElement[] =>
   [...parent.children].filter((child): child is HTMLPreElement => child.localName === "pre");
 
 /** The parent's fences as files, in order, each named by fenceName for the mode, program or not,
- * its text the pre's text content. */
-export const readFences = (parent: ParentNode, program: boolean): Fence[] =>
-  fencesOf(parent).map((pre) => ({ name: fenceName(pre, program), text: pre.textContent ?? "" }));
+ * and the demo's file, its text the pre's text content. */
+export const readFences = (parent: ParentNode, program: boolean, file?: string | null): Fence[] =>
+  fencesOf(parent).map((pre) => ({
+    name: fenceName(fenceMarkup(pre), program, file),
+    text: pre.textContent ?? "",
+  }));
