@@ -72,17 +72,27 @@ for the Go packages.
   (`scripts/build-toolchain.ts`), in the worker, and fetches each standard-library package's
   archive per import through `go/toolchain/manifest.json`. The runner reuses the last build when
   only non-Go files change (`isGo` in `build.ts`), so editing `input.txt` alone reruns the program
-  without building. `playground.html` is one screen: the heading, a two-sentence lede, and one
-  fixed, source-mode sl-go-demo that opens on the starter program, fills the rest of the
-  viewport, and ends one gutter above its bottom. The page's detail, what a program can be and
+  without building. `playground.html` is one screen: the heading with the Program select beside
+  it, a two-sentence lede, and one fixed, source-mode sl-go-demo that shows the chosen program,
+  fills the rest of the viewport, and ends one gutter above its bottom. The select offers the
+  starter and the four programs; the page keeps one `FileSet` per program, built from its fences
+  by the demo's own rules (`web/components/fences.ts`), and gives the chosen one to the demo as
+  its `files` property, so edits survive switching within the tab. The fragment (`#calc`,
+  `#basics`, `#generics`, `#concurrency`, `#stdlib`) names the program shown, a choice writing it
+  as a new history entry; no fragment, or an unknown one, opens the calculator. The page's detail, what a program can be and
   how Run and Stop behave, is in an About dialog that the header's About button opens. The
   check's layout tests run twice: in the machine's fonts, and in a pinned DejaVu font set, the
   six faces of Ubuntu's fonts-dejavu-core. Planned: workspace modules' archives, added when the
   sqlate and scenarios tasks first require them.
-- **Starter program** (`playground/calc`, a package main outside `cmd/`, not a scenario): a
-  calculator language whose files the playground opens on; it runs the script in `input.txt`. The
-  check vets it and runs its tests under `GOOS=js` on both filesystems; the build never writes it
-  to `dist/`.
+- **Programs** (`playground/<program>`, each a package main outside `cmd/`, not a scenario): the
+  starter, `calc`, a calculator language whose files are the playground demo's own fences, which
+  runs the script in `input.txt`; and four programs whose files are templates in the page:
+  `basics` (structs, methods, function values, interfaces), `generics` (a constraint, a generic
+  type, range-over-func iterators), `concurrency` (goroutines, channels, select, a WaitGroup, a
+  pipeline), and `stdlib` (`input.json` decoded with encoding/json, slices, regexp, and a
+  text/template report). The check vets each and runs its tests under `GOOS=js` on both
+  filesystems; the build never writes them to `dist/`. The browser tier reports each one's cold
+  and warm phase timings and its closure, never as a gate (`mise run report:programs`).
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
   over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its parent's layout

@@ -12,7 +12,8 @@
      whose data-program names it, each fence equal byte for byte to its file in
      playground/<program>/ (the unit tier holds it). A template renders nothing; the script builds
      a file set from its fences by the demo's own rules, and keeps one per program for the tab's
-     life.
+     life. The fragment names the program shown, #calc or the template's program; each template's
+     id is its program's name, so the index's links to the programs each name an element here.
      The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
      body of class app (web/pages/page.css): the header, then main across the body's content
      width, its prose, the title row and a short lede alone, on its 80ch content column, then the
@@ -490,7 +491,7 @@ total / 4
 25 - total
 </code></pre>
       </sl-go-demo>
-      <template data-program="basics">
+      <template id="basics" data-program="basics">
 <pre data-file="main.go"><code class="language-go">// Command basics tours four of Go's building blocks over a few shapes: structs, which hold a
 // shape's sides; methods, which work out its area and perimeter; interfaces, which let one slice
 // hold every kind of shape; and function values, which pass a measure or a test around like any
@@ -649,7 +650,7 @@ func (s Square) String() string {
 }
 </code></pre>
       </template>
-      <template data-program="generics">
+      <template id="generics" data-program="generics">
 <pre data-file="main.go"><code class="language-go">// Command generics tours Go's generics: functions and types with type parameters, which the
 // compiler checks once for every type they may be given. A constraint, an interface, limits a type
 // parameter to the types that have what the function needs, such as + or &lt;; Stack, in stack.go, is
@@ -854,7 +855,7 @@ func (s *Stack[T]) All() iter.Seq[T] {
 }
 </code></pre>
       </template>
-      <template data-program="concurrency">
+      <template id="concurrency" data-program="concurrency">
 <pre data-file="main.go"><code class="language-go">// Command concurrency tours Go's concurrency: goroutines, functions that run alongside the rest of
 // the program; channels, which pass values from one goroutine to another and make one wait for
 // the other; select, which waits on several channels at once; a sync.WaitGroup, which waits for a
@@ -1046,7 +1047,7 @@ func collect(in &lt;-chan result) []result {
 }
 </code></pre>
       </template>
-      <template data-program="stdlib">
+      <template id="stdlib" data-program="stdlib">
 <pre data-file="main.go"><code class="language-go">// Command stdlib prints release notes for the commits listed in input.json, using only the
 // standard library: encoding/json decodes the file, regexp takes each commit message apart,
 // slices sorts and groups what it finds, and text/template lays out the report.
@@ -1312,8 +1313,8 @@ Issues referenced: {{range $i, $n := .Issues}}{{if $i}}, {{end}}#{{$n}}{{else}}n
         one thread: they sleep, wait, and talk over channels as usual, but CPU-heavy work doesn't
         run any faster in parallel. A program that waits forever, say on a channel nothing sends
         to, never finishes and shows no deadlock error; press Stop. The compiler stays loaded after
-        a Stop, so the next Run is quick. Your edits live only in this tab: reload,
-        and you're back to where you started.
+        a Stop, so the next Run is quick. Your edits to each program live only in this tab, so you
+        can switch away and come back to them: reload, and you're back to where you started.
       </p>
       <p>
         The first Run downloads the compiler, the linker, and the standard-library packages your

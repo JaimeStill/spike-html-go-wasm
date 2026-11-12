@@ -16,7 +16,12 @@
 // error, with exit 1. Each program keeps its own files for the tab's life: edits,
 // and the active file, survive switching away and back, and Reset restores the program on screen
 // alone. A switch while a run is pending stops the run, the status saying it stopped, and every
-// switch clears the console and the timings; the next Run runs the program now shown. The page's
+// switch clears the console and the timings; the next Run runs the program now shown. Switching
+// back to a program built earlier compiles and links it again, its build not held, but fetches no
+// archive the worker holds. The fragment names the program shown: the page opens on the program
+// it names, and on the calculator with none or one that names no program; a choice writes its
+// fragment as a new history entry, and Back, Forward, and an edited fragment show the program it
+// names, with its edits, the select following, with no reload. The page's
 // one screen, at the SDK's widths in both font sets, and its shell checks are
 // playground-layout-suite.ts's and site.test.ts's, with the select in place; the fences' bytes are
 // the unit tier's (go-demo-fences.test.ts). The helpers are go-demos.ts's, go-builds.ts's, and
@@ -33,7 +38,7 @@ import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
-import { BUILD, build, DONE, retype } from "./go-builds.ts";
+import { BUILD, build, BUILT_PHASES, DONE, retype, toolchainRequests } from "./go-builds.ts";
 import { goRequests, open as openPage, pressControl, says, shown } from "./go-demos.ts";
 import { axQuery, paste, PLAYGROUND } from "./playground-layouts.ts";
 
@@ -194,6 +199,22 @@ async function choose(page: Page, program: string) {
     2000,
   );
 }
+
+/** Resolves once the demo's tabs show the program's files and the select has it chosen, as a
+ * history step or an edited fragment leaves them. */
+const showing = (page: Page, program: string) =>
+  until(
+    page,
+    `${PICKER}.value === ${JSON.stringify(program)}
+      && [...window.demos.part(${PLAYGROUND}, "sl-file-tabs").shadowRoot
+        .querySelectorAll('[role="tab"]')].map((tab) => tab.dataset.name).join()
+        === ${JSON.stringify(FILES[program].join())}`,
+    2000,
+  );
+
+/** The page's fragment and its history's length. */
+const where = (page: Page): Promise<{ hash: string; length: number }> =>
+  page.evaluate(`({ hash: location.hash, length: history.length })`);
 
 /** Selects the demo's tab by its file's name, as a click on it requests. */
 async function select(page: Page, name: string) {
@@ -397,6 +418,100 @@ describe("the playground's programs", () => {
         },
         "the calculator's edit kept",
       );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("switching back to a program built earlier compiles and links it again, fetching no archive the worker holds", async (t) => {
+    const watched = await open();
+    const { page } = watched;
+    try {
+      const first = await build(page, PLAYGROUND, DONE);
+      await choose(page, "basics");
+      const other = await build(page, PLAYGROUND, DONE);
+      assert.deepEqual(other.lines, BASICS_OUTPUT);
+
+      const from = watched.requests.length;
+      await choose(page, "calc");
+      const again = await build(page, PLAYGROUND, DONE);
+      t.diagnostic(`calc again: ${again.phases.join(", ")}`);
+      assert.deepEqual(again.phases, BUILT_PHASES, "compiled and linked again");
+      assert.deepEqual(again.lines, first.lines, "the calculator's output again");
+      assert.deepEqual(again.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
+      assert.deepEqual(
+        toolchainRequests(watched, from),
+        ["manifest.json"],
+        "the manifest revalidated, and no toolchain module or archive fetched",
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the page opens on the program its fragment names, and on the calculator with no fragment or one that names no program", async () => {
+    const cases = [
+      ...PROGRAMS.map(([program]) => [`#${program}`, program]),
+      ["", "calc"],
+      ["#", "calc"],
+      ["#nope", "calc"],
+      ["#program", "calc"],
+    ];
+    for (const [fragment, program] of cases) {
+      const { page } = await openPage(browser, server.origin, `playground.html${fragment}`);
+      try {
+        await showing(page, program);
+        assert.deepEqual(
+          await files(page),
+          { names: FILES[program], active: "main.go", value: source(program, "main.go") },
+          `${fragment || "no fragment"} opens ${program}`,
+        );
+      } finally {
+        await page.close();
+      }
+    }
+  });
+
+  test("a choice writes its fragment as a new history entry; Back, Forward, and an edited fragment show the program it names, with its edits, the select following, with no reload", async () => {
+    const { page } = await open();
+    try {
+      await page.evaluate(`window.notReloaded = true`);
+      const start = await where(page);
+      assert.equal(start.hash, "", "no fragment on load");
+
+      await choose(page, "basics");
+      assert.deepEqual(await where(page), { hash: "#basics", length: start.length + 1 });
+      await retype(page, PLAYGROUND, "package main // basics, edited");
+      await choose(page, "generics");
+      assert.deepEqual(await where(page), { hash: "#generics", length: start.length + 2 });
+
+      await page.evaluate(`history.back()`);
+      await showing(page, "basics");
+      assert.equal((await where(page)).hash, "#basics");
+      assert.deepEqual(
+        await files(page),
+        { names: FILES.basics, active: "main.go", value: "package main // basics, edited" },
+        "Back shows basics with its edit",
+      );
+
+      await page.evaluate(`history.forward()`);
+      await showing(page, "generics");
+      assert.equal((await where(page)).hash, "#generics");
+      assert.equal((await files(page)).value, source("generics", "main.go"));
+
+      await page.evaluate(`history.go(-2)`);
+      await showing(page, "calc");
+      assert.equal((await where(page)).hash, "", "back to the entry the page opened on");
+
+      await page.evaluate(`location.hash = "stdlib"`);
+      await showing(page, "stdlib");
+      await page.evaluate(`location.hash = "basics"`);
+      await showing(page, "basics");
+      assert.equal((await files(page)).value, "package main // basics, edited", "its edit kept");
+      await page.evaluate(`location.hash = "nope"`);
+      await showing(page, "calc");
+
+      assert.equal(await page.evaluate(`window.notReloaded`), true, "no reload");
     } finally {
       await page.close();
     }

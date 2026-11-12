@@ -11,7 +11,7 @@
 // types and opens nothing. In the accessibility tree the button is named About and the dialog
 // "About the playground", modal. The dialog holds, after its header row, the three paragraphs
 // approved with the brief, the third with the programs task's goroutine and deadlock sentences
-// after "Stop to cancel", then what a Run downloads, then the link to the spike's question and
+// after "Stop to cancel" and its last sentence on each program's edits, then what a Run downloads, then the link to the spike's question and
 // evidence, the index, in that order and in those words. The SDK's shell checks hold the button
 // and the dialog to the components' shortcut dialog pattern, and Help's list to the page's
 // bindings, A's among them (site.test.ts). Every wait is bounded.
@@ -65,7 +65,7 @@ const LEDE =
 
 /** The dialog's content after its header row, each block's text, in order: the three paragraphs
  * approved with the brief, the third with the goroutine and deadlock sentences after "Stop to
- * cancel", what a Run downloads, and the link. */
+ * cancel" and its last sentence on each program's edits, what a Run downloads, and the link. */
 const ABOUT_TEXT = [
   "Your .go files build together as one main package, using only the standard library. There's " +
     "no go.mod, no other packages of your own, no cgo or assembly, and nothing passed in as " +
@@ -76,8 +76,8 @@ const ABOUT_TEXT = [
     "one thread: they sleep, wait, and talk over channels as usual, but CPU-heavy work doesn't " +
     "run any faster in parallel. A program that waits forever, say on a channel nothing sends to, " +
     "never finishes and shows no deadlock error; press Stop. The compiler stays loaded " +
-    "after a Stop, so the next Run is quick. Your edits live only in this tab: reload, and you're " +
-    "back to where you started.",
+    "after a Stop, so the next Run is quick. Your edits to each program live only in this tab, so " +
+    "you can switch away and come back to them: reload, and you're back to where you started.",
   "The first Run downloads the compiler, the linker, and the standard-library packages your " +
     "program imports; later Runs download only what a new import adds.",
   "The spike's question and evidence",

@@ -10,9 +10,9 @@
 // its TMPDIR. A --width not among the SDK's, or with no value, is a usage error naming the widths,
 // capturing nothing. The playground's capture, --page playground, is the viewport alone in each
 // band of its fixed demo, the phone's also with its Timings tab, and the wide band's in each
-// arrangement and with the Layout menu open, each chosen by the menu, and the widest with the
-// About dialog open and with each of Basics, Generics, Concurrency, and Standard library chosen in
-// the Program select.
+// arrangement and with the Layout menu open, each chosen by the menu, the widest with the About
+// dialog open, and each of the SDK's widths with each of Basics, Generics, Concurrency, and
+// Standard library chosen in the Program select.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -158,7 +158,7 @@ describe("a component's capture", () => {
     assert.deepEqual(run.left, [], "TMPDIR is left empty");
   });
 
-  test("the capture file captures the playground's viewport in each band of its fixed demo, the phone's Timings tab, the wide band in each arrangement and with the Layout menu open, the About dialog open, and Basics, Generics, Concurrency, and Standard library each chosen", () => {
+  test("the capture file captures the playground's viewport in each band of its fixed demo, the phone's Timings tab, the wide band in each arrangement and with the Layout menu open, the About dialog open, and Basics, Generics, Concurrency, and Standard library each chosen at each of the SDK's widths", () => {
     const described = description.pages.find(({ name }) => name === "playground");
     const [phone, ...wide] = WIDTHS.map(({ width }) => width);
     assert.deepEqual(
@@ -174,10 +174,9 @@ describe("a component's capture", () => {
           [`playground-menu-${width}`, width, false],
         ]),
         [`playground-about-${wide.at(-1)}`, wide.at(-1), false],
-        [`playground-basics-${wide.at(-1)}`, wide.at(-1), false],
-        [`playground-generics-${wide.at(-1)}`, wide.at(-1), false],
-        [`playground-concurrency-${wide.at(-1)}`, wide.at(-1), false],
-        [`playground-stdlib-${wide.at(-1)}`, wide.at(-1), false],
+        ...["basics", "generics", "concurrency", "stdlib"].flatMap((program) =>
+          [phone, ...wide].map((width) => [`playground-${program}-${width}`, width, false]),
+        ),
       ],
     );
   });

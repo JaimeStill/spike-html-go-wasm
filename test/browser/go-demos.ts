@@ -104,8 +104,9 @@ export interface Watched {
 const DEMO_PAGES = new Set(["components.html", "playground.html"]);
 
 /** Opens the path under the origin with its and its workers' requests watched from before it
- * loads. A page that holds Go demos, the components page (the default) or the playground, also
- * gets focus emulated, every element rendered, and the helpers installed. */
+ * loads. A page that holds Go demos, the components page (the default) or the playground, with a
+ * fragment or without, also gets focus emulated, every element rendered, and the helpers
+ * installed. */
 export async function open(
   browser: Browser,
   origin: string,
@@ -142,7 +143,7 @@ export async function open(
     flatten: false,
   });
   await page.goto(`${origin}${path}`);
-  if (DEMO_PAGES.has(path)) {
+  if (DEMO_PAGES.has(path.split("#")[0])) {
     await page.cdp("Emulation.setFocusEmulationEnabled", { enabled: true });
     await page.evaluate(SETTLED);
     await page.evaluate(HELPERS);

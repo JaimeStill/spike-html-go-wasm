@@ -22,8 +22,15 @@
 // are as the reader left them when they come back to it. Reset, the demo's, restores the set on
 // screen alone. A choice while a run is pending stops it, and clears the console and the timings,
 // as the demo does on any switch. A reload builds every set afresh, as shipped: the select's
-// autocomplete is off, so the browser restores no choice over a fresh set, and the page opens on
-// the select's default, Calculator.
+// autocomplete is off, so the browser restores no choice over a fresh set.
+//
+// The fragment names the program shown, #calc, #basics, #generics, #concurrency, or #stdlib, the
+// select's values: the page opens on the program it names, and with no fragment, or one that names
+// no program, on the calculator. A choice in the select writes its fragment as a new history entry,
+// so Back and Forward step through the reader's choices; those steps, and a fragment the reader
+// edits, show the program it then names, with its edits as they left them, and the select follows.
+// Each other program's template carries its fragment as its id, so a link to it names an element
+// on the page; a template renders nothing, so following one scrolls nothing.
 
 import { readFences } from "../components/fences.ts";
 import { FileSet } from "../components/file-set.ts";
@@ -60,12 +67,26 @@ const shipped = (program: string): FileSet => {
 /** Every program's set, by the program's name, the select's options' values. */
 const programs = new Map([...picker.options].map(({ value }) => [value, shipped(value)]));
 
-/** Gives the demo the chosen program's set. */
-const show = () => {
-  demo.files = programs.get(picker.value) ?? null;
+/** The program the fragment names, or the calculator when it names none. */
+const named = (): string => {
+  const program = location.hash.slice(1);
+  return programs.has(program) ? program : CALCULATOR;
+};
+
+/** Shows the program: the select chooses it and the demo is given its set. Giving the set the
+ * demo already holds changes nothing. */
+const show = (program: string) => {
+  picker.value = program;
+  demo.files = programs.get(program) ?? null;
 };
 
 demo.runner = runner;
-show();
-picker.addEventListener("change", show);
+show(named());
+picker.addEventListener("change", () => {
+  history.pushState(null, "", `#${picker.value}`);
+  show(picker.value);
+});
+// Back, Forward, and an edited fragment: a fragment's change by any of them fires hashchange, but a
+// pushState doesn't, so the select's own choice isn't shown twice.
+addEventListener("hashchange", () => show(named()));
 keep();
