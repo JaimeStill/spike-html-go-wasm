@@ -84,6 +84,13 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       compile error; Stop ending a busy loop, the next build fetching no toolchain module; and a
       file the reader adds read through `os.ReadFile` from the working directory, nothing a run
       writes outliving it;
+    - the playground's one screen: at 390px, 1120px, and 1376px, each at its capture height and at
+      900px, the disclosure closed, the demo's container taking every row left, the demo as tall
+      as it, its bottom edge the viewport's, the page scrolling neither way, and no script sizing
+      the demo; the disclosure opened taking its rows from the container, down to its floor, half
+      the viewport's height, where every part lies inside the demo, the editor showing three
+      lines and the console's log two, and the page scrolls down, never sideways; and closing it
+      putting the screen back;
     - the playground's fixed layout: at 390px, 1120px, and 1376px, and with the demo half a rem
       either side of 44rem and 64rem, each width in its band, a paste of 500 lines into the
       editor, 10,000 lines printed, and a full timings table changing no part's box, the page
@@ -108,10 +115,10 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
 - `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths,
   390px, 1120px, and 1376px, each component on the components page alone at each of them,
   `--page components/<component>`, as `--page components/console`, and the playground,
-  `--page playground`, its viewport alone, the demo scrolled into it, in each band of its fixed
-  demo: 390px, with the output panel's Output tab and again with its Timings tab, 900px, between
-  44rem and 64rem, and 1120px and 1376px, each in editor left, top, and right, and with the
-  Layout menu open, each chosen by the menu. `--width <px>`, one of the SDK's three, captures that
+  `--page playground`, its viewport alone, the page's one screen, in each band of its fixed demo:
+  390px, with the output panel's Output tab and again with its Timings tab, 900px, between 44rem
+  and 64rem, and 1120px and 1376px, each in editor left, top, and right, and with the Layout menu
+  open, each chosen by the menu; and 1376px with the disclosure open, the demo at its floor. `--width <px>`, one of the SDK's three, captures that
   width alone, every page's, as `mise run screenshots --page components/controls --width 390`
   (the playground's 900px capture is taken only with every width); any other width is a usage
   error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
@@ -164,10 +171,18 @@ are `protocol.ts`'s.
 
 `playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
 opening on hello's source, `cmd/hello/main.go` as it is. Its script, `web/pages/playground.ts`,
-gives the demo the page's one `Runner`, and sets `--sl-go-demo-inset` on it to the header's
-height as the header lays out, so the demo is as tall as the viewport less the header in every
-space and type profile. The demo takes the body's whole content width, beyond main's 80ch, so it
-reaches its wide band, while main and the page's prose keep their reading width. Nothing loads Go until a Run: the first fetches the manifest, the
+gives the demo the page's one `Runner` and the reader's arrangement. The page is one screen, laid
+out in CSS alone: the body at least the viewport's height, a
+grid of the header over main, and main a grid of the heading, the intro, a closed disclosure,
+"What you can build here", then the demo's container, a size container in a `1fr` row taking
+every row they leave, which the fixed demo fills (`100cqb`). Opening the disclosure takes its
+rows from the container, down to a floor of half the viewport's height (`minmax(50dvh, 1fr)`),
+where the editor still shows seven lines and the console two and a half at a phone's width;
+below the floor the page grows and scrolls. The container takes the body's whole content width,
+beyond main's 80ch, so the demo reaches its wide band, while main and the page's prose keep
+their reading width. The disclosure says, in the reader's terms, what a program can be, where its
+other files go, how Run and Stop behave, and that edits last only as long as the tab. Nothing
+loads Go until a Run: the first fetches the manifest, the
 compiler, the linker, and the archives of the program's import closure, and a later Run fetches
 the manifest again and only the archives a new import adds (see "Runtime", `build(files)`). The
 program's limits and its working directory are the build's. New file adds a file, so the program
@@ -536,9 +551,10 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     is 44rem wide, the console and the timings share a row, the timings in a 16rem column and the
     console taking the rest. Every part stays inside the demo at every width, and the demo fits a
     phone's width. Nothing moves.
-  - Fixed layout: with `fixed`, the demo is as tall as the dynamic viewport less
-    `--sl-go-demo-inset`, a length the page sets on the host, its header's height, 0 by default.
-    Its parts share that height in fractions of the demo, never in lengths, each in a frame it
+  - Fixed layout: with `fixed`, the demo is as tall as its nearest size container (`100cqb`),
+    which the page lays out; it reads no viewport unit and runs no script to size itself. With
+    no size container the unit falls back to the small viewport's height. Its parts share that
+    height in fractions of the demo, never in lengths, each in a frame it
     scrolls inside, so typing or pasting any number of lines, any output, and a full timings table
     change no part's box: the editor fills its frame, the console fills its own (`fill`), the
     timings scroll in theirs, and the toolbar's status is `steady`. Its arrangement follows its

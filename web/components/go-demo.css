@@ -12,8 +12,11 @@
  * console taking what they leave, every part within the demo. Every gap is a foundation space. The
  * parts draw their own focus; nothing here moves, so reduced motion has nothing to stop.
  *
- * A fixed demo is as tall as the dynamic viewport less --sl-go-demo-inset, the page's header's
- * length, which the page sets on the host, 0 by default. Its parts share that height in fractions,
+ * A fixed demo is as tall as its nearest size container, 100cqb, which the page lays out; it reads
+ * no viewport unit and runs no script to size itself, so whatever the page sets around it, the
+ * demo takes the height the page leaves it. (With no size container, the unit falls back to the
+ * small viewport's height.) The host's own inline-size container is not its own query container,
+ * so the bands still follow the demo's own width. Its parts share that height in fractions,
  * never in lengths, each part's share a frame it scrolls inside, so nothing a part holds changes
  * its box: the toolbar its own line, then the files 3fr, about 60% of what is left, and the output
  * 2fr. Each band places the same parts again, by grid areas, so a band change keeps every part's
@@ -73,7 +76,7 @@
 
 /* The fixed layout: the phone band, then the wider bands' changes to it. */
 :host([fixed]) {
-  block-size: calc(100dvh - var(--sl-go-demo-inset, 0px));
+  block-size: 100cqb;
 }
 
 :host([fixed]) .demo {

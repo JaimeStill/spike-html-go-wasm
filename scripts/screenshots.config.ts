@@ -6,14 +6,14 @@
 // state per width, with every other component's section hidden, and the controls' with New file's
 // form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run,
 // and no Go loads; and the playground, --page playground, its demo as before a Run, on hello's
-// source: the viewport alone, the demo scrolled to its end, not the page whole, since its fixed
-// demo is as tall as the viewport less the header, and a viewport grown to the page would grow the
-// demo with it. It is captured in
-// each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
-// again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and
-// 1376px, the wide band in each arrangement, editor left, top, and right, and with the Layout
-// menu open, each chosen by the menu as a reader chooses, so no state depends on what an earlier
-// one stored. The components page shows each state once and its layout
+// source: the viewport alone, the page's one screen, not the page whole, since the page fits its
+// viewport by its demo's container, and a viewport grown to the page would grow the demo with it.
+// It is captured in each of the fixed demo's bands: at 390px, the phone's, with its output panel's
+// Output tab and again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at
+// 1120px and 1376px, the wide band in each arrangement, editor left, top, and right, and with the
+// Layout menu open, each chosen by the menu as a reader chooses, so no state depends on what an
+// earlier one stored; and at 1376px with the disclosure open, the demo at its floor, the page
+// scrolled to its top. The components page shows each state once and its layout
 // follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set,
 // by --width, every page, the index's, each component's, and the playground's, takes only that
 // width's states, so the 900px capture, at no SDK width, is taken only when every width is. The SDK's widths over the whole components page grew with every component,
@@ -104,20 +104,17 @@ const opened =
  * capture's height. */
 export const MIDDLE = { width: 900, height: 700 };
 
-/** Scrolls the page until the playground's demo ends at the viewport's end, so the capture holds
- * the demo whole, as tall as the viewport less the header. */
-const demoInView: Step = async (page: Page) => {
-  await page.evaluate(
-    `document.querySelector("sl-go-demo").scrollIntoView({ block: "end", behavior: "instant" })`,
-  );
+/** Opens the playground's disclosure by a click on its summary, resolving once it is open. */
+const disclosed: Step = async (page: Page) => {
+  await page.evaluate(`document.querySelector("main > details > summary").click()`);
+  await until(page, `document.querySelector("main > details").open`, 5000);
 };
 
-/** Selects the playground demo's Timings tab, its phone band's output panel, the demo in view. */
+/** Selects the playground demo's Timings tab, its phone band's output panel. */
 const timingsTab: Step = async (page: Page) => {
   await page.evaluate(
     `document.querySelector("sl-go-demo").shadowRoot.querySelector('.output-tabs [data-part="timings"]').click()`,
   );
-  await demoInView(page);
 };
 
 /** The playground demo's toolbar's shadow root, as an expression. */
@@ -135,7 +132,7 @@ const openMenu = async (page: Page) => {
 /** The wide band's arrangements the playground is captured in, by the placement's name. */
 const PLACEMENTS = ["left", "top", "right"] as const;
 
-/** Chooses the placement by the playground demo's Layout menu, then brings the demo into view. */
+/** Chooses the placement by the playground demo's Layout menu, resolving once the menu closes. */
 const arranged =
   (placement: (typeof PLACEMENTS)[number]): Step =>
   async (page: Page) => {
@@ -144,23 +141,23 @@ const arranged =
       `${CONTROLS}.querySelector('#layout-menu [data-placement="${placement}"]').click()`,
     );
     await until(page, `!${MENU_OPEN}`, 5000);
-    await demoInView(page);
   };
 
-/** The Layout menu open on editor left, the demo in view. */
+/** The Layout menu open on editor left. */
 const menuOpen: Step = async (page: Page) => {
   await arranged("left")(page);
   await openMenu(page);
 };
 
-/** The playground's states: the viewport alone, the demo scrolled into it, in each band of its
- * fixed demo, the phone's with its Timings tab, and the wide band's in each arrangement and with
- * the Layout menu open, each named as the SDK names a page's, the width last. */
+/** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
+ * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
+ * Layout menu open; and the widest with the disclosure open, each named as the SDK names a page's,
+ * the width last. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
   const state = (
     viewport: { width: number; height: number },
-    open = demoInView,
+    open?: Step,
     variant = "",
     said = "",
   ) => ({
@@ -181,6 +178,7 @@ const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
       ),
       state(viewport, menuOpen, "menu-", "Layout menu, "),
     ]),
+    state(wide.at(-1) ?? phone, disclosed, "disclosure-", "disclosure open, "),
   ];
 };
 

@@ -7,8 +7,9 @@
 // copied page, none here, and loads each hand page it reaches: it reaches exactly the index and,
 // by the index's links, the components page and the playground. No page holds an SDK fence, so
 // the SDK's palette check has nothing to run on; the components page's editors are held to its
-// colors by code-editor.test.ts. The components page and the playground each set every section
-// apart, its heading --space-xl below what came before. Nothing here names the site: its base is
+// colors by code-editor.test.ts. The components page sets every section apart, its heading
+// --space-xl below what came before; the playground has no section, its one screen proved by
+// playground-layout.test.ts. Nothing here names the site: its base is
 // package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
@@ -71,36 +72,34 @@ describe("the site under its base", () => {
     });
   }
 
-  for (const path of ["components.html", "playground.html"]) {
-    test(`${path} sets each section apart: its heading sits --space-xl below what came before`, async () => {
-      const page = await browser.open(`${server.origin}${path}`);
-      try {
-        const gaps: { id: string; gap: number; xl: number }[] = await page.evaluate(`(() => {
-        const probe = document.createElement("div");
-        probe.style.blockSize = "var(--space-xl)";
-        document.body.append(probe);
-        const xl = probe.getBoundingClientRect().height;
-        probe.remove();
-        return [...document.querySelectorAll("main > section")].map((section) => ({
-          id: section.id,
-          gap: section.querySelector("h2").getBoundingClientRect().top -
-            section.previousElementSibling.getBoundingClientRect().bottom,
-          xl,
-        }));
-      })()`);
-        assert.ok(gaps.length > 0, "the page has sections");
-        for (const { id, gap, xl } of gaps) {
-          assert.ok(xl > 0, "--space-xl resolves");
-          assert.ok(
-            gap >= xl - 0.5,
-            `#${id}'s heading sits ${gap}px below what came before, under ${xl}px`,
-          );
-        }
-      } finally {
-        await page.close();
+  test("components.html sets each section apart: its heading sits --space-xl below what came before", async () => {
+    const page = await browser.open(`${server.origin}components.html`);
+    try {
+      const gaps: { id: string; gap: number; xl: number }[] = await page.evaluate(`(() => {
+      const probe = document.createElement("div");
+      probe.style.blockSize = "var(--space-xl)";
+      document.body.append(probe);
+      const xl = probe.getBoundingClientRect().height;
+      probe.remove();
+      return [...document.querySelectorAll("main > section")].map((section) => ({
+        id: section.id,
+        gap: section.querySelector("h2").getBoundingClientRect().top -
+          section.previousElementSibling.getBoundingClientRect().bottom,
+        xl,
+      }));
+    })()`);
+      assert.ok(gaps.length > 0, "the page has sections");
+      for (const { id, gap, xl } of gaps) {
+        assert.ok(xl > 0, "--space-xl resolves");
+        assert.ok(
+          gap >= xl - 0.5,
+          `#${id}'s heading sits ${gap}px below what came before, under ${xl}px`,
+        );
       }
-    });
-  }
+    } finally {
+      await page.close();
+    }
+  });
 
   test("the crawl reaches the hand pages, and nothing else", async (t) => {
     const page = await browser.open("about:blank");

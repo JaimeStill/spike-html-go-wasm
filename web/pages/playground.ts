@@ -4,9 +4,8 @@
 // the page creates it. Nothing here loads Go on load: the runner starts its worker and fetches the
 // toolchain only on the demo's Run.
 //
-// The demo is fixed, as tall as the dynamic viewport less --sl-go-demo-inset: the page sets it to
-// its header's height, as the header lays out, since that height follows the reader's space and
-// type profiles and the viewport's width, which no length in the page's CSS could know.
+// The demo is fixed, as tall as its container, which the page's CSS makes the viewport's rows left
+// under the header, the heading, the intro, and the disclosure; nothing here measures or sizes it.
 //
 // The page owns the reader's arrangement, which places the demo's parts from 64rem: it reads the
 // stored choice before first paint, this module blocking render, and stores each choice the demo's
@@ -25,11 +24,3 @@ const demo = document.querySelector("sl-go-demo");
 if (!demo) throw new Error("playground.html has no sl-go-demo");
 demo.runner = runner;
 keep();
-
-const header = document.querySelector("body > header");
-if (!header) throw new Error("playground.html has no header");
-// The header's border-box block size, the demo's inset, each time the header lays out anew.
-new ResizeObserver(([entry]) => {
-  const height = entry.borderBoxSize[0]?.blockSize ?? header.getBoundingClientRect().height;
-  demo.style.setProperty("--sl-go-demo-inset", `${height}px`);
-}).observe(header);

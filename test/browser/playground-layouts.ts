@@ -84,6 +84,55 @@ export const layout = async (page: Page): Promise<Layout> => {
   })()`);
 };
 
+/** The playground's one screen as laid out: the viewport's height; how far the page scrolls each
+ * way; the top and bottom edges, on the page, of the disclosure and of the demo's container, and
+ * the demo's height; and whether the disclosure is open. Each length to a hundredth of a px. */
+export interface Screen {
+  viewport: number;
+  down: number;
+  sideways: number;
+  details: [number, number];
+  container: [number, number];
+  demo: number;
+  open: boolean;
+}
+
+/** The playground's one screen, as Screen says, read once two frames have painted. */
+export const screen = async (page: Page): Promise<Screen> => {
+  await settle(page);
+  return page.evaluate(`(() => {
+    const round = (n) => Math.round(n * 100) / 100;
+    const edges = (element) => {
+      const { top, bottom } = element.getBoundingClientRect();
+      return [round(top + scrollY), round(bottom + scrollY)];
+    };
+    const html = document.documentElement;
+    const details = document.querySelector("main > details");
+    return {
+      viewport: innerHeight,
+      down: html.scrollHeight - html.clientHeight,
+      sideways: html.scrollWidth - html.clientWidth,
+      details: edges(details),
+      container: edges(document.querySelector(".demo-container")),
+      demo: round(${PLAYGROUND}.getBoundingClientRect().height),
+      open: details.open,
+    };
+  })()`);
+};
+
+/** The demo container's floor, as a share of the viewport's height: playground.html's. */
+export const FLOOR = 0.5;
+
+/** Opens or closes the playground's disclosure by a click on its summary, as a reader does,
+ * resolving once it is open or closed. */
+export async function disclose(page: Page, open: boolean): Promise<void> {
+  await page.evaluate(`(() => {
+    const details = document.querySelector("main > details");
+    if (details.open !== ${open}) details.querySelector("summary").click();
+  })()`);
+  await until(page, `document.querySelector("main > details").open === ${open}`, 5000);
+}
+
 /** Asserts that the page doesn't scroll sideways and every part shown lies inside the demo. */
 export function contained({ parts, sideways }: Layout, width: number | string) {
   assert.ok(sideways <= 0, `at ${width}px the page scrolls sideways by ${sideways}px`);

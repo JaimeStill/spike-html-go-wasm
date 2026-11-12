@@ -62,9 +62,9 @@
 // the active file, focus staying on Rename; Delete removes the active file and focuses the tab
 // now active.
 //
-// The fixed layout: with `fixed`, the demo is as tall as the dynamic viewport less the length the
-// page sets as --sl-go-demo-inset on it, its header's, and each part keeps a share of that height
-// and scrolls inside it, so no edit, output, or timing changes any part's box. Its arrangement
+// The fixed layout: with `fixed`, the demo is as tall as its nearest size container, which the page
+// lays out, reading no viewport unit and running no script to size itself, and each part keeps a
+// share of that height and scrolls inside it, so no edit, output, or timing changes any part's box. Its arrangement
 // follows its own width, by container queries in go-demo.css: below 44rem, the editor over one
 // output panel whose tablist, Output and Timings, shows the console or the timings; from 44rem to
 // 64rem, the editor over the console and the timings side by side; and from 64rem, the arrangement
@@ -263,8 +263,8 @@ interface Owned {
  * instead, every .go file as package main, and runs its main, naming no scenario. The files are
  * the light DOM's fences (see the module's note). `editable-files` adds New file, Rename, and
  * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
- * to 8 columns, 4 by default. `fixed` holds the demo to the dynamic viewport's height less
- * --sl-go-demo-inset, a length the page sets on it, its own header's, 0 by default; each part
+ * to 8 columns, 4 by default. `fixed` holds the demo to the block size of its nearest size
+ * container, which the page lays out (100cqb); each part
  * keeps its share of that height, scrolling inside it, in a layout that follows the demo's width
  * (see the module's note). `arrangement`, an Arrangement the page writes, places a fixed demo's
  * parts from 64rem and shows its toolbar's Layout menu there; with none, the editor is left and

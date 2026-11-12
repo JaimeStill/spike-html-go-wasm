@@ -2,8 +2,15 @@
 // serves it, dist/ under the base by the SDK's served(), Vite's preview, in the pinned
 // chrome-headless-shell.
 //
-// The demo is as tall as the viewport less the page's header, and its parts keep their shares of
-// that height at every width: at the SDK's three capture widths, 390, 1120, and 1376 px, and at
+// The page is one screen, in CSS alone: at the SDK's three capture widths, each at its capture
+// height and at 900px, with the disclosure closed, the demo's container takes every row the
+// header, the heading, the intro, and the disclosure leave, the demo as tall as it, its bottom edge
+// the viewport's, the page scrolling neither way, and no script sizing the demo. Opening the
+// disclosure takes its space from the container, down to its floor, half the viewport's height,
+// where every part stays inside the demo, the editor showing three lines and the console's log two; below the floor the page scrolls
+// down, never sideways; closing it puts the screen back as it was.
+//
+// The demo's parts keep their shares of its height at every width: at the SDK's three capture widths, 390, 1120, and 1376 px, and at
 // widths that put the demo itself half a rem either side of its two bands' edges, 44rem and 64rem,
 // a paste of 500 lines into the editor, 10,000 lines printed, and a full table of a build's timings
 // change no part's box, in each arrangement from 64rem, each placing the parts as it says; the
@@ -23,12 +30,17 @@ import { after, before, describe, test } from "node:test";
 import { launch, until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
+import { WIDTHS } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
 import { BUILD, build, BUILT_PHASES, DONE } from "./go-builds.ts";
 import { demo, open as openPage, pressControl, says, settle } from "./go-demos.ts";
 import {
   arrange,
+  disclose,
+  FLOOR,
+  screen,
+  type Screen,
   type AXNode,
   axQuery,
   type Band,
@@ -119,6 +131,93 @@ const choose = (page: Page, part: "console" | "timings") =>
   page.evaluate(
     `${PLAYGROUND}.shadowRoot.querySelector('.output-tabs [data-part="${part}"]').click()`,
   );
+
+/** Asserts that the demo's container ends at the viewport's bottom edge and the page scrolls
+ * neither way, the demo as tall as its container. */
+function oneScreen(shown: Screen, where: string): void {
+  const [top, bottom] = shown.container;
+  assert.ok(Math.abs(bottom - shown.viewport) <= 0.5, `${where}: the container ends at ${bottom}`);
+  assert.ok(Math.abs(shown.demo - (bottom - top)) <= 0.5, `${where}: the demo fills its container`);
+  assert.deepEqual([shown.down, shown.sideways], [0, 0], `${where}: the page scrolls neither way`);
+}
+
+/** The SDK's capture widths, each at its capture height and at 900px. */
+const SCREENS = WIDTHS.flatMap(({ width, height }) => [
+  { width, height },
+  { width, height: 900 },
+]);
+
+describe("the playground's one screen", () => {
+  test("with the disclosure closed, the demo's container takes every row left, the demo's bottom edge the viewport's, and the page scrolls neither way, with no script sizing the demo", async () => {
+    const page = await open();
+    try {
+      for (const { width, height } of SCREENS) {
+        await viewport(page, width, height);
+        const shown = await screen(page);
+        assert.equal(shown.open, false, "the disclosure opens closed");
+        oneScreen(shown, `${width}x${height}`);
+        // Above the floor, so the closed page never scrolls at the capture sizes.
+        const [top, bottom] = shown.container;
+        assert.ok(bottom - top > FLOOR * height, `${width}x${height}: above the floor`);
+      }
+      const styled = await page.evaluate(`${PLAYGROUND}.getAttribute("style")`);
+      assert.equal(styled, null, "the page sets no style on the demo");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("opening the disclosure takes its space from the demo's container, down to the floor, below which the page scrolls down and never sideways; closing it puts the screen back", async () => {
+    const page = await open();
+    try {
+      // At 1800px tall the open disclosure leaves the container above its floor at every width;
+      // at the capture heights it leaves less, and the floor holds.
+      const cases = WIDTHS.flatMap(({ width, height }) => [
+        { width, height: 1800, floored: false },
+        { width, height, floored: true },
+      ]);
+      for (const { width, height, floored } of cases) {
+        const where = `${width}x${height}`;
+        await viewport(page, width, height);
+        const closed = await screen(page);
+        await disclose(page, true);
+        const opened = await screen(page);
+        const [top, bottom] = opened.container;
+        assert.ok(opened.details[1] > closed.details[1], `${where}: the disclosure grows`);
+        assert.equal(opened.sideways, 0, `${where}: the page never scrolls sideways`);
+        if (floored) {
+          assert.ok(height - top < FLOOR * height, `${where}: the rows left are under the floor`);
+          assert.ok(
+            Math.abs(opened.demo - FLOOR * height) <= 0.5,
+            `${where}: the demo at its floor`,
+          );
+          assert.ok(Math.abs(bottom - (height + opened.down)) <= 0.5, `${where}: the page's end`);
+          assert.ok(opened.down > 0, `${where}: the page scrolls down`);
+          // At the floor, every part lies inside the demo, the editor's frame holding three of its
+          // lines and the console's log frame two of its own.
+          const laid = await layout(page);
+          contained(laid, where);
+          const lines: number[] = await page.evaluate(`(() => {
+            const root = ${PLAYGROUND}.shadowRoot;
+            const editor = root.querySelector("sl-code-editor").shadowRoot.querySelector(".editor");
+            const log = root.querySelector("sl-console").shadowRoot.querySelector(".frame");
+            return [editor, log].map((frame) => parseFloat(getComputedStyle(frame).lineHeight));
+          })()`);
+          assert.ok(laid.parts.editor.box[3] >= 3 * lines[0], `${where}: the editor shows 3 lines`);
+          assert.ok(laid.parts.log.box[3] >= 2 * lines[1], `${where}: the log shows 2 lines`);
+        } else {
+          oneScreen(opened, `${where}, open`);
+          assert.ok(opened.demo > FLOOR * height, `${where}: above the floor`);
+          assert.ok(opened.demo < closed.demo, `${where}: the demo yields the disclosure's rows`);
+        }
+        await disclose(page, false);
+        assert.deepEqual(await screen(page), closed, `${where}: closed again`);
+      }
+    } finally {
+      await page.close();
+    }
+  });
+});
 
 describe("the playground's fixed layout", () => {
   test("at each width, a paste of 500 lines, 10,000 lines printed, and a full timings table change no part's box; nothing scrolls the page sideways, and every part lies inside the demo", async () => {
