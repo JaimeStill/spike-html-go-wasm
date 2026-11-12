@@ -14,11 +14,10 @@
 // package before the compiler runs or the toolchain is fetched. Stop: after the runner's Stop while
 // idle, a Run of the same files runs with no build and no request; Stop ends a built busy loop and
 // a build whose archive fetch CDP's Fetch holds, and the next build fetches and compiles no
-// toolchain module, one worker live. Every wait is bounded. Nothing here names the site: its base
-// is package.json's name.
+// toolchain module, one worker live. The build's helpers are go-builds.ts's. Every wait is bounded.
+// Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { after, before, describe, test, type TestContext } from "node:test";
 
@@ -27,17 +26,18 @@ import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
-import { closure, type Manifest } from "../../web/runtime/manifest.ts";
 import {
-  demo,
-  open as openPage,
-  pressControl,
-  says,
-  settles,
-  shown,
-  type Shown,
-  type Watched,
-} from "./go-demos.ts";
+  archivesOf,
+  BUILD,
+  build,
+  BUILT_PHASES,
+  DONE,
+  retype as retypeIn,
+  timed,
+  TOOLS,
+  toolchainRequests,
+} from "./go-builds.ts";
+import { demo, open as openPage, pressControl, says, settles, type Shown } from "./go-demos.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -53,63 +53,19 @@ after(async () => {
   await server?.stop();
 });
 
-/** How long a build and its run may take to settle: a cold one fetches and compiles the 52 MB
- * compiler. */
-const BUILD = 120_000;
-
 const SOURCE = demo("source");
 
 /** The source demo's input.txt, as components.html gives it. */
 const INPUT = "hello from the working directory\n";
 
-/** The manifest the build wrote, which the page's builds read. */
-const manifest = JSON.parse(
-  readFileSync(join(root, "dist/go/toolchain/manifest.json"), "utf8"),
-) as Manifest;
-
-/** The archives of the imports' closure, as the manifest names them. */
-const archivesOf = (imports: string[]) =>
-  closure(manifest, imports).flatMap((path) => manifest.packages[path].archive ?? []);
-
-const TOOLS = [manifest.compile, manifest.link];
-
 /** Opens the components page, watched (go-demos.ts). */
 const open = () => openPage(browser, server.origin);
 
-/** The toolchain's files requested, by path under go/toolchain/, from the index'th request on. */
-const toolchainRequests = ({ origin, requests }: Watched, from = 0) =>
-  requests
-    .slice(from)
-    .map((url) => new URL(url, origin).pathname)
-    .flatMap((path) => {
-      const at = path.indexOf("/go/toolchain/");
-      return at < 0 ? [] : [path.slice(at + "/go/toolchain/".length)];
-    });
+/** Replaces the source demo's active file's text. */
+const retype = (page: Page, text: string) => retypeIn(page, SOURCE, text);
 
-/** Replaces the active file's text by typing it over the editor's selected text. */
-async function retype(page: Page, text: string) {
-  await page.evaluate(`(() => {
-    const text = window.demos.editor(${SOURCE}).shadowRoot.querySelector(".text");
-    text.focus();
-    getSelection().selectAllChildren(text);
-  })()`);
-  await page.cdp("Input.insertText", { text });
-}
-
-/** Presses Run and answers what the demo shows once its status says the text. */
-async function run(page: Page, finished: string): Promise<Shown> {
-  await pressControl(page, SOURCE, "run");
-  await says(page, SOURCE, finished, BUILD);
-  return shown(page, SOURCE);
-}
-
-/** The phases as the timings show them, each with its time, for the test's diagnostics. */
-const timed = ({ phases, times }: Shown) =>
-  phases.map((phase, index) => `${phase} ${times[index]} ms`).join(", ");
-
-const BUILT_PHASES = ["Fetch", "Wasm compile", "Go compile", "Link", "Instantiate", "Run"];
-
-const DONE = "Finished main, exit code 0";
+/** Presses the source demo's Run and answers what it shows once its status says the text. */
+const run = (page: Page, finished: string): Promise<Shown> => build(page, SOURCE, finished);
 
 describe("a source demo's build", () => {
   test("cold: the manifest, the toolchain, and only the closure's archives fetched; main run; every phase", async (t: TestContext) => {

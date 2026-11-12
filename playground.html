@@ -1,0 +1,160 @@
+<!doctype html>
+<!-- The playground, a hand page: one sl-go-demo in the source mode, its files editable and
+     editable-files on, which opens on hello's source, its one fence equal byte for byte to
+     cmd/hello/main.go (the unit tier holds it). Run compiles and links the reader's files with Go's
+     own compiler and linker in the page's worker, then runs main; nothing loads Go, or starts the
+     worker, until a Run. Its script, web/pages/playground.ts, gives the demo the page's one runner.
+     A section after the demo says what a program may hold; the page sets its sections apart, as the
+     foundation leaves that space to the page. The shell is the index's, the same header, dialogs,
+     and unlayered header-actions rule; see index.html for each. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Playground · spike-html-go-wasm</title>
+    <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
+    <style>
+      /* With no site nav to take the header's row, site.css leaves the header-actions group at the
+         row's inline start; the group goes to the inline end at every width, where the SDK's
+         header check holds the buttons when the header has no nav. Unlayered: the build writes this
+         sheet before the linked ones, so an @layer here would declare its layer ahead of the
+         foundation's and reorder every layer on the page. */
+      body > header > .header-actions {
+        margin-inline-start: auto;
+      }
+      /* A section opens on its heading, which the foundation's elements layer gives no top margin
+         as its container's first child, and the foundation leaves the space between sections to
+         the page: the section takes it, as the components page's do. */
+      main > section {
+        margin-block-start: var(--space-xl);
+      }
+      /* The demo sits apart from the introduction above it. */
+      main > sl-go-demo {
+        margin-block-start: var(--space-m);
+      }
+    </style>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/shortcuts.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/settings.js"></script>
+    <script type="module" blocking="render" src="./web/pages/playground.ts"></script>
+  </head>
+  <body>
+    <header>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="show-modal"
+          aria-label="Help"
+          data-keys="?"
+          interestfor="help-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/question-16"></svg>
+          <span aria-hidden="true"><kbd>?</kbd></span>
+        </button>
+        <div id="help-hint" class="glyph-hint" popover="hint" aria-hidden="true">Help</div>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="show-modal"
+          aria-label="Settings"
+          data-keys="s"
+          interestfor="settings-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/gear-16"></svg>
+          <span aria-hidden="true"><kbd>S</kbd></span>
+        </button>
+        <div id="settings-hint" class="glyph-hint" popover="hint" aria-hidden="true">Settings</div>
+      </div>
+    </header>
+    <main>
+      <h1>Playground</h1>
+      <p>
+        Edit the Go below and Run it: Go's own compiler and linker, built for
+        <code>GOOS=js</code>, compile and link your files here in the page, then your program's
+        main runs, its output and exit in the console and each phase's time beside it. The first
+        Run fetches the toolchain and the standard library's packages your imports need; later Runs
+        fetch only the packages a new import adds. <a href="./">The spike's question and evidence</a>.
+      </p>
+      <sl-go-demo source editable-files label="Playground">
+<pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
+// standard library and prints one line. It is a program scenario: the components page's Go demo
+// runs its main to completion in the runtime's worker, which reports the line as stdout output
+// and the exit code 0. It stays the standard-library baseline.
+package main
+
+import (
+	"fmt"
+	"runtime"
+)
+
+func main() {
+	fmt.Printf("hello from Go %s on %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+}
+</code></pre>
+      </sl-go-demo>
+      <section id="programs" aria-labelledby="programs-heading">
+        <h2 id="programs-heading">What a program holds</h2>
+        <p>
+          Every <code>.go</code> file is compiled as one package main, importing the standard
+          library alone, as <code>GOOS=js GOARCH=wasm</code> builds it: no <code>go.mod</code>,
+          local subpackages, cgo, assembly, or <code>go:embed</code>, and no arguments or standard
+          input. Every other file sits in the program's working directory, so
+          <code>os.ReadFile("input.txt")</code> reads a file named <code>input.txt</code>; each Run
+          starts from those files again, and nothing a run writes outlives it.
+        </p>
+        <p>
+          Ctrl or Cmd+Enter runs from inside the demo; Stop ends a build or a run, and the next Run
+          keeps the compiled toolchain. Your files live only in this page: a reload starts from
+          hello again.
+        </p>
+      </section>
+    </main>
+    <dialog id="help" aria-labelledby="help-title">
+      <header class="dialog-header">
+        <h2 id="help-title" tabindex="-1" autofocus>Keyboard shortcuts</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="close"
+          aria-label="Close"
+          interestfor="help-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="help-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-shortcuts></sl-shortcuts>
+    </dialog>
+    <dialog id="settings" aria-labelledby="settings-title">
+      <header class="dialog-header">
+        <h2 id="settings-title">Settings</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="close"
+          aria-label="Close"
+          interestfor="settings-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="settings-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-settings></sl-settings>
+    </dialog>
+  </body>
+</html>

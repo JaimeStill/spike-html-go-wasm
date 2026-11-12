@@ -1,5 +1,6 @@
-// The browser tier's hold on the components page's Go demos, shared by go-demo.test.ts, which
-// proves sl-go-demo, and go-runs.test.ts, which proves the runtime through it: a page opened with
+// The browser tier's hold on the Go demos, the components page's and the playground's, shared by
+// go-demo.test.ts, which proves sl-go-demo, go-runs.test.ts and go-build.test.ts, which prove the
+// runtime through it, and playground.test.ts, which proves the playground: a page opened with
 // every request it and its workers send watched, every worker it starts counted, live until it
 // detaches, and helpers installed on the page that read what a demo shows.
 //
@@ -99,9 +100,12 @@ export interface Watched {
   live: Set<string>;
 }
 
+/** The pages that hold Go demos: the components page and the playground. */
+const DEMO_PAGES = new Set(["components.html", "playground.html"]);
+
 /** Opens the path under the origin with its and its workers' requests watched from before it
- * loads. The components page, the default, also gets focus emulated, every element rendered, and
- * the helpers installed. */
+ * loads. A page that holds Go demos, the components page (the default) or the playground, also
+ * gets focus emulated, every element rendered, and the helpers installed. */
 export async function open(
   browser: Browser,
   origin: string,
@@ -138,7 +142,7 @@ export async function open(
     flatten: false,
   });
   await page.goto(`${origin}${path}`);
-  if (path === "components.html") {
+  if (DEMO_PAGES.has(path)) {
     await page.cdp("Emulation.setFocusEmulationEnabled", { enabled: true });
     await page.evaluate(SETTLED);
     await page.evaluate(HELPERS);

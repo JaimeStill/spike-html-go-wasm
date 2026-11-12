@@ -66,8 +66,12 @@ for the Go packages.
   to a fresh one.
 - **Go tests on the in-memory fs** (`test/memfs`): a Go test program that the check runs under
   node on the runtime's fs, through package `os`.
-- **Playground** (planned): `cmd/compile` and `cmd/link` built to wasm and run in the worker,
-  with per-package standard-library and workspace archives fetched per import through a manifest.
+- **Playground**: Go's own `cmd/compile` and `cmd/link`, built by the pinned Go for `GOOS=js`
+  (`scripts/build-toolchain.ts`), run in the worker by the runner's build request
+  (`web/runtime/build.ts`), with each standard-library package's archive fetched per import
+  through `go/toolchain/manifest.json`; `playground.html` holds one source-mode sl-go-demo opening
+  on hello's source. Planned: workspace modules' archives, as the sqlate and scenarios tasks
+  first require them.
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
   over a runner the page passes in. No component holds authoritative state: DOM-free models,
@@ -76,7 +80,9 @@ for the Go packages.
   documents each module.
 - **Pages** (`web/pages`, the apps tier, for the scripts a page loads): `components.html`, a hand
   page whose script, `web/pages/components.ts`, shows every component's states, again at 20rem;
-  its Go demos run hello and the probe's handlers over the page's one runner. Planned: hand pages
+  its Go demos run hello and the probe's handlers over the page's one runner. `playground.html`,
+  a hand page whose script, `web/pages/playground.ts`, gives its one source demo the page's
+  runner. Planned: hand pages
   and rendered Markdown embedding `<sl-go-demo>` around a go fence.
 
 ## Path

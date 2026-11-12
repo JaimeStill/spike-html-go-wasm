@@ -1,10 +1,12 @@
 // Every program demo's go fence on the components page is its scenario's source, byte for byte:
 // each sl-go-demo in components.html with no handler and no source attribute runs the prebuilt
-// program, so the code it shows must be the code that program was built from. A fence is a direct-child pre of the
-// demo, its text the pre's text content, as sl-go-demo reads it (web/components/go-demo.ts); its
-// file is the fence's name, its data-file, on the pre or its code, else the pre's title, else
-// main.go, under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go.
-// The written demos are every demo's source: the page's script adds none.
+// program, so the code it shows must be the code that program was built from. The playground's one
+// demo, a source demo, opens on hello's source: its one fence, main.go, is cmd/hello/main.go byte
+// for byte. A fence is a direct-child pre of the demo, its text the pre's text content, as
+// sl-go-demo reads it (web/components/go-demo.ts); its file is the fence's name, its data-file, on
+// the pre or its code, else the pre's title, else main.go, under cmd/<scenario>/, so a one-fence
+// demo's is its entrypoint, cmd/<scenario>/main.go.
+// The written demos are every demo's source: the pages' scripts add none.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the
 // page's hand-written markup, so a small reader suffices, held to the HTML parser's rules where
@@ -108,21 +110,31 @@ function fences(content: string): { name: string; text: string }[] {
   return found;
 }
 
-/** The page's program demos, each sl-go-demo with no handler attribute and no source attribute,
- * in order: a source demo's fences are the reader's program, which no scenario was built from. */
-function programDemos(html: string): ProgramDemo[] {
+/** A demo as written: its attributes and its fences. */
+interface WrittenDemo {
+  attrs: Map<string, string>;
+  fences: { name: string; text: string }[];
+}
+
+/** The page's demos, every sl-go-demo outside a comment, in order. */
+function writtenDemos(html: string): WrittenDemo[] {
   const page = html.replace(/<!--[\s\S]*?-->/g, "");
-  const demos: ProgramDemo[] = [];
-  const starts = [...page.matchAll(/<sl-go-demo\b[^>]*>/gi)];
-  for (const start of starts) {
+  const demos: WrittenDemo[] = [];
+  for (const start of page.matchAll(/<sl-go-demo\b[^>]*>/gi)) {
     const from = start.index + start[0].length;
     const end = page.indexOf("</sl-go-demo>", from);
     if (end < 0) throw new Error(`a demo the reader can't close: ${start[0]}`);
-    const attrs = attributes(start[0]);
-    if (attrs.has("handler") || attrs.has("source")) continue;
-    demos.push({ scenario: attrs.get("scenario") ?? "", fences: fences(page.slice(from, end)) });
+    demos.push({ attrs: attributes(start[0]), fences: fences(page.slice(from, end)) });
   }
   return demos;
+}
+
+/** The page's program demos, each sl-go-demo with no handler attribute and no source attribute,
+ * in order: a source demo's fences are the reader's program, which no scenario was built from. */
+function programDemos(html: string): ProgramDemo[] {
+  return writtenDemos(html)
+    .filter(({ attrs }) => !attrs.has("handler") && !attrs.has("source"))
+    .map(({ attrs, fences }) => ({ scenario: attrs.get("scenario") ?? "", fences }));
 }
 
 describe("the components page's program demos", () => {
@@ -146,6 +158,25 @@ describe("the components page's program demos", () => {
         assert.equal(text, source, `the ${scenario} demo's ${name}`);
       }
     }
+  });
+});
+
+describe("the playground's demo", () => {
+  const html = readFileSync(join(root, "playground.html"), "utf8");
+
+  test("is one source demo with editable files, opening on hello's source byte for byte", () => {
+    const demos = writtenDemos(html);
+    assert.deepEqual(
+      demos.map(({ attrs, fences }) => [
+        attrs.has("source"),
+        attrs.has("editable-files"),
+        attrs.has("scenario") || attrs.has("handler"),
+        fences.map(({ name }) => name),
+      ]),
+      [[true, true, false, ["main.go"]]],
+    );
+    const [{ fences }] = demos;
+    assert.equal(fences[0].text, readFileSync(join(root, "cmd/hello/main.go"), "utf8"));
   });
 });
 

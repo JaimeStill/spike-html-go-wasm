@@ -1,13 +1,15 @@
 // The site's build, as Pages serves it: dist/ under the base, by the SDK's served(), Vite's
 // preview, loaded in the pinned chrome-headless-shell. Each of the SDK's shell checks is a test on
-// a fresh page of each hand page, the index and the components page, whose headers have no site
-// nav, which the checks allow, and which a test of its own holds on each: no sl-site-nav in the
-// header, and no site-nav.js loaded, which defines it; the build bundles the module, so the
-// registry rather than a request names it. The crawl, from the index, checks every copied page,
-// none here, and loads each hand page it reaches: it reaches exactly the index and, by the index's
-// link, the components page. No page holds an SDK fence, so the SDK's palette check has nothing to
-// run on; the components page's editors are held to its colors by code-editor.test.ts. The components
-// page sets each section apart, its heading --space-xl below what came before. Nothing here names the site: its base is package.json's name.
+// a fresh page of each hand page, the index, the components page, and the playground, whose
+// headers have no site nav, which the checks allow, and which a test of its own holds on each: no
+// sl-site-nav in the header, and no site-nav.js loaded, which defines it; the build bundles the
+// module, so the registry rather than a request names it. The crawl, from the index, checks every
+// copied page, none here, and loads each hand page it reaches: it reaches exactly the index and,
+// by the index's links, the components page and the playground. No page holds an SDK fence, so
+// the SDK's palette check has nothing to run on; the components page's editors are held to its
+// colors by code-editor.test.ts. The components page and the playground each set every section
+// apart, its heading --space-xl below what came before. Nothing here names the site: its base is
+// package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/test/browser/site.test.ts, its checks
@@ -39,7 +41,7 @@ after(async () => {
 });
 
 /** The hand pages, each by its path under the base. */
-const hand = ["", "components.html"];
+const hand = ["", "components.html", "playground.html"];
 
 describe("the site under its base", () => {
   for (const path of hand) {
@@ -69,10 +71,11 @@ describe("the site under its base", () => {
     });
   }
 
-  test("the components page sets each section apart: its heading sits --space-xl below what came before", async () => {
-    const page = await browser.open(`${server.origin}components.html`);
-    try {
-      const gaps: { id: string; gap: number; xl: number }[] = await page.evaluate(`(() => {
+  for (const path of ["components.html", "playground.html"]) {
+    test(`${path} sets each section apart: its heading sits --space-xl below what came before`, async () => {
+      const page = await browser.open(`${server.origin}${path}`);
+      try {
+        const gaps: { id: string; gap: number; xl: number }[] = await page.evaluate(`(() => {
         const probe = document.createElement("div");
         probe.style.blockSize = "var(--space-xl)";
         document.body.append(probe);
@@ -85,18 +88,19 @@ describe("the site under its base", () => {
           xl,
         }));
       })()`);
-      assert.ok(gaps.length > 0, "the page has sections");
-      for (const { id, gap, xl } of gaps) {
-        assert.ok(xl > 0, "--space-xl resolves");
-        assert.ok(
-          gap >= xl - 0.5,
-          `#${id}'s heading sits ${gap}px below what came before, under ${xl}px`,
-        );
+        assert.ok(gaps.length > 0, "the page has sections");
+        for (const { id, gap, xl } of gaps) {
+          assert.ok(xl > 0, "--space-xl resolves");
+          assert.ok(
+            gap >= xl - 0.5,
+            `#${id}'s heading sits ${gap}px below what came before, under ${xl}px`,
+          );
+        }
+      } finally {
+        await page.close();
       }
-    } finally {
-      await page.close();
-    }
-  });
+    });
+  }
 
   test("the crawl reaches the hand pages, and nothing else", async (t) => {
     const page = await browser.open("about:blank");

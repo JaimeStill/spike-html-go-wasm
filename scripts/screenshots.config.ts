@@ -5,12 +5,14 @@
 // component, --page components/<component>, each the page whole at each of the same widths, one
 // state per width, with every other component's section hidden, and the controls' with New file's
 // form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run,
-// and no Go loads. The page shows each state once and its layout follows the viewport, so the
-// narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the
-// index's and each component's, takes only that width's states. The SDK's widths over the whole
-// components page grew with every component, so each component is captured alone. The
-// description's facets, --all's profiles, the registry's profiles, and its server, which serves
-// the site as the browser tier serves it, by the SDK's served(), under the base, are the SDK's.
+// and no Go loads; and the playground, --page playground, whole at each of the same widths, its
+// demo as before a Run, on hello's source. The components page shows each state once and its
+// layout follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH
+// set, by --width, every page, the index's, each component's, and the playground's, takes only
+// that width's states. The SDK's widths over the whole components page grew with every component,
+// so each component is captured alone. The description's facets, --all's profiles, the registry's
+// profiles, and its server, which serves the site as the browser tier serves it, by the SDK's
+// served(), under the base, are the SDK's.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/scripts/screenshots.config.ts, its pages
@@ -90,7 +92,10 @@ const opened =
     if (step) await page.evaluate(step);
   };
 
-const described = description({ root, pages: ["index.html", "components.html"] });
+const described = description({
+  root,
+  pages: ["index.html", "components.html", "playground.html"],
+});
 
 /** The components page as a page per component: its path, and a state whole at each of the SDK's
  * widths with the component's section alone, the state's name its files', with no slash, the

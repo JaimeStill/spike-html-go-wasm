@@ -5,9 +5,11 @@
 
 The GitHub Pages site of spike-html-go-wasm, made from the template of
 [spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.2. Its index,
-`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside one more hand page,
+`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside two more hand pages:
 `components.html`, the components page, which shows each component in `web/components/` in each
-of its states; its Go demos run Go through the runtime in `web/runtime/`. The site copies no
+of its states, its Go demos running Go through the runtime in `web/runtime/`; and
+`playground.html`, the playground, where the reader edits Go and builds and runs it in the page
+(see "Playground"). The site copies no
 Markdown tree: `content.json` records none, and `content/` holds nothing. The spike's question,
 evidence, and path are in `context/README.md`.
 
@@ -32,7 +34,8 @@ evidence, and path are in `context/README.md`.
     working directory. It tests the components' five models
     (`EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations,
     refusals, and change events. It holds each program demo's go fence on the components page to
-    its scenario's source, byte for byte. It fails if a module under `web/components` or
+    its scenario's source, byte for byte, and the playground's demo to hello's,
+    `cmd/hello/main.go`. It fails if a module under `web/components` or
     `web/pages` registers a page shortcut through the foundation's `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
     and the crawl, and proves each component on the components page:
@@ -70,7 +73,14 @@ evidence, and path are in `context/README.md`.
       a compile error as the compiler writes it, with its exit, running nothing; an import the
       manifest lacks refused before the compiler runs; and Stop, while idle, during a built
       program's busy loop, and during a build, the next build fetching and compiling no toolchain
-      module.
+      module;
+    - the playground: no Go before a Run; the first Run fetching the manifest, the compiler, the
+      linker, and only hello's closure of archives, and printing hello with exit 0 and every phase
+      of a build; a Run after an edit fetching no toolchain module and no archive held, a new
+      standard import only the archives its closure adds, and the edited program's output; a
+      compile error; Stop ending a busy loop, the next build fetching no toolchain module; and a
+      file the reader adds read through `os.ReadFile` from the working directory, nothing a run
+      writes outliving it.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
   (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`, and the playground's
@@ -78,17 +88,19 @@ evidence, and path are in `context/README.md`.
   built for `GOOS=js`, an archive for each standard-library package, and `manifest.json`, the one
   file that names them, each by its content's hash. A bare `vite build` omits the wasm.
 - `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths,
-  390px, 1120px, and 1376px, and each component on the components page alone at each of them,
-  `--page components/<component>`, as `--page components/console`. `--width <px>`, one of the
-  three, captures that width alone, the index's and each component's, as
-  `mise run screenshots --page components/controls --width 390`; any other width is a usage
-  error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
+  390px, 1120px, and 1376px, each component on the components page alone at each of them,
+  `--page components/<component>`, as `--page components/console`, and the playground at each,
+  `--page playground`. `--width <px>`, one of the three, captures that width alone, every
+  page's, as `mise run screenshots --page components/controls --width 390`; any other width is a
+  usage error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
   know, and hands it to the capture file.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
 - `mise run live [base URL]`: check that the deployed site, at its Pages URL or the base given,
-  serves the index as HTML and `go/hello.wasm` as `application/wasm`, gzip-encoded. It reads the
-  network and isn't part of the check.
+  serves the index as HTML, `go/hello.wasm` as `application/wasm`, gzip-encoded, the playground's
+  `go/toolchain/manifest.json`, and the compiler it names as `application/wasm`, gzip-encoded. It
+  reads the network and isn't part of the check; the unit tier holds its assertions against local
+  servers.
 
 ## Runtime
 
@@ -125,6 +137,18 @@ are `protocol.ts`'s.
 - `listen(listener)`: every output, exit, and timing event. The runner runs one load, build, or
   run at a time; one started while another is pending stops it first, which rejects with
   `"stopped"`, so every event between a request's start and its settling is that request's.
+
+## Playground
+
+`playground.html` holds one `sl-go-demo` in the source mode, with `editable-files`, opening on
+hello's source, `cmd/hello/main.go` as it is. Its script, `web/pages/playground.ts`, gives the
+demo the page's one `Runner`. Nothing loads Go until a Run: the first fetches the manifest, the
+compiler, the linker, and the archives of the program's import closure, and a later Run fetches the
+manifest again and only the archives a new import adds (see "Runtime", `build(files)`). The
+program's limits and its working directory are the build's; New file adds a file, so a non-Go
+file such as `input.txt` is read through `os.ReadFile`. Stop keeps the compiled toolchain.
+The reader's files live only in the page: a reload opens on hello again, and nothing is shared or
+stored.
 
 ## Components
 

@@ -8,7 +8,8 @@
 // focus-start mark the page's first, or none for a component with no focus state, and a run of one
 // at one --width prints that component's few tiles at that width alone and leaves nothing under
 // its TMPDIR. A --width not among the SDK's, or with no value, is a usage error naming the widths,
-// capturing nothing.
+// capturing nothing. The playground's capture, --page playground, is the page whole at each of the
+// SDK's widths.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -152,6 +153,14 @@ describe("a component's capture", () => {
     // The console's section alone is a few tiles of 1200px; the whole page is over twenty.
     assert.ok(run.printed.length <= 8, `${run.printed.length} tiles: ${run.printed.join(", ")}`);
     assert.deepEqual(run.left, [], "TMPDIR is left empty");
+  });
+
+  test("the capture file captures the playground whole at each of the SDK's widths", () => {
+    const described = description.pages.find(({ name }) => name === "playground");
+    assert.deepEqual(
+      described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
+      WIDTHS.map(({ width }) => [`playground-${width}`, width, true]),
+    );
   });
 
   test("a --width not among the SDK's is a usage error naming them, and captures nothing", () => {
