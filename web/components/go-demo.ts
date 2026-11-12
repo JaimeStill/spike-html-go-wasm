@@ -230,21 +230,20 @@ interface Owned {
  * A live Go demo. `runner`, the page's runner, a DemoRunner, runs it; with none, Run does nothing.
  * `scenario` names the scenario Run loads; `handler`, when given, the handler Run calls with the
  * one file's text, else Run runs the program's main. `source` builds the program from the files
- * instead, every .go file as package main, and runs its main, naming no scenario. The files are
- * the light DOM's fences (see the module's note), unless `files`, a FileSet the page owns, gives
- * them; giving another set, or none, switches the demo to it in place, stopping its pending run
- * and clearing its console and timings. `file` names each fence that names none, in place of the
- * default from its language or the mode (file-names.ts); a fence's own name wins over it, and a page's
- * set ignores it. `editable-files` adds New file, Rename, and
- * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
- * to 8 columns, 4 by default. `fixed` makes the demo as tall as the box its parent's layout gives
- * it, never below its floor in lines of its parts (go-demo.css); each part keeps its share of that
- * height, scrolling inside it, in a layout that follows the demo's width (see the module's note).
- * `arrangement`, an Arrangement the page writes, places a fixed demo's parts from 64rem and shows
- * its toolbar's Layout menu there; with none, the editor is left and the menu isn't shown.
- * `label` names the demo, a region; by default it names the scenario and the handler, "probe
- * format demo", or, on a source demo, "Go source demo".
- *
+ * instead, every .go file as package main, and runs its main, naming no scenario. The files are the
+ * light DOM's fences (see the module's note), unless `files`, a FileSet the page owns, gives them;
+ * giving another set, or none, switches the demo to it in place, stopping its pending run and
+ * clearing its console and timings. `file` names each fence that names none, in place of the
+ * default from its language or the mode (file-names.ts); a fence's own name wins over it, and a
+ * page's set ignores it. `editable-files` adds New file, Rename, and Delete on a program or source
+ * demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1 to 8 columns, 4 by default.
+ * `fixed` makes the demo as tall as the box its parent's layout gives it, never below its floor in
+ * lines of its parts (go-demo.css); each part keeps its share of that height, scrolling inside it,
+ * in a layout that follows the demo's width (see the module's note). `arrangement`, an Arrangement
+ * the page writes, places a fixed demo's parts from 64rem and shows its toolbar's Layout menu
+ * there; with none, the editor is left and the menu isn't shown. `label` names the demo, a region;
+ * by default it names the scenario and the handler, "probe format demo", or, on a source demo, "Go
+ * source demo".
  * An authoring error, a missing scenario, a source demo naming a scenario or a handler, no fence,
  * more than one fence on a handler demo, a fence's name the file set refuses, or a tab size the
  * settings refuse, shows in place of the demo, naming the reason, as the region's description too,

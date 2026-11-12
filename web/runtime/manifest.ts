@@ -6,10 +6,10 @@
 // its import path. Every file it names has a content-hashed name, given nowhere but here, so a
 // cached old compiler can never pair with new archives: a new build names new files.
 
-/** One package, the standard library's or a pinned module's: its archive, the .a file whose export data the compiler reads
- * and whose object the linker reads, at a path relative to the manifest, absent for unsafe
- * alone, which the compiler provides itself; and its direct imports, as Go resolves them for
- * js/wasm (a vendored package by its vendor/ path), in Go's sorted order. */
+/** One package, the standard library's or a pinned module's: its archive, the .a file whose export
+ * data the compiler reads and whose object the linker reads, at a path relative to the manifest,
+ * absent for unsafe alone, which the compiler provides itself; and its direct imports, as Go
+ * resolves them for js/wasm (a vendored package by its vendor/ path), in Go's sorted order. */
 export interface ManifestPackage {
   archive?: string;
   imports: string[];

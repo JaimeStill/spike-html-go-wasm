@@ -17,15 +17,15 @@
 // Program select, as a reader chooses it; and the sqlate page, --page sqlate, an app page as the
 // playground is, its demo as before a Run, the viewport alone at each of the SDK's widths; and the
 // rendered Markdown page, --page sqlate-compile, its demo as before a Run, whole at each of the
-// SDK's widths, the SDK's own states for a page. The
-// components page shows each state once and its layout
-// follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by
-// --width, every page, the index's, each component's, and the playground's, takes only that width's
-// states, so the 900px capture, at no SDK width, is taken only when every width is. The SDK's
-// widths over the whole components page grew with every component, so each component is captured
-// alone. The description's facets, --all's profiles, the registry's profiles, and its server, which
-// serves the site as the browser tier serves it, by the SDK's served(), under the base, are the
-// SDK's. Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
+// SDK's widths, the SDK's own states for a page. The components page shows each state once and its
+// layout follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH
+// set, by --width, every page, the index's, each component's, the playground's, and the sqlate
+// pages', takes only that width's states, so the 900px capture, at no SDK width, is taken only when
+// every width is. The SDK's widths over the whole components page grew with every component, so
+// each component is captured alone. The description's facets, --all's profiles, the registry's
+// profiles, and its server, which serves the site as the browser tier serves it, by the SDK's
+// served(), under the base, are the SDK's.
+// Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's. Adapted from spike-html-hosting-sdk (v0.6.2):
 // template/scripts/screenshots.config.ts, its pages the hand pages, as the site copies no tree for
 // contentPages to list; the components page split into a page per component, a state per width.

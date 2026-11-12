@@ -8,13 +8,14 @@
 // the program's file set from them by the demo's rules: basics, its main.go and shapes.go;
 // generics, its main.go and stack.go; concurrency, its main.go and pipeline.go; and stdlib, its
 // main.go and the input.json it reads. The sqlate page's one demo, a source demo, is
-// playground/sqlate's files byte for byte: main.go and guard.go, the pattern app.identity.sql,
-// the statements create.sql, edit.sql, and version.sql, and the run's input.json. Each program's fences are every file in its
-// directory but its tests, so a file added there and not to the page fails. A fence is a direct-child pre of the demo or the template,
-// its text the pre's text content, as sl-go-demo reads it (web/components/fences.ts); its file is
-// the fence's name, its data-file, on the pre or its code, else the pre's title, else main.go,
-// under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go. The
-// written demos and templates are every program's source: the pages' scripts add none.
+// playground/sqlate's files byte for byte: main.go and guard.go, the pattern app.identity.sql, the
+// statements create.sql, edit.sql, and version.sql, and the run's input.json. Each program's fences
+// are every file in its directory but its tests, so a file added there and not to the page fails. A
+// fence is a direct-child pre of the demo or the template, its text the pre's text content, as
+// sl-go-demo reads it (web/components/fences.ts); its file is the fence's name, its data-file, on
+// the pre or its code, else the pre's title, else main.go, under cmd/<scenario>/, so a one-fence
+// demo's is its entrypoint, cmd/<scenario>/main.go. The written demos and templates are every
+// program's source: the pages' scripts add none.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the
 // page's hand-written markup, so a small reader suffices, held to the HTML parser's rules where

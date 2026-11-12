@@ -1,11 +1,10 @@
 /*
- * The hand pages' own rules, index.html's, components.html's, playground.html's, and
- * sqlate.html's, and the rendered Markdown pages', in one sheet each page links after the SDK's
- * site.css. Every rule is in the page cascade layer, which this
- * sheet declares last, after the foundation's layers and the SDK's site, so a page rule wins over
- * the shell's by layer order alone, at any specificity, and an unlayered sheet (the components'
- * glyph-button.css) stays above it. The layer order is the page's, as the browser tier reads it:
- * foundation's, then site, then page.
+ * The hand pages' own rules, index.html's, components.html's, playground.html's, and sqlate.html's,
+ * and the rendered Markdown pages', in one sheet each page links after the SDK's site.css. Every
+ * rule is in the page cascade layer, which this sheet declares last, after the foundation's layers
+ * and the SDK's site, so a page rule wins over the shell's by layer order alone, at any
+ * specificity, and an unlayered sheet (the components' glyph-button.css) stays above it. The layer
+ * order is the page's, as the browser tier reads it: foundation's, then site, then page.
  *
  * A linked sheet, never an inline <style>: the build writes a page's inline sheet before the
  * bundled linked ones, so an @layer there would declare page ahead of the foundation's layers and

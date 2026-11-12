@@ -68,8 +68,8 @@ export default defineConfig({
     target: "es2024",
     // The hand pages: Vite builds index.html by default only with no input given, and the plugin
     // gives its pages, the rendered sqlate-compile.html, as an input list, with which these
-    // concatenate. components.html is the components page,
-    // playground.html the playground, and sqlate.html the sqlate page.
+    // concatenate. components.html is the components page, playground.html the playground, and
+    // sqlate.html the sqlate page.
     rolldownOptions: {
       input: [
         `${root}index.html`,

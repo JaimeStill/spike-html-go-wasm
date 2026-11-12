@@ -7,8 +7,9 @@
 //
 // The tokenizer (tokenizer.ts: Shiki's core, its JavaScript regex engine, the Go, JSON, and SQL
 // grammars, and the palettes' merged themes) loads lazily, once, as the first editor upgrades.
-// Until it has, and for any language but Go, JSON, and SQL, the text shows plain. After an edit the editor
-// re-highlights once typing pauses, from a timer, so a keystroke never waits on the tokenizer.
+// Until it has, and for any language but Go, JSON, and SQL, the text shows plain. After an edit the
+// editor re-highlights once typing pauses, from a timer, so a keystroke never waits on the
+// tokenizer.
 //
 // The gutter is layout, not text: each line of the value has a row in the editor's grid, its
 // number drawn by a CSS counter in the first column and a copy of the line, invisible, in the

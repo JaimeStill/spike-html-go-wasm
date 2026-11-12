@@ -1,19 +1,20 @@
-// The runtime in the browser, through the components page's Go demos: the build as Pages serves
-// it, dist/ under the base by the SDK's served(), Vite's preview, in the pinned
-// chrome-headless-shell, the page's one runner shared by every demo. The modules, hello's,
-// probe's, and sqlate's, answer as application/wasm, and the index requests no Go on load (the components page's own load is
+// The runtime in the browser, through the components page's Go demos: the build as Pages serves it,
+// dist/ under the base by the SDK's served(), Vite's preview, in the pinned chrome-headless-shell,
+// the page's one runner shared by every demo. The modules, hello's, probe's, and sqlate's, answer
+// as application/wasm, and the index requests no Go on load (the components page's own load is
 // go-demo.test.ts's). Through the demos: files' steps through the in-memory fs; a held module
-// reused, a handler's call alone and a program's instance afresh, with no fetch; scenarios
-// switched in place in one worker. Then Stop: it ends spin's busy loop, and after it, or after
-// crash's panic ends the instance, the next call answers from the module the runner kept, with no
-// new .wasm request, and the page never has more than one live worker; the runner's Stop while
-// idle, which no demo sends, leaves the scenario loaded. And one request at a time: a program's
-// Run in another demo while spin is pending stops spin first, then loads hello in the fresh
-// worker; a load or Run while another demo's load is pending, its probe.wasm held back by CDP's
-// Fetch, stops that load, which rejects with "stopped", and proceeds, and the stopped load,
-// settling, never clears the newer load's scenario. hello's line and exit, format's answer, line,
-// and error, the timings by phase, and a call while spin is pending are go-demo.test.ts's, the
-// page's watch and helpers go-demos.ts's. Every wait is bounded. Nothing here names the site: its base is package.json's name.
+// reused, a handler's call alone and a program's instance afresh, with no fetch; scenarios switched
+// in place in one worker. Then Stop: it ends spin's busy loop, and after it, or after crash's panic
+// ends the instance, the next call answers from the module the runner kept, with no new .wasm
+// request, and the page never has more than one live worker; the runner's Stop while idle, which no
+// demo sends, leaves the scenario loaded. And one request at a time: a program's Run in another
+// demo while spin is pending stops spin first, then loads hello in the fresh worker; a load or Run
+// while another demo's load is pending, its probe.wasm held back by CDP's Fetch, stops that load,
+// which rejects with "stopped", and proceeds, and the stopped load, settling, never clears the
+// newer load's scenario. hello's line and exit, format's answer, line, and error, the timings by
+// phase, and a call while spin is pending are go-demo.test.ts's, the page's watch and helpers
+// go-demos.ts's. Every wait is bounded. Nothing here names the site: its base is package.json's
+// name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";

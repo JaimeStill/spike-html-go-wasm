@@ -10,21 +10,22 @@
 // runs that demo, and from outside any demo runs none. A handler demo with two fences shows its
 // authoring error, in the page and in the accessibility tree, the fences as written, and doesn't
 // run. Stop ends spin. Two demos on the runner: format's Run while spin's is pending stops spin,
-// whose demo records it stopped, each console holds only its own output, and the module goes to
-// the fresh worker unfetched, one worker live. Editable files: New file, Rename, and Delete change
-// the set, a new file selected with the editor focused, focus on the tab now active after a
-// delete, and the last file kept. Reset restores an edited file. A tab size the settings refuse is
-// an authoring error a valid one mends, and a handler's change rebuilds the files in its mode. A
-// program demo given a FileSet as its files property renders that set, and its fences again when
-// given none; a handler demo refuses a set as an authoring error. A demo's accessibility tree: a region named by its label, the toolbar, the tabs and the panel on
-// a program demo, the editor, the log, and the timings, its fences no part of it. The fences: the
-// SDK's Shiki markup read as plain text and run, named by the demo's file attribute while it is
-// set, and without script, every fence shows as the
+// whose demo records it stopped, each console holds only its own output, and the module goes to the
+// fresh worker unfetched, one worker live. Editable files: New file, Rename, and Delete change the
+// set, a new file selected with the editor focused, focus on the tab now active after a delete, and
+// the last file kept. Reset restores an edited file. A tab size the settings refuse is an authoring
+// error a valid one mends, and a handler's change rebuilds the files in its mode. A program demo
+// given a FileSet as its files property renders that set, and its fences again when given none; a
+// handler demo refuses a set as an authoring error. A demo's accessibility tree: a region named by
+// its label, the toolbar, the tabs and the panel on a program demo, the editor, the log, and the
+// timings, its fences no part of it. The fences: the SDK's Shiki markup read as plain text and run,
+// named by the demo's file attribute while it is set, and without script, every fence shows as the
 // page's code. At a phone's width each demo fits its column, and at 1280px and 1120px, either side
 // of the 44rem at which the console and timings share a row, and a phone's width, every part of
-// every demo lies within it, run or not, the console and timings side by side from the 44rem on. The rest of the runtime's proofs, through the same demos, are go-runs.test.ts's;
-// the page's watch and helpers are go-demos.ts's. Every wait is bounded. Nothing here names the
-// site: its base is package.json's name.
+// every demo lies within it, run or not, the console and timings side by side from the 44rem on.
+// The rest of the runtime's proofs, through the same demos, are go-runs.test.ts's; the page's watch
+// and helpers are go-demos.ts's. Every wait is bounded. Nothing here names the site: its base is
+// package.json's name.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

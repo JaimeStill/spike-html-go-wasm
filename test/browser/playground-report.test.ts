@@ -1,15 +1,15 @@
 // The playground's programs' report, never a gate: for each program the Program select offers,
 // opened by its fragment, and for the sqlate page's source demo, playground/sqlate, each in a
 // browser of its own, so its worker is fresh and its cache empty, the phase timings of its first
-// Run, cold, and of a Run after an edit to main.go, warm, each phase as the demo's timings show
-// it, and its closure, the archives its cold Run fetched, the standard library's and, for sqlate,
-// the site's pinned modules': their count, their bytes as fetched, and their bytes gzipped here, by node's zlib at its default
-// level, as Vite's preview serves them raw. The report is the test's diagnostics, written nowhere
-// else; nothing here asserts a number, only that each Run finishes, exit 0, so the report has
-// numbers to give. mise run report:programs runs it alone, on a quiet machine; the browser tier
-// runs it beside its other files, so its timings there are a busier machine's. The build as Pages
-// serves it, dist/ under the base by the SDK's served(), Vite's preview, in the pinned
-// chrome-headless-shell. The helpers are go-demos.ts's, go-builds.ts's, and
+// Run, cold, and of a Run after an edit to main.go, warm, each phase as the demo's timings show it,
+// and its closure, the archives its cold Run fetched, the standard library's and, for sqlate, the
+// site's pinned modules': their count, their bytes as fetched, and their bytes gzipped here, by
+// node's zlib at its default level, as Vite's preview serves them raw. The report is the test's
+// diagnostics, written nowhere else; nothing here asserts a number, only that each Run finishes,
+// exit 0, so the report has numbers to give. mise run report:programs runs it alone, on a quiet
+// machine; the browser tier runs it beside its other files, so its timings there are a busier
+// machine's. The build as Pages serves it, dist/ under the base by the SDK's served(), Vite's
+// preview, in the pinned chrome-headless-shell. The helpers are go-demos.ts's, go-builds.ts's, and
 // playground-layouts.ts's. Every wait is bounded.
 
 import { readFileSync } from "node:fs";
