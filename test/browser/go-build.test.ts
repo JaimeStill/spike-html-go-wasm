@@ -370,7 +370,11 @@ describe("a build runs alone", () => {
           .then(() => "built", (error) => error.message)`);
         await settles(() => held.paused.length === 1, "the compiler requested and held", BUILD);
         await page.evaluate(`(() => { const runner = ${SOURCE}.runner; return ${next}; })()`);
-        assert.equal(await building, "stopped");
+        // Bounded: without the preemption the build would wait on the held compiler forever.
+        const unsettled = new Promise((resolve) => {
+          setTimeout(resolve, 10_000, "unsettled").unref();
+        });
+        assert.equal(await Promise.race([building, unsettled]), "stopped");
         // The direct calls are no demo's: the source demo shows nothing of them.
         assert.deepEqual((await shown(page, SOURCE)).rows, []);
       } finally {
