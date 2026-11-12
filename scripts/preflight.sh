@@ -46,3 +46,10 @@ fi
 # The browser tier's DejaVu run draws from the archive's ttf/ (test/browser/fonts.ts).
 fonts=$(mise where http:dejavu-fonts 2>/dev/null) || fail "the DejaVu fonts (http:dejavu-fonts)"
 [[ -f $fonts/ttf/DejaVuSans.ttf ]] || fail "the DejaVu fonts (http:dejavu-fonts)"
+# As with the browser, a version bumped without its sha256 installs the old release; the archive's
+# README.md names its version.
+pin=$(mise current http:dejavu-fonts)
+if ! grep -qF "DejaVu fonts $pin (c)" "$fonts/README.md"; then
+  echo "preflight: $fonts isn't DejaVu fonts $pin; give the pin its own sha256" >&2
+  exit 1
+fi

@@ -205,10 +205,9 @@ and the browser tier reads that order on each page. Every rule a page adds is in
 `web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
 specificity: the header-actions group at the header's inline end, wrapping its buttons only where
 the row can't hold them, as the playground's three at a phone's width and twice the text size,
-the space between `main >
-section`s on every page, the components page's specimens, and the app page, the playground's
-one screen, which only a body of class `app` takes. Its spaces are the foundation's `--space-*`
-steps.
+the space between `main > section`s on every page, the components page's specimens, and the app
+page, the playground's one screen, which only a body of class `app` takes. Its spaces are the
+foundation's `--space-*` steps.
 
 A hand page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the

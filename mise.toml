@@ -31,7 +31,7 @@ version_json_path = ".channels.Stable.version"
 linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chrome-headless-shell-linux64.zip", checksum = "sha256:f90329720fb61e5a76da9b6b509b6ad12a484c9c5df0359403e935177c6d153a", size = "127965683" }
 
 # The browser tier's second font set: DejaVu, the fonts an Ubuntu runner draws with, which the
-# layout tests run under a test-only fontconfig (scripts/dejavu-fonts.sh), so CI's fonts are
+# layout tests run under a test-only fontconfig (test/browser/fonts.ts), so CI's fonts are
 # exercised by name and a local run is never only the machine's. DejaVu publishes no checksums:
 # the sha256 and size are taken from the download by hand at each bump; currency reads the
 # release assets' names through mise outdated. Its license, Bitstream Vera's with DejaVu's
