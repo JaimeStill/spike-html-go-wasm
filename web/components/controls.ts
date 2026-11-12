@@ -153,8 +153,8 @@ export function stem(name: string): string {
  * `arrangement`, an Arrangement the owner writes, shows the layout group, after the files group,
  * its Layout menu checking the arrangement's placement; with none, the group isn't shown.
  *
- * `steady` keeps the status to one line whatever it says, beside the toolbar where the row leaves it
- * room, else on a line of its own, its words cut short with an ellipsis where they outrun it, so
+ * `steady` keeps the status to one line whatever it says, beside the toolbar where the row leaves
+ * it room, else on a line of its own, its words cut short with an ellipsis where they outrun it, so
  * the controls' box follows their width alone.
  *
  * The toolbar is named by `label`, "Controls" by default. Run carries aria-keyshortcuts,
@@ -500,9 +500,7 @@ export class Controls extends LitElement {
     const from = items.indexOf(event.target as HTMLElement);
     if (event.key === "Tab") {
       // Focus goes back to Layout before the key's default moves it on, from there.
-      this.#menu?.hidePopover();
-      this.#menuRestore = false;
-      this.#button("layout")?.focus();
+      this.#closeMenu();
       return;
     }
     const to = {
