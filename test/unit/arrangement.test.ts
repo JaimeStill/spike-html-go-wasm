@@ -5,13 +5,11 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import {
-  Arrangement,
-  DEFAULT_PLACEMENT,
-  type Placement,
-  PLACEMENTS,
-  placementProblem,
-} from "../../web/components/arrangement.ts";
+import { Arrangement, type Placement, placementProblem } from "../../web/components/arrangement.ts";
+
+/** The placements the model holds, written out here rather than read from the module's own list,
+ * so a placement dropped from it fails. The Layout menu's order is the browser tier's. */
+const HELD: Placement[] = ["left", "top", "right"];
 
 /** The placement after each change event, in order, as the events arrive. */
 function heard(arrangement: Arrangement): Placement[] {
@@ -24,15 +22,12 @@ function heard(arrangement: Arrangement): Placement[] {
 }
 
 describe("Arrangement", () => {
-  test("defaults to the editor left, and holds left, top, and right, in the menu's order", () => {
+  test("defaults to the editor left", () => {
     assert.equal(new Arrangement().placement, "left");
-    assert.equal(DEFAULT_PLACEMENT, "left");
-    assert.deepEqual(PLACEMENTS, ["left", "top", "right"]);
-    assert.ok(Object.isFrozen(PLACEMENTS), "no one can change the placements every menu offers");
   });
 
-  test("takes its initial placement, validated", () => {
-    for (const placement of PLACEMENTS) {
+  test("takes its initial placement, left, top, or right, validated", () => {
+    for (const placement of HELD) {
       assert.equal(placementProblem(placement), null);
       assert.equal(new Arrangement(placement).placement, placement);
     }
