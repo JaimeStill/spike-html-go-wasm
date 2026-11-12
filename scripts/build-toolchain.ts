@@ -3,12 +3,19 @@
 // first. Go's compiler and linker, cmd/compile and cmd/link built unchanged by the pinned Go for
 // GOOS=js GOARCH=wasm, -trimpath and -ldflags "-s -w" as the entrypoints are; the archive of every
 // standard-library package that builds for js/wasm, as `go list -export` names it in Go's build
-// cache under the same -trimpath; and manifest.json (web/runtime/manifest.ts), which names them.
+// cache under the same -trimpath; the archive of every package of the site's pinned modules, the
+// go.mod requirements, that the repository's own packages depend on, sqlate's and its
+// dependencies' today, as `go list -deps -export ./...` names them, the repository's own packages
+// left out; and manifest.json (web/runtime/manifest.ts), which names them.
 // Every file but the manifest is named for its content's hash, so a new build never reuses a name
 // for other bytes, and a page caching the old compiler can never pair it with new archives. The
 // six test-only packages under std build no archive and are left out; unsafe, which the compiler
-// provides itself, is listed with no archive. Reads no network (GOPROXY=off, GOTOOLCHAIN=local);
-// writes the output directory and Go's caches. test/unit/toolchain.test.ts runs buildToolchain().
+// provides itself, is listed with no archive. A standard package's archive is under std/, a module
+// package's under mod/, each by its import path. The modules' packages are the ones the repository
+// imports, not every package each module holds: a package no code here imports may not build for
+// js/wasm, and a reader's program can import only what the site's own Go reaches. Reads no network
+// (GOPROXY=off, GOTOOLCHAIN=local: install downloaded the modules); writes the output directory
+// and Go's caches. test/unit/toolchain.test.ts runs buildToolchain().
 
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -28,6 +35,10 @@ const env = {
   GOTOOLCHAIN: "local",
 };
 
+/** The repository's root, where go.mod is: every go command runs here, so ./... and the
+ * modules' versions are the site's. */
+const root = join(import.meta.dirname, "..");
+
 /** The flags of every build here, the entrypoints' own; the archives' -trimpath matches the
  * compiler's, so the archives the page links are the ones a -trimpath build would. */
 const trimpath = "-trimpath";
@@ -37,7 +48,7 @@ const ldflags = "-ldflags=-s -w";
  * the linker, and the archives build at once. */
 function go(args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn("go", args, { env, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn("go", args, { cwd: root, env, stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     child.stdout.setEncoding("utf8").on("data", (chunk: string) => (stdout += chunk));
@@ -71,12 +82,18 @@ function place(out: string, from: string, stem: string, extension: string): stri
 }
 
 /** A package as `go list -json` prints it, the fields read here: Export, the archive's path in
- * the build cache, empty for a package that builds none. */
+ * the build cache, empty for a package that builds none; Standard, set for the standard library's;
+ * and Module, the module a package outside it belongs to, Main set for the repository's own. */
 interface Listed {
   ImportPath: string;
   Export?: string;
   Imports?: string[];
+  Standard?: boolean;
+  Module?: { Main?: boolean };
 }
+
+/** The fields every listing here prints. */
+const fields = "-json=ImportPath,Export,Imports,Standard,Module";
 
 /** The objects in `go list -json`'s output, a stream of top-level objects, one after another;
  * only a top-level object closes with a brace in the first column. */
@@ -98,18 +115,27 @@ export async function buildToolchain(out: string): Promise<Manifest> {
   mkdirSync(out, { recursive: true });
   const scratch = mkdtempSync(join(tmpdir(), "build-toolchain-"));
   try {
-    const [version, compile, link, listing] = await Promise.all([
+    const [version, compile, link, std, deps] = await Promise.all([
       go(["env", "GOVERSION"]),
       tool(scratch, "compile"),
       tool(scratch, "link"),
-      go(["list", trimpath, "-export", "-json=ImportPath,Export,Imports", "std"]),
+      go(["list", trimpath, "-export", fields, "std"]),
+      // The repository's packages' dependencies, the standard ones among them, already in std's
+      // listing; only the modules' are kept from this one.
+      go(["list", trimpath, "-deps", "-export", fields, "./..."]),
     ]);
+    const modules = parseStream(deps).filter(
+      ({ Standard, Module }) => !Standard && Module && !Module.Main,
+    );
 
     const packages: Record<string, ManifestPackage> = {};
-    for (const { ImportPath, Export, Imports = [] } of parseStream(listing)) {
+    for (const { ImportPath, Export, Imports = [], Standard } of [
+      ...parseStream(std),
+      ...modules,
+    ]) {
       if (ImportPath === "unsafe") packages[ImportPath] = { imports: Imports };
       else if (Export) {
-        const archive = place(out, Export, `std/${ImportPath}`, "a");
+        const archive = place(out, Export, `${Standard ? "std" : "mod"}/${ImportPath}`, "a");
         packages[ImportPath] = { archive, imports: Imports };
       }
     }

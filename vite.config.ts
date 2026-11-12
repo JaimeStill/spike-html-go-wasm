@@ -1,5 +1,5 @@
-// The site's build (mise run build): the hand pages, index.html, components.html, and
-// playground.html, the foundation modules they load, the pages' scripts, the components and the
+// The site's build (mise run build): the hand pages, index.html, components.html,
+// playground.html, and sqlate.html, the foundation modules they load, the pages' scripts, the components and the
 // tokenizer they load lazily, and the runtime's worker, into dist/:
 // static files GitHub Pages serves as the repository's project site, under
 // /<repository>/. The base is that path, and the repository's name is package.json's name, the one
@@ -54,10 +54,15 @@ export default defineConfig({
     outDir: "dist",
     target: "es2024",
     // The hand pages: Vite builds index.html by default only with no input given, and the plugin
-    // gives its pages, none here, as an input list. components.html is the components page, and
-    // playground.html the playground.
+    // gives its pages, none here, as an input list. components.html is the components page,
+    // playground.html the playground, and sqlate.html the sqlate page.
     rolldownOptions: {
-      input: [`${root}index.html`, `${root}components.html`, `${root}playground.html`],
+      input: [
+        `${root}index.html`,
+        `${root}components.html`,
+        `${root}playground.html`,
+        `${root}sqlate.html`,
+      ],
     },
   },
   // The runtime's worker (web/runtime/runner.ts starts it as `new Worker(new URL(...),

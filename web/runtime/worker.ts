@@ -87,7 +87,8 @@ let held: HeldProgram | undefined;
 /** The toolchain's compiled modules, the compiler and the linker, by their absolute URLs. */
 const tools = new Map<string, WebAssembly.Module>();
 
-/** The standard library's archives fetched, by their absolute URLs. */
+/** The archives fetched, the standard library's and the pinned modules', by their absolute
+ * URLs. */
 const archives = new Map<string, Uint8Array>();
 
 /** An instance of the held module, live until it exits or is dropped. */

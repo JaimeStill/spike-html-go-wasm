@@ -120,7 +120,8 @@ export class Runner {
   /**
    * Builds a program from its files and holds it as the loaded scenario, "main", so the next run
    * runs its main to its exit, over a working directory holding every file that isn't Go. Every
-   * .go file is compiled as package main, against the standard library alone, and linked.
+   * .go file is compiled as package main, against the standard library and the site's pinned
+   * modules' packages, as the manifest holds them, and linked.
    *
    * In the worker: the toolchain's manifest, revalidated; the compiler, the linker, and the
    * imports' closure of archives the worker doesn't hold yet, fetched; then compile and link, each

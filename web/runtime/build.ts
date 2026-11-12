@@ -57,7 +57,8 @@ export interface Toolchain {
   link: CompiledModule;
 }
 
-/** The archive the manifest names by `name`, its path relative to the manifest (std/fmt.<hash>.a),
+/** The archive the manifest names by `name`, its path relative to the manifest (std/fmt.<hash>.a,
+ * or a module package's, mod/<import path>.<hash>.a),
  * or undefined when the caller holds none. Keyed by the hashed name, not the package, so a held
  * archive never pairs with a manifest naming other bytes. */
 export type ArchiveLookup = (name: string) => Uint8Array | undefined;
@@ -175,7 +176,8 @@ export function goSources(files: readonly BuildFile[]): string[] {
   return sources;
 }
 
-/** The standard packages the program's .go files import, each once, sorted. */
+/** The packages the program's .go files import, each once, sorted: standard ones and the site's
+ * pinned modules' alike. */
 export function programImports(files: readonly BuildFile[]): string[] {
   return [...new Set(files.filter(isGo).flatMap((file) => goImports(file.text)))].sort();
 }

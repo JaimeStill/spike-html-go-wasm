@@ -1,14 +1,14 @@
 // The site's build, as Pages serves it: dist/ under the base, by the SDK's served(), Vite's
 // preview, loaded in the pinned chrome-headless-shell. Each of the SDK's shell checks is a test on
-// a fresh page of each hand page, the index, the components page, and the playground, whose headers
-// have no site nav, which the checks allow, and which a test of its own holds on each: no
-// sl-site-nav in the header, and no site-nav.js loaded, which defines it; the build bundles the
-// module, so the registry rather than a request names it. The playground is an app page, its main
-// across the body's content width, so it runs every check but main's reading width,
-// holdsReadingWidth; a check of the spike's own holds its prose, the heading and the lede, to 80ch,
-// centered, instead. The crawl, from the index, checks every copied page, none here, and loads each
-// hand page it reaches: it reaches exactly the index and, by the index's links, the components page
-// and the playground. No page holds an SDK fence, so the SDK's palette check has nothing to run on;
+// a fresh page of each hand page, the index, the components page, the playground, and the sqlate
+// page, whose headers have no site nav, which the checks allow, and which a test of its own holds
+// on each: no sl-site-nav in the header, and no site-nav.js loaded, which defines it; the build
+// bundles the module, so the registry rather than a request names it. The playground and the
+// sqlate page are app pages, each main across the body's content width, so they run every check
+// but main's reading width, holdsReadingWidth; a check of the spike's own holds each one's prose,
+// the heading and the lede, to 80ch, centered, instead. The crawl, from the index, checks every
+// copied page, none here, and loads each hand page it reaches: it reaches exactly the index and,
+// by the index's links, the components page, the playground, and the sqlate page. No page holds an SDK fence, so the SDK's palette check has nothing to run on;
 // the components page's editors are held to its colors by code-editor.test.ts. Each hand page's
 // cascade layers, read from its sheets in the order the document names them, are the foundation's,
 // then the SDK's site, then page, the shared sheet's (web/pages/page.css), last, and its source
@@ -49,18 +49,18 @@ after(async () => {
 });
 
 /** The hand pages, each by its path under the base. */
-const hand = ["", "components.html", "playground.html"];
+const hand = ["", "components.html", "playground.html", "sqlate.html"];
 
-/** The app page, the playground, whose main spans the body's content width. */
-const APP = "playground.html";
+/** The app pages, the playground and the sqlate page, whose main spans the body's content width. */
+const APPS = ["playground.html", "sqlate.html"];
 
 describe("the site under its base", () => {
   for (const path of hand) {
     const where = path || "the index";
     for (const [name, check] of Object.entries(shell)) {
-      // The playground is an app page: main spans the body's content width, and its prose holds
-      // the reading width instead, by the check below.
-      if (path === APP && check === holdsReadingWidth) continue;
+      // An app page's main spans the body's content width, and its prose holds the reading width
+      // instead, by the check below.
+      if (APPS.includes(path) && check === holdsReadingWidth) continue;
       test(`${name} on ${where}`, async () => {
         const page = await browser.open("about:blank");
         try {
@@ -177,13 +177,14 @@ describe("the site under its base", () => {
     }
   });
 
-  test(`${APP}'s prose, its heading and lede, holds its 80ch reading width, centered, at 1600px and 1120px, and the whole width less the gutters at 390px`, async () => {
-    const page = await browser.open(`${server.origin}${APP}`);
-    try {
-      for (const width of [1600, 1120, 390]) {
-        await viewport(page, width);
-        const read: { ch: number; viewport: number; gutter: number; prose: number[][] } =
-          await page.evaluate(`(() => {
+  for (const APP of APPS) {
+    test(`${APP}'s prose, its heading and lede, holds its 80ch reading width, centered, at 1600px and 1120px, and the whole width less the gutters at 390px`, async () => {
+      const page = await browser.open(`${server.origin}${APP}`);
+      try {
+        for (const width of [1600, 1120, 390]) {
+          await viewport(page, width);
+          const read: { ch: number; viewport: number; gutter: number; prose: number[][] } =
+            await page.evaluate(`(() => {
           const main = document.querySelector("main");
           const probe = document.createElement("div");
           probe.style.inlineSize = "80ch";
@@ -203,17 +204,21 @@ describe("the site under its base", () => {
             ),
           };
         })()`);
-        assert.equal(read.prose.length, 2, "the heading and the lede");
-        const column = Math.min(read.ch, read.viewport - 2 * read.gutter);
-        for (const [left, right, inline] of read.prose) {
-          assert.ok(Math.abs(inline - column) <= 0.5, `at ${width}px the prose is ${inline}px`);
-          assert.ok(Math.abs(left - right) <= 1, `at ${width}px it is centered, ${left}, ${right}`);
+          assert.equal(read.prose.length, 2, "the heading and the lede");
+          const column = Math.min(read.ch, read.viewport - 2 * read.gutter);
+          for (const [left, right, inline] of read.prose) {
+            assert.ok(Math.abs(inline - column) <= 0.5, `at ${width}px the prose is ${inline}px`);
+            assert.ok(
+              Math.abs(left - right) <= 1,
+              `at ${width}px it is centered, ${left}, ${right}`,
+            );
+          }
         }
+      } finally {
+        await page.close();
       }
-    } finally {
-      await page.close();
-    }
-  });
+    });
+  }
 
   test("the crawl reaches the hand pages, and nothing else", async (t) => {
     const page = await browser.open("about:blank");

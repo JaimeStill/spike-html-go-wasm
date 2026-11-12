@@ -14,7 +14,9 @@
 // each chosen by the menu as a reader chooses, so no state depends on what an earlier one stored;
 // and at 1376px with the About dialog open, opened by its button in the header; and at each of the
 // SDK's widths with each of Basics, Generics, Concurrency, and Standard library chosen in the
-// Program select, as a reader chooses it. The components page shows each state once and its layout
+// Program select, as a reader chooses it; and the sqlate page, --page sqlate, an app page as the
+// playground is, its demo as before a Run, the viewport alone at each of the SDK's widths. The
+// components page shows each state once and its layout
 // follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by
 // --width, every page, the index's, each component's, and the playground's, takes only that width's
 // states, so the 900px capture, at no SDK width, is taken only when every width is. The SDK's
@@ -215,9 +217,19 @@ const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   ];
 };
 
+/** The sqlate page's states: the viewport alone, its one screen, as the playground's are, at each
+ * of the SDK's widths. */
+const sqlateStates = ({ path }: DescribedPage): DescribedState[] =>
+  WIDTHS.map((viewport) => ({
+    name: `sqlate-${viewport.width}`,
+    caption: `${path}, ${viewport.width}px`,
+    viewport,
+    full: false,
+  }));
+
 const described = description({
   root,
-  pages: ["index.html", "components.html", "playground.html"],
+  pages: ["index.html", "components.html", "playground.html", "sqlate.html"],
 });
 
 /** The components page as a page per component: its path, and a state whole at each of the SDK's
@@ -244,5 +256,6 @@ export default {
     .map((page) =>
       page.name === "playground" ? { ...page, states: playgroundStates(page) } : page,
     )
+    .map((page) => (page.name === "sqlate" ? { ...page, states: sqlateStates(page) } : page))
     .map((page) => ({ ...page, states: page.states?.filter(kept) })),
 };

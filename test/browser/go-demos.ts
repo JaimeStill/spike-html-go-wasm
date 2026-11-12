@@ -1,4 +1,5 @@
-// The browser tier's hold on the Go demos, the components page's and the playground's, shared by
+// The browser tier's hold on the Go demos, the components page's, the playground's, and the
+// sqlate page's, shared by
 // go-demo.test.ts, which proves sl-go-demo, go-runs.test.ts and go-build.test.ts, which prove the
 // runtime through it, and playground.test.ts, which proves the playground: a page opened with
 // every request it and its workers send watched, every worker it starts counted, live until it
@@ -100,12 +101,12 @@ export interface Watched {
   live: Set<string>;
 }
 
-/** The pages that hold Go demos: the components page and the playground. */
-const DEMO_PAGES = new Set(["components.html", "playground.html"]);
+/** The pages that hold Go demos: the components page, the playground, and the sqlate page. */
+const DEMO_PAGES = new Set(["components.html", "playground.html", "sqlate.html"]);
 
 /** Opens the path under the origin with its and its workers' requests watched from before it
- * loads. A page that holds Go demos, the components page (the default) or the playground, with a
- * fragment or without, also gets focus emulated, every element rendered, and the helpers
+ * loads. A page that holds Go demos, the components page (the default), the playground, or the
+ * sqlate page, with a fragment or without, also gets focus emulated, every element rendered, and the helpers
  * installed. */
 export async function open(
   browser: Browser,
