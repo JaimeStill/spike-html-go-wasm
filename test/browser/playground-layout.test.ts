@@ -6,13 +6,15 @@
 // that height at every width: at the SDK's three capture widths, 390, 1120, and 1376 px, and at
 // widths that put the demo itself half a rem either side of its two bands' edges, 44rem and 64rem,
 // a paste of 500 lines into the editor, 10,000 lines printed, and a full table of a build's timings
-// change no part's box; the page never scrolls sideways; and every part lies inside the demo. A
-// Run, a Stop, a failed build, and a band change keep each part's content and scroll position,
-// and the output tab chosen. Below 44rem, the output panel's tablist is the tabs pattern, its
+// change no part's box, in each arrangement from 64rem, each placing the parts as it says; the
+// page never scrolls sideways; and every part lies inside the demo. A Run, a Stop, a failed build,
+// a band change, and an arrangement change keep each part's content and scroll position, and the
+// output tab chosen. Below 44rem, the output panel's tablist is the tabs pattern, its
 // keyboard and accessibility tree the file tabs'; from 44rem it isn't there, and the console and
 // the timings are no tabpanels. A demo without `fixed`, the components page's, has no output
-// tablist and a console that grows. The helpers are go-demos.ts's and go-builds.ts's. Every wait
-// is bounded.
+// tablist and a console that grows. The helpers are go-demos.ts's, go-builds.ts's, and
+// playground-layouts.ts's. playground-arrangement.test.ts proves the Layout menu and the stored
+// choice. Every wait is bounded.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -25,6 +27,26 @@ import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
 import { BUILD, build, BUILT_PHASES, DONE } from "./go-builds.ts";
 import { demo, open as openPage, pressControl, says, settle } from "./go-demos.ts";
+import {
+  arrange,
+  type AXNode,
+  axQuery,
+  type Band,
+  comments,
+  contained,
+  kept,
+  layout,
+  type Layout,
+  paste,
+  type Placement,
+  PLACEMENTS,
+  placedAs,
+  PLAYGROUND,
+  press,
+  printing,
+  property,
+  widthFor,
+} from "./playground-layouts.ts";
 import { PHONE, viewport } from "./viewport.ts";
 
 const root = join(import.meta.dirname, "../..");
@@ -41,167 +63,46 @@ after(async () => {
   await server?.stop();
 });
 
-/** The playground's one demo. */
-const PLAYGROUND = `document.querySelector("sl-go-demo")`;
-
 /** Opens the playground, watched (go-demos.ts). */
 const open = async () => (await openPage(browser, server.origin, "playground.html")).page;
 
-/** A CSS px to the rem, the foundation's root size. */
-const REM = 16;
-
-/** The bands a fixed demo's width puts it in, as go-demo.css names them in --band. */
-type Band = "phone" | "middle" | "wide";
-
-/** A part's box, [x, y, width, height], each to a hundredth of a px, on the page, so the page's
- * own scroll moves none, and whether it shows. */
-interface Part {
-  box: number[];
-  shown: boolean;
-}
-
-/** The parts of the demo laid out by its fixed layout, by name: the demo, the toolbar, the file
- * tabs, the panel and the editor's frame, the output, its tablist, the console and its log's
- * frame, and the timings; and the demo's band, the page's sideways overflow, and its width. */
-interface Layout {
-  band: Band;
-  parts: Record<string, Part>;
-  sideways: number;
+/** A width the layout is proved at: a name for messages, its px, the band it gives, and the
+ * placement the demo is in there; the narrower bands are proved in the default alone, where no
+ * other is offered. */
+interface Proved {
+  name: string;
   width: number;
+  band: Band;
+  placement: Placement;
 }
 
-/** The demo's layout, as Layout says, read once two frames have painted. */
-const layout = async (page: Page): Promise<Layout> => {
-  await settle(page);
-  return page.evaluate(`(() => {
-    const demo = ${PLAYGROUND};
-    const root = demo.shadowRoot;
-    const editor = root.querySelector("sl-code-editor");
-    const console = root.querySelector("sl-console");
-    const elements = {
-      demo,
-      controls: root.querySelector("sl-controls"),
-      tabs: root.querySelector("sl-file-tabs"),
-      panel: root.querySelector("#panel"),
-      editor: editor.shadowRoot.querySelector(".editor"),
-      output: root.querySelector(".output"),
-      outputTabs: root.querySelector(".output-tabs"),
-      console,
-      log: console.shadowRoot.querySelector(".frame"),
-      timings: root.querySelector("sl-timings"),
-    };
-    const round = (n) => Math.round(n * 100) / 100;
-    const parts = {};
-    for (const [name, element] of Object.entries(elements)) {
-      const { x, y, width, height } = element.getBoundingClientRect();
-      parts[name] = {
-        box: [x + scrollX, y + scrollY, width, height].map(round),
-        shown: element.checkVisibility({ visibilityProperty: true }),
-      };
-    }
-    const html = document.documentElement;
-    return {
-      band: getComputedStyle(root.querySelector(".demo")).getPropertyValue("--band").trim(),
-      parts,
-      sideways: html.scrollWidth - html.clientWidth,
-      width: round(demo.getBoundingClientRect().width / ${REM}),
-    };
-  })()`);
-};
-
-/** Asserts that the page doesn't scroll sideways and every part shown lies inside the demo. */
-function contained({ parts, sideways }: Layout, width: number) {
-  assert.ok(sideways <= 0, `at ${width}px the page scrolls sideways by ${sideways}px`);
-  const [x, y, w, h] = parts.demo.box;
-  for (const [name, { box, shown }] of Object.entries(parts)) {
-    if (!shown) continue;
-    const [px, py, pw, ph] = box;
-    assert.ok(
-      px >= x - 0.5 && py >= y - 0.5 && px + pw <= x + w + 0.5 && py + ph <= y + h + 0.5,
-      `at ${width}px the ${name}, ${box}, lies inside the demo, ${parts.demo.box}`,
-    );
-  }
-}
-
-/** The viewport width, in CSS px, at which the demo itself is the rems given wide, found by
- * measuring: the page's own margins and scrollbar follow its width, so they are measured, not
- * assumed. */
-async function widthFor(page: Page, rems: number): Promise<number> {
-  let width = Math.round(rems * REM + 64);
-  for (let step = 0; step < 4; step++) {
-    await viewport(page, width);
-    const measured = (await layout(page)).width;
-    const off = Math.round((rems - measured) * REM);
-    if (off === 0) break;
-    width += off;
-  }
-  return width;
-}
-
-/** The widths the layout is proved at, each with the band it gives, and a name for messages: the
- * SDK's three, and the demo half a rem either side of 44rem and 64rem. */
-async function widths(page: Page): Promise<{ name: string; width: number; band: Band }[]> {
-  return [
+/** The widths the layout is proved at, the SDK's three and the demo half a rem either side of 44rem
+ * and 64rem, each from 64rem in every placement. */
+async function widths(page: Page): Promise<Proved[]> {
+  const narrow: Omit<Proved, "placement">[] = [
     { name: "390px", width: PHONE, band: "phone" },
     { name: "43.5rem", width: await widthFor(page, 43.5), band: "phone" },
     { name: "44.5rem", width: await widthFor(page, 44.5), band: "middle" },
     { name: "63.5rem", width: await widthFor(page, 63.5), band: "middle" },
+  ];
+  const wide: Omit<Proved, "placement">[] = [
     { name: "64.5rem", width: await widthFor(page, 64.5), band: "wide" },
     { name: "1120px", width: 1120, band: "wide" },
     { name: "1376px", width: 1376, band: "wide" },
   ];
+  return [
+    ...narrow.map((each) => ({ ...each, placement: "left" as const })),
+    ...PLACEMENTS.flatMap((placement) =>
+      wide.map((each) => ({ ...each, name: `${each.name}, editor ${placement}`, placement })),
+    ),
+  ];
 }
 
-/** Pastes the text at the end of the editor's text, as the clipboard would, or over all of it
- * when over: a paste keeps its line breaks as written, where typed text's would be the editor's
- * keys. */
-const paste = (page: Page, text: string, over = false) =>
-  page.evaluate(`(() => {
-    const text = window.demos.editor(${PLAYGROUND}).shadowRoot.querySelector(".text");
-    text.focus();
-    const selection = getSelection();
-    selection.selectAllChildren(text);
-    if (!${over}) selection.collapseToEnd();
-    const data = new DataTransfer();
-    data.setData("text/plain", ${JSON.stringify(text)});
-    text.dispatchEvent(new ClipboardEvent("paste", {
-      clipboardData: data, bubbles: true, cancelable: true, composed: true,
-    }));
-  })()`);
-
-/** A program printing the lines given, numbered, then, when spin, looping until Stop. */
-const printing = (lines: number, spin = false) =>
-  `package main
-
-import "fmt"
-
-func main() {
-\tfor i := 1; i <= ${lines}; i++ {
-\t\tfmt.Println("line", i)
-\t}${spin ? "\n\tfor {\n\t}" : ""}
+/** Lays the page out at the width, in the placement where the band offers one. */
+async function at(page: Page, { width, band, placement }: Proved): Promise<void> {
+  await viewport(page, width);
+  if (band === "wide") await arrange(page, placement);
 }
-`;
-
-/** Lines of comments, numbered, to paste. */
-const comments = (count: number) =>
-  Array.from({ length: count }, (_, index) => `// pasted line ${index + 1}\n`).join("");
-
-/** Each scroller's position and what it holds: the editor's frame and value, the console's log
- * frame and its row count, the timings, and the output part the tablist selects. */
-const kept = (page: Page) =>
-  page.evaluate(`(() => {
-    const root = ${PLAYGROUND}.shadowRoot;
-    const editor = root.querySelector("sl-code-editor");
-    const log = root.querySelector("sl-console").shadowRoot.querySelector(".frame");
-    return {
-      editor: editor.shadowRoot.querySelector(".editor").scrollTop,
-      value: editor.value,
-      log: log.scrollTop,
-      rows: log.querySelector(".lines").children.length,
-      timings: root.querySelector("sl-timings").scrollTop,
-      selected: root.querySelector('.output-tabs [aria-selected="true"]').dataset.part,
-    };
-  })()`);
 
 /** Scrolls the editor's frame and the console's log frame to the positions given. */
 const scrollParts = (page: Page, editor: number, log: number) =>
@@ -225,10 +126,12 @@ describe("the playground's fixed layout", () => {
     try {
       const proved = await widths(page);
       const before = new Map<string, Layout>();
-      for (const { name, width, band } of proved) {
-        await viewport(page, width);
+      for (const each of proved) {
+        const { name, width, band, placement } = each;
+        await at(page, each);
         const laid = await layout(page);
         assert.equal(laid.band, band, `the band at ${name}`);
+        if (band === "wide") placedAs(laid, placement, name);
         // Below 44rem the timings share the console's cell, hidden behind its tab.
         assert.equal(laid.parts.outputTabs.shown, band === "phone", `the output tabs at ${name}`);
         assert.equal(laid.parts.timings.shown, band !== "phone", `the timings at ${name}`);
@@ -251,8 +154,9 @@ describe("the playground's fixed layout", () => {
         5000,
       );
 
-      for (const { name, width } of proved) {
-        await viewport(page, width);
+      for (const each of proved) {
+        const { name, width } = each;
+        await at(page, each);
         const laid = await layout(page);
         assert.deepEqual(laid, before.get(name), `every part's box at ${name}`);
         contained(laid, width);
@@ -264,12 +168,14 @@ describe("the playground's fixed layout", () => {
         })()`);
         assert.deepEqual(overflows, [true, true], `the editor and the log scroll at ${name}`);
       }
+      // The reader's choice is kept for the origin: the default again for the tests after.
+      await arrange(page, "left");
     } finally {
       await page.close();
     }
   });
 
-  test("a Run, a Stop, a failed build, and a band change keep each part's content and scroll position, and the output tab chosen", async () => {
+  test("a Run, a Stop, a failed build, a band change, and an arrangement change keep each part's content and scroll position, and the output tab chosen", async () => {
     const page = await open();
     try {
       await viewport(page, PHONE);
@@ -297,6 +203,13 @@ describe("the playground's fixed layout", () => {
         await settle(page);
         assert.deepEqual(await kept(page), running, `at ${width}px`);
       }
+      await viewport(page, 1376);
+      for (const placement of ["top", "right", "left"] as const) {
+        await arrange(page, placement);
+        assert.deepEqual(await kept(page), running, `in editor ${placement}`);
+      }
+      await viewport(page, PHONE);
+      await settle(page);
 
       await pressControl(page, PLAYGROUND, "stop");
       await says(page, PLAYGROUND, "Stopped main", 5000);
@@ -322,38 +235,7 @@ describe("the playground's fixed layout", () => {
   });
 });
 
-/** A node of the page's accessibility tree, as Accessibility.queryAXTree gives it. */
-interface AXNode {
-  ignored: boolean;
-  role?: { value: string };
-  name?: { value: string };
-  properties?: { name: string; value: { value?: unknown } }[];
-}
-
-/** The unignored nodes of the role under the element the expression gives. */
-async function axQuery(page: Page, expression: string, role: string): Promise<AXNode[]> {
-  const { result } = await page.cdp("Runtime.evaluate", { expression });
-  const { nodes }: { nodes: AXNode[] } = await page.cdp("Accessibility.queryAXTree", {
-    objectId: result.objectId,
-    role,
-  });
-  return nodes.filter((node) => !node.ignored);
-}
-
-const selected = (node: AXNode) =>
-  node.properties?.find((each) => each.name === "selected")?.value.value === true;
-
-/** A key pressed and released on the focused element. */
-async function press(page: Page, key: string, keyCode: number) {
-  for (const type of ["keyDown", "keyUp"]) {
-    await page.cdp("Input.dispatchKeyEvent", {
-      type,
-      key,
-      code: key,
-      windowsVirtualKeyCode: keyCode,
-    });
-  }
-}
+const selected = (node: AXNode) => property(node, "selected") === true;
 
 /** The focused output tab's part, each tab's tabindex, and which output parts show. */
 const tabState = (page: Page) =>
@@ -430,16 +312,16 @@ describe("the phone's output tablist", () => {
         timings: part === "timings",
       });
       assert.deepEqual(await tabState(page), at("console"));
-      const steps: [string, number, "console" | "timings"][] = [
-        ["ArrowRight", 39, "timings"],
-        ["ArrowRight", 39, "console"],
-        ["ArrowLeft", 37, "timings"],
-        ["ArrowLeft", 37, "console"],
-        ["End", 35, "timings"],
-        ["Home", 36, "console"],
+      const steps: ["ArrowRight" | "ArrowLeft" | "Home" | "End", "console" | "timings"][] = [
+        ["ArrowRight", "timings"],
+        ["ArrowRight", "console"],
+        ["ArrowLeft", "timings"],
+        ["ArrowLeft", "console"],
+        ["End", "timings"],
+        ["Home", "console"],
       ];
-      for (const [key, code, part] of steps) {
-        await press(page, key, code);
+      for (const [key, part] of steps) {
+        await press(page, key);
         await settle(page);
         assert.deepEqual(await tabState(page), at(part), `${key} to ${part}`);
       }

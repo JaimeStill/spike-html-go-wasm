@@ -23,8 +23,10 @@
  *   keeps its scroll and its layout.
  * - middle, from 44rem to 64rem: the files over the console and the timings side by side, the
  *   timings in their 16rem track, as a demo that isn't fixed lays them out.
- * - wide, from 64rem: the files, 3fr, beside a column, 2fr, of the console, 3fr, over the timings,
- *   2fr, under the toolbar.
+ * - wide, from 64rem: the arrangement go-demo.ts names in data-placement, the page's, editor left
+ *   with none. Left: the files, 3fr, beside a column, 2fr, of the console, 3fr, over the timings,
+ *   2fr, under the toolbar. Right: its mirror, the column first. Top: the middle band's layout,
+ *   which the wide band leaves as it is.
  * The editor fills its frame, the console fills its own (sl-console's fill), and the timings
  * scroll in theirs.
  *
@@ -149,10 +151,14 @@
   }
 }
 
-/* From 64rem, editor left: the files beside a column of the console over the timings. */
+/* From 64rem, editor left or right: the files beside a column of the console over the timings,
+   right its mirror. Editor top keeps the middle band's layout. */
 @container (min-inline-size: 64rem) {
   :host([fixed]) .demo {
     --band: wide;
+  }
+
+  :host([fixed]) .demo:not([data-placement="top"]) {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
@@ -160,7 +166,14 @@
       "files output";
   }
 
-  :host([fixed]) .output {
+  :host([fixed]) .demo[data-placement="right"] {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-areas:
+      "controls controls"
+      "output files";
+  }
+
+  :host([fixed]) .demo:not([data-placement="top"]) .output {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
     grid-template-areas: "console" "timings";

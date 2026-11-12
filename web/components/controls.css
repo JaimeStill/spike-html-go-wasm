@@ -24,6 +24,11 @@
  * decides the layout, and a glyph alone is 24px a side at the smallest space, as glyph-button.css
  * says.
  *
+ * The Layout menu is a popover anchored below its button as the forms are, on the same elevated
+ * surface: a column of items, each its name after a column the checked item's tick fills, the item
+ * with focus on the second elevated surface, and the foundation's outline inside it, so the menu's
+ * edge never cuts it. Forced colors mark the focused item in the system's highlight.
+ *
  * Each form is a popover anchored below its button, at its inline start, flipped above it where
  * the viewport's foot would cut it, or to its inline end where the viewport's side would: a small
  * panel on the first elevated surface, its label above its input and submit, and a refusal below,
@@ -113,15 +118,24 @@
   anchor-name: --rename;
 }
 
+[data-control="layout"] {
+  anchor-name: --layout;
+}
+
 #new-form {
   position-anchor: --new-file;
+}
+
+#layout-menu {
+  position-anchor: --layout;
 }
 
 #rename-form {
   position-anchor: --rename;
 }
 
-.form-popover {
+.form-popover,
+.menu-popover {
   position-area: block-end span-inline-end;
   position-try-fallbacks:
     flip-block,
@@ -132,17 +146,50 @@
   margin-block-start: var(--space-3xs);
   inline-size: max-content;
   max-inline-size: min(22rem, 100vw - 2 * var(--space-s));
-  padding: var(--space-2xs) var(--space-xs);
   border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-md);
   background-color: var(--bg-1);
   color: var(--fg);
 }
 
-/* A non-modal form leaves the page as it is: the foundation veils behind every top-layer
+.form-popover {
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.menu-popover {
+  padding: var(--space-3xs);
+}
+
+/* A non-modal form or menu leaves the page as it is: the foundation veils behind every top-layer
    element's backdrop, a modal dialog's meant among them. */
-.form-popover::backdrop {
+.form-popover::backdrop,
+.menu-popover::backdrop {
   background-color: transparent;
+}
+
+.menu-popover .item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-s);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menu-popover .item:is(:hover, :focus) {
+  background-color: var(--bg-2);
+}
+
+.menu-popover .item:focus-visible {
+  outline-offset: calc(-1 * var(--line-m));
+}
+
+/* The tick's column, its width kept on every item, so the names line up. */
+.menu-popover .check {
+  display: inline-flex;
+  inline-size: 1em;
 }
 
 .form-popover label {
@@ -192,5 +239,9 @@
   }
   .row > input[aria-invalid="true"] {
     border-color: CanvasText;
+  }
+  .menu-popover .item:focus {
+    background-color: Highlight;
+    color: HighlightText;
   }
 }

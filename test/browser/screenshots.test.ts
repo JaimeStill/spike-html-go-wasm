@@ -9,7 +9,8 @@
 // at one --width prints that component's few tiles at that width alone and leaves nothing under
 // its TMPDIR. A --width not among the SDK's, or with no value, is a usage error naming the widths,
 // capturing nothing. The playground's capture, --page playground, is the viewport alone in each
-// band of its fixed demo, the phone's also with its Timings tab.
+// band of its fixed demo, the phone's also with its Timings tab, and the wide band's in each
+// arrangement and with the Layout menu open, each chosen by the menu.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -155,19 +156,58 @@ describe("a component's capture", () => {
     assert.deepEqual(run.left, [], "TMPDIR is left empty");
   });
 
-  test("the capture file captures the playground's viewport in each band of its fixed demo, and the phone's Timings tab", () => {
+  test("the capture file captures the playground's viewport in each band of its fixed demo, the phone's Timings tab, and the wide band in each arrangement and with the Layout menu open", () => {
     const described = description.pages.find(({ name }) => name === "playground");
-    const [phone, wide, wider] = WIDTHS.map(({ width }) => width);
+    const [phone, ...wide] = WIDTHS.map(({ width }) => width);
     assert.deepEqual(
       described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
       [
         [`playground-${phone}`, phone, false],
         [`playground-timings-${phone}`, phone, false],
         [`playground-${MIDDLE.width}`, MIDDLE.width, false],
-        [`playground-${wide}`, wide, false],
-        [`playground-${wider}`, wider, false],
+        ...wide.flatMap((width) => [
+          [`playground-${width}`, width, false],
+          [`playground-top-${width}`, width, false],
+          [`playground-right-${width}`, width, false],
+          [`playground-menu-${width}`, width, false],
+        ]),
       ],
     );
+  });
+
+  test("the playground's wide states choose their arrangement by the Layout menu, and the menu's state leaves it open", async () => {
+    const described = description.pages.find(({ name }) => name === "playground");
+    const wide = (described?.states ?? []).filter(({ viewport }) => viewport?.width === 1376);
+    const expected = [
+      ["left", false],
+      ["top", false],
+      ["right", false],
+      ["left", true],
+    ];
+    assert.equal(wide.length, expected.length);
+    for (const [index, state] of wide.entries()) {
+      const page = await browser.open(`${server.origin}playground.html`);
+      try {
+        await page.cdp("Emulation.setDeviceMetricsOverride", {
+          width: 1376,
+          height: 900,
+          deviceScaleFactor: 1,
+          mobile: false,
+        });
+        await state.open?.(page);
+        const shown = await page.evaluate(`(() => {
+          const root = document.querySelector("sl-go-demo").shadowRoot;
+          return [
+            root.querySelector(".demo").dataset.placement,
+            root.querySelector("sl-controls").shadowRoot
+              .querySelector("#layout-menu").matches(":popover-open"),
+          ];
+        })()`);
+        assert.deepEqual(shown, expected[index], `the state at ${index}`);
+      } finally {
+        await page.close();
+      }
+    }
   });
 
   test("a --width not among the SDK's is a usage error naming them, and captures nothing", () => {

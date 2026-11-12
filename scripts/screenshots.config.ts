@@ -11,7 +11,9 @@
 // demo with it. It is captured in
 // each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
 // again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and
-// 1376px, the wide band's editor left. The components page shows each state once and its layout
+// 1376px, the wide band in each arrangement, editor left, top, and right, and with the Layout
+// menu open, each chosen by the menu as a reader chooses, so no state depends on what an earlier
+// one stored. The components page shows each state once and its layout
 // follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set,
 // by --width, every page, the index's, each component's, and the playground's, takes only that
 // width's states, so the 900px capture, at no SDK width, is taken only when every width is. The SDK's widths over the whole components page grew with every component,
@@ -26,6 +28,7 @@
 
 import { join } from "node:path";
 
+import { until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type {
   DescribedPage,
@@ -117,23 +120,67 @@ const timingsTab: Step = async (page: Page) => {
   await demoInView(page);
 };
 
+/** The playground demo's toolbar's shadow root, as an expression. */
+const CONTROLS = `document.querySelector("sl-go-demo").shadowRoot.querySelector("sl-controls").shadowRoot`;
+
+/** Whether the Layout menu is open, as an expression. */
+const MENU_OPEN = `${CONTROLS}.querySelector("#layout-menu").matches(":popover-open")`;
+
+/** Opens the playground demo's Layout menu by a click on Layout, resolving once it is open. */
+const openMenu = async (page: Page) => {
+  await page.evaluate(`${CONTROLS}.querySelector('[data-control="layout"]').click()`);
+  await until(page, MENU_OPEN, 5000);
+};
+
+/** The wide band's arrangements the playground is captured in, by the placement's name. */
+const PLACEMENTS = ["left", "top", "right"] as const;
+
+/** Chooses the placement by the playground demo's Layout menu, then brings the demo into view. */
+const arranged =
+  (placement: (typeof PLACEMENTS)[number]): Step =>
+  async (page: Page) => {
+    await openMenu(page);
+    await page.evaluate(
+      `${CONTROLS}.querySelector('#layout-menu [data-placement="${placement}"]').click()`,
+    );
+    await until(page, `!${MENU_OPEN}`, 5000);
+    await demoInView(page);
+  };
+
+/** The Layout menu open on editor left, the demo in view. */
+const menuOpen: Step = async (page: Page) => {
+  await arranged("left")(page);
+  await openMenu(page);
+};
+
 /** The playground's states: the viewport alone, the demo scrolled into it, in each band of its
- * fixed demo, and the phone's with its Timings tab, each named as the SDK names a page's, the
- * width last. */
+ * fixed demo, the phone's with its Timings tab, and the wide band's in each arrangement and with
+ * the Layout menu open, each named as the SDK names a page's, the width last. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
-  const state = (viewport: { width: number; height: number }, open = demoInView, tab = "") => ({
-    name: `playground-${tab}${viewport.width}`,
-    caption: `${path}, ${tab ? "Timings tab, " : ""}${viewport.width}px`,
+  const state = (
+    viewport: { width: number; height: number },
+    open = demoInView,
+    variant = "",
+    said = "",
+  ) => ({
+    name: `playground-${variant}${viewport.width}`,
+    caption: `${path}, ${said}${viewport.width}px`,
     viewport,
     full: false,
     open,
   });
   return [
     state(phone),
-    state(phone, timingsTab, "timings-"),
+    state(phone, timingsTab, "timings-", "Timings tab, "),
     state(MIDDLE),
-    ...wide.map((viewport) => state(viewport)),
+    ...wide.flatMap((viewport) => [
+      state(viewport, arranged("left")),
+      ...PLACEMENTS.slice(1).map((placement) =>
+        state(viewport, arranged(placement), `${placement}-`, `editor ${placement}, `),
+      ),
+      state(viewport, menuOpen, "menu-", "Layout menu, "),
+    ]),
   ];
 };
 

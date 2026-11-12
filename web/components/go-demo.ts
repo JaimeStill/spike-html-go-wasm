@@ -4,6 +4,9 @@
 // model its parts render from: it creates a FileSet, an EditorSettings, a ConsoleLog, a
 // RunTimings, and a RunState, is the only writer of each, and applies every request its parts
 // send. The parts render from the models and re-render on their change events; none writes one.
+// One model it renders from is the page's: a fixed demo's Arrangement, the reader's preference,
+// which the page gives every fixed demo and writes alone; the demo passes the Layout menu's choice
+// on as its own request, which the page applies.
 //
 // The runner: the demo reads a structural subset of the runtime's Runner, DemoRunner, its load,
 // build, run, stop, and listen, with the output, exit, and timing events re-declared here, since
@@ -64,13 +67,18 @@
 // and scrolls inside it, so no edit, output, or timing changes any part's box. Its arrangement
 // follows its own width, by container queries in go-demo.css: below 44rem, the editor over one
 // output panel whose tablist, Output and Timings, shows the console or the timings; from 44rem to
-// 64rem, the editor over the console and the timings side by side; and from 64rem, the editor
-// beside a column of the console over the timings. The parts are the same elements in every band,
-// only placed again, so a band change keeps each part's content and scroll position, and the panel
+// 64rem, the editor over the console and the timings side by side; and from 64rem, the arrangement
+// the page's Arrangement places: the editor left or right of a column of the console over the
+// timings, or the editor top, over the console and the timings side by side, as from 44rem. With no
+// arrangement given, the editor is left. From 64rem, and only given an arrangement, the toolbar
+// shows its Layout menu, whose choice the demo sends on as an arrange request; the page applies it
+// to the arrangement, and the demo, rendering from it, places its parts again. The parts are the
+// same elements in every band and arrangement, only placed again, so a band or arrangement change
+// keeps each part's content and scroll position, and the panel
 // the tablist doesn't show is hidden by visibility, keeping its own. The output tablist is the tabs
 // pattern, with activation on focus, as the file tabs' (aria.ts's roved, tabs.css's look); its
-// panels are tabpanels only while it shows, which the demo reads from the band the stylesheet
-// names, --band, as its width changes.
+// panels are tabpanels only while it shows. The demo reads its band from the one the stylesheet
+// names, --band, as its width changes: whether the output is tabs, and whether Layout shows.
 //
 // Ctrl or Cmd+Enter runs the demo from inside it: the keydown is the host's, from any of its
 // parts, the editor included, so it reaches no other demo and no page-wide shortcut. Run declares
@@ -87,16 +95,18 @@ import "./console.ts";
 import "./controls.ts";
 import "./file-tabs.ts";
 import "./timings.ts";
+import type { Arrangement } from "./arrangement.ts";
 import { roved } from "./aria.ts";
 import type { CodeEditor } from "./code-editor.ts";
 import { ConsoleLog, type Stream } from "./console-log.ts";
-import type { DeleteDetail, NewDetail, RenameDetail } from "./controls.ts";
+import type { ArrangeDetail, DeleteDetail, NewDetail, RenameDetail } from "./controls.ts";
 import { defaults, EditorSettings } from "./editor-settings.ts";
 import { FileSet, type GivenFile } from "./file-set.ts";
 import type { FileTabs, SelectDetail } from "./file-tabs.ts";
 import styles from "./go-demo.css" with { type: "css" };
 import { RunState } from "./run-state.ts";
 import { type Phase, RunTimings } from "./run-timings.ts";
+import { Subscription } from "./subscription.ts";
 import tabs from "./tabs.css" with { type: "css" };
 
 /** The tag the element defines. */
@@ -159,8 +169,15 @@ const OUTPUT_TABS: readonly { part: OutputPart; name: string }[] = Object.freeze
   { part: "timings", name: "Timings" },
 ]);
 
-/** The band go-demo.css names, in --band, where a fixed demo's output parts are tabs. */
-const TABBED_BAND = "phone";
+/** The bands go-demo.css names in --band, by a fixed demo's width: below 44rem, from 44rem to
+ * 64rem, and from 64rem; "" while the demo isn't fixed. */
+type Band = "phone" | "middle" | "wide" | "";
+
+/** The band where a fixed demo's output parts are tabs. */
+const TABBED_BAND: Band = "phone";
+
+/** The band where a fixed demo's arrangement applies, and its toolbar shows Layout. */
+const ARRANGED_BAND: Band = "wide";
 
 /** A fence's file, as read from the light DOM, before the set holds it. */
 interface Fence {
@@ -249,7 +266,9 @@ interface Owned {
  * to 8 columns, 4 by default. `fixed` holds the demo to the dynamic viewport's height less
  * --sl-go-demo-inset, a length the page sets on it, its own header's, 0 by default; each part
  * keeps its share of that height, scrolling inside it, in a layout that follows the demo's width
- * (see the module's note). `label` names the demo, a region; by default it names the scenario
+ * (see the module's note). `arrangement`, an Arrangement the page writes, places a fixed demo's
+ * parts from 64rem and shows its toolbar's Layout menu there; with none, the editor is left and
+ * the menu isn't shown. `label` names the demo, a region; by default it names the scenario
  * and the handler, "probe format demo", or, on a source demo, "Go source demo".
  *
  * An authoring error, a missing scenario, a source demo naming a scenario or a handler, no fence,
@@ -257,9 +276,11 @@ interface Owned {
  * settings refuse, shows in place of the demo, naming the reason, as the region's description too,
  * over the fences as authored; the demo doesn't run. `problem` gives the reason, or null.
  *
- * Events: none of its own; every part's request is the demo's to apply, and goes no further.
+ * Events: `arrange`, a CustomEvent, bubbling, whose detail names the placement the Layout menu
+ * chose, a request for the page, which owns the arrangement, to apply; until it does, nothing
+ * changes. Every other part's request is the demo's to apply, and goes no further.
  *
- * Keyboard: each part's own, in order: the toolbar, the tabs on a program or source demo, the
+ * Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a program or source demo, the
  * editor, a fixed demo's output tablist below 44rem, and the console. The output tablist's are
  * the file tabs': Tab reaches the selected tab alone; Left and Right select the previous and the
  * next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter, from anywhere inside
@@ -278,10 +299,11 @@ export class GoDemo extends LitElement {
     tabSize: { type: String, attribute: "tab-size" },
     label: { type: String },
     fixed: { type: Boolean, reflect: true },
+    arrangement: { attribute: false },
     owned: { state: true },
     problem: { state: true },
     outputPart: { state: true },
-    tabbed: { state: true },
+    band: { state: true },
   } satisfies PropertyDeclarations;
 
   /** The page's runner, which the demo reads and never replaces; null runs nothing. */
@@ -302,14 +324,17 @@ export class GoDemo extends LitElement {
   declare label: string | null;
   /** Whether the demo is held to the viewport's height, each part to its share. */
   declare fixed: boolean;
+  /** The page's arrangement, which the demo renders from and never writes; null places the editor
+   * left and shows no Layout menu. */
+  declare arrangement: Arrangement | null;
   /** The models, once built from the fences. */
   declare private owned: Owned | null;
   /** Why the demo can't run, or null. */
   declare problem: string | null;
   /** The output part a fixed demo's output tablist selects. */
   declare private outputPart: OutputPart;
-  /** Whether a fixed demo's output parts are tabs at its width, the band go-demo.css names. */
-  declare private tabbed: boolean;
+  /** A fixed demo's band at its width, as go-demo.css names it; "" while the demo isn't fixed. */
+  declare private band: Band;
 
   readonly #internals = this.attachInternals();
   /** The runner listened to, and the function that stops listening to it. */
@@ -340,11 +365,18 @@ export class GoDemo extends LitElement {
     this.tabSize = null;
     this.label = null;
     this.fixed = false;
+    this.arrangement = null;
     this.owned = null;
     this.problem = null;
     this.outputPart = "console";
-    this.tabbed = false;
+    this.band = "";
     this.#internals.role = "region";
+    // Renders again as the page's arrangement changes, while the demo is in the document.
+    new Subscription(
+      this,
+      () => this.arrangement,
+      () => this.requestUpdate(),
+    );
     this.addEventListener("keydown", (event) => this.#keydown(event));
   }
 
@@ -367,13 +399,13 @@ export class GoDemo extends LitElement {
     document.removeEventListener("DOMContentLoaded", this.#parsed);
   }
 
-  /** Whether a fixed demo's output parts are tabs: the band go-demo.css's container queries name
-   * on the layout, read once it lays out at a new width or as the demo becomes fixed or not. */
+  /** A fixed demo's band: the one go-demo.css's container queries name on the layout, read once it
+   * lays out at a new width or as the demo becomes fixed or not. */
   #measure(): void {
     const layout = this.renderRoot.querySelector(".demo");
-    const band = layout ? getComputedStyle(layout).getPropertyValue("--band").trim() : "";
-    const tabbed = this.fixed && band === TABBED_BAND;
-    if (tabbed !== this.tabbed) this.tabbed = tabbed;
+    const named = layout ? getComputedStyle(layout).getPropertyValue("--band").trim() : "";
+    const band = (this.fixed ? named : "") as Band;
+    if (band !== this.band) this.band = band;
   }
 
   /** The output tablist's tabs, in order, once rendered. */
@@ -569,6 +601,16 @@ export class GoDemo extends LitElement {
     if (this.#current !== null) void this.runner?.stop();
   }
 
+  /** The Layout menu's choice, sent on to the page as the demo's own request. */
+  #arrange(event: CustomEvent<ArrangeDetail>): void {
+    this.dispatchEvent(
+      new CustomEvent<ArrangeDetail>("arrange", {
+        detail: { placement: event.detail.placement },
+        bubbles: true,
+      }),
+    );
+  }
+
   /** Ctrl or Cmd+Enter from anywhere inside the demo runs it. */
   #keydown(event: KeyboardEvent): void {
     if (!isRunShortcut(event) || !this.owned) return;
@@ -684,17 +726,21 @@ export class GoDemo extends LitElement {
     // Until the fences are read, they show as authored.
     if (!owned) return html`<slot></slot>`;
     const program = this.#program;
-    // A fixed demo's output parts are tabpanels only while its tablist shows.
-    const tabbed = this.fixed && this.tabbed;
+    // A fixed demo's output parts are tabpanels only while its tablist shows; its arrangement
+    // applies, and Layout shows, from 64rem.
+    const tabbed = this.fixed && this.band === TABBED_BAND;
+    const arrangement = this.fixed ? this.arrangement : null;
+    const arranged = arrangement !== null && this.band === ARRANGED_BAND;
     // The editor's edits are the active file's, applied to the set; a read-only file takes none.
     const editor = html`<sl-code-editor
       .settings=${owned.settings}
       @input=${this.#edited}
     ></sl-code-editor>`;
-    return html`<div class="demo">
+    return html`<div class="demo" data-placement=${arrangement?.placement ?? nothing}>
       <sl-controls
         .files=${owned.files}
         .runState=${owned.state}
+        .arrangement=${arranged ? arrangement : null}
         ?editable-files=${program && this.editableFiles}
         ?steady=${this.fixed}
         @run=${() => void this.#run()}
@@ -703,6 +749,7 @@ export class GoDemo extends LitElement {
         @new=${this.#new}
         @rename=${this.#rename}
         @delete=${(event: CustomEvent<DeleteDetail>) => void this.#delete(event)}
+        @arrange=${this.#arrange}
       ></sl-controls>
       ${
         program

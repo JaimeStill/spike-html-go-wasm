@@ -7,10 +7,15 @@
 // The demo is fixed, as tall as the dynamic viewport less --sl-go-demo-inset: the page sets it to
 // its header's height, as the header lays out, since that height follows the reader's space and
 // type profiles and the viewport's width, which no length in the page's CSS could know.
+//
+// The page owns the reader's arrangement, which places the demo's parts from 64rem: it reads the
+// stored choice before first paint, this module blocking render, and stores each choice the demo's
+// Layout menu requests (arrangement.ts).
 
 import "../components/go-demo.ts";
 import type { DemoRunner } from "../components/go-demo.ts";
 import { Runner } from "../runtime/runner.ts";
+import { keep } from "./arrangement.ts";
 
 /** The page's one runner: the runtime's Runner, checked here, at compile time, against the subset
  * sl-go-demo declares. It starts no worker and fetches nothing until the demo's Run. */
@@ -19,6 +24,7 @@ const runner = new Runner() satisfies DemoRunner;
 const demo = document.querySelector("sl-go-demo");
 if (!demo) throw new Error("playground.html has no sl-go-demo");
 demo.runner = runner;
+keep();
 
 const header = document.querySelector("body > header");
 if (!header) throw new Error("playground.html has no header");

@@ -87,10 +87,18 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
     - the playground's fixed layout: at 390px, 1120px, and 1376px, and with the demo half a rem
       either side of 44rem and 64rem, each width in its band, a paste of 500 lines into the
       editor, 10,000 lines printed, and a full timings table changing no part's box, the page
-      never scrolling sideways, and every part inside the demo; a Run, a Stop, a failed build, and
-      a band change keeping the editor's and the console's content and scroll position and the
-      output tab chosen; the phone's output tablist's accessibility tree and keys, and no tablist
-      or tabpanel from 44rem; and a demo without `fixed` laid out as before.
+      never scrolling sideways, and every part inside the demo, from 64rem in each arrangement,
+      each placing the parts as it says; a Run, a Stop, a failed build, a band change, and an
+      arrangement change keeping the editor's and the console's content and scroll position and
+      the output tab chosen; the phone's output tablist's accessibility tree and keys, and no
+      tablist or tabpanel from 44rem; and a demo without `fixed` laid out as before;
+    - the playground's arrangement: Layout a menu button in its own group from 64rem and absent
+      below; its menu's accessibility tree and its APG keys, each in turn; choosing each
+      arrangement in place, with no reload, no request, and the run's status, output, and timings
+      as they were; the choice the only write to storage, under the spike's key, which a reload
+      and another page open in; another tab's choice, and a cleared store, followed; and an empty
+      store, text that isn't JSON, a refused value, and blocked storage opening with the editor
+      left, writing nothing.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
   (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`, and the playground's
@@ -102,7 +110,8 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   `--page components/<component>`, as `--page components/console`, and the playground,
   `--page playground`, its viewport alone, the demo scrolled into it, in each band of its fixed
   demo: 390px, with the output panel's Output tab and again with its Timings tab, 900px, between
-  44rem and 64rem, and 1120px and 1376px. `--width <px>`, one of the SDK's three, captures that
+  44rem and 64rem, and 1120px and 1376px, each in editor left, top, and right, and with the
+  Layout menu open, each chosen by the menu. `--width <px>`, one of the SDK's three, captures that
   width alone, every page's, as `mise run screenshots --page components/controls --width 390`
   (the playground's 900px capture is taken only with every width); any other width is a usage
   error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
@@ -163,8 +172,21 @@ compiler, the linker, and the archives of the program's import closure, and a la
 the manifest again and only the archives a new import adds (see "Runtime", `build(files)`). The
 program's limits and its working directory are the build's. New file adds a file, so the program
 can read a non-Go file such as `input.txt` through `os.ReadFile`. Stop keeps the compiled
-toolchain. The reader's files live only in the page: a reload opens on hello again, and nothing
+toolchain. The reader's files live only in the page: a reload opens on hello again, and no file
 is shared or stored.
+
+From 64rem the demo's toolbar shows Layout, a menu of Editor left, Editor top, and Editor right,
+which places the editor beside the output, above it, or on its other side (`sl-go-demo`, "Fixed
+layout"). The arrangement is the reader's preference, which the page owns, not the demo:
+`web/pages/arrangement.ts`'s `keep()` builds one `Arrangement` from the placement kept in
+localStorage under `spike-html-go-wasm.arrangement`, a JSON string, `"left"`, `"top"`, or
+`"right"`; gives it to every fixed demo on the page; and applies each demo's `arrange` request to
+it, storing the choice. Reading runs in a try/catch, as the foundation's `preferences.js` reads
+the theme, before first paint, so a reload, and every playground on the origin, opens in the
+stored arrangement; blocked storage, an empty store, text that isn't JSON, or a value the model
+refuses opens with the editor left. The choice is the only write: nothing is stored until the
+reader chooses, and choosing the placement already held stores nothing. Another tab's choice
+moves this page's demo too, and a cleared store moves it back to left.
 
 ## Components
 
@@ -176,6 +198,17 @@ module script beside it. A page imports a component's module, and the build bund
 viewport, and focused by the keyboard. The directory's other modules are the components'
 internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `reasons.ts`,
 `subscription.ts`, `syntax-themes.ts`, and `tokenizer.ts`.
+
+- `./arrangement.js`: `Arrangement`, a fixed Go demo's arrangement from 64rem, the reader's
+  preference, a model with no document, element, or storage, an `EventTarget` its owner, the page,
+  writes: `placement`, where the editor sits, `"left"` (the default, `DEFAULT_PLACEMENT`), `"top"`,
+  or `"right"`, `PLACEMENTS` in the Layout menu's order, frozen. `new Arrangement(placement?)`
+  starts from the placement given, validated. A value it can't hold is refused, a `TypeError` for
+  one that isn't a string or a `RangeError` for a string that isn't a placement, naming the
+  reason, and changes nothing; `placementProblem(value)` gives that reason, or `null`, without
+  setting anything, so an owner reading storage tests a value before taking it. Each set that
+  changes the placement sends one `change` `Event`; a set to the placement held sends none. The
+  unit tier tests it under node.
 
 - `./code-editor.js`: `sl-code-editor`, a plain-text source editor: a `contenteditable` element
   in plaintext-only mode, exposed as a multiline textbox, beside a gutter of line numbers. Its Go
@@ -307,8 +340,8 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     adds; an empty write, or a clear of an empty log, sends none. The unit tier tests it under
     node.
 - `./controls.js`: `sl-controls`, a demo's controls as one ARIA toolbar: a Run group (Run, Stop,
-  and Reset) and, under `editable-files`, a vertical separator and a Files group (New file,
-  Rename, and Delete). Each control is a glyph button named by its name, which shows beside its
+  and Reset), under `editable-files` a vertical separator and a Files group (New file, Rename, and
+  Delete), and, given an `Arrangement`, a separator and a Layout group (Layout). Each control is a glyph button named by its name, which shows beside its
   glyph while the toolbar is 26rem wide or wider, where the widest group fits with its names in
   any font; narrower, the glyph shows alone and the name as a hint on hover and keyboard focus,
   as the console's Copy and Clear show theirs. It renders the `FileSet`
@@ -325,7 +358,11 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
   live region, and from then on the reason follows the name as it is typed. A taken name closes
   the form, returns focus to its button, and sends the request; a rename to the file's own name
   sends nothing. Escape closes the form, sends nothing, and returns focus to its button. Delete
-  asks for no confirmation. The status, a polite live region beside the toolbar, says each run's
+  asks for no confirmation. Layout is the APG menu button, `aria-haspopup="menu"` and
+  `aria-expanded`: it opens a menu, a popover anchored below it, of three radio items, Editor
+  left, Editor top, and Editor right, the arrangement's placement checked and ticked. Choosing an
+  item closes the menu, returns focus to Layout, and sends the request, unless the placement is
+  the one held. The status, a polite live region beside the toolbar, says each run's
   start, "Running hello…", and its end, "Finished format", "Finished hello, exit code 0",
   "Stopped spin", or "Failed format: <message>", from the run state's transitions alone: the
   state the toolbar is given is never said, nor a change of the files. The toolbar wraps between
@@ -337,14 +374,16 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     status keeps one line), and `label` (the toolbar's accessible name, "Controls" by default).
   - Properties: `files`, the `FileSet` its owner creates and writes, `null` by default, leaving
     Reset unavailable and the Files group out; `runState`, the `RunState` its owner creates and
-    writes, `null` by default, leaving Stop unavailable; and `editableFiles` and `label`, as their
+    writes, `null` by default, leaving Stop unavailable; `arrangement`, the `Arrangement` its owner
+    writes, `null` by default, leaving the Layout group out; and `editableFiles` and `label`, as their
     attributes.
   - Events, each bubbling and not composed, a request that changes nothing until the owner applies
     it: `run`, `stop`, and `reset` (`Event`s); `new` (a `CustomEvent`, `detail.name`, the new
-    file's name), `rename` (`detail.from` and `detail.to`), and `delete` (`detail.name`, the
-    active file's). The owner applies them as `runState.start(what)` with its runner's run,
-    `runState.finish(run, { kind: "stopped" })` with its runner's stop, `files.resetAll()`,
-    `files.add(name)`, `files.rename(from, to)`, and `files.remove(name)`.
+    file's name), `rename` (`detail.from` and `detail.to`), `delete` (`detail.name`, the active
+    file's), and `arrange` (`detail.placement`, the placement chosen). The owner applies them as
+    `runState.start(what)` with its runner's run, `runState.finish(run, { kind: "stopped" })` with
+    its runner's stop, `files.resetAll()`, `files.add(name)`, `files.rename(from, to)`,
+    `files.remove(name)`, and `arrangement.placement = placement`.
   - Slots: none.
   - Keyboard: Tab reaches the toolbar's one tab stop, the control last focused, Run at first, a
     roving tabindex. Left and Right move to the previous and next control, wrapping, and Home and
@@ -352,7 +391,13 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     focused control. Run declares `aria-keyshortcuts="Control+Enter Meta+Enter"`, the shortcut
     the demo composing it handles from inside itself. In a form, Enter submits and Escape closes
     it, each returning focus to the control that opened it; the form closes on Escape's keydown,
-    so focus is back on the control before the page's keys see it.
+    so focus is back on the control before the page's keys see it. On Layout, Enter, Space, and
+    Down open its menu, focus on the checked item. In the menu, Down and Up move focus to the next
+    and the previous item, wrapping, and Home and End to the first and the last; Enter or Space
+    chooses the focused item and closes the menu; Escape closes it; each returns focus to Layout,
+    and each is marked handled, so no page shortcut fires. Tab closes the menu and moves on from
+    Layout. Layout keeps its place in the toolbar's roving tabindex; the items rove by the menu's
+    keys alone.
 - `./editor-settings.js`: `EditorSettings`, the code editor's settings, a model with no document
   or element, an `EventTarget` its owner writes: `wrap` (a boolean, `false` by default: long lines
   scroll sideways) and `tabSize` (a whole number from 1 to 8, 4 by default, how many columns a tab
@@ -409,7 +454,8 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     last, each requesting that tab's selection: activation follows focus. Enter, Space, and a
     click request the focused tab's selection.
 - `./glyphs.js`: the glyphs the components draw in their shadow roots, Octicons' copy, trash,
-  check-circle, x-circle, play, square-fill, undo, file-added, and pencil from the icons layer,
+  check-circle, x-circle, play, square-fill, undo, file-added, pencil, split-view, and check from
+  the icons layer,
   written out as Lit templates with the same paths: the build fills the icons layer into a page's
   own markup, and no tier imports it.
 - `./go-demo.js`: `sl-go-demo`, live Go: the element composing `sl-controls`, `sl-file-tabs`,
@@ -449,7 +495,9 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     change the settings in place; while an authoring error shows, a change to `scenario`,
     `wrap`, or `tab-size` builds the demo again, so a mended attribute mends it.
   - Properties: `runner`, a `DemoRunner`, the page's one runner, `null` by default, which runs
-    nothing; `problem`, read-only, the authoring error's reason, or `null`; and the attributes'.
+    nothing; `arrangement`, an `Arrangement`, the page's, which a fixed demo renders from and never
+    writes, `null` by default, placing the editor left with no Layout menu; `problem`, read-only,
+    the authoring error's reason, or `null`; and the attributes'.
   - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
     the pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
     Shiki-rendered `<pre class="shiki">` read alike. A file's name is the pre's or its code's
@@ -469,12 +517,15 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
   - Files: New file adds the file, selects it, and focuses the editor; Rename renames the active
     file, focus staying on Rename; Delete removes the active file, unless the last, and focuses
     the tab now active; Reset restores every file's text as given.
-  - Events: none of its own; its parts' requests stop at it. Slots: none, but the fences above.
+  - Events: `arrange`, a `CustomEvent`, bubbling, `detail.placement` the placement the Layout
+    menu chose: the page, which owns the arrangement, applies it, and until it does nothing
+    changes. Its parts' other requests stop at it. Slots: none, but the fences above.
   - Accessibility: a region named by `label`, holding the toolbar, the tabs and their tabpanel on
     a program demo, the editor, named by the active file's name, the log, and the timings. A fixed
     demo below 44rem also holds the output tablist, "Output panel", its tabs "Output" and
     "Timings", each controlling its part, a tabpanel named by its tab while the tablist shows.
-  - Keyboard: each part's own, in order: the toolbar, the tabs on a program demo, the editor, a
+  - Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a
+    program demo, the editor, a
     fixed demo's output tablist below 44rem, and the console. The output tablist's are the file
     tabs': Tab reaches the selected tab alone, Left and Right select the previous and the next,
     wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter, from anywhere inside the demo, the editor included, runs it,
@@ -497,10 +548,14 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
       or the timings, the console first;
     - from 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' 16rem
       track, 2fr;
-    - from 64rem, editor left: under the toolbar, the editor, 3fr of the width, beside a column,
-      2fr, of the console, 3fr of the height, over the timings, 2fr.
-    Every band places the same parts, so a run, a Stop, a failed build, or a band change keeps
-    each part's content and scroll position, and the output tab chosen; below 44rem the part not
+    - from 64rem, the arrangement the page's `Arrangement` places, editor left with none: editor
+      left, under the toolbar, the editor, 3fr of the width, beside a column, 2fr, of the console,
+      3fr of the height, over the timings, 2fr; editor right, its mirror, the column first; and
+      editor top, the layout from 44rem. Here alone, and only given an arrangement, the toolbar
+      shows Layout, whose choice the demo sends on as `arrange`.
+    Every band and arrangement places the same parts, so a run, a Stop, a failed build, a band
+    change, or an arrangement change keeps each part's content and scroll position, and the output
+    tab chosen; below 44rem the part not
     shown is hidden by visibility, keeping its own. A demo without `fixed` lays out as above.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
