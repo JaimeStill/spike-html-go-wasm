@@ -254,7 +254,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 12/12 committed · standards done · spec done · editor — (starter program)
+slices 12/12 committed · standards done · spec done · editor done (starter program)
 
 ## Decisions
 
@@ -746,7 +746,8 @@ slices 12/12 committed · standards done · spec done · editor — (starter pro
   a log analyzer; a concurrent ASCII Mandelbrot (it overlaps the programs task's concurrency
   program); a JSON inventory report (encoding/json makes the cold Run heavy).
 - playground (starter): its source is cmd/calc, built and tested in the check, with the fences
-  checked byte for byte against it. Rejected: fences only in playground.html.
+  checked byte for byte against it. Rejected: fences only in playground.html. (Superseded: the
+  source moved to playground/calc and is never built; see "starter placement".)
 - playground (starter): the shipped script runs clean and exits 0, and a comment suggests a line
   to try that fails. Rejected: shipping a failing line.
 - playground (starter): a build is reused when only non-Go files change. Rejected: reusing it
@@ -763,6 +764,24 @@ slices 12/12 committed · standards done · spec done · editor — (starter pro
   page loads (minimal-footprint).
 - playground (starter placement): a result of negative zero prints 0. Rejected: -0, as Go's
   float formatting gives it.
+- playground (starter, build): numbers are float64, printed to 12 significant digits, which hides
+  floating point's last-digit error.
+- playground (starter, build): `#` starts a comment to the end of the line, and `let` is a
+  keyword.
+- playground (starter, build): a failing line binds nothing, so a failing `let` leaves its name
+  as it was.
+- playground (starter, build): the tests sit in package main with `//nolint:testpackage`, because
+  a main package can't be imported.
+- playground (starter, build): run() writes to os.Stdout and os.Stderr, and the tests swap them
+  for temporary files. Rejected: io.Writer parameters, which make errcheck demand error handling
+  in the reader's showcase code; os.Pipe, which js/wasm lacks.
+- playground (starter, build): the test embeds input.txt, because the in-memory fs holds no
+  package directory to read it from.
+- playground (starter, standards review): errors are checked where they occur; the tests use one
+  quoting style; TestLines gained a left-associativity case, which nothing tested; runner.ts and
+  build.ts share build.ts's `isGo`.
+- playground (starter, open): the four .go files are ~350 lines with doc comments, against the
+  brief's "about 200". Not decided; the session brief raises it with the architect.
 
 ## Notes
 
@@ -844,6 +863,11 @@ slices 12/12 committed · standards done · spec done · editor — (starter pro
 - A `@position-try` fallback's `max-inline-size` replaces the element's own, so the fallback must
   restate any cap the element sets.
 
+- The programs task can follow playground/calc's pattern: a package main outside cmd/, its
+  fences checked byte for byte against its files, and its tests run under GOOS=js on node's fs
+  and on the in-memory fs.
+- calc's closure is 58 archives (~5.0 MB gzip), one more than hello's.
+
 ## Pending edits
 
 - coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", a candidate principle
@@ -858,7 +882,8 @@ slices 12/12 committed · standards done · spec done · editor — (starter pro
   and workspace archives" becomes "per-package standard-library archives", since the sqlate and
   scenarios tasks add their modules' archives; and "the playground page" becomes "the playground
   page, an app page around sl-go-demo's fixed layout with a Layout menu whose choice the page
-  stores", since the summary otherwise omits the redirect's and the layout foundation's work.
+  stores, opening on a calculator-language starter program", since the summary otherwise omits
+  the redirect's, the layout foundation's, and the starter's work.
 - coordinator · roadmap.toml: the sqlate and scenarios tasks' summaries add "with the module's
   js/wasm archives added to the playground's manifest".
 - coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"

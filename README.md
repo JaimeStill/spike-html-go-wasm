@@ -21,10 +21,10 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm` and fails unless
   `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` or `.a` archive is
   tracked. It runs the Go tests as wasm under node twice: on node's fs, and on the runtime's
-  in-memory fs, where `test/memfs` drives it through package `os`, and where
-  `playground/calc`'s tests run the playground's starter over its shipped `input.txt` and over a
-  script with failing lines, holding its output and its exit code. It type-checks the configs,
-  the web tiers, and the suite with tsc and runs `mise run build`.
+  in-memory fs, where `test/memfs` drives it through package `os`. Among them, `playground/calc`'s
+  tests run the playground's starter over its shipped `input.txt` and over a script with failing
+  lines, and hold its output and its exit code. It type-checks the configs, the web tiers, and
+  the suite with tsc and runs `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
     checks the playground's toolchain: each file its manifest names exists under its content's
@@ -34,9 +34,8 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
     the manifest lacks refused before the compiler runs, and a non-Go file read from the run's
     working directory. It tests the components' six models (`Arrangement`, `EditorSettings`,
     `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change
-    events.
-    It holds each program demo's go fence on the components page to its scenario's source, byte
-    for byte, and the playground's demo to the starter's files in `playground/calc/`, its four
+    events. It holds each program demo's go fence on the components page to its scenario's source,
+    byte for byte, and the playground's demo to the starter's files in `playground/calc/`, its four
     `.go` files and its `input.txt`. It fails if a module under `web/components` or `web/pages`
     registers a page shortcut through the foundation's `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
@@ -88,11 +87,10 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       archives, and printing its results with exit 0 and every phase of a build; an edit to
       `input.txt` alone building nothing, the Run fetching nothing and printing the new input's
       results, a failing line's `input.txt:<n>: <reason>` on stderr with exit 1; a Run after an
-      edit to `main.go` fetching no toolchain module and no archive held, a new
-      standard import only the archives its closure adds, and the edited program's output; a
-      compile error; Stop ending a busy loop, the next build fetching no toolchain module; and a
-      file the reader adds read through `os.ReadFile` from the working directory, nothing a run
-      writes outliving it;
+      edit to `main.go` fetching no toolchain module and no archive held, a new standard import
+      only the archives its closure adds, and the edited program's output; a compile error; Stop
+      ending a busy loop, the next build fetching no toolchain module; and a file the reader adds
+      read through `os.ReadFile` from the working directory, nothing a run writes outliving it;
     - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
       at 900px, at 1120x800, and at 900x700: with the disclosure closed, the demo takes every row
       left and ends a gutter above the viewport's bottom edge, the one gutter that holds the page
@@ -206,24 +204,28 @@ layer. A page rule goes in `web/pages/page.css`.
 ## Playground
 
 `playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
-opening on the starter, a tiny calculator language in `playground/calc/`, its files as they are:
-`main.go`, active, which reads `input.txt` from the working directory and runs it line by line;
-`lexer.go`, `parser.go`, and `eval.go`, which turn each line into tokens, a syntax tree, and a
-value; and `input.txt`, a worked shopping total whose top comment suggests a line to try that
-fails. A script has `let` bindings, decimal numbers, `+ - * /` with unary minus and parentheses,
-and `#` comments; each line's result prints on stdout, a `let` as `name = value`, and a failing
-line prints `input.txt:<line>: <reason>` on stderr, the run going on, and the program exiting 1.
+opening on the starter program's files as `playground/calc/` holds them. Its script,
+`web/pages/playground.ts`, gives the demo the page's one `Runner` and the reader's arrangement.
+Nothing loads Go until a Run: the first fetches the manifest, the compiler, the linker, and the
+archives of the program's import closure, and a later Run fetches the manifest again and only the
+archives a new import adds (see "Runtime", `build(files)`). A Run after an edit to non-Go files
+alone, such as `input.txt`, builds nothing: it reruns the last program built over the edited
+files. The program's limits and its working directory are the build's. New file adds a file, so
+the program can read a non-Go file through `os.ReadFile`. Stop keeps the compiled toolchain. The
+reader's files live only in the page: a reload opens on the starter again, and no file is shared
+or stored.
+
+The starter is a calculator language. `main.go`, the active file, reads `input.txt` from the
+working directory and runs it line by line; `lexer.go`, `parser.go`, and `eval.go` turn each line
+into tokens, a syntax tree, and a value. A script line is an expression or a `let` binding, over
+decimal numbers, `+ - * /`, unary minus, and parentheses; `#` starts a comment. Each result prints
+on stdout, a binding as `name = value`. A failing line prints `input.txt:<line>: <reason>` on
+stderr, the run goes on, and the program exits 1. The shipped `input.txt` works out a shopping
+total, and its top comment suggests a line to try that fails.
+
 The starter isn't a scenario and no page loads it prebuilt, so it lives outside `cmd/` and the
-build never writes it to `dist/`: the check vets it and runs its Go tests under `GOOS=js`, on
-node's fs and on the in-memory fs. Its script, `web/pages/playground.ts`, gives the demo the
-page's one `Runner` and the reader's arrangement. Nothing loads Go until a
-Run: the first fetches the manifest, the compiler, the linker, and the archives of the program's
-import closure, and a later Run fetches the manifest again and only the archives a new import
-adds (see "Runtime", `build(files)`). The program's limits and its working directory are the
-build's. New file adds a file, so the program can read a non-Go file such as `input.txt` through
-`os.ReadFile`. A Run after an edit to non-Go files alone reruns the program built last over
-them, with no build. Stop keeps the compiled toolchain. The reader's files live only in the
-page: a reload opens on the starter again, and no file is shared or stored.
+build never writes it to `dist/`. The check vets it and runs its Go tests under `GOOS=js`, on
+node's fs and on the in-memory fs.
 
 ### The one-screen page
 
