@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
+- **State:** building
 - **Task:** playground
 - **Branch:** playground
 
@@ -42,8 +42,10 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                  of the import closure that the worker doesn't hold yet. It compiles every .go
                  file as package main and links the result. It compiles the linked module and
                  holds it as the loaded scenario, so the existing run runs its main to its exit.
-                 A build of files identical to the last successful build holds that program
-                 again and fetches, compiles, and links nothing.
+                 A build whose .go files are identical to the last successful build's holds that
+                 program again and fetches, compiles, and links nothing; its non-Go files go to
+                 the program's working directory as given, so a Run after editing only
+                 input.txt runs the held program over the new file.
               3. A build runs alone as a load does. Started while another request is pending,
                  it first stops that request, which rejects with "stopped". Every event between
                  a build's start and its settling belongs to that build.
@@ -74,13 +76,14 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                  the page. The handler and program modes are unchanged, and the demo still
                  imports nothing from the runtime and fetches nothing itself.
               9. A playground page, linked from the index, holds one editable-files sl-go-demo
-                 in the source mode. It opens on hello's source, equal byte for byte to the hello
-                 entrypoint under the unit tier. The page requests no Go before a Run. It passes
+                 in the source mode. It opens on the starter program (behavior 21), its fences
+                 equal byte for byte to cmd/calc's files and its input.txt under the unit tier. The page requests no Go before a Run. It passes
                  every SDK shell check except reading width, its prose holds 80ch, centred, and
                  the crawl reaches the index, the components page, and the playground alone.
               10. On the playground page in the browser tier, the first Run fetches the
-                  manifest, the compiler, the linker, and only hello's closure of archives, and
-                  prints hello with exit 0 and every phase of behavior 7. A Run after an edit
+                  manifest, the compiler, the linker, and only the starter's closure of
+                  archives, and prints the starter's results with exit 0 and every phase of
+                  behavior 7. A Run after an edit
                   fetches no toolchain module and no archive already held. A new standard import
                   fetches only the archives its closure adds. An edited program that prints
                   something else prints it. A compile error, Stop during a busy loop, and a
@@ -166,6 +169,19 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   on any page. The index and the components page render as before (their
                   existing tests and captures), and a browser test reads the layer order:
                   the foundation's layers, then `site`, then `page`.
+              21. The starter is a small calculator language in one package main, in
+                  cmd/calc: main.go reads input.txt from the working directory, and lexer.go,
+                  parser.go, and eval.go turn each line into tokens, a syntax tree, and a value.
+                  The script has `let` bindings, the four arithmetic operators, parentheses, and
+                  comments. Each line's result prints on stdout. A line that fails prints
+                  "input.txt:<line>: <reason>" on stderr, and the run goes on to the next line;
+                  the program exits 1 if any line failed and 0 otherwise. The shipped input.txt
+                  runs clean, and a comment at its top suggests a line to try that fails. It
+                  imports only light standard packages (no encoding/json or net/http), and reads
+                  plainly, about 200 lines with doc comments. `go test` in the check proves its
+                  output and exit for the shipped input.txt and for a failing script. Under
+                  GOOS=js it builds like the other entrypoints and follows the Go module's layer
+                  rules.
 Test seams    mise run check: the unit tier for 1 and the fence equality in 9, and the build's
               compile and link steps over the runtime's in-memory fs under node for 2, 4, and 5.
               The browser tier, the built site under its base in chrome-headless-shell with the
@@ -213,6 +229,12 @@ Slices        1. Upgrade: chrome-headless-shell 157.0.8103.78 (its sha256 and si
               11. The reservations: the status's width in ch and the timings' track, each as one
                   property; the Layout menu's width bound; the band read limited as behavior 14
                   says, with a README note; box-stability tests rerun; captures.
+              12. The starter program: cmd/calc with its tests in the check; the playground's
+                  fences replaced by its four files and input.txt, with the fence check; the
+                  build-reuse rule for non-Go files in the runner, with a browser test where an
+                  input.txt edit runs with no Go compile or link; behavior 10's first-Run proofs
+                  moved to the starter's closure and output; the captures; the docs (README
+                  Playground, the disclosure stays as approved).
 Out of scope  persisting files, sharing, and a Format button; workspace modules' archives (the
               sqlate and scenarios tasks add them as they first require them); go.mod, local
               subpackages, cgo, assembly, and go:embed in a built program; argv and stdin for a
@@ -229,7 +251,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 11/11 committed · standards done · spec done · editor done (layout foundation)
+slices 11/12 committed · standards — · spec — · editor — (starter program)
 
 ## Decisions
 
@@ -715,6 +737,17 @@ slices 11/11 committed · standards done · spec done · editor done (layout fou
 - playground (layout foundation, after the standards review): README.md states no pixel figures
   for the layout, and the menu-gap test reads `--space-3xs`.
 - playground (layout foundation, spec review): no gaps.
+
+- playground (starter): the playground opens on a calculator language (main.go, lexer.go,
+  parser.go, eval.go, and input.txt). Rejected: hello, which the components page already shows;
+  a log analyzer; a concurrent ASCII Mandelbrot (it overlaps the programs task's concurrency
+  program); a JSON inventory report (encoding/json makes the cold Run heavy).
+- playground (starter): its source is cmd/calc, built and tested in the check, with the fences
+  checked byte for byte against it. Rejected: fences only in playground.html.
+- playground (starter): the shipped script runs clean and exits 0, and a comment suggests a line
+  to try that fails. Rejected: shipping a failing line.
+- playground (starter): a build is reused when only non-Go files change. Rejected: reusing it
+  only when every file is unchanged (editing input.txt recompiled and relinked for nothing).
 
 ## Notes
 
