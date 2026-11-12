@@ -101,22 +101,22 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   run's output of any length, and a full timings table change no part's box, and
                   each part scrolls inside its own frame. A demo without `fixed` lays out as
                   before.
-              14. A fixed demo's layout follows its own width. Below 44rem: the toolbar, the
-                  tabs over the editor (about 60% of the height), then one output panel whose
-                  tablist, "Output" and "Timings", selects the console or the timings, the
-                  console first; the tablist keeps the file tabs' keyboard model (roving
-                  tabindex, Left and Right wrapping, Home and End) and its accessibility tree.
-                  From 44rem to 64rem: the editor over a row of the console and the timings'
-                  track (behavior 14). From 64rem: the reader's arrangement (behavior 15): the editor
-                  left or right of a column of the console over the timings, or the editor top,
-                  over the console and timings row. A run, a Stop, a build failure, or a
-                  layout change preserves each part's content and scroll position. The toolbar
-                  status's reserved width and the timings' track are each stated once, as a
-                  named property in their content's unit (ch for the status's text), read
-                  wherever the size is needed, so no literal is kept in step across sheets. The Layout menu's width is bounded by its containing block, not by a
-                  viewport unit. The demo's script reads its width band, named only in CSS, just
-                  where the accessibility tree changes (the output panels' tabpanel roles) and
-                  for whether the Layout group shows.
+              14. A fixed demo's layout follows its own width. Below 44rem: the toolbar, the tabs
+                  over the editor (about 60% of the height), then one output panel whose tablist,
+                  "Output" and "Timings", selects the console or the timings, the console first; the
+                  tablist keeps the file tabs' keyboard model (roving tabindex, Left and Right
+                  wrapping, Home and End) and its accessibility tree. From 44rem to 64rem: the
+                  editor over a row of the console and the timings' track. From 64rem:
+                  the reader's arrangement (behavior 15): the editor left or right of a column of
+                  the console over the timings, or the editor top, over the console and timings row.
+                  A run, a Stop, a build failure, or a layout change preserves each part's content
+                  and scroll position. The toolbar status's reserved width and the timings' track
+                  are each stated once, as a named property in their content's unit (ch for the
+                  status's text), read wherever the size is needed, so no literal is kept in step
+                  across sheets. The Layout menu's width is bounded by its containing block, not by
+                  a viewport unit. The demo's script reads its width band, named only in CSS, just
+                  where the accessibility tree changes (the output panels' tabpanel roles) and for
+                  whether the Layout group shows.
               15. From 64rem, a fixed demo's toolbar shows a Layout menu button in its own group
                   after the files group. It opens a menu of three radio items, "Editor left",
                   "Editor top", and "Editor right", the current one checked, with the APG menu
@@ -229,7 +229,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 11/11 committed · standards done · spec done · editor — (layout foundation)
+slices 11/11 committed · standards done · spec done · editor done (layout foundation)
 
 ## Decisions
 
@@ -680,6 +680,42 @@ slices 11/11 committed · standards done · spec done · editor — (layout foun
 - playground (layout foundation): the status's reserved width (in ch) and the timings' track are
   each one named property. Rejected: the room left on the toolbar's line, about 104px at 390,
   which would cut most statuses to a word.
+- playground (layout foundation, slice 9): each hand page links `web/pages/page.css` after
+  `site.css`. Rejected: importing it from a page script, since the index has no script.
+- playground (layout foundation, slice 9): a body of class `app` scopes the playground's rules,
+  so the index and the components page keep the reading layout; moving the rules into the layer
+  changed no cascade outcome.
+- playground (layout foundation, slice 10): one gutter token, `--page-gutter`, set from
+  `--space-m` (site.css's side padding), spaces the inline sides and the block end.
+- playground (layout foundation, slice 10): the floor is 6 editor lines and 2 console lines, each
+  in its part's own `lh`, with `contain: size` on the editor and the timings so their content
+  never raises it.
+- playground (layout foundation, slice 10): the playground's shell checks skip only
+  holdsReadingWidth, and a spike check holds the prose column instead.
+- playground (layout foundation, slice 10): the floor's line counts can't rise at 390x844 without
+  a change to the brief.
+- playground (layout foundation, slice 11): the steady status reserves 24ch, the old 12rem in its
+  own text.
+- playground (layout foundation, slice 11): the timings' least width is 28ch of the table's text,
+  and the timings' track is `auto`, reading it on the element; the two 44rem container queries
+  became one. Rejected: rem, which doesn't follow the table's font.
+- playground (layout foundation, slice 11): each popover is `max-content` wide, with a `--within`
+  position-try fallback as the last resort. Rejected: `max-inline-size: 100%` in the base
+  position, which never flips; `position-try-order: most-inline-size`, which flipped the menu at
+  1120px.
+- playground (layout foundation, slice 11): the New file form, which overflowed the viewport at
+  390px, now fits inside it.
+- playground (layout foundation, standards review): removed two overrides of site.css that
+  changed nothing, restored the forms' 22rem cap that the `--within` fallback had dropped, and
+  prefixed the floor's properties with the component's name.
+- playground (layout foundation, after the standards review): the floor's rationale is the least
+  a reader can work in, the component's own. Rejected: a rationale from the page's screenshots.
+- playground (layout foundation, after the standards review): the prose is one `.prose` block, so
+  main's two named rows don't count the prose's children. Rejected: `repeat(3, auto)` rows.
+- playground (layout foundation, after the standards review): README.md states no pixel figures
+  for the layout, and the menu-gap test reads `--space-3xs`.
+- playground (layout foundation, spec review): no gaps.
+
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
@@ -709,7 +745,8 @@ slices 11/11 committed · standards done · spec done · editor — (layout foun
   ~3 ms at 10,000 rows); a block with its own max block size doesn't.
 - Visually hidden text placed `position: absolute` inside a scroller needs a positioned ancestor
   inside the scroller; otherwise its containing block is the page's, and it grows the page.
-- An element with `contain: inline-size` measures 0 in an auto grid track; size the track.
+- An element with `contain: inline-size` measures 0 in an auto grid track; give the element a
+  `min-inline-size`, which the track takes, or size the track.
 - The foundation's elements layer veils `::backdrop`, which a popover in the top layer has too; a
   popover that veils nothing sets its backdrop transparent.
 - The foundation's keys.js passes over a keydown whose default is prevented, so a component keeps
@@ -741,18 +778,23 @@ slices 11/11 committed · standards done · spec done · editor — (layout foun
   scenarios tasks settle it. The newest versions so far come from local tags only, so check
   them against the remotes when those tasks plan.
 
-- The playground's one screen is proven at the default space and type profiles only. At short
-  heights, such as 390x600, the page with its disclosure closed scrolls, because the floor of half
-  the viewport's height holds, as briefed.
+- The playground's floor is counted in lines, so it follows the space and type profiles. On a
+  short screen, such as 390x600, the demo holds its floor and the page scrolls down, never
+  sideways.
 - CDP's Input.insertText loses line breaks in the editor, so browser tests set the editor's text
   through a paste event.
 - In Chrome, an element with `min-block-size` on a size container in a grid row laid out 0px
-  tall; set the floor on the grid track instead.
+  tall. The playground no longer uses a size container; the note stays as a pitfall for any page
+  that does.
 
 - Intake candidates: the SDK has no page mode for tools, and holdsReadingWidth assumes a
   reading page; a page-layout sheet (gutter, section spacing, content and full named lines) in
   the SDK or foundation. Pitfall: Vite places a hand page's inline <style> before the bundled
   sheets, so an inline @layer declares ahead of the foundation's.
+- `@custom-media` isn't shipped, so complementary container queries repeat their breakpoint.
+- The foundation has no token for `outline-offset`.
+- A `@position-try` fallback's `max-inline-size` replaces the element's own, so the fallback must
+  restate any cap the element sets.
 
 ## Pending edits
 
@@ -767,8 +809,8 @@ slices 11/11 committed · standards done · spec done · editor — (layout foun
 - coordinator · roadmap.toml: in the playground task's summary, "per-package standard-library
   and workspace archives" becomes "per-package standard-library archives", since the sqlate and
   scenarios tasks add their modules' archives; and "the playground page" becomes "the playground
-  page, one screen around sl-go-demo's fixed layout with a Layout menu whose choice the page
-  stores", since the summary otherwise omits the redirect's work.
+  page, an app page around sl-go-demo's fixed layout with a Layout menu whose choice the page
+  stores", since the summary otherwise omits the redirect's and the layout foundation's work.
 - coordinator · roadmap.toml: the sqlate and scenarios tasks' summaries add "with the module's
   js/wasm archives added to the playground's manifest".
 - coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"

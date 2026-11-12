@@ -59,9 +59,9 @@
     font-size: var(--text-s);
   }
 
-  /* The playground, a body of class app: an app page, a workspace rather than an article. It keeps
-     the shell site.css lays out, the body's inline gutter, the header and its row, and changes three
-     things about it, each for the workspace:
+  /* The playground, a body of class app: an app page, a workspace rather than an article. It
+     keeps the shell site.css lays out, the body's inline gutter, the header and its row, and
+     changes three things about it, each for the workspace:
      - The body is one column at every width, the header over main, where site.css makes it, from
        70rem, three columns with main's reading column in the middle: a tool takes the body's whole
        content width, and the prose keeps its reading column inside main instead, by named lines.

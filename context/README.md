@@ -72,23 +72,32 @@ for the Go packages.
   (`scripts/build-toolchain.ts`), in the worker, and fetches each standard-library package's
   archive per import through `go/toolchain/manifest.json`. `playground.html` is one screen: a
   heading, an intro, a closed disclosure of what a program can be, and one fixed, source-mode
-  sl-go-demo, opening on hello's source, that fills the rest of the viewport a gutter above its
-  bottom: an app page, main across the body's content width by named lines, the prose on an 80ch
-  column and the demo on the full one. Planned: workspace
-  modules' archives, added when the sqlate and scenarios tasks first require them.
+  sl-go-demo, opening on hello's source, that fills the rest of the viewport and ends one gutter
+  above its bottom. Planned: workspace modules' archives, added when the sqlate and scenarios
+  tasks first require them.
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
-  over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its parent's layout makes
-  it, never below a floor in lines of its editor and console, and divides that height among its
-  parts in three width bands; for it, sl-console's `fill` takes the
-  height given, sl-controls' `steady` keeps the status to one line, and sl-controls, given an
-  `Arrangement`, shows a Layout group, which the demo shows from 64rem. The file tabs and the
-  fixed demo's output tabs share one sheet, `tabs.css`. No component holds authoritative state:
+  over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its parent's layout
+  makes it, never below a floor of six editor lines and two console lines
+  (`--sl-go-demo-editor-lines`, `--sl-go-demo-console-lines`), and divides that height among its
+  parts in three width bands. For it, sl-console's `fill` takes the height given, at least
+  `--sl-console-min-lines` lines tall; sl-controls' `steady` keeps the status to one line of a
+  reserved width, `--sl-controls-status-inline-size`; and sl-controls, given an `Arrangement`,
+  shows a Layout group, which the demo shows from 64rem. sl-timings states its table's least
+  width once, `--sl-timings-min-inline-size`, and the demo's timings track reads it. Popovers
+  (the Layout menu and the New file and Rename forms) are as wide as their content, bounded by
+  their containing block and a form's `--popover-max-inline-size`. The file tabs and the fixed
+  demo's output tabs share one sheet, `tabs.css`. No component holds authoritative state:
   DOM-free models, `Arrangement`, `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and
   `RunState`, hold it, each written by one owner, sl-go-demo or the page. No component imports
   the runtime. `README.md`, "Components", documents each module.
-- **Pages** (`web/pages`, the apps tier, for the scripts a page loads): `components.html`, a hand
-  page whose script, `web/pages/components.ts`, shows every component's states once; its Go
+- **Pages** (`web/pages`, the apps tier, for the scripts and the stylesheet the pages load):
+  `web/pages/page.css` holds every hand page's own rules in the `page` cascade layer, which comes
+  after the foundation's layers and the SDK's `site`; a hand page holds no inline `<style>`. A
+  body of class `app` makes the page an app page: one column, main a grid of named lines with the
+  prose (`.prose`) on an 80ch `content` column and the demo on the `full` column, and one gutter,
+  `--page-gutter`, on the inline sides and the block end. `components.html`, a hand page whose
+  script, `web/pages/components.ts`, shows every component's states once; its Go
   demos run hello and the probe's handlers over the page's one runner. `playground.html`, a hand
   page whose script, `web/pages/playground.ts`, gives its one source demo the page's runner and
   the reader's arrangement. `web/pages/arrangement.ts` owns that stored preference: its `keep()`
