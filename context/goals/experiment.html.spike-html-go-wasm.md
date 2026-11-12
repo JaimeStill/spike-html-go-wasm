@@ -164,7 +164,7 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   so anything the program writes is gone by the next one.
                   Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The
                   compiler stays loaded after a Stop, so the next Run is quick. Your edits live
-                  only in this tab: reload, and you're back to hello.
+                  only in this tab: reload, and you're back to where you started.
               20. Every hand page's own rules sit in one shared sheet in a `page` cascade
                   layer after the SDK's `site` layer, with no inline or unlayered page rule left
                   on any page. The index and the components page render as before (their
@@ -750,6 +750,9 @@ slices 12/12 committed · standards — · spec — · editor — (starter progr
 - playground (starter): a build is reused when only non-Go files change. Rejected: reusing it
   only when every file is unchanged (editing input.txt recompiled and relinked for nothing).
 
+- playground (starter, architect): the disclosure's last sentence ends "reload, and you're back
+  to where you started". Rejected: "back to the calculator", which a later starter would make
+  untrue.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
