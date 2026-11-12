@@ -65,12 +65,13 @@ const LEDE =
   "here in your browser.";
 
 /** The dialog's content after its header row, each block's text, in order: the three paragraphs
- * approved with the brief, the third with the goroutine and deadlock sentences after "Stop to
+ * approved with the brief, the first naming the site's pinned modules beside the standard
+ * library since the sqlate task, the third with the goroutine and deadlock sentences after "Stop to
  * cancel" and its last sentence on each program's edits, what a Run downloads, and the link. */
 const ABOUT_TEXT = [
-  "Your .go files build together as one main package, using only the standard library. There's " +
-    "no go.mod, no other packages of your own, no cgo or assembly, and nothing passed in as " +
-    "arguments or standard input.",
+  "Your .go files build together as one main package, using the standard library and the " +
+    "modules this site pins, such as sqlate. There's no go.mod, no other packages of your own, " +
+    "no cgo or assembly, and nothing passed in as arguments or standard input.",
   'Any other file you add sits next to your program, so os.ReadFile("input.txt") will find it. ' +
     "Each Run starts fresh from your files, so anything the program writes is gone by the next one.",
   "Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. Goroutines take turns on " +
@@ -79,8 +80,8 @@ const ABOUT_TEXT = [
     "never finishes and shows no deadlock error; press Stop. The compiler stays loaded " +
     "after a Stop, so the next Run is quick. Your edits to each program live only in this tab, so " +
     "you can switch away and come back to them: reload, and you're back to where you started.",
-  "The first Run downloads the compiler, the linker, and the standard-library packages your " +
-    "program imports; later Runs download only what a new import adds.",
+  "The first Run downloads the compiler, the linker, and the packages your program imports; " +
+    "later Runs download only what a new import adds.",
   "The spike's question and evidence",
 ];
 

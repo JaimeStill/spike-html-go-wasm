@@ -1,7 +1,7 @@
 // The runtime in the browser, through the components page's Go demos: the build as Pages serves
 // it, dist/ under the base by the SDK's served(), Vite's preview, in the pinned
-// chrome-headless-shell, the page's one runner shared by every demo. The modules answer as
-// application/wasm, and the index requests no Go on load (the components page's own load is
+// chrome-headless-shell, the page's one runner shared by every demo. The modules, hello's,
+// probe's, and sqlate's, answer as application/wasm, and the index requests no Go on load (the components page's own load is
 // go-demo.test.ts's). Through the demos: files' steps through the in-memory fs; a held module
 // reused, a handler's call alone and a program's instance afresh, with no fetch; scenarios
 // switched in place in one worker. Then Stop: it ends spin's busy loop, and after it, or after
@@ -88,7 +88,7 @@ async function hold(page: Page): Promise<{ paused: string[]; release(): Promise<
 }
 
 describe("the Go modules under the base", () => {
-  for (const name of ["hello", "probe"]) {
+  for (const name of ["hello", "probe", "sqlate"]) {
     test(`${name}.wasm answers 200 as application/wasm`, async () => {
       const response = await fetch(new URL(`go/${name}.wasm`, server.origin));
       assert.equal(response.status, 200);

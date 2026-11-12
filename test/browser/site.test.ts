@@ -1,15 +1,21 @@
 // The site's build, as Pages serves it: dist/ under the base, by the SDK's served(), Vite's
 // preview, loaded in the pinned chrome-headless-shell. Each of the SDK's shell checks is a test on
 // a fresh page of each hand page, the index, the components page, the playground, and the sqlate
-// page, whose headers have no site nav, which the checks allow, and which a test of its own holds
-// on each: no sl-site-nav in the header, and no site-nav.js loaded, which defines it; the build
+// page, and of the rendered Markdown page, whose headers have no site nav, which the checks
+// allow, and which a test of its own holds on each: no sl-site-nav in the header, and no site-nav.js loaded, which defines it; the build
 // bundles the module, so the registry rather than a request names it. The playground and the
 // sqlate page are app pages, each main across the body's content width, so they run every check
 // but main's reading width, holdsReadingWidth; a check of the spike's own holds each one's prose,
 // the heading and the lede, to 80ch, centered, instead. The crawl, from the index, checks every
 // copied page, none here, and loads each hand page it reaches: it reaches exactly the index and,
-// by the index's links, the components page, the playground, and the sqlate page. No page holds an SDK fence, so the SDK's palette check has nothing to run on;
-// the components page's editors are held to its colors by code-editor.test.ts. Each hand page's
+// by the index's links, the components page, the playground, the sqlate page, and the rendered
+// Markdown page, sqlate-compile.html, which the SDK's markdownPages renders from the spike's own
+// markdown/ tree into markdown-shell.html. The crawl counts it a hand page, since content.json
+// records no tree that names it, so the shell checks run on it by its URL as on the hand pages,
+// every one, its reading width among them, and so does each of the spike's checks below that
+// runs on every page. It is the one page holding SDK fences, highlighted at build, so the SDK's
+// palette check runs on it; the components page's editors are held to its colors by
+// code-editor.test.ts. Each page's
 // cascade layers, read from its sheets in the order the document names them, are the foundation's,
 // then the SDK's site, then page, the shared sheet's (web/pages/page.css), last, and its source
 // holds no inline <style>, which the build would write ahead of the linked sheets. The components
@@ -20,7 +26,7 @@
 // the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/test/browser/site.test.ts, its checks
 // run on each hand page, as the SDK's README gives a root-style site, its crawl reaching the hand
-// pages alone, without the palette check.
+// pages and the spike's own rendered page, the palette check on that page alone.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -29,7 +35,12 @@ import { after, before, describe, test } from "node:test";
 import { launch } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
-import { crawl, holdsReadingWidth, shell } from "@jaimestill/spike-html-hosting-sdk/browser.js";
+import {
+  crawl,
+  highlightsEachPalette,
+  holdsReadingWidth,
+  shell,
+} from "@jaimestill/spike-html-hosting-sdk/browser.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
 import { viewport } from "./viewport.ts";
@@ -51,11 +62,18 @@ after(async () => {
 /** The hand pages, each by its path under the base. */
 const hand = ["", "components.html", "playground.html", "sqlate.html"];
 
+/** The rendered Markdown pages, the spike's own markdown/ tree's, each by its path under the base:
+ * the crawl counts each a hand page, as content.json records no tree that names it. */
+const rendered = ["sqlate-compile.html"];
+
+/** Every page the site builds. */
+const pages = [...hand, ...rendered];
+
 /** The app pages, the playground and the sqlate page, whose main spans the body's content width. */
 const APPS = ["playground.html", "sqlate.html"];
 
 describe("the site under its base", () => {
-  for (const path of hand) {
+  for (const path of pages) {
     const where = path || "the index";
     for (const [name, check] of Object.entries(shell)) {
       // An app page's main spans the body's content width, and its prose holds the reading width
@@ -85,7 +103,7 @@ describe("the site under its base", () => {
     });
   }
 
-  for (const path of hand) {
+  for (const path of pages) {
     const where = path || "the index";
     test(`${where}'s cascade layers are the foundation's, then site, then page, and its source holds no inline sheet`, async () => {
       const page = await browser.open(`${server.origin}${path}`);
@@ -220,14 +238,23 @@ describe("the site under its base", () => {
     });
   }
 
-  test("the crawl reaches the hand pages, and nothing else", async (t) => {
+  test("the SDK's palette check holds the rendered page's fences, highlighted at build, in every palette", async () => {
+    const page = await browser.open("about:blank");
+    try {
+      await highlightsEachPalette(page, server.origin, `${server.origin}${rendered[0]}`);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the crawl reaches the hand pages and the rendered page, and nothing else", async (t) => {
     const page = await browser.open("about:blank");
     try {
       const crawled = await crawl(page, server.origin, root);
       t.diagnostic(`${crawled.pages} pages, ${crawled.links} in-site links`);
       assert.deepEqual(
         { pages: crawled.pages, unreachable: crawled.unreachable, hand: crawled.hand },
-        { pages: hand.length, unreachable: [], hand },
+        { pages: pages.length, unreachable: [], hand: pages },
       );
     } finally {
       await page.close();

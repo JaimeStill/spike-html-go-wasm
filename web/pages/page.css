@@ -1,6 +1,7 @@
 /*
- * The hand pages' own rules, index.html's, components.html's, and playground.html's, in one sheet
- * each page links after the SDK's site.css. Every rule is in the page cascade layer, which this
+ * The hand pages' own rules, index.html's, components.html's, playground.html's, and
+ * sqlate.html's, and the rendered Markdown pages', in one sheet each page links after the SDK's
+ * site.css. Every rule is in the page cascade layer, which this
  * sheet declares last, after the foundation's layers and the SDK's site, so a page rule wins over
  * the shell's by layer order alone, at any specificity, and an unlayered sheet (the components'
  * glyph-button.css) stays above it. The layer order is the page's, as the browser tier reads it:
@@ -64,6 +65,13 @@
   .readout {
     color: var(--fg-2);
     font-size: var(--text-s);
+  }
+
+  /* A rendered Markdown page's Go demo, raw HTML in main's flow around its fence, set apart from
+     the prose around it as site.css sets a fence apart, by --space-m above and below. Never an
+     app page's, whose fixed demo takes its row of main's grid exactly. */
+  body:not(.app) > main > sl-go-demo {
+    margin-block: var(--space-m);
   }
 
   /* The playground, a body of class app: an app page, a workspace rather than an article. It

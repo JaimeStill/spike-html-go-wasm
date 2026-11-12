@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # The site build's Go step, after Vite's, which empties dist/ (vite.config.ts): each entrypoint
-# under cmd/ built for GOOS=js GOARCH=wasm by the pinned Go, into dist/go/<name>.wasm, which the
+# under cmd/, hello, probe, and sqlate, the compile handler the Markdown page calls, built for
+# GOOS=js GOARCH=wasm by the pinned Go, into dist/go/<name>.wasm, which the
 # preview and Pages serve at <base>go/ and the runtime's worker fetches; never playground/'s
 # programs, the starter, calc, the others the Program select offers, and sqlate, which a page
 # builds from source, no page loads prebuilt, and the check vets and tests alone
@@ -14,7 +15,7 @@ set -euo pipefail
 export GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off GOTOOLCHAIN=local
 
 mkdir -p dist/go
-for name in hello probe; do
+for name in hello probe sqlate; do
   go build -trimpath -ldflags="-s -w" -o "dist/go/$name.wasm" "./cmd/$name"
 done
 node scripts/build-toolchain.ts dist/go/toolchain
