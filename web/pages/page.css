@@ -20,8 +20,15 @@
 @layer page {
   /* With no site nav to take the header's row, site.css leaves the header-actions group at the
      row's inline start; the group goes to the inline end at every width, where the SDK's header
-     check holds the buttons when the header has no nav. */
+     check holds the buttons when the header has no nav. Where the row can't hold the group on one
+     line, as the playground's three buttons at a phone's width and twice the text size, the group
+     shrinks to the row and wraps its buttons, still at the inline end, where site.css's flex: none
+     would hold it whole and scroll the page sideways; at every width the captures read, at the
+     default type, the group is one line. */
   body > header > .header-actions {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     margin-inline-start: auto;
   }
 
@@ -89,10 +96,11 @@
      80ch; and the full column, the content and both sides. Its rows are two, by name, whatever the
      prose holds: the prose, its own height, then the demo, 1fr, every row the prose leaves, which
      the demo takes as a stretched grid item, a --space-m gap apart. The prose, one block holding
-     the heading, the intro, and the disclosure in reading flow, sits on the content column.
-     Opening the disclosure grows the prose's row and takes the space from the demo's, down to the
-     demo's own floor; past it, main and the body grow by the rest, and the page scrolls down, never
-     sideways. The gutter below is the body's, so main ends on its last row. */
+     the heading and the lede alone, sits on the content column; the playground's detail is in its
+     About dialog, so no more than the lede's lines come out of the demo's row in any font. Where
+     the demo's row falls below the demo's own floor, as at a larger type or text zoom, main and the
+     body grow by the rest, and the page scrolls down, never sideways. The gutter below is the
+     body's, so main ends on its last row. */
   body.app > main {
     grid-area: 2 / 1;
     display: grid;
@@ -116,5 +124,17 @@
   body.app > main > sl-go-demo {
     grid-column: full;
     grid-row: demo;
+  }
+
+  /* The playground's About dialog, a shortcut dialog as Help is, holding prose: as wide as the
+     prose's reading width, 80ch, where the viewport has it, and otherwise the viewport less
+     --space-s on each side, as the SDK's shortcut dialogs are. Its title takes focus as it opens,
+     by its tabindex="-1" and autofocus, so that Close's hint doesn't show; the heading isn't a
+     control, and Tab never reaches it, so it draws no focus outline, as site.css holds Help's. */
+  dialog#about {
+    inline-size: min(100% - 2 * var(--space-s), 80ch);
+  }
+  dialog#about h2#about-title[tabindex="-1"]:focus {
+    outline: none;
   }
 }

@@ -5,8 +5,8 @@
 // toolchain only on the demo's Run.
 //
 // The demo is fixed, as tall as its row of the page's grid, which the page's CSS makes the
-// viewport's rows left under the header, the heading, the intro, and the disclosure, less the
-// page's gutter; nothing here measures or sizes it.
+// viewport's rows left under the header, the heading, and the lede, less the page's gutter;
+// nothing here measures or sizes it.
 //
 // The page owns the reader's arrangement, which places the demo's parts from 64rem: it reads the
 // stored choice before first paint, this module blocking render, and stores each choice the demo's

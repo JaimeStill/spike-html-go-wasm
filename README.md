@@ -14,8 +14,8 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
 
 ## Tasks
 
-- `mise run install`: install the pinned tools, node_modules, and go.mod's requirements; reads
-  the network.
+- `mise run install`: install the pinned tools, the browser tier's chrome-headless-shell and
+  DejaVu fonts among them, node_modules, and go.mod's requirements; reads the network.
 - `mise run check`: run every check, reading no network. It lints with ESLint (the web tiers'
   import direction, and the check that the build left no CSS module script), Prettier,
   shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm` and fails unless
@@ -91,15 +91,20 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       only the archives its closure adds, and the edited program's output; a compile error; Stop
       ending a busy loop, the next build fetching no toolchain module; and a file the reader adds
       read through `os.ReadFile` from the working directory, nothing a run writes outliving it;
+    - the playground's prose and About: the prose is the heading and the lede alone, and the page
+      holds no disclosure; About leads the header's group, a glyph button showing A; A, a click, or
+      Enter opens the About dialog on its title, Tab reaches its Close, and Close or Escape closes
+      it, focus back where it was; A typed into the editor types; the accessibility tree names the
+      button and the dialog; and the dialog's text is the approved text, in order;
     - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
-      at 900px, at 1120x800, and at 900x700: with the disclosure closed, the demo takes every row
-      left and ends a gutter above the viewport's bottom edge, the one gutter that holds the page
-      off both sides, every part's bottom border inside the demo and in view, in each arrangement
-      from 64rem; the page doesn't scroll, and no script sizes the demo; opening the disclosure
-      takes its rows from the demo, down to its floor, where the editor's frame holds six of its
-      lines and the console's log two, one of them exactly, and the page scrolls down, the demo a
-      gutter above its end, but never sideways; closing it restores the screen; on a short
-      screen, 390x600 or 1376x500, the demo holds its floor, closed or open;
+      at 900px, at 1120x800, and at 900x700: the demo takes every row left and ends a gutter above
+      the viewport's bottom edge, the one gutter that holds the page off both sides, every part's
+      bottom border inside the demo and in view, in each arrangement from 64rem; the page doesn't
+      scroll, and no script sizes the demo; at each capture size the demo stands above its floor,
+      where the editor's frame holds six of its lines and the console's log two, and the test
+      reports by how much; on a short screen, 390x600 or 1376x400, or at twice the text size at
+      390x844 and 1120x700, the demo holds its floor, one part exactly at it, and the page scrolls
+      down, the demo a gutter above its end, but never sideways;
     - the playground's fixed layout, at 390px, 1120px, and 1376px, and with the demo half a rem
       either side of 44rem and 64rem: each width lays out its band, and from 64rem each
       arrangement places the parts as it says; a paste of 500 lines, 10,000 printed lines, and a
@@ -111,6 +116,13 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       the timings' track is `sl-timings`' least width, 28ch of its table, and the steady status
       asks for 24ch of its own text, sharing the toolbar's line at 50rem and taking its own at a
       phone's width, each one property that moves every reader when set on its element;
+    - the playground's one screen, fixed layout, and reservations again in a pinned DejaVu font
+      set, the six faces of Ubuntu's `fonts-dejavu-core`, from `http:dejavu-fonts`:
+      `test/browser/playground-layout-dejavu.test.ts` runs the suite that
+      `playground-layout.test.ts` runs in the machine's fonts, under a test-only fontconfig
+      (`test/browser/fonts.ts`, written under TMPDIR) that shows the browser those six faces
+      alone, and first proves the page draws in DejaVu Sans and DejaVu Sans Mono alone, so a
+      layout that holds in one font set and not the other fails on any machine;
     - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
       absent below; the menu opens `--space-3xs` below Layout, at its inline start, as wide as its
       items and inside the viewport, and has the expected accessibility tree and the APG keys;
@@ -131,8 +143,8 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   playground, `--page playground`, is captured as its viewport alone, the page's one screen, in
   each band of its fixed demo: 390px with the output panel's Output tab and again with its
   Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
-  each chosen through the Layout menu, and with the menu open; and 1376px with the disclosure
-  open, the demo yielding its rows, every part's bottom border a gutter above the viewport's.
+  each chosen through the Layout menu, and with the menu open; and 1376px with the About dialog
+  open.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as
   `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
   is taken only when no width is given. Any other width is a usage error naming the three.
@@ -191,10 +203,11 @@ bundles the four into the one stylesheet every page links. The cascade layers ar
 foundation's (`foundation.tokens.*` through `foundation.theme-menu`), then `site`, then `page`,
 and the browser tier reads that order on each page. Every rule a page adds is in
 `web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
-specificity: the header-actions group at the header's inline end, the space between `main >
-section`s on every page, the components page's specimens, and the app page, the playground's
-one screen, which only a body of class `app` takes. Its spaces are the foundation's `--space-*`
-steps.
+specificity: the header-actions group at the header's inline end, shrinking and wrapping its
+buttons where the row can't hold them on one line, as the playground's three at a phone's width
+and twice the text size; the space between `main > section`s on every page; the components page's
+specimens; and the app page, the playground's one screen, which only a body of class `app` takes.
+Its spaces are the foundation's `--space-*` steps.
 
 A hand page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
@@ -241,14 +254,24 @@ spaces the inline sides and the block end alike.
 Main spans the body's content width, a grid of named lines: `content`, the prose's 80ch, centered
 between two equal side tracks, and `full`, the content and both sides. Its rows are two, by name,
 whatever the prose holds: `prose`, its own height, and `demo`, `1fr`, every row the prose leaves.
-The prose, one block (`.prose`) of the heading, the intro, and a closed disclosure ("What you can
-build here"), sits on `content`; the fixed demo sits on `full`, in `demo`, so it ends a gutter
-above the viewport's bottom, every part's bottom border in view. The demo's own width sets its
-bands. Opening the disclosure takes its rows from the demo, down to the demo's floor (`sl-go-demo`,
-"Fixed layout"); below the floor, the page grows and scrolls down, never sideways. The SDK's
-shell checks all run on the page but main's reading width, and the spike's own check holds the
-prose to 80ch, centered. The disclosure says, in the reader's terms, what a program can be, where
-its other files go, how Run and Stop behave, and that edits last only as long as the tab.
+The prose, one block (`.prose`) of the heading and the lede alone, "Edit the Go below and press
+Run (Ctrl+Enter). Go's own compiler and linker build it right here in your browser.", sits on
+`content`; the fixed demo sits on `full`, in `demo`, so it ends a gutter above the viewport's
+bottom, every part's bottom border in view. The demo's own width sets its bands. Where the
+viewport leaves the demo less than its floor (`sl-go-demo`, "Fixed layout"), as on a short screen
+or at a larger type or text zoom, the page grows and scrolls down, never sideways. The SDK's shell
+checks all run on the page but main's reading width, and the spike's own check holds the prose to
+80ch, centered. The browser tier proves the one screen in the machine's fonts and in the pinned
+DejaVu set, and reports how far above its floor the demo stands at each capture size.
+
+The playground's detail is in its About dialog, `dialog#about`, out of the screen's flow, so no
+font costs the demo a line of it. About, the header's first glyph button, before the shell's Help
+and Settings, shows the icons layer's `info-16` and its key, A, which nothing else on the page or
+in the shell binds; it opens the dialog as Help opens its own, a shortcut dialog headed "About the
+playground", its title focused, closed by its Close or by Escape. The dialog says, in the reader's
+terms, what a program can be, where its other files go, how Run and Stop behave, that edits last
+only as long as the tab, and what a Run downloads, and links to the spike's question and evidence,
+the index. Its width is the prose's 80ch where the viewport has it (`web/pages/page.css`).
 
 ### The Layout menu and the stored arrangement
 
