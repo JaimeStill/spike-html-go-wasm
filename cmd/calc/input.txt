@@ -1,0 +1,19 @@
+# A weekend's shopping, worked out by calc. Each line prints its value; a
+# line starting with let names its value for the lines after. A # starts a
+# comment, like this one.
+#
+# Try a line that fails, such as:  let each = total / 0
+
+let apples = 6 * 0.50
+let bread = 4.25
+let coffee = 2 * 8.75
+let subtotal = apples + bread + coffee
+
+# A coupon takes 4.75 off, then sales tax is 8%.
+let coupon = -4.75
+let rate = 0.08
+let total = (subtotal + coupon) * (1 + rate)
+
+# Split four ways, and what's left on a 25 gift card.
+total / 4
+25 - total

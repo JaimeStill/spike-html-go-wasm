@@ -12,7 +12,7 @@ set -euo pipefail
 export GOOS=js GOARCH=wasm GOWORK=off GOPROXY=off GOTOOLCHAIN=local
 
 mkdir -p dist/go
-for name in hello probe; do
+for name in hello probe calc; do
   go build -trimpath -ldflags="-s -w" -o "dist/go/$name.wasm" "./cmd/$name"
 done
 node scripts/build-toolchain.ts dist/go/toolchain
