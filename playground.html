@@ -1,12 +1,15 @@
 <!doctype html>
 <!-- The playground, a hand page: one sl-go-demo in the source mode, its files editable and
      editable-files on, which opens on hello's source, its one fence equal byte for byte to
-     cmd/hello/main.go (the unit tier holds it). Run compiles and links the reader's files with Go's
+     cmd/hello/main.go (the unit tier holds it). The demo is fixed: held to the viewport's height
+     less the header's, each part in its share. Run compiles and links the reader's files with Go's
      own compiler and linker in the page's worker, then runs main; nothing loads Go, or starts the
-     worker, until a Run. Its script, web/pages/playground.ts, gives the demo the page's one runner.
-     A section after the demo says what a program may hold; the page sets its sections apart, as the
-     foundation leaves that space to the page. The shell is the index's, the same header, dialogs,
-     and unlayered header-actions rule; see index.html for each. -->
+     worker, until a Run. Its script, web/pages/playground.ts, gives the demo the page's one runner
+     and the header's height. The demo takes the body's whole width, main and the prose keeping
+     their reading width. A section after the demo says what a program may hold; the page
+     sets its sections apart, as the foundation leaves that space to the page. The shell is the
+     index's, the same header, dialogs, and unlayered header-actions rule; see index.html for
+     each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -33,6 +36,18 @@
       /* The demo sits apart from the introduction above it. */
       main > sl-go-demo {
         margin-block-start: var(--space-m);
+      }
+      /* The playground is a tool, so the demo, fixed, takes the body's whole content width,
+         beyond main's 80ch reading width, which main itself keeps, as the SDK's shell checks hold
+         it, with the page's prose: the body is the container its width is read from, 100cqi, and
+         the demo's margins, negative where main is narrower, center it on main, which site.css
+         centers in the body at every width. */
+      body {
+        container-type: inline-size;
+      }
+      main > sl-go-demo {
+        inline-size: 100cqi;
+        margin-inline: calc((100% - 100cqi) / 2);
       }
     </style>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
@@ -84,7 +99,7 @@
         Run fetches the toolchain and the standard library's packages your imports need; later Runs
         fetch only the packages a new import adds. <a href="./">The spike's question and evidence</a>.
       </p>
-      <sl-go-demo source editable-files label="Playground">
+      <sl-go-demo source editable-files fixed label="Playground">
 <pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
 // standard library and prints one line. It is a program scenario: the components page's Go demo
 // runs its main to completion in the runtime's worker, which reports the line as stdout output

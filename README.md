@@ -83,7 +83,14 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       standard import only the archives its closure adds, and the edited program's output; a
       compile error; Stop ending a busy loop, the next build fetching no toolchain module; and a
       file the reader adds read through `os.ReadFile` from the working directory, nothing a run
-      writes outliving it.
+      writes outliving it;
+    - the playground's fixed layout: at 390px, 1120px, and 1376px, and with the demo half a rem
+      either side of 44rem and 64rem, each width in its band, a paste of 500 lines into the
+      editor, 10,000 lines printed, and a full timings table changing no part's box, the page
+      never scrolling sideways, and every part inside the demo; a Run, a Stop, a failed build, and
+      a band change keeping the editor's and the console's content and scroll position and the
+      output tab chosen; the phone's output tablist's accessibility tree and keys, and no tablist
+      or tabpanel from 44rem; and a demo without `fixed` laid out as before.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
   (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`, and the playground's
@@ -92,10 +99,13 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   file that names them, each by its content's hash. A bare `vite build` omits the wasm.
 - `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths,
   390px, 1120px, and 1376px, each component on the components page alone at each of them,
-  `--page components/<component>`, as `--page components/console`, and the playground at each,
-  `--page playground`. `--width <px>`, one of the three, captures that width alone, every
-  page's, as `mise run screenshots --page components/controls --width 390`; any other width is a
-  usage error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
+  `--page components/<component>`, as `--page components/console`, and the playground,
+  `--page playground`, its viewport alone, the demo scrolled into it, in each band of its fixed
+  demo: 390px, with the output panel's Output tab and again with its Timings tab, 900px, between
+  44rem and 64rem, and 1120px and 1376px. `--width <px>`, one of the SDK's three, captures that
+  width alone, every page's, as `mise run screenshots --page components/controls --width 390`
+  (the playground's 900px capture is taken only with every width); any other width is a usage
+  error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
   know, and hands it to the capture file.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
@@ -143,9 +153,12 @@ are `protocol.ts`'s.
 
 ## Playground
 
-`playground.html` holds one `sl-go-demo` in the source mode, with `editable-files`, opening on
-hello's source, `cmd/hello/main.go` as it is. Its script, `web/pages/playground.ts`, gives the
-demo the page's one `Runner`. Nothing loads Go until a Run: the first fetches the manifest, the
+`playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
+opening on hello's source, `cmd/hello/main.go` as it is. Its script, `web/pages/playground.ts`,
+gives the demo the page's one `Runner`, and sets `--sl-go-demo-inset` on it to the header's
+height as the header lays out, so the demo is as tall as the viewport less the header in every
+space and type profile. The demo takes the body's whole content width, beyond main's 80ch, so it
+reaches its wide band, while main and the page's prose keep their reading width. Nothing loads Go until a Run: the first fetches the manifest, the
 compiler, the linker, and the archives of the program's import closure, and a later Run fetches
 the manifest again and only the archives a new import adds (see "Runtime", `build(files)`). The
 program's limits and its working directory are the build's. New file adds a file, so the program
@@ -243,9 +256,13 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
   whole log: 10,000 writes, each its own task, render in a few frames. The log grows with its
   lines up to 24rem, or the length the page sets as `--sl-console-max-block-size` on the host,
   and scrolls inside; it is no flex item, which would lay out every row again on each append.
-  - Attributes: `label` (the log's accessible name, "Output" by default).
+  With `fill`, it grows with nothing: the console fills the block size its container gives it,
+  the bar above and the log the rest, whatever the log holds, and the log scrolls inside; its
+  frame's size is contained, so no row is measured to size it.
+  - Attributes: `label` (the log's accessible name, "Output" by default) and `fill` (a boolean:
+    fill the given block size rather than grow with the log).
   - Properties: `log`, the `ConsoleLog` its owner creates and writes; `null`, the default, shows
-    the empty state; and `label`, as its attribute.
+    the empty state; and `label` and `fill`, as their attributes.
   - Events: `clear`, an `Event` that bubbles and is not composed, when Clear is pressed with
     entries shown: a request, which changes nothing until the owner applies it with
     `log.clear()`. Copy sends none: it puts the log's `text()` on the clipboard itself, changing
@@ -312,9 +329,12 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
   start, "Running hello…", and its end, "Finished format", "Finished hello, exit code 0",
   "Stopped spin", or "Failed format: <message>", from the run state's transitions alone: the
   state the toolbar is given is never said, nor a change of the files. The toolbar wraps between
-  its groups, each group's controls together. Nothing moves.
-  - Attributes: `editable-files` (a boolean: show the Files group) and `label` (the toolbar's
-    accessible name, "Controls" by default).
+  its groups, each group's controls together. With `steady`, the status keeps one line whatever
+  it says: it asks the row for 12rem, so whether it shares the toolbar's line or takes its own
+  follows the width alone, and words longer than its line end in an ellipsis, still whole to
+  assistive technology; the controls' box then follows their width alone. Nothing moves.
+  - Attributes: `editable-files` (a boolean: show the Files group), `steady` (a boolean: the
+    status keeps one line), and `label` (the toolbar's accessible name, "Controls" by default).
   - Properties: `files`, the `FileSet` its owner creates and writes, `null` by default, leaving
     Reset unavailable and the Files group out; `runState`, the `RunState` its owner creates and
     writes, `null` by default, leaving Stop unavailable; and `editableFiles` and `label`, as their
@@ -422,8 +442,9 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     Run builds the files and runs the built program's main; a source demo names no scenario and
     no handler), `editable-files` (a boolean: New file, Rename, and Delete on a program or source
     demo; a handler demo, holding its one input, ignores it), `wrap` (a boolean: long lines
-    wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), and `label` (the demo's
-    accessible name, "<scenario> <handler> demo" by default, "Go source demo" on a source demo).
+    wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), `fixed` (a boolean: the
+    fixed layout, below), and `label` (the demo's accessible name, "<scenario> <handler> demo" by
+    default, "Go source demo" on a source demo).
     A change to `handler` or `source` rebuilds the files from the fences; `wrap` and `tab-size`
     change the settings in place; while an authoring error shows, a change to `scenario`,
     `wrap`, or `tab-size` builds the demo again, so a mended attribute mends it.
@@ -450,9 +471,13 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     the tab now active; Reset restores every file's text as given.
   - Events: none of its own; its parts' requests stop at it. Slots: none, but the fences above.
   - Accessibility: a region named by `label`, holding the toolbar, the tabs and their tabpanel on
-    a program demo, the editor, named by the active file's name, the log, and the timings.
-  - Keyboard: each part's own, in order: the toolbar, the tabs on a program demo, the editor, and
-    the console. Ctrl or Cmd+Enter, from anywhere inside the demo, the editor included, runs it,
+    a program demo, the editor, named by the active file's name, the log, and the timings. A fixed
+    demo below 44rem also holds the output tablist, "Output panel", its tabs "Output" and
+    "Timings", each controlling its part, a tabpanel named by its tab while the tablist shows.
+  - Keyboard: each part's own, in order: the toolbar, the tabs on a program demo, the editor, a
+    fixed demo's output tablist below 44rem, and the console. The output tablist's are the file
+    tabs': Tab reaches the selected tab alone, Left and Right select the previous and the next,
+    wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter, from anywhere inside the demo, the editor included, runs it,
     as Run's `aria-keyshortcuts` declares; with Alt or Shift also held, Enter runs nothing. From
     outside every demo the shortcut runs none, and the foundation's shortcut registry holds no
     entry for it.
@@ -460,6 +485,23 @@ internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `rea
     is 44rem wide, the console and the timings share a row, the timings in a 16rem column and the
     console taking the rest. Every part stays inside the demo at every width, and the demo fits a
     phone's width. Nothing moves.
+  - Fixed layout: with `fixed`, the demo is as tall as the dynamic viewport less
+    `--sl-go-demo-inset`, a length the page sets on the host, its header's height, 0 by default.
+    Its parts share that height in fractions of the demo, never in lengths, each in a frame it
+    scrolls inside, so typing or pasting any number of lines, any output, and a full timings table
+    change no part's box: the editor fills its frame, the console fills its own (`fill`), the
+    timings scroll in theirs, and the toolbar's status is `steady`. Its arrangement follows its
+    own width, by container queries, in three bands:
+    - below 44rem: the toolbar, the tabs over the editor, 3fr of what the toolbar leaves (about
+      60%), then, 2fr, one output panel whose tablist, "Output" and "Timings", shows the console
+      or the timings, the console first;
+    - from 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' 16rem
+      track, 2fr;
+    - from 64rem, editor left: under the toolbar, the editor, 3fr of the width, beside a column,
+      2fr, of the console, 3fr of the height, over the timings, 2fr.
+    Every band places the same parts, so a run, a Stop, a failed build, or a band change keeps
+    each part's content and scroll position, and the output tab chosen; below 44rem the part not
+    shown is hidden by visibility, keeping its own. A demo without `fixed` lays out as above.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the

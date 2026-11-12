@@ -59,11 +59,24 @@
 // the active file, focus staying on Rename; Delete removes the active file and focuses the tab
 // now active.
 //
+// The fixed layout: with `fixed`, the demo is as tall as the dynamic viewport less the length the
+// page sets as --sl-go-demo-inset on it, its header's, and each part keeps a share of that height
+// and scrolls inside it, so no edit, output, or timing changes any part's box. Its arrangement
+// follows its own width, by container queries in go-demo.css: below 44rem, the editor over one
+// output panel whose tablist, Output and Timings, shows the console or the timings; from 44rem to
+// 64rem, the editor over the console and the timings side by side; and from 64rem, the editor
+// beside a column of the console over the timings. The parts are the same elements in every band,
+// only placed again, so a band change keeps each part's content and scroll position, and the panel
+// the tablist doesn't show is hidden by visibility, keeping its own. The output tablist is the tabs
+// pattern, with activation on focus, as the file tabs' (aria.ts's roved, tabs.css's look); its
+// panels are tabpanels only while it shows, which the demo reads from the band the stylesheet
+// names, --band, as its width changes.
+//
 // Ctrl or Cmd+Enter runs the demo from inside it: the keydown is the host's, from any of its
 // parts, the editor included, so it reaches no other demo and no page-wide shortcut. Run declares
 // it by aria-keyshortcuts. The foundation's shortcut registry isn't touched.
 
-import { html, LitElement, type PropertyDeclarations, type PropertyValues } from "lit";
+import { html, LitElement, nothing, type PropertyDeclarations, type PropertyValues } from "lit";
 
 import elements from "@jaimestill/spike-html-apps-foundation/baseline/elements.css" with { type: "css" };
 import reset from "@jaimestill/spike-html-apps-foundation/baseline/reset.css" with { type: "css" };
@@ -74,6 +87,7 @@ import "./console.ts";
 import "./controls.ts";
 import "./file-tabs.ts";
 import "./timings.ts";
+import { roved } from "./aria.ts";
 import type { CodeEditor } from "./code-editor.ts";
 import { ConsoleLog, type Stream } from "./console-log.ts";
 import type { DeleteDetail, NewDetail, RenameDetail } from "./controls.ts";
@@ -83,6 +97,7 @@ import type { FileTabs, SelectDetail } from "./file-tabs.ts";
 import styles from "./go-demo.css" with { type: "css" };
 import { RunState } from "./run-state.ts";
 import { type Phase, RunTimings } from "./run-timings.ts";
+import tabs from "./tabs.css" with { type: "css" };
 
 /** The tag the element defines. */
 export const tagName = "sl-go-demo";
@@ -133,6 +148,19 @@ export interface DemoRunner {
   stop(): Promise<void>;
   listen(listener: (event: DemoEvent) => void): () => void;
 }
+
+/** The output panel's parts, as a fixed demo's output tablist selects them below 44rem. */
+type OutputPart = "console" | "timings";
+
+/** The output tablist's tabs, in order, each its part, which is its element's id too, and its
+ * name. */
+const OUTPUT_TABS: readonly { part: OutputPart; name: string }[] = Object.freeze([
+  { part: "console", name: "Output" },
+  { part: "timings", name: "Timings" },
+]);
+
+/** The band go-demo.css names, in --band, where a fixed demo's output parts are tabs. */
+const TABBED_BAND = "phone";
 
 /** A fence's file, as read from the light DOM, before the set holds it. */
 interface Fence {
@@ -218,7 +246,10 @@ interface Owned {
  * instead, every .go file as package main, and runs its main, naming no scenario. The files are
  * the light DOM's fences (see the module's note). `editable-files` adds New file, Rename, and
  * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
- * to 8 columns, 4 by default. `label` names the demo, a region; by default it names the scenario
+ * to 8 columns, 4 by default. `fixed` holds the demo to the dynamic viewport's height less
+ * --sl-go-demo-inset, a length the page sets on it, its own header's, 0 by default; each part
+ * keeps its share of that height, scrolling inside it, in a layout that follows the demo's width
+ * (see the module's note). `label` names the demo, a region; by default it names the scenario
  * and the handler, "probe format demo", or, on a source demo, "Go source demo".
  *
  * An authoring error, a missing scenario, a source demo naming a scenario or a handler, no fence,
@@ -229,10 +260,13 @@ interface Owned {
  * Events: none of its own; every part's request is the demo's to apply, and goes no further.
  *
  * Keyboard: each part's own, in order: the toolbar, the tabs on a program or source demo, the
- * editor, and the console. Ctrl or Cmd+Enter, from anywhere inside the demo, runs it.
+ * editor, a fixed demo's output tablist below 44rem, and the console. The output tablist's are
+ * the file tabs': Tab reaches the selected tab alone; Left and Right select the previous and the
+ * next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter, from anywhere inside
+ * the demo, runs it.
  */
 export class GoDemo extends LitElement {
-  static styles = [reset, elements, styles];
+  static styles = [reset, elements, tabs, styles];
 
   static properties = {
     runner: { attribute: false },
@@ -243,8 +277,11 @@ export class GoDemo extends LitElement {
     wrap: { type: Boolean },
     tabSize: { type: String, attribute: "tab-size" },
     label: { type: String },
+    fixed: { type: Boolean, reflect: true },
     owned: { state: true },
     problem: { state: true },
+    outputPart: { state: true },
+    tabbed: { state: true },
   } satisfies PropertyDeclarations;
 
   /** The page's runner, which the demo reads and never replaces; null runs nothing. */
@@ -263,10 +300,16 @@ export class GoDemo extends LitElement {
   declare tabSize: string | null;
   /** The demo's accessible name, unless the default. */
   declare label: string | null;
+  /** Whether the demo is held to the viewport's height, each part to its share. */
+  declare fixed: boolean;
   /** The models, once built from the fences. */
   declare private owned: Owned | null;
   /** Why the demo can't run, or null. */
   declare problem: string | null;
+  /** The output part a fixed demo's output tablist selects. */
+  declare private outputPart: OutputPart;
+  /** Whether a fixed demo's output parts are tabs at its width, the band go-demo.css names. */
+  declare private tabbed: boolean;
 
   readonly #internals = this.attachInternals();
   /** The runner listened to, and the function that stops listening to it. */
@@ -277,6 +320,10 @@ export class GoDemo extends LitElement {
   #current: number | null = null;
   /** Shows the active file in the editor, as the files change. */
   readonly #filesChanged = () => this.#show();
+  /** The layout the band was last read from. */
+  #layout: Element | null = null;
+  /** Reads the band as the demo's width changes. */
+  readonly #resized = new ResizeObserver(() => this.#measure());
   /** Builds the models once the document has parsed the demo's children. */
   readonly #parsed = () => {
     this.#build();
@@ -292,8 +339,11 @@ export class GoDemo extends LitElement {
     this.wrap = false;
     this.tabSize = null;
     this.label = null;
+    this.fixed = false;
     this.owned = null;
     this.problem = null;
+    this.outputPart = "console";
+    this.tabbed = false;
     this.#internals.role = "region";
     this.addEventListener("keydown", (event) => this.#keydown(event));
   }
@@ -306,13 +356,39 @@ export class GoDemo extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#listen();
+    this.#resized.observe(this);
     if (!this.owned && !this.problem) this.#build();
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.#listen();
+    this.#resized.disconnect();
     document.removeEventListener("DOMContentLoaded", this.#parsed);
+  }
+
+  /** Whether a fixed demo's output parts are tabs: the band go-demo.css's container queries name
+   * on the layout, read once it lays out at a new width or as the demo becomes fixed or not. */
+  #measure(): void {
+    const layout = this.renderRoot.querySelector(".demo");
+    const band = layout ? getComputedStyle(layout).getPropertyValue("--band").trim() : "";
+    const tabbed = this.fixed && band === TABBED_BAND;
+    if (tabbed !== this.tabbed) this.tabbed = tabbed;
+  }
+
+  /** The output tablist's tabs, in order, once rendered. */
+  get #outputTabs(): HTMLElement[] {
+    return [...this.renderRoot.querySelectorAll<HTMLElement>('.output-tabs [role="tab"]')];
+  }
+
+  /** The output tablist's keys, the file tabs': Left and Right, wrapping, Home and End, each
+   * moving focus to a tab and selecting its part. Any other key is the demo's or the page's. */
+  #outputKeydown(event: KeyboardEvent): void {
+    const tab = roved(event, this.#outputTabs, this);
+    if (!tab) return;
+    event.preventDefault();
+    tab.focus();
+    this.outputPart = tab.dataset.part as OutputPart;
   }
 
   /** Listens to the runner the demo holds while it is in the document, and to no other. */
@@ -552,8 +628,49 @@ export class GoDemo extends LitElement {
     this.#internals.ariaDescription = this.problem ? `Authoring error: ${this.problem}` : null;
   }
 
-  protected override updated(): void {
+  protected override updated(changed: PropertyValues<this>): void {
     this.#show();
+    // A layout appears with the models, and becomes fixed or not with the attribute, neither of
+    // which need change the demo's width, so the band is read again here too.
+    const layout = this.renderRoot.querySelector(".demo");
+    if (changed.has("fixed") || layout !== this.#layout) {
+      this.#layout = layout;
+      this.#measure();
+    }
+  }
+
+  /** The output part's class: unselected on a fixed demo when its tablist selects the other, which
+   * go-demo.css hides only while the tablist shows. */
+  #placed(part: OutputPart): string {
+    return this.fixed && this.outputPart !== part ? "unselected" : "";
+  }
+
+  /** A fixed demo's output tablist, Output and Timings, each tab controlling its part; go-demo.css
+   * shows it below 44rem alone. The timings, holding nothing to focus, take focus as a panel. */
+  #outputTablist() {
+    return html`<div
+      class="tablist output-tabs"
+      role="tablist"
+      aria-label="Output panel"
+      @keydown=${this.#outputKeydown}
+    >
+      ${OUTPUT_TABS.map(({ part, name }) => {
+        const selected = part === this.outputPart;
+        return html`<button
+          type="button"
+          role="tab"
+          class="tab"
+          id=${`${part}-tab`}
+          data-part=${part}
+          aria-selected=${selected ? "true" : "false"}
+          aria-controls=${part}
+          tabindex=${selected ? "0" : "-1"}
+          @click=${() => (this.outputPart = part)}
+        >
+          ${name}
+        </button>`;
+      })}
+    </div>`;
   }
 
   render() {
@@ -567,6 +684,8 @@ export class GoDemo extends LitElement {
     // Until the fences are read, they show as authored.
     if (!owned) return html`<slot></slot>`;
     const program = this.#program;
+    // A fixed demo's output parts are tabpanels only while its tablist shows.
+    const tabbed = this.fixed && this.tabbed;
     // The editor's edits are the active file's, applied to the set; a read-only file takes none.
     const editor = html`<sl-code-editor
       .settings=${owned.settings}
@@ -577,6 +696,7 @@ export class GoDemo extends LitElement {
         .files=${owned.files}
         .runState=${owned.state}
         ?editable-files=${program && this.editableFiles}
+        ?steady=${this.fixed}
         @run=${() => void this.#run()}
         @stop=${this.#stop}
         @reset=${() => owned.files.resetAll()}
@@ -597,8 +717,24 @@ export class GoDemo extends LitElement {
           : html`<div class="files">${editor}</div>`
       }
       <div class="output">
-        <sl-console .log=${owned.log} @clear=${() => owned.log.clear()}></sl-console>
-        <sl-timings .timings=${owned.timings}></sl-timings>
+        ${this.fixed ? this.#outputTablist() : nothing}
+        <sl-console
+          id="console"
+          class=${this.#placed("console")}
+          role=${tabbed ? "tabpanel" : nothing}
+          aria-labelledby=${tabbed ? "console-tab" : nothing}
+          ?fill=${this.fixed}
+          .log=${owned.log}
+          @clear=${() => owned.log.clear()}
+        ></sl-console>
+        <sl-timings
+          id="timings"
+          class=${this.#placed("timings")}
+          role=${tabbed ? "tabpanel" : nothing}
+          aria-labelledby=${tabbed ? "timings-tab" : nothing}
+          tabindex=${tabbed ? "0" : nothing}
+          .timings=${owned.timings}
+        ></sl-timings>
       </div>
     </div>`;
   }

@@ -9,8 +9,11 @@
  * buttons at its end, over the log, one frame that grows with its lines up to its max block size,
  * 24rem unless the page sets --sl-console-max-block-size on the host, and scrolls up and down
  * inside it. The frame is no flex or grid item, whose size would be measured from every row on
- * each append (console.ts). Lines wrap, anywhere if they must, so nothing
- * scrolls sideways, and keep their spaces, tabs, and blank lines as written.
+ * each append (console.ts). With fill, the host is a grid as tall as its container makes it, the
+ * bar's row and the frame's, which takes the rest whatever it holds: the frame's size is
+ * contained, so no row of it is measured to size it, and the log scrolls inside it. Lines wrap,
+ * anywhere if they must, so nothing scrolls sideways, and keep their spaces, tabs, and blank lines
+ * as written.
  *
  * Every line has a gutter at its start, as wide as the stderr cue, so stdout and stderr text start
  * in one column. stdout is the page's text on the log's surface. stderr's line is the palette's red
@@ -32,6 +35,12 @@
 :host {
   display: block;
   contain: inline-size;
+}
+
+/* Filling: the bar's row, then the frame's, taking the rest of the host's given block size. */
+:host([fill]) {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .bar {
@@ -83,6 +92,14 @@
   color: var(--fg);
   font-family: var(--font-code);
   line-height: var(--leading-code);
+}
+
+/* Filling, the frame is as tall as its row and no taller or shorter for what it holds: its size
+   contained, its rows are never measured to size it. */
+:host([fill]) .frame {
+  min-block-size: 0;
+  max-block-size: none;
+  contain: size;
 }
 
 .frame:focus-visible {

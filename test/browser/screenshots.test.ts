@@ -8,8 +8,8 @@
 // focus-start mark the page's first, or none for a component with no focus state, and a run of one
 // at one --width prints that component's few tiles at that width alone and leaves nothing under
 // its TMPDIR. A --width not among the SDK's, or with no value, is a usage error naming the widths,
-// capturing nothing. The playground's capture, --page playground, is the page whole at each of the
-// SDK's widths.
+// capturing nothing. The playground's capture, --page playground, is the viewport alone in each
+// band of its fixed demo, the phone's also with its Timings tab.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -31,7 +31,7 @@ import {
 } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
-import description, { COMPONENTS } from "../../scripts/screenshots.config.ts";
+import description, { COMPONENTS, MIDDLE } from "../../scripts/screenshots.config.ts";
 
 const root = join(import.meta.dirname, "../..");
 const config = join(root, "scripts/screenshots.config.ts");
@@ -155,11 +155,18 @@ describe("a component's capture", () => {
     assert.deepEqual(run.left, [], "TMPDIR is left empty");
   });
 
-  test("the capture file captures the playground whole at each of the SDK's widths", () => {
+  test("the capture file captures the playground's viewport in each band of its fixed demo, and the phone's Timings tab", () => {
     const described = description.pages.find(({ name }) => name === "playground");
+    const [phone, wide, wider] = WIDTHS.map(({ width }) => width);
     assert.deepEqual(
       described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
-      WIDTHS.map(({ width }) => [`playground-${width}`, width, true]),
+      [
+        [`playground-${phone}`, phone, false],
+        [`playground-timings-${phone}`, phone, false],
+        [`playground-${MIDDLE.width}`, MIDDLE.width, false],
+        [`playground-${wide}`, wide, false],
+        [`playground-${wider}`, wider, false],
+      ],
     );
   });
 

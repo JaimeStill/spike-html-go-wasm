@@ -5,11 +5,16 @@
 // component, --page components/<component>, each the page whole at each of the same widths, one
 // state per width, with every other component's section hidden, and the controls' with New file's
 // form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run,
-// and no Go loads; and the playground, --page playground, whole at each of the same widths, its
-// demo as before a Run, on hello's source. The components page shows each state once and its
-// layout follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH
-// set, by --width, every page, the index's, each component's, and the playground's, takes only
-// that width's states. The SDK's widths over the whole components page grew with every component,
+// and no Go loads; and the playground, --page playground, its demo as before a Run, on hello's
+// source: the viewport alone, the demo scrolled to its end, not the page whole, since its fixed
+// demo is as tall as the viewport less the header, and a viewport grown to the page would grow the
+// demo with it. It is captured in
+// each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
+// again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and
+// 1376px, the wide band's editor left. The components page shows each state once and its layout
+// follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set,
+// by --width, every page, the index's, each component's, and the playground's, takes only that
+// width's states, so the 900px capture, at no SDK width, is taken only when every width is. The SDK's widths over the whole components page grew with every component,
 // so each component is captured alone. The description's facets, --all's profiles, the registry's
 // profiles, and its server, which serves the site as the browser tier serves it, by the SDK's
 // served(), under the base, are the SDK's.
@@ -92,6 +97,46 @@ const opened =
     if (step) await page.evaluate(step);
   };
 
+/** The width that puts the playground's fixed demo between its 44rem and 64rem bands, at the 1120px
+ * capture's height. */
+export const MIDDLE = { width: 900, height: 700 };
+
+/** Scrolls the page until the playground's demo ends at the viewport's end, so the capture holds
+ * the demo whole, as tall as the viewport less the header. */
+const demoInView: Step = async (page: Page) => {
+  await page.evaluate(
+    `document.querySelector("sl-go-demo").scrollIntoView({ block: "end", behavior: "instant" })`,
+  );
+};
+
+/** Selects the playground demo's Timings tab, its phone band's output panel, the demo in view. */
+const timingsTab: Step = async (page: Page) => {
+  await page.evaluate(
+    `document.querySelector("sl-go-demo").shadowRoot.querySelector('.output-tabs [data-part="timings"]').click()`,
+  );
+  await demoInView(page);
+};
+
+/** The playground's states: the viewport alone, the demo scrolled into it, in each band of its
+ * fixed demo, and the phone's with its Timings tab, each named as the SDK names a page's, the
+ * width last. */
+const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
+  const [phone, ...wide] = WIDTHS;
+  const state = (viewport: { width: number; height: number }, open = demoInView, tab = "") => ({
+    name: `playground-${tab}${viewport.width}`,
+    caption: `${path}, ${tab ? "Timings tab, " : ""}${viewport.width}px`,
+    viewport,
+    full: false,
+    open,
+  });
+  return [
+    state(phone),
+    state(phone, timingsTab, "timings-"),
+    state(MIDDLE),
+    ...wide.map((viewport) => state(viewport)),
+  ];
+};
+
 const described = description({
   root,
   pages: ["index.html", "components.html", "playground.html"],
@@ -118,5 +163,8 @@ export default {
   ...described,
   pages: described.pages
     .flatMap((page) => (page.name === "components" ? perComponent(page) : [page]))
+    .map((page) =>
+      page.name === "playground" ? { ...page, states: playgroundStates(page) } : page,
+    )
     .map((page) => ({ ...page, states: page.states?.filter(kept) })),
 };

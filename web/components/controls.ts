@@ -28,7 +28,8 @@
 // The status, a polite live region beside the toolbar, says a run's start and its end, derived
 // from the RunState's transitions: a run beginning, or a pending run ending. The state as it is
 // when the controls first hold it is never said, so a page that loads with a run pending, or one
-// finished, announces nothing until something changes.
+// finished, announces nothing until something changes. With `steady`, as a fixed Go demo sets it,
+// the status keeps one line, so what it says never changes the toolbar's box (controls.css).
 
 import { html, LitElement, nothing, type PropertyDeclarations, type TemplateResult } from "lit";
 
@@ -113,6 +114,10 @@ export function stem(name: string): string {
  * Rename always, and Delete unless the set refuses to remove the active file, as the last. With no
  * set, Reset is unavailable and the files group isn't shown; with no run state, Stop is.
  *
+ * `steady` keeps the status to one line whatever it says, beside the toolbar where the row leaves it
+ * room, else on a line of its own, its words cut short with an ellipsis where they outrun it, so
+ * the controls' box follows their width alone.
+ *
  * The toolbar is named by `label`, "Controls" by default. Run carries aria-keyshortcuts,
  * "Control+Enter Meta+Enter", the shortcut its owner handles from inside the demo.
  *
@@ -134,6 +139,7 @@ export class Controls extends LitElement {
     runState: { attribute: false },
     editableFiles: { type: Boolean, attribute: "editable-files" },
     label: { type: String },
+    steady: { type: Boolean, reflect: true },
     status: { state: true },
     current: { state: true },
     renaming: { state: true },
@@ -150,6 +156,8 @@ export class Controls extends LitElement {
   declare editableFiles: boolean;
   /** The toolbar's accessible name. */
   declare label: string;
+  /** Whether the status keeps one line, so its words never change the controls' box. */
+  declare steady: boolean;
   /** What the status says: the last transition's words, or nothing. */
   declare private status: string;
   /** The control holding the toolbar's tab stop. */
@@ -170,6 +178,7 @@ export class Controls extends LitElement {
     this.runState = null;
     this.editableFiles = false;
     this.label = "Controls";
+    this.steady = false;
     this.status = "";
     this.current = "run";
     this.renaming = "";

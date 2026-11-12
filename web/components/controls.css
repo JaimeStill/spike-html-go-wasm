@@ -8,7 +8,10 @@
  * The host is a block holding one row: the toolbar at its start and the status at its end. The row
  * wraps, the status first, onto a line of its own; then the toolbar wraps between its groups, so a
  * group's controls stay together, and only a group wider than its container wraps inside itself.
- * The separator is a rule the height of the controls.
+ * The separator is a rule the height of the controls. Steady, the status keeps one line whatever
+ * it says: it asks the row for 12rem, so whether it shares the toolbar's line or takes its own
+ * follows the host's width alone, never its words, and its line is there even empty; words longer
+ * than the line end in an ellipsis, still whole to assistive technology.
  *
  * Each button shows its name beside its glyph only where the toolbar's widest group fits with the
  * names: the host is an inline-size container, and below 26rem the names hide and each glyph shows
@@ -68,6 +71,17 @@
   margin-inline-start: auto;
   color: var(--fg-2);
   font-size: var(--text-s);
+}
+
+/* Steady: one line, a share of the row asked by length, not by the words, and kept when empty. */
+:host([steady]) .status {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  min-block-size: 1lh;
+  overflow: hidden;
+  text-align: end;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Narrower than the widest group with its names: the glyphs alone, the names as hints. Wider: the
