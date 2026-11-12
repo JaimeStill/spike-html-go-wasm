@@ -8,12 +8,19 @@
      web/pages/playground.ts, gives the demo the page's one runner and the reader's arrangement.
      The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
      body of class app (web/pages/page.css): the header, then main across the body's content
-     width, its prose, one block of the heading, the intro, and a closed disclosure saying what a
-     program can be, on its 80ch content column, then the demo on its full column, in the row the
-     prose leaves, a gutter above the viewport's bottom. The demo is fixed, as tall as that row, each
-     part in its share, so opening the disclosure takes its space from the demo, down to the demo's
-     floor, in lines of its editor and console; below that, the page scrolls down. The shell is the index's, the same
-     header, dialogs, and shared sheet; see index.html for each. -->
+     width, its prose, the heading and a short lede alone, on its 80ch content column, then the
+     demo on its full column, in the row the prose leaves, a gutter above the viewport's bottom. The
+     demo is fixed, as tall as that row, each part in its share, never below its floor, in lines of
+     its editor and console; below that, as at a larger type or text zoom, the page scrolls down.
+     The playground's detail, what a program can be, where its other files go, how Run and Stop
+     behave, and what a Run downloads, is in dialog#about, out of the screen's flow, so no font
+     the reader's machine draws it in costs the demo a line. The shell is the index's, the same
+     header, dialogs, and shared sheet; see index.html for each. The header's group adds About,
+     first, before the shell's Help and Settings, so theirs keep their places at the inline end:
+     a glyph button in the same pattern, its glyph info-16, its key A, which no binding on the
+     page or in the shell (?, S, P, C, H, L, J, K, T) takes, sending show-modal to dialog#about,
+     headed "About the playground", a shortcut dialog as Help is, its heading taking focus as it
+     opens, closed by its Close or by Escape. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -33,6 +40,20 @@
   <body class="app">
     <header>
       <div class="header-actions">
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="about"
+          command="show-modal"
+          aria-label="About"
+          data-keys="a"
+          interestfor="about-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/info-16"></svg>
+          <span aria-hidden="true"><kbd>A</kbd></span>
+        </button>
+        <div id="about-hint" class="glyph-hint" popover="hint" aria-hidden="true">About</div>
         <button
           type="button"
           class="glyph-button"
@@ -67,31 +88,9 @@
       <div class="prose">
         <h1>Playground</h1>
         <p>
-          Edit the Go below and Run it: Go's own compiler and linker, built for
-          <code>GOOS=js</code>, compile and link your files here in the page, then your program's
-          main runs, its output and exit in the console and each phase's time beside it. The
-          first Run fetches the toolchain and the standard library's packages your imports need;
-          later Runs fetch only the packages a new import adds.
-          <a href="./">The spike's question and evidence</a>.
+          Edit the Go below and press Run (<kbd>Ctrl+Enter</kbd>). Go's own compiler and linker
+          build it right here in your browser.
         </p>
-        <details>
-          <summary>What you can build here</summary>
-          <p>
-            Your <code>.go</code> files build together as one <code>main</code> package, using only
-            the standard library. There's no <code>go.mod</code>, no other packages of your own, no
-            cgo or assembly, and nothing passed in as arguments or standard input.
-          </p>
-          <p>
-            Any other file you add sits next to your program, so
-            <code>os.ReadFile("input.txt")</code> will find it. Each Run starts fresh from your
-            files, so anything the program writes is gone by the next one.
-          </p>
-          <p>
-            Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays
-            loaded after a Stop, so the next Run is quick. Your edits live only in this tab: reload,
-            and you're back to where you started.
-          </p>
-        </details>
       </div>
       <sl-go-demo source editable-files fixed label="Playground">
 <pre data-file="main.go"><code class="language-go">// Command calc runs a tiny calculator language, one line at a time, over the script in input.txt.
@@ -473,6 +472,44 @@ total / 4
 </code></pre>
       </sl-go-demo>
     </main>
+    <dialog id="about" aria-labelledby="about-title">
+      <header class="dialog-header">
+        <h2 id="about-title" tabindex="-1" autofocus>About the playground</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="about"
+          command="close"
+          aria-label="Close"
+          interestfor="about-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="about-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <p>
+        Your <code>.go</code> files build together as one <code>main</code> package, using only
+        the standard library. There's no <code>go.mod</code>, no other packages of your own, no
+        cgo or assembly, and nothing passed in as arguments or standard input.
+      </p>
+      <p>
+        Any other file you add sits next to your program, so
+        <code>os.ReadFile("input.txt")</code> will find it. Each Run starts fresh from your
+        files, so anything the program writes is gone by the next one.
+      </p>
+      <p>
+        Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays
+        loaded after a Stop, so the next Run is quick. Your edits live only in this tab: reload,
+        and you're back to where you started.
+      </p>
+      <p>
+        The first Run downloads the compiler, the linker, and the standard-library packages your
+        program imports; later Runs download only what a new import adds.
+      </p>
+      <p><a href="./">The spike's question and evidence</a></p>
+    </dialog>
     <dialog id="help" aria-labelledby="help-title">
       <header class="dialog-header">
         <h2 id="help-title" tabindex="-1" autofocus>Keyboard shortcuts</h2>

@@ -2,7 +2,7 @@
 # Fails naming mise run install when a tool a task needs is missing: the node_modules tooling, and
 # typescript-go's tsc, the pinned mise tool; Go, node, golangci-lint, shellcheck, and actionlint,
 # and go.mod's requirements in the module cache; and with `browser`, the pinned
-# chrome-headless-shell.
+# chrome-headless-shell and the pinned DejaVu fonts, the browser tier's second font set.
 # Adapted from spike-html-apps-foundation (d5037b4): scripts/preflight.sh, without the browser
 # check.
 # Adapted from spike-html-apps-foundation (d5037b4): scripts/preflight.sh, with vite among the
@@ -43,3 +43,6 @@ if [[ "$("$shell" --version)" != *" $pin" ]]; then
   echo "preflight: $shell isn't chrome-headless-shell $pin; give the pin its own sha256" >&2
   exit 1
 fi
+# The browser tier's DejaVu run draws from the archive's ttf/ (test/browser/fonts.ts).
+fonts=$(mise where http:dejavu-fonts 2>/dev/null) || fail "the DejaVu fonts (http:dejavu-fonts)"
+[[ -f $fonts/ttf/DejaVuSans.ttf ]] || fail "the DejaVu fonts (http:dejavu-fonts)"

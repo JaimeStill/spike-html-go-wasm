@@ -5,8 +5,8 @@
 // sl-site-nav in the header, and no site-nav.js loaded, which defines it; the build bundles the
 // module, so the registry rather than a request names it. The playground is an app page, its main
 // across the body's content width, so it runs every check but main's reading width,
-// holdsReadingWidth; a check of the spike's own holds its prose, the heading, the intro, and the
-// disclosure, to 80ch, centered, instead. The crawl, from the index, checks every
+// holdsReadingWidth; a check of the spike's own holds its prose, the heading and the lede, to
+// 80ch, centered, instead. The crawl, from the index, checks every
 // copied page, none here, and loads each hand page it reaches: it reaches exactly the index and,
 // by the index's links, the components page and the playground. No page holds an SDK fence, so
 // the SDK's palette check has nothing to run on; the components page's editors are held to its
@@ -177,7 +177,7 @@ describe("the site under its base", () => {
     }
   });
 
-  test(`${APP}'s prose, its heading, intro, and disclosure, holds its 80ch reading width, centered, at 1600px and 1120px, and the whole width less the gutters at 390px`, async () => {
+  test(`${APP}'s prose, its heading and lede, holds its 80ch reading width, centered, at 1600px and 1120px, and the whole width less the gutters at 390px`, async () => {
     const page = await browser.open(`${server.origin}${APP}`);
     try {
       for (const width of [1600, 1120, 390]) {
@@ -195,7 +195,7 @@ describe("the site under its base", () => {
             ch,
             viewport,
             gutter: parseFloat(getComputedStyle(document.body).paddingInlineStart),
-            prose: [...main.querySelectorAll(":scope > .prose > :is(h1, p, details)")].map(
+            prose: [...main.querySelectorAll(":scope > .prose > *")].map(
               (element) => {
                 const { left, right, width } = element.getBoundingClientRect();
                 return [left, viewport - right, width];
@@ -203,7 +203,7 @@ describe("the site under its base", () => {
             ),
           };
         })()`);
-        assert.equal(read.prose.length, 3, "the heading, the intro, and the disclosure");
+        assert.equal(read.prose.length, 2, "the heading and the lede");
         const column = Math.min(read.ch, read.viewport - 2 * read.gutter);
         for (const [left, right, inline] of read.prose) {
           assert.ok(Math.abs(inline - column) <= 0.5, `at ${width}px the prose is ${inline}px`);

@@ -86,9 +86,8 @@ export const layout = async (page: Page): Promise<Layout> => {
 
 /** The playground's one screen as laid out: the viewport's height and width, less any scrollbar;
  * the body's padding at the inline start, the inline end, and the block end, the page's gutter;
- * how far the page scrolls each way, and its height; the top and bottom edges, on the page, of the
- * disclosure and of the demo, and the demo's inline start and end in the viewport; and whether the
- * disclosure is open. Each length to a hundredth of a px. */
+ * how far the page scrolls each way, and its height; the demo's top and bottom edges, on the page,
+ * and its inline start and end in the viewport. Each length to a hundredth of a px. */
 export interface Screen {
   viewport: number;
   width: number;
@@ -96,10 +95,8 @@ export interface Screen {
   down: number;
   sideways: number;
   height: number;
-  details: [number, number];
   demo: [number, number];
   sides: [number, number];
-  open: boolean;
 }
 
 /** The playground's one screen, as Screen says, read once two frames have painted. */
@@ -113,7 +110,6 @@ export const screen = async (page: Page): Promise<Screen> => {
     };
     const html = document.documentElement;
     const body = getComputedStyle(document.body);
-    const details = document.querySelector("main > .prose > details");
     const demo = ${PLAYGROUND}.getBoundingClientRect();
     return {
       viewport: innerHeight,
@@ -122,10 +118,8 @@ export const screen = async (page: Page): Promise<Screen> => {
       down: html.scrollHeight - html.clientHeight,
       sideways: html.scrollWidth - html.clientWidth,
       height: html.scrollHeight,
-      details: edges(details),
       demo: edges(${PLAYGROUND}),
       sides: [round(demo.left), round(demo.right)],
-      open: details.open,
     };
   })()`);
 };
@@ -145,16 +139,6 @@ export const frameLines = (page: Page): Promise<{ editor: number; log: number }>
       frame.getBoundingClientRect().height / parseFloat(getComputedStyle(frame).lineHeight);
     return { editor: lines(editor), log: lines(log) };
   })()`);
-
-/** Opens or closes the playground's disclosure by a click on its summary, as a reader does,
- * resolving once it is open or closed. */
-export async function disclose(page: Page, open: boolean): Promise<void> {
-  await page.evaluate(`(() => {
-    const details = document.querySelector("main > .prose > details");
-    if (details.open !== ${open}) details.querySelector("summary").click();
-  })()`);
-  await until(page, `document.querySelector("main > .prose > details").open === ${open}`, 5000);
-}
 
 /** Asserts that the page doesn't scroll sideways and every part shown lies inside the demo. */
 export function contained({ parts, sideways }: Layout, width: number | string) {
