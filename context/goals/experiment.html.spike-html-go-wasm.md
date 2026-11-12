@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
+- **State:** building
 - **Task:** playground
 - **Branch:** playground
 
@@ -131,7 +131,8 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
               18. The playground is one screen, laid out in CSS alone: the header, the heading,
                   the intro, a closed disclosure, then the demo's container, which takes every
                   row of the viewport that is left. At 390, 1120, and 1376 px, with the
-                  disclosure closed, the demo's bottom edge meets the viewport's and the page
+                  disclosure closed, the demo ends the page's inline gutter above the
+                  viewport's bottom edge, so every part's bottom border shows, and the page
                   scrolls neither way. Opening the disclosure takes its space from the demo's
                   container, down to a floor at which every part stays usable (stated as a
                   share, not a length); below that floor the page scrolls. The page runs no
@@ -626,6 +627,9 @@ slices 8/8 committed · standards done · spec done · editor done (redirect: fi
   constants and merged the Layout menu's duplicated close into `closeMenu`; the spec review found
   no gaps.
 
+- playground (architect, after the brief): the demo ends the page's inline gutter above the
+  viewport's bottom, the same space as at its sides. Rejected: the demo meeting the viewport's
+  bottom edge, where every part's bottom border sat on the last pixel and read as cut off.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
