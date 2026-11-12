@@ -83,8 +83,9 @@ export interface HeldTool {
  *
  * An adopt hands a worker modules compiled before, which it holds as a load's or a build's, with
  * no fetch and no compile: the program, when there is one, and the toolchain's modules. The
- * runner's Stop sends it to the fresh worker, and a build of the files the last build built sends
- * it in the build's place.
+ * runner's Stop sends it to the fresh worker, and a build of the .go files the last build built
+ * sends it in the build's place, the program carrying that build's files, so its runs read the
+ * build's own non-Go files.
  *
  * A run with no handler runs the program's main; with one, it calls that handler with input. */
 export type Request =

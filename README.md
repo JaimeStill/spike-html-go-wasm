@@ -21,7 +21,9 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm` and fails unless
   `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` or `.a` archive is
   tracked. It runs the Go tests as wasm under node twice: on node's fs, and on the runtime's
-  in-memory fs, where `test/memfs` drives it through package `os`. It type-checks the configs,
+  in-memory fs, where `test/memfs` drives it through package `os`, and where `cmd/calc`'s tests
+  run the playground's starter over its shipped `input.txt` and over a script with failing
+  lines, holding its output and its exit code. It type-checks the configs,
   the web tiers, and the suite with tsc and runs `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
@@ -34,7 +36,8 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
     `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change
     events.
     It holds each program demo's go fence on the components page to its scenario's source, byte
-    for byte, and the playground's demo to hello's, `cmd/hello/main.go`. It fails if a module
+    for byte, and the playground's demo to the starter's files in `cmd/calc/`, its four `.go`
+    files and its `input.txt`. It fails if a module
     under `web/components` or `web/pages` registers a page shortcut through the foundation's
     `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
@@ -81,9 +84,12 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       stopping the build, which rejects as stopped, the source demo's console holding none of the
       other request's events; and Ctrl+Enter and Cmd+Enter building and running the edited
       program, and Reset restoring the source as given;
-    - the playground: no Go before a Run; the first Run fetching the manifest, the compiler, the
-      linker, and only hello's closure of archives, and printing hello with exit 0 and every phase
-      of a build; a Run after an edit fetching no toolchain module and no archive held, a new
+    - the playground: the starter's five files, `main.go` active, and no Go before a Run; the
+      first Run fetching the manifest, the compiler, the linker, and only the starter's closure of
+      archives, and printing its results with exit 0 and every phase of a build; an edit to
+      `input.txt` alone building nothing, the Run fetching nothing and printing the new input's
+      results, a failing line's `input.txt:<n>: <reason>` on stderr with exit 1; a Run after an
+      edit to `main.go` fetching no toolchain module and no archive held, a new
       standard import only the archives its closure adds, and the edited program's output; a
       compile error; Stop ending a busy loop, the next build fetching no toolchain module; and a
       file the reader adds read through `os.ReadFile` from the working directory, nothing a run
@@ -156,9 +162,10 @@ are `protocol.ts`'s.
   files to their closure through it; fetches the compiler, the linker, and each archive of the
   closure the worker doesn't hold yet, under their content-hashed names; compiles every `.go` file
   as package main with Go's own compiler and links it with Go's own linker, each step its own
-  phase, `go-compile` and `link`; and compiles the linked module. Files identical to the last
-  successful build's, the same names and texts in the same order, hold that program again,
-  fetching, compiling, and linking nothing.
+  phase, `go-compile` and `link`; and compiles the linked module. `.go` files identical to the
+  last successful build's, the same names and texts in the same order, hold that program again,
+  fetching, compiling, and linking nothing, whatever the non-Go files are: the runs that follow
+  read this build's non-Go files, so editing `input.txt` alone builds nothing.
   - A failed step's output, the compiler's diagnostics (to stdout) or the linker's (to stderr),
     reaches the runner's listeners as written, positions relative to the file's name
     (`main.go:5:27: undefined: x`), then an exit event naming the step (`compile exited with code
@@ -200,14 +207,23 @@ layer. A page rule goes in `web/pages/page.css`.
 ## Playground
 
 `playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
-opening on hello's source, `cmd/hello/main.go` as it is. Its script, `web/pages/playground.ts`,
+opening on the starter, a tiny calculator language in `cmd/calc/`, its files as they are:
+`main.go`, active, which reads `input.txt` from the working directory and runs it line by line;
+`lexer.go`, `parser.go`, and `eval.go`, which turn each line into tokens, a syntax tree, and a
+value; and `input.txt`, a worked shopping total whose top comment suggests a line to try that
+fails. A script has `let` bindings, decimal numbers, `+ - * /` with unary minus and parentheses,
+and `#` comments; each line's result prints on stdout, a `let` as `name = value`, and a failing
+line prints `input.txt:<line>: <reason>` on stderr, the run going on, and the program exiting 1.
+The check builds the starter for `GOOS=js` with the other entrypoints and runs its Go tests.
+Its script, `web/pages/playground.ts`,
 gives the demo the page's one `Runner` and the reader's arrangement. Nothing loads Go until a
 Run: the first fetches the manifest, the compiler, the linker, and the archives of the program's
 import closure, and a later Run fetches the manifest again and only the archives a new import
 adds (see "Runtime", `build(files)`). The program's limits and its working directory are the
 build's. New file adds a file, so the program can read a non-Go file such as `input.txt` through
-`os.ReadFile`. Stop keeps the compiled toolchain. The reader's files live only in the page: a
-reload opens on hello again, and no file is shared or stored.
+`os.ReadFile`. A Run after an edit to non-Go files alone reruns the program built last over
+them, with no build. Stop keeps the compiled toolchain. The reader's files live only in the
+page: a reload opens on the starter again, and no file is shared or stored.
 
 ### The one-screen page
 

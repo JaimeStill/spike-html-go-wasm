@@ -15,8 +15,9 @@
 // one way to end Go that never yields (GOMAXPROCS is 1 under js, and nothing preempts a busy
 // loop): it terminates the worker, starts a fresh one, and posts it the kept modules, so the next
 // run instantiates at once, and the next build fetches and compiles no toolchain module. A build
-// of the files the last successful build built holds its program again, by the same adopt, with
-// no fetch, compile, or link.
+// whose .go files are the last successful build's holds its program again, by the same adopt,
+// with no fetch, compile, or link, and with the build's own non-Go files, which only the run
+// reads: editing input.txt alone builds nothing.
 //
 // A built program is held as the scenario "main" (BUILT_SCENARIO), under a URL no load's module
 // has, so a load always replaces it, and a build always replaces a loaded scenario.
@@ -70,7 +71,7 @@ export class Runner {
   #url: string | undefined;
   /** The compiled module of the scenario loaded or built, as the worker answered it. */
   #held: HeldProgram | undefined;
-  /** The last successful build's program, and its files as one key. */
+  /** The last successful build's program, and its .go files as one key. */
   #built: { key: string; program: HeldProgram } | undefined;
   /** The toolchain's compiled modules, as the worker last posted them. */
   #tools: HeldTool[] = [];
@@ -127,20 +128,27 @@ export class Runner {
    * 1"); an import the manifest doesn't hold rejects before the compiler runs, naming the package.
    * A failed build holds nothing, and a run after it finds no scenario loaded.
    *
-   * Files identical to the last successful build's, the same names and texts in the same order,
-   * hold that program again, fetching, compiling, and linking nothing. Stops a pending load,
+   * .go files identical to the last successful build's, the same names and texts in the same
+   * order, hold that program again, fetching, compiling, and linking nothing, whatever the non-Go
+   * files are: the program held carries this build's files, so each run's working directory holds
+   * the non-Go files as given here. Stops a pending load,
    * build, or run first, as Stop does. Starts the worker on the first request.
    */
   async build(files: readonly BuildFile[]): Promise<void> {
     this.#preempt();
     const given = files.map(({ name, text }) => ({ name, text }));
-    const key = JSON.stringify(given);
+    // Only the .go files reach the compiler and the linker; the rest reach only the run.
+    const key = JSON.stringify(given.filter(({ name }) => name.endsWith(".go")));
     const load = this.#begin(BUILT_SCENARIO, BUILT_URL);
     const built = this.#built;
     try {
       if (built?.key === key) {
-        await this.#send({ op: "adopt", program: built.program, tools: [] });
-        if (this.#loads === load) this.#held = built.program;
+        const program = { ...built.program, files: given };
+        await this.#send({ op: "adopt", program, tools: [] });
+        if (this.#loads === load) {
+          this.#held = program;
+          this.#built = { key, program };
+        }
         return;
       }
       const manifest = new URL("toolchain/manifest.json", this.#modules).href;

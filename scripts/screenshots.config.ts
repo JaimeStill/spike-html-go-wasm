@@ -5,7 +5,7 @@
 // component, --page components/<component>, each the page whole at each of the same widths, one
 // state per width, with every other component's section hidden, and the controls' with New file's
 // form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run, and
-// no Go loads; and the playground, --page playground, its demo as before a Run, on hello's source:
+// no Go loads; and the playground, --page playground, its demo as before a Run, on the starter:
 // the viewport alone, the page's one screen, not the page whole, since the page fits its viewport
 // by its demo's row, and a viewport grown to the page would grow the demo with it. It is captured
 // in each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
