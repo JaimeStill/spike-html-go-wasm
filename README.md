@@ -23,10 +23,11 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   tracked. It runs the Go tests as wasm under node twice: on node's fs, and on the runtime's
   in-memory fs, where `test/memfs` drives it through package `os`. Among them, `playground/calc`'s
   tests run the playground's starter over its shipped `input.txt` and over a script with failing
-  lines, and hold its output and its exit code, and each of the four programs' tests holds its
-  exact output and exit 0: `playground/concurrency`'s on every one of several runs, and
-  `playground/stdlib`'s also a malformed or missing `input.json`'s one stderr line and exit 1. It type-checks the configs, the web tiers, and
-  the suite with tsc and runs `mise run build`.
+  lines, and hold its output and its exit code. Each of the four programs' tests holds its exact
+  output and exit 0; `playground/concurrency`'s hold it over six runs and hold `GOMAXPROCS` at 1,
+  and `playground/stdlib`'s hold the one stderr line and exit 1 of a malformed and of a missing
+  `input.json`. It type-checks the configs, the web tiers, and the suite with tsc and runs
+  `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
     checks the playground's toolchain: each file its manifest names exists under its content's
@@ -172,10 +173,12 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   costs. For each, in a browser of its own, so its worker is fresh and its cache empty, opened by
   its fragment, it prints the phase timings of the first Run, cold, and of a Run after an edit to
   `main.go`, warm, as the demo's timings show them, and its closure: the count of standard-library
-  archives the cold Run fetched, their bytes as fetched, and their bytes gzipped by node's zlib,
-  since Vite's preview serves them raw. The table is the test's diagnostics, written nowhere else;
-  only a Run that doesn't finish fails it. The browser tier runs the same file among its others,
-  so its timings there are a busier machine's.
+  archives the cold Run fetched, their bytes as `dist/` holds them and Vite's preview serves them,
+  and their bytes gzipped by node's zlib at its default level, since the preview doesn't gzip.
+  The timings table has a column only for a phase some Run recorded, so it has no Start column: a
+  source build records no Start phase. The tables are the test's diagnostics, written nowhere
+  else; only a Run that doesn't finish fails it. The browser tier runs the same file among its
+  others, so its timings there are a busier machine's.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
 - `mise run live [base URL]`: check that the deployed site, at its Pages URL or the base given,
@@ -280,10 +283,12 @@ never built into the site:
 - Concurrency (`playground/concurrency`): goroutines, channels, `select`, a `WaitGroup`, and a
   pipeline, in `main.go` and `pipeline.go`, its output in a fixed order whatever the scheduling;
   `GOMAXPROCS` is 1 under `GOOS=js`, so its goroutines take turns on one thread.
-- Standard library (`playground/stdlib`): reads `input.json` from its working directory, decodes
-  it with `encoding/json`, works over it with `slices` and `regexp`, and prints a `text/template`
-  report. A malformed `input.json` prints one stderr line naming the JSON error, found through
-  `errors.As`, and exits 1.
+- Standard library (`playground/stdlib`): prints release notes from a commit log. It reads
+  `input.json` from its working directory, decodes it with `encoding/json`, takes each commit
+  message apart with `regexp`, sorts and groups with `slices`, and prints a `text/template`
+  report, all in `main.go`. A malformed `input.json` prints one stderr line naming the JSON error,
+  found through `errors.As`, at its `input.json:<line>:<column>`, and a missing one prints one
+  line found through `errors.Is`; either exits 1.
 
 The Program select, a native `<select id="program">` labelled Program, offers Calculator, Basics,
 Generics, Concurrency, and Standard library, their values `calc`, `basics`, `generics`,
@@ -645,13 +650,13 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
 - `./go-demo.js`: `sl-go-demo`, live Go: the element composing `sl-controls`, `sl-file-tabs`,
   `sl-code-editor`, `sl-console`, and `sl-timings` over the page's runner, and the one owner of
   their models. It builds a `FileSet` from its fences, unless the page gives it one as its `files`
-  property, an `EditorSettings` from its attributes,
-  and a `ConsoleLog`, a `RunTimings`, and a `RunState` of its own; it is the only writer of each,
-  and applies every request its parts send. It imports nothing from the runtime and fetches
-  nothing: it reads `DemoRunner`, the runtime's `Runner`'s structural subset, `load`, `build`,
-  `run`, `stop`, and `listen`, with the output, exit, and timing events re-declared
-  (`DemoEvent`), and the page that passes it the runtime's `Runner` has TypeScript check the one
-  against the other there (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
+  property, an `EditorSettings` from its attributes, and a `ConsoleLog`, a `RunTimings`, and a
+  `RunState` of its own; it is the only writer of each, and applies every request its parts send.
+  It imports nothing from the runtime and fetches nothing: it reads `DemoRunner`, the runtime's
+  `Runner`'s structural subset, `load`, `build`, `run`, `stop`, and `listen`, with the output,
+  exit, and timing events re-declared (`DemoEvent`), and the page that passes it the runtime's
+  `Runner` has TypeScript check the one against the other there
+  (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
   - Modes: with `handler` named, Run loads the scenario and calls that handler with the one file's
     text, editable; its answer, a string as it is or anything else as indented JSON, or its error,
     shows as the console's result block. With none, Run runs the prebuilt program's main: the
@@ -682,11 +687,14 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   - Properties: `runner`, a `DemoRunner`, the page's one runner, `null` by default, which runs
     nothing; `files`, a `FileSet` the page owns, `null` by default: given one, a program or source
     demo reads no fence and holds no set of its own, and editing, the file actions, Reset, and Run
-    work on the set given; a handler demo refuses one as an authoring error; giving another set,
-    or taking it away, which builds the files from the fences again, is a switch, stopping the
-    demo's pending run, recorded as stopped, and clearing its console and timings; `arrangement`, an `Arrangement`, the page's, which a fixed demo renders from and never
-    writes, `null` by default, placing the editor left with no Layout menu; `problem`, read-only,
-    the authoring error's reason, or `null`; and the attributes'.
+    work on the set given; a handler demo refuses one as an authoring error. Giving another set,
+    or taking it away, which builds the files from the fences again, is a switch: it stops the
+    demo's pending run, recorded as stopped, and gives the demo a new console and timings, both
+    empty; the editor settings and the run state stay, so the status still says how the last run
+    ended, or "Stopped main" after a switch stopped it. `arrangement`, an `Arrangement`, the
+    page's, which a fixed demo renders from and never writes, `null` by default, placing the
+    editor left with no Layout menu; `problem`, read-only, the authoring error's reason, or
+    `null`; and the attributes'.
   - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
     the pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
     Shiki-rendered `<pre class="shiki">` read alike. A file's name is the pre's or its code's

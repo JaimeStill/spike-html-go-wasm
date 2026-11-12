@@ -148,7 +148,7 @@ fence-naming rules from the components tier for the page to reuse, rather than d
 
 ## Progress
 
-slices 5/5 committed · standards ✓ · spec ✓ · editor —
+slices 5/5 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
@@ -741,6 +741,37 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor —
   measure task.
 - programs: switching back to a program compiles and links it again from the archives the worker
   holds. Rejected: holding one built program per program.
+- programs (build): a switch keeps the demo's `RunState` and editor settings and makes a new
+  `ConsoleLog` and `RunTimings`. A pending run is stopped and finished as stopped, so the status
+  reads "Stopped main" over an empty console and timings; after a switch from a finished run, the
+  status still shows that run's outcome.
+- programs (build): a handler demo given `files` shows an authoring error, on its first build and
+  on a later one.
+- programs (build): the fence rules live in their own components module, `fences.ts` (`readFences`,
+  `Fence`). Rejected: exporting them from `go-demo.ts`.
+- programs (build): each option's value is its program's fragment name; the select has
+  `autocomplete="off"`; at narrow widths and large text, the select wraps under the heading.
+- programs (build): About's goroutine and deadlock sentences sit inside the paragraph, after
+  "Stop to cancel."
+- programs (build): generics uses `strings.FieldsSeq` and `slices.Backward`, as `go fix` proposes.
+- programs (build): concurrency doesn't print GOMAXPROCS; a test asserts it is 1 under `GOOS=js`.
+- programs (build): stdlib prints release notes from a commit log, in one `.go` file plus
+  `input.json` (Prettier-formatted). A JSON error's line names `input.json:<line>:<column>`, from
+  the error's Offset less one; a missing `input.json` exits 1, found through
+  `errors.Is(fs.ErrNotExist)`.
+- programs (build): each template's `id` is its program's name, so the SDK's crawl accepts the
+  index's fragment links; an unknown fragment shows the calculator and leaves the URL as it is.
+- programs (build): the report launches a fresh browser profile per program; its raw bytes are the
+  `dist/` files' sizes, its gzip bytes node zlib's at the default level; the warm Run follows a
+  comment appended to `main.go`. It runs in the browser tier (≈53 s of the check) and alone as
+  `mise run report:programs`. It has no Start column, since a source build records no Start
+  phase.
+- programs (standards review): the fence test covers every program file and requires the
+  templates to be exactly the programs; the About test checks elements, not class names;
+  `playground.ts` passes `readFences`' output straight to `FileSet`.
+- programs (spec review): added tests for each program's closure, the archives a program adds in
+  one tab, an edit rerunning, a reload restoring every program, and file actions surviving a
+  switch.
 
 ## Notes
 
@@ -822,10 +853,16 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor —
 - A `@position-try` fallback's `max-inline-size` replaces the element's own, so the fallback must
   restate any cap the element sets.
 
-- The programs task can follow playground/calc's pattern: a package main outside cmd/, its
-  fences checked byte for byte against its files, and its tests run under GOOS=js on node's fs
-  and on the in-memory fs.
-- calc's closure is 58 archives (~5.0 MB gzip), one more than hello's.
+- Each playground program's closure, as the report reads it locally: basics and concurrency 57
+  archives (~4.9 MB gzip), calc and generics 58 (~5.0 MB), stdlib 85 (~8.0 MB). For the measure
+  task.
+- Local cold timings per program: ~1.3–2.3 s in total, Go compile the largest phase at
+  0.65–1.3 s; warm, after an edit to main.go, 0.32–0.66 s. For the measure task.
+- The SDK's crawl fails on a fragment link that names no element on the page, so a deep link to
+  a page's state needs an element carrying that id.
+- Pasting into an empty file in the editor stores an extra trailing newline.
+- In browser tests, retyping a whole main.go through CDP may not finish building; appending
+  through a paste event works.
 
 - With the minimal lede, the demo stands 230px above its floor at 390x844, in the machine's fonts
   and in the DejaVu set alike.
@@ -855,6 +892,10 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor —
   stores, opening on a calculator-language starter program, its detail in an About dialog", since
   the summary otherwise omits the redirect's, the layout foundation's, the starter's, and the
   fix's work.
+- coordinator · roadmap.toml: the programs task's summary becomes "Basics, generics,
+  concurrency, and standard-library programs of the spike's own, edited and run from source in the
+  playground, chosen by a Program select and a URL fragment, each keeping its edits within the tab,
+  with a report of each one's cold and warm timings and closure. Evidence 12."
 - coordinator · roadmap.toml: the sqlate and scenarios tasks' summaries add "with the module's
   js/wasm archives added to the playground's manifest".
 - coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"

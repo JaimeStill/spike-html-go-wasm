@@ -78,21 +78,22 @@ for the Go packages.
   starter and the four programs; the page keeps one `FileSet` per program, built from its fences
   by the demo's own rules (`web/components/fences.ts`), and gives the chosen one to the demo as
   its `files` property, so edits survive switching within the tab. The fragment (`#calc`,
-  `#basics`, `#generics`, `#concurrency`, `#stdlib`) names the program shown, a choice writing it
-  as a new history entry; no fragment, or an unknown one, opens the calculator. The page's detail, what a program can be and
-  how Run and Stop behave, is in an About dialog that the header's About button opens. The
-  check's layout tests run twice: in the machine's fonts, and in a pinned DejaVu font set, the
-  six faces of Ubuntu's fonts-dejavu-core. Planned: workspace modules' archives, added when the
-  sqlate and scenarios tasks first require them.
+  `#basics`, `#generics`, `#concurrency`, `#stdlib`) names the program shown, and each choice
+  writes it as a new history entry; no fragment, or an unknown one, opens the calculator. The
+  page's detail, what a program can be and how Run and Stop behave, is in an About dialog that the
+  header's About button opens. The check's layout tests run twice: in the machine's fonts, and in
+  a pinned DejaVu font set, the six faces of Ubuntu's fonts-dejavu-core. Planned: workspace
+  modules' archives, added when the sqlate and scenarios tasks first require them.
 - **Programs** (`playground/<program>`, each a package main outside `cmd/`, not a scenario): the
   starter, `calc`, a calculator language whose files are the playground demo's own fences, which
   runs the script in `input.txt`; and four programs whose files are templates in the page:
   `basics` (structs, methods, function values, interfaces), `generics` (a constraint, a generic
   type, range-over-func iterators), `concurrency` (goroutines, channels, select, a WaitGroup, a
-  pipeline), and `stdlib` (`input.json` decoded with encoding/json, slices, regexp, and a
-  text/template report). The check vets each and runs its tests under `GOOS=js` on both
-  filesystems; the build never writes them to `dist/`. The browser tier reports each one's cold
-  and warm phase timings and its closure, never as a gate (`mise run report:programs`).
+  pipeline), and `stdlib` (release notes from a commit log in `input.json`, through
+  encoding/json, regexp, slices, and text/template). The check vets each and runs its tests
+  under `GOOS=js` on both filesystems; the build never writes them to `dist/`. The browser tier
+  reports each one's cold and warm phase timings and its closure, never as a gate
+  (`mise run report:programs`).
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
   over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its parent's layout
@@ -107,8 +108,10 @@ for the Go packages.
   their containing block and a form's `--popover-max-inline-size`. The file tabs and the fixed
   demo's output tabs share one sheet, `tabs.css`. No component holds authoritative state:
   DOM-free models, `Arrangement`, `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and
-  `RunState`, hold it, each written by one owner, sl-go-demo or the page. No component imports
-  the runtime. `README.md`, "Components", documents each module.
+  `RunState`, hold it, each written by one owner, sl-go-demo or the page. sl-go-demo builds its
+  `FileSet` from its fences unless the page gives it one as its `files` property; `fences.ts`
+  holds the fence-reading rules, so a page reads a template's fences as the demo would. No
+  component imports the runtime. `README.md`, "Components", documents each module.
 - **Pages** (`web/pages`, the apps tier, for the scripts and the stylesheet the pages load):
   `web/pages/page.css` holds every hand page's own rules in the `page` cascade layer, which comes
   after the foundation's layers and the SDK's `site`; a hand page holds no inline `<style>`. A
@@ -117,8 +120,9 @@ for the Go packages.
   `--page-gutter`, on the inline sides and the block end. `components.html` is a hand page whose
   script, `web/pages/components.ts`, shows every component's states once; its Go demos run hello
   and the probe's handlers over the page's one runner. `playground.html` is a hand page whose
-  script, `web/pages/playground.ts`, gives its one source demo the page's runner and the reader's
-  arrangement. `web/pages/arrangement.ts` owns that stored preference: its `keep()`
+  script, `web/pages/playground.ts`, gives its one source demo the page's runner, the reader's
+  arrangement, and the chosen program's `FileSet`, and keeps the select and the fragment in step.
+  `web/pages/arrangement.ts` owns that stored preference: its `keep()`
   reads the placement from localStorage under `spike-html-go-wasm.arrangement`, gives one
   `Arrangement` to every fixed demo on the page, and stores each Layout menu choice. Planned: hand
   pages and rendered Markdown embedding `<sl-go-demo>` around a go fence.
