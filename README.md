@@ -38,7 +38,9 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
     under `web/components` or `web/pages` registers a page shortcut through the foundation's
     `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
-    and the crawl, and proves each component on the components page:
+    and the crawl, reads each hand page's cascade layers (the foundation's, then `site`, then
+    `page`) and finds no inline `<style>` in its source, and proves each component on the
+    components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
       accessibility tree, its gutter, its loading, its editing keys and events, its settings,
       paste, and read-only;
@@ -169,6 +171,23 @@ are `protocol.ts`'s.
   run at a time; one started while another is pending stops it first, which rejects with
   `"stopped"`, so every event between a request's start and its settling is that request's.
 
+## Pages
+
+Each hand page links the foundation's `page-full.css`, the components' `glyph-button.css`, the
+SDK's `site.css`, and the pages' shared sheet, `web/pages/page.css`, in that order; the build
+bundles the four into the one stylesheet every page links. The cascade layers are the
+foundation's (`foundation.tokens.*` through `foundation.theme-menu`), then `site`, then `page`,
+and the browser tier reads that order on each page. Every rule a page adds is in
+`web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
+specificity: the header-actions group at the header's inline end, the space between `main >
+section`s on every page, the components page's specimens, and the playground's one screen, which
+only a body of class `app` takes. Its spaces are the foundation's `--space-*` steps.
+
+A hand page holds no inline `<style>`. The build writes a page's inline sheet into its head
+before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
+foundation's and reorders every layer on the page, and an unlayered rule there sits above every
+layer. A page rule goes in `web/pages/page.css`.
+
 ## Playground
 
 `playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
@@ -183,7 +202,8 @@ reload opens on hello again, and no file is shared or stored.
 
 ### The one-screen page
 
-The page fits one screen, laid out in CSS alone. The body is at least the viewport's height, a
+The page fits one screen, laid out in CSS alone, by the shared sheet's rules for its body, of
+class `app` (see "Pages"). The body is at least the viewport's height, a
 grid of the header over main. Main is a grid of the heading, the intro, a closed disclosure
 ("What you can build here"), and the demo's container, a size container whose `1fr` row takes
 every row the others leave; the fixed demo fills it (`100cqb`). Opening the disclosure takes its

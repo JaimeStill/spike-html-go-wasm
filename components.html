@@ -29,7 +29,8 @@
      a source demo, editable files built from source in the page, a main.go reading its input.txt
      from the working directory. The
      script gives every demo the page's one runner, which loads Go only on a Run. The shell is the index's, the same header, dialogs,
-     and unlayered header-actions rule; see index.html for each. -->
+     and shared sheet, web/pages/page.css, which also holds the states' layout and sets each
+     section apart; see index.html for each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -38,48 +39,7 @@
     <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
     <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
     <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
-    <style>
-      /* With no site nav to take the header's row, site.css leaves the header-actions group at the
-         row's inline start; the group goes to the inline end at every width, where the SDK's
-         header check holds the buttons when the header has no nav. Unlayered: the build writes this
-         sheet before the linked ones, so an @layer here would declare its layer ahead of the
-         foundation's and reorder every layer on the page. */
-      body > header > .header-actions {
-        margin-inline-start: auto;
-      }
-      /* A section opens on its heading, which the foundation's elements layer gives no top margin
-         as its container's first child, and the foundation leaves the space between sections to
-         the page: the section takes it. From spike-html-apps-components (19d4f59): demo/demo.css,
-         its main > section rule. */
-      main > section {
-        margin-block-start: var(--space-xl);
-      }
-      /* A component's states, one figure each, stacked. */
-      .states {
-        display: grid;
-        gap: var(--space-m);
-        margin-block-start: var(--space-s);
-      }
-      .state {
-        margin: 0;
-      }
-      .state > figcaption {
-        margin-block-end: var(--space-2xs);
-      }
-      /* A state of several instances sets them apart. */
-      .state > * + :not(figcaption) {
-        margin-block-start: var(--space-s);
-      }
-      /* A specimen aid, beside the component it observes, quieter than the component. */
-      /* The panel the file tabs control, holding the editor that shows the active file. */
-      .state > .panel {
-        margin-block-start: var(--space-2xs);
-      }
-      .readout {
-        color: var(--fg-2);
-        font-size: var(--text-s);
-      }
-    </style>
+    <link rel="stylesheet" href="./web/pages/page.css" />
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>

@@ -5,13 +5,14 @@
      own compiler and linker in the page's worker, then runs main; nothing loads Go, or starts the
      worker, until a Run. Its script, web/pages/playground.ts, gives the demo the page's one runner
      and the reader's arrangement.
-     The page is one screen, laid out in CSS alone: the header, the heading, the intro, a closed
+     The page is one screen, laid out in CSS alone, the shared sheet's rules for a body of class
+     app (web/pages/page.css): the header, the heading, the intro, a closed
      disclosure saying what a program can be, then the demo's container, which takes every row of
      the viewport left. The demo is fixed, as tall as that container, each part in its share, so
      opening the disclosure takes its space from the demo, down to a floor of half the viewport's
      height; below that, the page scrolls. The demo takes the body's whole width, main and the prose
-     keeping their reading width. The shell is the index's, the same header, dialogs, and unlayered
-     header-actions rule; see index.html for each. -->
+     keeping their reading width. The shell is the index's, the same header, dialogs, and
+     shared sheet; see index.html for each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -20,64 +21,7 @@
     <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
     <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
     <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
-    <style>
-      /* With no site nav to take the header's row, site.css leaves the header-actions group at the
-         row's inline start; the group goes to the inline end at every width, where the SDK's
-         header check holds the buttons when the header has no nav. Unlayered: the build writes this
-         sheet before the linked ones, so an @layer here would declare its layer ahead of the
-         foundation's and reorder every layer on the page. */
-      body > header > .header-actions {
-        margin-inline-start: auto;
-      }
-      /* One screen: the body is at least the viewport's height, a column of the header and main,
-         main taking every row the header leaves; the foundation's reset sets the body's minimum by
-         the small viewport, and the page takes the dynamic one, which is the viewport as it is.
-         From 70rem site.css makes the body a grid of three columns, its rows packed at the top;
-         here its rows fill the body instead, and below 70rem the body is a grid of one column. The
-         body is also the container the demo's container reads its width from, 100cqi. */
-      body {
-        container-type: inline-size;
-        display: grid;
-        grid-template-rows: auto 1fr;
-        align-content: normal;
-        min-block-size: 100dvh;
-      }
-      @media (width < 70rem) {
-        body {
-          grid-template-columns: minmax(0, 1fr);
-        }
-      }
-      /* Main fills its row, a column of the heading, the intro, and the disclosure, each its own
-         height, then the demo's container, taking every row they leave, but never less than the
-         floor, half the viewport's height, the least share at which every part of the demo stays
-         usable: at a phone's width, the editor shows seven lines and the console two and a half,
-         where 45% left the console under two. An open disclosure takes its space from the
-         container, down to the floor; past it, main and the body grow, and the page scrolls. Main's
-         80ch reading width and its centring stay site.css's, as the SDK's shell checks hold them;
-         its foot keeps no padding, so the demo's bottom edge is the viewport's. */
-      main {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto auto auto minmax(50dvh, 1fr);
-        align-self: stretch;
-        padding-block-end: 0;
-      }
-      /* The disclosure sits apart from the demo below it, open or closed. The space is its own, not
-         the container's, so the container's row is the demo's whole height. */
-      main > details {
-        margin-block-end: var(--space-m);
-      }
-      /* The demo's container: a size container, so the fixed demo inside it, 100cqb, is as tall as
-         its row. The playground is a tool, so the container takes the body's whole content width,
-         beyond main's 80ch, 100cqi of the body, its margins, negative where main is narrower,
-         centering it on main, which site.css centers in the body at every width. Its own width,
-         which it gives the demo, sets the demo's bands. */
-      .demo-container {
-        container-type: size;
-        inline-size: 100cqi;
-        margin-inline: calc((100% - 100cqi) / 2);
-      }
-    </style>
+    <link rel="stylesheet" href="./web/pages/page.css" />
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
@@ -85,7 +29,7 @@
     <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/settings.js"></script>
     <script type="module" blocking="render" src="./web/pages/playground.ts"></script>
   </head>
-  <body>
+  <body class="app">
     <header>
       <div class="header-actions">
         <button

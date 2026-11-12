@@ -7,7 +7,10 @@
 // copied page, none here, and loads each hand page it reaches: it reaches exactly the index and,
 // by the index's links, the components page and the playground. No page holds an SDK fence, so
 // the SDK's palette check has nothing to run on; the components page's editors are held to its
-// colors by code-editor.test.ts. The components page sets every section apart, its heading
+// colors by code-editor.test.ts. Each hand page's cascade layers, read from its sheets in the
+// order the document names them, are the foundation's, then the SDK's site, then page, the
+// shared sheet's (web/pages/page.css), last, and its source holds no inline <style>, which the
+// build would write ahead of the linked sheets. The components page sets every section apart, its heading
 // --space-xl below what came before; the playground has no section, its one screen proved by
 // playground-layout.test.ts. Nothing here names the site: its base is
 // package.json's name.
@@ -66,6 +69,69 @@ describe("the site under its base", () => {
           defined: customElements.get("sl-site-nav") !== undefined,
         })`);
         assert.deepEqual(nav, { inHeader: 0, defined: false });
+      } finally {
+        await page.close();
+      }
+    });
+  }
+
+  for (const path of hand) {
+    const where = path || "the index";
+    test(`${where}'s cascade layers are the foundation's, then site, then page, and its source holds no inline sheet`, async () => {
+      const page = await browser.open(`${server.origin}${path}`);
+      try {
+        const read: { layers: string[]; inline: boolean } = await page.evaluate(`(async () => {
+          // Each layer by its full name, in the order the document first names it: the cascade's
+          // order. A statement or a block names its layer at its place in the sheet, a layered
+          // @import names its layer before the imported sheet's own, and a block's layers nest
+          // under its name; a conditional group's rules are walked in place. The document's
+          // sheets come first, then its adopted ones, as the cascade orders them.
+          const layers = [];
+          const name = (outer, inner) => (outer ? outer + "." + inner : inner);
+          // A dotted name declares each layer it nests in first, as the cascade does.
+          const named = (full) => {
+            const parts = full.split(".");
+            for (let i = 1; i <= parts.length; i++) {
+              const prefix = parts.slice(0, i).join(".");
+              if (!layers.includes(prefix)) layers.push(prefix);
+            }
+          };
+          const walk = (rules, outer) => {
+            for (const rule of rules) {
+              if (rule instanceof CSSLayerStatementRule) {
+                for (const inner of rule.nameList) named(name(outer, inner));
+              } else if (rule instanceof CSSLayerBlockRule) {
+                const full = rule.name ? name(outer, rule.name) : outer;
+                if (rule.name) named(full);
+                walk(rule.cssRules, full);
+              } else if (rule instanceof CSSImportRule) {
+                const full = rule.layerName ? name(outer, rule.layerName) : outer;
+                if (rule.layerName) named(full);
+                if (rule.styleSheet) walk(rule.styleSheet.cssRules, full);
+              } else if (rule instanceof CSSGroupingRule) {
+                walk(rule.cssRules, outer);
+              }
+            }
+          };
+          for (const sheet of [...document.styleSheets, ...document.adoptedStyleSheets]) {
+            walk(sheet.cssRules, "");
+          }
+          const source = await (await fetch(location.href)).text();
+          return { layers, inline: /<style[\\s>]/i.test(source) };
+        })()`);
+        const top = read.layers.filter((layer) => !layer.includes("."));
+        assert.deepEqual(top, ["foundation", "site", "page"], read.layers.join(", "));
+        const site = read.layers.indexOf("site");
+        assert.ok(
+          read.layers.slice(0, site).every((layer) => layer.split(".")[0] === "foundation"),
+          `every layer before site is the foundation's: ${read.layers.join(", ")}`,
+        );
+        assert.ok(
+          read.layers.some((layer) => layer.startsWith("foundation.")),
+          "the foundation's sub-layers are read",
+        );
+        assert.equal(read.layers.at(-1), "page", "page is the last layer");
+        assert.equal(read.inline, false, "the page's source holds no <style>");
       } finally {
         await page.close();
       }

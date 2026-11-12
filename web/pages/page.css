@@ -1,0 +1,111 @@
+/*
+ * The hand pages' own rules, index.html's, components.html's, and playground.html's, in one sheet
+ * each page links after the SDK's site.css. Every rule is in the page cascade layer, which this
+ * sheet declares last, after the foundation's layers and the SDK's site, so a page rule wins over
+ * the shell's by layer order alone, at any specificity, and an unlayered sheet (the components'
+ * glyph-button.css) stays above it. The layer order is the page's, as the browser tier reads it:
+ * foundation's, then site, then page.
+ *
+ * A linked sheet, never an inline <style>: the build writes a page's inline sheet before the
+ * bundled linked ones, so an @layer there would declare page ahead of the foundation's layers and
+ * reorder every layer on the page, and an unlayered one would sit above every layer.
+ *
+ * Every space is a foundation --space-* step. The rules each page shares come first, then the
+ * components page's specimens, then the playground's one screen, which only a body of class app
+ * takes, so the index and the components page keep the site's reading layout.
+ * Adapted from spike-html-apps-components (19d4f59): demo/demo.css, its page layout the consumer's,
+ * in a layer of its own after the foundation's.
+ */
+
+@layer page {
+  /* With no site nav to take the header's row, site.css leaves the header-actions group at the
+     row's inline start; the group goes to the inline end at every width, where the SDK's header
+     check holds the buttons when the header has no nav. */
+  body > header > .header-actions {
+    margin-inline-start: auto;
+  }
+
+  /* A section opens on its heading, which the foundation's elements layer gives no top margin as
+     its container's first child, and the foundation leaves the space between sections to the
+     page: on every page, the section takes it. From spike-html-apps-components (19d4f59):
+     demo/demo.css, its main > section rule. */
+  main > section {
+    margin-block-start: var(--space-xl);
+  }
+
+  /* The components page: a component's states, one figure each, stacked. */
+  .states {
+    display: grid;
+    gap: var(--space-m);
+    margin-block-start: var(--space-s);
+  }
+  .state {
+    margin: 0;
+  }
+  .state > figcaption {
+    margin-block-end: var(--space-2xs);
+  }
+  /* A state of several instances sets them apart. */
+  .state > * + :not(figcaption) {
+    margin-block-start: var(--space-s);
+  }
+  /* The panel the file tabs control, holding the editor that shows the active file. */
+  .state > .panel {
+    margin-block-start: var(--space-2xs);
+  }
+  /* A specimen aid, beside the component it observes, quieter than the component. */
+  .readout {
+    color: var(--fg-2);
+    font-size: var(--text-s);
+  }
+
+  /* The playground, a body of class app: one screen. The body is at least the viewport's height,
+     a column of the header and main, main taking every row the header leaves; the foundation's
+     reset sets the body's minimum by the small viewport, and the page takes the dynamic one, which
+     is the viewport as it is. From 70rem site.css makes the body a grid of three columns, its rows
+     packed at the top; here its rows fill the body instead, and below 70rem the body is a grid of
+     one column. The body is also the container the demo's container reads its width from,
+     100cqi. */
+  body.app {
+    container-type: inline-size;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    align-content: normal;
+    min-block-size: 100dvh;
+  }
+  @media (width < 70rem) {
+    body.app {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  /* Main fills its row, a column of the heading, the intro, and the disclosure, each its own
+     height, then the demo's container, taking every row they leave, but never less than the
+     floor, half the viewport's height, the least share at which every part of the demo stays
+     usable: at a phone's width, the editor shows seven lines and the console two and a half, where
+     45% left the console under two. An open disclosure takes its space from the container, down
+     to the floor; past it, main and the body grow, and the page scrolls. Main's 80ch reading width
+     and its centring stay site.css's, as the SDK's shell checks hold them; its foot keeps no
+     padding, so the demo's bottom edge is the viewport's. */
+  body.app > main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(50dvh, 1fr);
+    align-self: stretch;
+    padding-block-end: 0;
+  }
+  /* The disclosure sits apart from the demo below it, open or closed. The space is its own, not
+     the container's, so the container's row is the demo's whole height. */
+  body.app > main > details {
+    margin-block-end: var(--space-m);
+  }
+  /* The demo's container: a size container, so the fixed demo inside it, 100cqb, is as tall as
+     its row. The playground is a tool, so the container takes the body's whole content width,
+     beyond main's 80ch, 100cqi of the body, its margins, negative where main is narrower,
+     centering it on main, which site.css centers in the body at every width. Its own width, which
+     it gives the demo, sets the demo's bands. */
+  body.app .demo-container {
+    container-type: size;
+    inline-size: 100cqi;
+    margin-inline: calc((100% - 100cqi) / 2);
+  }
+}
