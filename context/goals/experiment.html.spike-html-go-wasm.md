@@ -531,6 +531,11 @@ Door          two-way: the components stay in this repository unreleased, the ru
   check; every wait needs its own bound.
 - CDP Fetch enabled on the page intercepts the worker's .wasm fetch, which the page's Network
   domain doesn't see; a paused request of a terminated worker may be gone when continued.
+- The foundation's elements layer zeroes a container's first-child heading's top margin and leaves
+  the space between sections to the page, so every page on it must set its own section spacing
+  (the components page's `main > section` rule, from spike-html-apps-components' demo.css); the
+  components page shipped without it. An intake candidate: a page-layout sheet the SDK or the
+  foundation ships, so no page has to know.
 
 ## Pending edits
 
