@@ -464,17 +464,24 @@ export class GoDemo extends LitElement {
     } else if (!this.scenario) {
       throw new Error("a demo names its Go scenario in its scenario attribute");
     }
-    const program = this.#program;
-    if (!program && this.files) {
-      throw new Error("a handler demo holds one fence, its handler's input, and takes no files");
-    }
     return {
-      files: this.files ?? this.#fenceSet(program),
+      files: this.#fileSet(),
       settings: new EditorSettings({ wrap: this.wrap, tabSize: tabSizeOf(this.tabSize) }),
       log: new ConsoleLog(),
       timings: new RunTimings(),
       state: new RunState(),
     };
+  }
+
+  /** The files the demo renders from: the page's set when it gives one, else a set of the
+   * fences'; throws the reason when a handler demo is given a set, or the fences can't make one. */
+  #fileSet(): FileSet {
+    const program = this.#program;
+    if (!this.files) return this.#fenceSet(program);
+    if (!program) {
+      throw new Error("a handler demo holds one fence, its handler's input, and takes no files");
+    }
+    return this.files;
   }
 
   /** A set of the fences' files, for the mode, program or not; throws the reason when they can't
@@ -512,7 +519,7 @@ export class GoDemo extends LitElement {
     }
     let files: FileSet;
     try {
-      files = this.files ?? this.#fenceSet(this.#program);
+      files = this.#fileSet();
     } catch {
       this.#build();
       return;
