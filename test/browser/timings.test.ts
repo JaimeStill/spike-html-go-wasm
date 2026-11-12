@@ -6,7 +6,7 @@
 // had, in the runtime's phase order whatever order they arrived in, and a total row; the times
 // formatted to a tenth under 10 ms and whole from there, grouped, right-aligned in tabular
 // numerals; no run yet said, with no total, and a run begun with no phase timed said apart from
-// it; at 20rem the table fits its column. A new run replaces the last, on the owner's begin and on
+// it; at a phone's width the table fits its column. A new run replaces the last, on the owner's begin and on
 // the specimen aid's press. The table listens only to the timings it holds, only while in the
 // document, and nothing moves. Nothing here names the site: its base is package.json's name.
 
@@ -18,6 +18,8 @@ import { launch, SETTLED, until } from "@jaimestill/spike-html-apps-tooling/brow
 import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
+
+import { PHONE, viewport } from "./viewport.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -35,8 +37,8 @@ after(async () => {
 
 /** The page's helpers, installed on window.timings once the page has loaded:
  *
- * - figure(state, list): the figure data-state names in the list'th states list of #timings, the
- *   first by default; at(state, list) its sl-timings.
+ * - figure(state): the figure data-state names in the states list of #timings; at(state) its
+ *   sl-timings.
  * - rows(table): once its pending render is done, each body row as it renders, its header's text
  *   and its cell's, and the total row's, or null with none.
  * - loose(timings): a table of the timings, in the "empty" figure, with no owner.
@@ -45,13 +47,12 @@ after(async () => {
  * - RunTimings: the page's model class, read from a table's timings.
  */
 const HELPERS = `(() => {
-  const figure = (state, list) =>
-    document.querySelector("#timings").querySelectorAll(".states")[list ?? 0]
-      .querySelector(\`figure[data-state="\${state}"]\`);
+  const figure = (state) =>
+    document.querySelector("#timings .states").querySelector(\`figure[data-state="\${state}"]\`);
   const text = (cell) => cell?.textContent.trim() ?? null;
   window.timings = {
     figure,
-    at: (state, list) => figure(state, list).querySelector("sl-timings"),
+    at: (state) => figure(state).querySelector("sl-timings"),
     async rows(table) {
       await table.updateComplete;
       const root = table.shadowRoot;
@@ -290,13 +291,14 @@ describe("the timings' rendering", () => {
     }
   });
 
-  test("at 20rem the table fits its column, and nothing scrolls sideways", async () => {
+  test("at a phone's width the table fits its column, and nothing scrolls sideways", async () => {
     const page = await open();
     try {
+      await viewport(page, PHONE);
       for (const state of ["cold", "program", "empty"]) {
         const fit: { table: number; figure: number; sideways: boolean; page: boolean } =
           await page.evaluate(`(() => {
-            const host = window.timings.at("${state}", 1);
+            const host = window.timings.at("${state}");
             const table = host.shadowRoot.querySelector("table");
             return {
               table: table.getBoundingClientRect().width,
@@ -305,7 +307,10 @@ describe("the timings' rendering", () => {
               page: document.documentElement.scrollWidth > document.documentElement.clientWidth,
             };
           })()`);
-        assert.ok(fit.figure <= 320, `${state}: the column is 20rem, ${fit.figure}px`);
+        assert.ok(
+          fit.figure < PHONE,
+          `${state}: the column is narrower than the page, ${fit.figure}px`,
+        );
         assert.ok(fit.table <= fit.figure, `${state}: ${fit.table}px in ${fit.figure}px`);
         assert.equal(fit.sideways, false, state);
         assert.equal(fit.page, false, state);

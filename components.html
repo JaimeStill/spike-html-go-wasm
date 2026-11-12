@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- The components page, a hand page: each of the spike's components in every state, each state
-     labelled in its figure's caption, then every state again in a column 20rem wide, and, for a
+     labelled in its figure's caption, once, the layout following the viewport, and, for a
      component that takes focus, one instance reached by the keyboard, its focus shown. Its script,
      web/pages/components.ts, defines the components and builds the states into each list; nothing
      runs Go, or loads it, until a Go demo's Run. sl-code-editor: Go and JSON highlighted, another
@@ -25,8 +25,8 @@
      JSON input; a program demo, hello's main.go as cmd/hello/main.go holds it; a program demo with
      editable files; handler demos for files, its text input, and for crash, which panics; a
      handler demo whose fence is the SDK's Shiki markup, as a Markdown page renders it; a handler
-     demo with two fences, an authoring error; and two demos, spin and format, sharing the runner. The script copies them into the 20rem list and gives every demo the page's
-     one runner, which loads Go only on a Run. The shell is the index's, the same header, dialogs,
+     demo with two fences, an authoring error; and two demos, spin and format, sharing the runner. The
+     script gives every demo the page's one runner, which loads Go only on a Run. The shell is the index's, the same header, dialogs,
      and unlayered header-actions rule; see index.html for each. -->
 <html lang="en">
   <head>
@@ -45,15 +45,11 @@
       body > header > .header-actions {
         margin-inline-start: auto;
       }
-      /* A component's states, one figure each, stacked; the narrow list holds every state again,
-         held to a narrow column's width. */
+      /* A component's states, one figure each, stacked. */
       .states {
         display: grid;
         gap: var(--space-m);
         margin-block-start: var(--space-s);
-      }
-      .narrow {
-        max-inline-size: 20rem;
       }
       .state {
         margin: 0;
@@ -118,8 +114,7 @@
     <main>
       <h1>Components</h1>
       <p>
-        The spike's components, each in every state it has, then again in a column 20rem wide, and
-        reached by the keyboard. <a href="./">The spike's question and evidence</a>.
+        The spike's components, each in every state it has, and reached by the keyboard. <a href="./">The spike's question and evidence</a>.
       </p>
       <section id="code-editor" aria-labelledby="code-editor-heading">
         <h2 id="code-editor-heading">Code editor</h2>
@@ -129,8 +124,6 @@
         </p>
         <h3 id="code-editor-states">States</h3>
         <div class="states"></div>
-        <h3 id="code-editor-narrow">States at 20rem</h3>
-        <div class="states narrow"></div>
         <h3 id="code-editor-focus">Focus visible</h3>
         <p>The editor, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>
@@ -145,8 +138,6 @@
         </p>
         <h3 id="file-tabs-states">States</h3>
         <div class="states"></div>
-        <h3 id="file-tabs-narrow">States at 20rem</h3>
-        <div class="states narrow"></div>
         <h3 id="file-tabs-focus">Focus visible</h3>
         <p>The tabs, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>
@@ -161,8 +152,6 @@
         </p>
         <h3 id="console-states">States</h3>
         <div class="states"></div>
-        <h3 id="console-narrow">States at 20rem</h3>
-        <div class="states narrow"></div>
         <h3 id="console-focus">Focus visible</h3>
         <p>The log, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>
@@ -177,8 +166,6 @@
         </p>
         <h3 id="timings-states">States</h3>
         <div class="states"></div>
-        <h3 id="timings-narrow">States at 20rem</h3>
-        <div class="states narrow"></div>
       </section>
       <section id="controls" aria-labelledby="controls-heading">
         <h2 id="controls-heading">Controls</h2>
@@ -190,8 +177,6 @@
         </p>
         <h3 id="controls-states">States</h3>
         <div class="states"></div>
-        <h3 id="controls-narrow">States at 20rem</h3>
-        <div class="states narrow"></div>
         <h3 id="controls-focus">Focus visible</h3>
         <p>The toolbar, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>
@@ -301,8 +286,6 @@ func main() {
             </sl-go-demo>
           </figure>
         </div>
-        <h3 id="go-demo-narrow">States at 20rem</h3>
-        <div class="states narrow"></div>
         <h3 id="go-demo-focus">Focus visible</h3>
         <p>The demo's toolbar, reached by the keyboard.</p>
         <span tabindex="-1" data-focus-start="1"></span>

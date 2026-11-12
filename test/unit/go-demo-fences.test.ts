@@ -4,8 +4,7 @@
 // demo, its text the pre's text content, as sl-go-demo reads it (web/components/go-demo.ts); its
 // file is the fence's name, its data-file, on the pre or its code, else the pre's title, else
 // main.go, under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go.
-// The page's 20rem copies are the script's, cloned from these, so the written demos are every
-// demo's source.
+// The written demos are every demo's source: the page's script adds none.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the
 // page's hand-written markup, so a small reader suffices, held to the HTML parser's rules where

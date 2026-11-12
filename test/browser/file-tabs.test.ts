@@ -8,9 +8,9 @@
 // and a select request sent for each tab reached, the page applying it. Control: a request no
 // owner applies changes neither the selection nor the tab order, the set's own change does, and
 // the tabs never write the set. The marker follows the editor's edits, through the page's loop.
-// Overflow: at 20rem the row scrolls, the active tab in view as the page loads, as focus moves,
-// and as the set changes, the page never scrolled; no row, wide or at 20rem, overflows up or down
-// in any space and type. Focus shows, the row scrolls smoothly only when motion is allowed, and
+// Overflow: at a phone's width the row scrolls, the active tab in view as the page loads, as focus
+// moves, and as the set changes, the page never scrolled; no row, wide or at a phone's width,
+// overflows up or down in any space and type. Focus shows, the row scrolls smoothly only when motion is allowed, and
 // nothing moves under reduced motion. The tabs listen only to the set they hold, only while in the
 // document. Nothing here names the site: its base is package.json's name.
 
@@ -22,6 +22,8 @@ import { launch, SETTLED } from "@jaimestill/spike-html-apps-tooling/browser.js"
 import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
+
+import { PHONE, viewport, WIDE } from "./viewport.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -39,8 +41,8 @@ after(async () => {
 
 /** The page's helpers, installed on window.tabs once the page has loaded:
  *
- * - figure(state, list): the figure data-state names in the list'th states list of #file-tabs,
- *   the first by default, or in its .focus when list is "focus"; at(state, list) its sl-file-tabs,
+ * - figure(state, list): the figure data-state names in the states list of #file-tabs, or in its
+ *   .focus when list is "focus"; at(state, list) its sl-file-tabs,
  *   editor(state, list) its sl-code-editor.
  * - shown(tabs): each tab as it renders: its file's name, whether selected, its tabindex, and
  *   whether it shows a marker; with the name of the tab focus is on, if any.
@@ -83,17 +85,23 @@ const HELPERS = `(() => {
   };
 })()`;
 
-/** Opens the components page, waits for every element to render, and installs the helpers. */
-async function open(): Promise<Page> {
-  const page = await browser.open(`${server.origin}components.html`);
+/** Opens the components page, at the width when one is given, waits for every element to render, and installs the helpers. */
+async function open(width?: number): Promise<Page> {
+  const url = `${server.origin}components.html`;
+  // Laid out at the width from the first frame, so the page loads at it.
+  const page = await browser.open(width === undefined ? url : "about:blank");
+  if (width !== undefined) {
+    await viewport(page, width);
+    await page.goto(url);
+  }
   await page.evaluate(SETTLED);
   await page.evaluate(HELPERS);
   return page;
 }
 
 /** Opens the components page with focus emulated, so focus and :focus-visible hold headless. */
-async function focused(): Promise<Page> {
-  const page = await open();
+async function focused(width?: number): Promise<Page> {
+  const page = await open(width);
   await page.cdp("Emulation.setFocusEmulationEnabled", { enabled: true });
   return page;
 }
@@ -456,11 +464,11 @@ describe("the tabs as a controlled element", () => {
 });
 
 describe("overflowing tabs", () => {
-  /** The overflowing state's tabs in the 20rem list. */
-  const NARROW = `window.tabs.at("overflow", 1)`;
+  /** The overflowing state's tabs, which each test here reads at a phone's width. */
+  const NARROW = `window.tabs.at("overflow")`;
 
-  test("at 20rem the row scrolls inside itself, the active tab in view as the page loads", async () => {
-    const page = await open();
+  test("at a phone's width the row scrolls inside itself, the active tab in view as the page loads", async () => {
+    const page = await open(PHONE);
     try {
       const row: { scrolls: boolean; overflow: string; width: number; host: number } =
         await page.evaluate(`(() => {
@@ -472,7 +480,7 @@ describe("overflowing tabs", () => {
             host: ${NARROW}.parentElement.getBoundingClientRect().width,
           };
         })()`);
-      assert.equal(row.scrolls, true, "sixteen tabs overflow 20rem");
+      assert.equal(row.scrolls, true, "sixteen tabs overflow a phone's width");
       assert.equal(row.overflow, "auto");
       assert.ok(
         row.width <= row.host,
@@ -486,7 +494,7 @@ describe("overflowing tabs", () => {
   });
 
   test("focus moving by the keyboard, and the set's own select, scroll the tab into view, never the page", async () => {
-    const page = await focused();
+    const page = await focused(PHONE);
     try {
       // Instant scrolling, so each position is read as it lands.
       await page.cdp("Emulation.setEmulatedMedia", {
@@ -528,7 +536,7 @@ describe("overflowing tabs", () => {
     }
   });
 
-  test("no row overflows up or down, wide or at 20rem, in each space and type; at 20rem it still scrolls sideways", async () => {
+  test("no row overflows up or down, wide or at a phone's width, in each space and type; there it still scrolls sideways", async () => {
     const page = await open();
     try {
       const profiles: { space: string[]; type: string[] } = await page.evaluate(`(() => {
@@ -536,17 +544,13 @@ describe("overflowing tabs", () => {
         return { space: [...registry.space], type: [...registry.type] };
       })()`);
       assert.ok(profiles.space.length > 1 && profiles.type.length > 1);
-      await page.cdp("Emulation.setDeviceMetricsOverride", {
-        width: 1280,
-        height: 900,
-        deviceScaleFactor: 1,
-        mobile: false,
-      });
-      for (const space of profiles.space) {
-        for (const type of profiles.type) {
-          // Every tablist on the page, the Go demos' among them, the wide states' and the 20rem
-          // column's, by its figure's state and how far its content reaches past it up and down.
-          const rows: { state: string; overflow: number }[] = await page.evaluate(`(async () => {
+      for (const width of [WIDE, PHONE]) {
+        await viewport(page, width);
+        for (const space of profiles.space) {
+          for (const type of profiles.type) {
+            // Every tablist on the page, the Go demos' among them, by its figure's state and how far
+            // its content reaches past it up and down.
+            const rows: { state: string; overflow: number }[] = await page.evaluate(`(async () => {
             const root = document.documentElement;
             root.setAttribute("data-space", ${JSON.stringify(space)});
             root.setAttribute("data-type", ${JSON.stringify(type)});
@@ -567,12 +571,13 @@ describe("overflowing tabs", () => {
             walk(document);
             return rows;
           })()`);
-          assert.ok(rows.length > 2, `${space} ${type}: the tablists found`);
-          assert.deepEqual(
-            rows.filter((row) => row.overflow !== 0),
-            [],
-            `${space} ${type}: every row as tall as its content`,
-          );
+            assert.ok(rows.length > 2, `${width}px, ${space} ${type}: the tablists found`);
+            assert.deepEqual(
+              rows.filter((row) => row.overflow !== 0),
+              [],
+              `${width}px, ${space} ${type}: every row as tall as its content`,
+            );
+          }
         }
       }
       const sideways: { before: number; after: number; max: number } = await page.evaluate(`(() => {
@@ -582,7 +587,7 @@ describe("overflowing tabs", () => {
         list.scrollLeft = before === 0 ? 1e6 : 0;
         return { before, after: list.scrollLeft, max: list.scrollWidth - list.clientWidth };
       })()`);
-      assert.ok(sideways.max > 0, "the 20rem row overflows sideways");
+      assert.ok(sideways.max > 0, "at a phone's width the row overflows sideways");
       assert.notEqual(sideways.after, sideways.before, "and scrolls sideways");
     } finally {
       await page.close();

@@ -25,6 +25,8 @@ import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
+import { PHONE, viewport, WIDE } from "./viewport.ts";
+
 const root = join(import.meta.dirname, "../..");
 
 let server: Server;
@@ -41,8 +43,8 @@ after(async () => {
 
 /** The page's helpers, installed on window.controls once the page has loaded:
  *
- * - figure(state, list): the figure data-state names in the list'th states list of #controls, the
- *   first by default, or in its .focus when list is "focus"; at(state, list) its sl-controls.
+ * - figure(state, list): the figure data-state names in the states list of #controls, or in its
+ *   .focus when list is "focus"; at(state, list) its sl-controls.
  * - button(controls, control): the toolbar's button of the control; available(controls), each
  *   button's control and aria-disabled, in order.
  * - status(controls): the status's text.
@@ -174,17 +176,6 @@ async function hover(page: Page, expression: string) {
     return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
   })()`);
   await page.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", ...point });
-}
-
-/** The page laid out at the width, 900px tall, once two frames have painted. */
-async function viewport(page: Page, width: number) {
-  await page.cdp("Emulation.setDeviceMetricsOverride", {
-    width,
-    height: 900,
-    deviceScaleFactor: 1,
-    mobile: false,
-  });
-  await page.evaluate(SETTLED);
 }
 
 /** The control focused in the toolbar the expression gives, or the id of the field focused in its
@@ -949,7 +940,7 @@ describe("the status", () => {
 });
 
 describe("size, space, and motion", () => {
-  test("every button, the forms' among them, is at least 24px a side in every space and type", async () => {
+  test("every button, the forms' among them, is at least 24px a side in every space and type, wide and at a phone's width", async () => {
     const page = await open();
     try {
       const profiles: { space: string[]; type: string[] } = await page.evaluate(`(() => {
@@ -957,11 +948,13 @@ describe("size, space, and motion", () => {
         return { space: [...registry.space], type: [...registry.type] };
       })()`);
       assert.ok(profiles.space.length > 1 && profiles.type.length > 1);
-      const controls = `window.controls.at("editable", 1)`;
-      for (const space of profiles.space) {
-        for (const type of profiles.type) {
-          const sizes: { name: string; width: number; height: number }[] =
-            await page.evaluate(`(async () => {
+      const controls = `window.controls.at("editable")`;
+      for (const at of [WIDE, PHONE]) {
+        await viewport(page, at);
+        for (const space of profiles.space) {
+          for (const type of profiles.type) {
+            const sizes: { name: string; width: number; height: number }[] =
+              await page.evaluate(`(async () => {
             const root = document.documentElement;
             root.setAttribute("data-space", ${JSON.stringify(space)});
             root.setAttribute("data-type", ${JSON.stringify(type)});
@@ -976,16 +969,17 @@ describe("size, space, and motion", () => {
             form.hidePopover();
             return sizes;
           })()`);
-          assert.deepEqual(
-            sizes.map(({ name }) => name),
-            ["Run", "Stop", "Reset", "New file", "Rename", "Delete", "Create"],
-            "the six controls and the open form's submit",
-          );
-          for (const { name, width, height } of sizes) {
-            assert.ok(
-              width >= 23.5 && height >= 23.5,
-              `${name} in ${space} ${type}: ${width}×${height}`,
+            assert.deepEqual(
+              sizes.map(({ name }) => name),
+              ["Run", "Stop", "Reset", "New file", "Rename", "Delete", "Create"],
+              "the six controls and the open form's submit",
             );
+            for (const { name, width, height } of sizes) {
+              assert.ok(
+                width >= 23.5 && height >= 23.5,
+                `${name} at ${at}px in ${space} ${type}: ${width}×${height}`,
+              );
+            }
           }
         }
       }
@@ -1012,8 +1006,8 @@ describe("size, space, and motion", () => {
       })()`);
       const controls = `window.controls.at("editable")`;
       for (const [width, named] of [
-        [390, false],
-        [1280, true],
+        [PHONE, false],
+        [WIDE, true],
       ] as const) {
         await viewport(page, width);
         for (const space of profiles.space) {
@@ -1069,7 +1063,7 @@ describe("size, space, and motion", () => {
     try {
       const controls = `window.controls.at("editable")`;
       const hint = `${shadow(controls)}.querySelector("#rename-hint")`;
-      await viewport(page, 390);
+      await viewport(page, PHONE);
       await hover(page, `window.controls.button(${controls}, "rename")`);
       await until(page, `${hint}.matches(":popover-open")`, 3000);
       const shown: { text: string; visible: boolean; below: boolean } =
@@ -1085,7 +1079,7 @@ describe("size, space, and motion", () => {
       assert.deepEqual(shown, { text: "Rename", visible: true, below: true });
       await hover(page, "document.querySelector('h1')");
       await until(page, `!${hint}.matches(":popover-open")`, 3000);
-      await viewport(page, 1280);
+      await viewport(page, WIDE);
       await hover(page, `window.controls.button(${controls}, "rename")`);
       await until(page, `${hint}.matches(":popover-open")`, 3000);
       assert.equal(await page.evaluate(`${hint}.checkVisibility()`), false, "named, no hint shows");

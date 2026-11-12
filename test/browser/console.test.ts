@@ -24,6 +24,8 @@ import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
+import { PHONE, viewport } from "./viewport.ts";
+
 const root = join(import.meta.dirname, "../..");
 
 let server: Server;
@@ -40,8 +42,8 @@ after(async () => {
 
 /** The page's helpers, installed on window.consoles once the page has loaded:
  *
- * - figure(state, list): the figure data-state names in the list'th states list of #console, the
- *   first by default, or in its .focus when list is "focus"; at(state, list) its sl-console.
+ * - figure(state, list): the figure data-state names in the states list of #console, or in its
+ *   .focus when list is "focus"; at(state, list) its sl-console.
  * - frame(console): its scrolling log.
  * - rendered(console): resolves once a frame has passed and the update it asked for is done, so a
  *   change made before it shows.
@@ -342,12 +344,13 @@ describe("the console's rendering", () => {
     }
   });
 
-  test("at 20rem a long line wraps, and nothing scrolls sideways", async () => {
+  test("at a phone's width a long line wraps, and nothing scrolls sideways", async () => {
     const page = await open();
     try {
+      await viewport(page, PHONE);
       const wrap: { tall: boolean; sideways: boolean; width: number; figure: number } =
         await page.evaluate(`(() => {
-          const console = window.consoles.at("long", 1);
+          const console = window.consoles.at("long");
           const frame = window.consoles.frame(console);
           const row = frame.querySelector(".line");
           return {

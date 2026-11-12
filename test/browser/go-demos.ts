@@ -19,8 +19,7 @@ export const RUN = 20_000;
 /** The page's helpers, installed on window.demos once the page has loaded:
  *
  * - at(state, index, list): the index'th sl-go-demo, the first by default, in the figure the
- *   state names in the list'th states list of #go-demo, the first by default, or in its .focus
- *   when list is "focus".
+ *   state names in the states list of #go-demo, or in its .focus when list is "focus".
  * - part(demo, selector): the element in the demo's shadow root.
  * - status(demo): the toolbar's status; button(demo, control): the toolbar's button.
  * - rows(demo): the console's rows as shown, each { kind, text }, kind its class, its whitespace
@@ -159,7 +158,7 @@ export const wasmRequests = (watched: Watched) =>
   goRequests(watched).filter((path) => path.endsWith(".wasm"));
 
 /** A demo by its state, as the helpers' at() takes it. */
-export const demo = (state: string, index = 0, list?: number | "focus") =>
+export const demo = (state: string, index = 0, list?: "focus") =>
   `window.demos.at(${JSON.stringify(state)}, ${index}${list === undefined ? "" : `, ${JSON.stringify(list)}`})`;
 
 /** Presses the demo's control by a click, as the toolbar's own click handler takes it. */

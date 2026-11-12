@@ -43,6 +43,8 @@ import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 import { builtinSyntax, createSyntax } from "@jaimestill/spike-html-hosting-sdk/syntax.js";
 
+import { PHONE, viewport, WIDE } from "./viewport.ts";
+
 const root = join(import.meta.dirname, "../..");
 const assets = join(root, "dist/assets");
 
@@ -60,8 +62,8 @@ after(async () => {
 
 /** The page's helpers, installed on window.editors once the page has loaded:
  *
- * - at(state, list): the editor of the figure data-state names, in the list'th states list, the
- *   first by default, or of #code-editor .focus when list is "focus"; all(state, list) every one.
+ * - at(state, list): the editor of the figure data-state names, in the states list, or of
+ *   #code-editor .focus when list is "focus"; all(state, list) every one.
  * - painted(editor): the editor's text, and each character's color as it paints: its highlight's
  *   ::highlight() color when a range of the editor covers it, else the text's own; with the
  *   ranges' count and the text's element children.
@@ -522,7 +524,7 @@ describe("the editor in the accessibility tree", () => {
       const sorted = (list: typeof boxes) => list.map((box) => JSON.stringify(box)).sort();
       assert.deepEqual(
         sorted(boxes),
-        sorted([...expected, ...expected, { name: "shapes.go", multiline: true, readonly: false }]),
+        sorted([...expected, { name: "shapes.go", multiline: true, readonly: false }]),
       );
       // The caption names the empty editor through aria-labelledby.
       const empty = nodes.find(
@@ -615,19 +617,15 @@ describe("the gutter", () => {
     const page = await open();
     try {
       await settleAll(page);
-      const wrapped: boolean = await page.evaluate(`(() => {
-        const editor = window.editors.at("wrap", 1);
-        const rows = editor.shadowRoot.querySelectorAll(".ghost");
-        return [...rows].some((row) => row.getBoundingClientRect().height > parseFloat(getComputedStyle(row).lineHeight) * 1.5);
-      })()`);
-      assert.ok(wrapped, "the wrapped editor at 20rem wraps a line");
-      for (const width of [1120, 390]) {
-        await page.cdp("Emulation.setDeviceMetricsOverride", {
-          width,
-          height: 900,
-          deviceScaleFactor: 1,
-          mobile: false,
-        });
+      for (const width of [1120, PHONE]) {
+        await viewport(page, width);
+        if (width === PHONE) {
+          const wrapped: boolean = await page.evaluate(`(() => {
+            const rows = window.editors.at("wrap").shadowRoot.querySelectorAll(".ghost");
+            return [...rows].some((row) => row.getBoundingClientRect().height > parseFloat(getComputedStyle(row).lineHeight) * 1.5);
+          })()`);
+          assert.ok(wrapped, "the wrapped editor at a phone's width wraps a line");
+        }
         for (const space of ["regular", "compact"]) {
           for (const type of ["sans", "mono"]) {
             await page.evaluate(`(() => {
@@ -1545,15 +1543,20 @@ describe("the editor's settings", () => {
   test("with none given, long lines scroll sideways, one row a line, and a tab shows four columns wide", async () => {
     const page = await open();
     try {
-      for (const list of [0, 1]) {
-        const long = `window.editors.at("long", ${list})`;
+      const long = `window.editors.at("long")`;
+      for (const width of [WIDE, PHONE]) {
+        await viewport(page, width);
         assert.equal(await page.evaluate(`${long}.settings`), null);
-        assert.deepEqual(await page.evaluate(MODE(long)), {
-          whiteSpace: "pre",
-          tabSize: "4",
-          overflows: true,
-          wraps: false,
-        });
+        assert.deepEqual(
+          await page.evaluate(MODE(long)),
+          {
+            whiteSpace: "pre",
+            tabSize: "4",
+            overflows: true,
+            wraps: false,
+          },
+          `${width}px`,
+        );
       }
       assert.equal(await page.evaluate(TAB(EDITABLE)), 4);
     } finally {
@@ -1564,13 +1567,18 @@ describe("the editor's settings", () => {
   test("the page's settings wrap long lines, or show a tab two columns wide, still a tab", async () => {
     const page = await open();
     try {
-      for (const list of [0, 1]) {
-        assert.deepEqual(await page.evaluate(MODE(`window.editors.at("wrap", ${list})`)), {
-          whiteSpace: "pre-wrap",
-          tabSize: "4",
-          overflows: false,
-          wraps: true,
-        });
+      for (const width of [WIDE, PHONE]) {
+        await viewport(page, width);
+        assert.deepEqual(
+          await page.evaluate(MODE(`window.editors.at("wrap")`)),
+          {
+            whiteSpace: "pre-wrap",
+            tabSize: "4",
+            overflows: false,
+            wraps: true,
+          },
+          `${width}px`,
+        );
       }
       const narrow = `window.editors.at("tab-size")`;
       assert.equal(await page.evaluate(`${narrow}.settings.tabSize`), 2);
@@ -1584,7 +1592,8 @@ describe("the editor's settings", () => {
   test("the editor follows each change its settings send, and settings given in their place", async () => {
     const page = await open();
     try {
-      const wrapped = `window.editors.at("wrap", 1)`;
+      await viewport(page, PHONE);
+      const wrapped = `window.editors.at("wrap")`;
       await page.evaluate(`${wrapped}.settings.wrap = false`);
       await page.evaluate(`${wrapped}.updateComplete`);
       assert.deepEqual(await page.evaluate(MODE(wrapped)), {
@@ -1598,7 +1607,7 @@ describe("the editor's settings", () => {
       assert.equal((await page.evaluate(MODE(wrapped))).tabSize, "8");
       // Settings given to an editor that had none, then others in their place: it shows the new
       // ones, and a change to the old ones no longer reaches it.
-      const long = `window.editors.at("long", 1)`;
+      const long = `window.editors.at("long")`;
       await page.evaluate(`(() => {
         const Settings = ${wrapped}.settings.constructor;
         window.first = new Settings({ wrap: true, tabSize: 3 });
@@ -1707,8 +1716,9 @@ describe("the editor's settings", () => {
 });
 
 describe("scrolling long lines", () => {
-  /** The long editor at 20rem, which scrolls sideways at every width. */
-  const LONG = `window.editors.at("long", 1)`;
+  /** The long editor, which scrolls sideways at every width; each test here lays the page out at
+   * a phone's width, where the read-only editor's lines overflow too. */
+  const LONG = `window.editors.at("long")`;
   /** The long comment's line in the long editor's text. */
   const COMMENT = "// A comment longer than any width";
 
@@ -1740,6 +1750,7 @@ describe("scrolling long lines", () => {
   test("the gutter stays in place over the lines as they scroll, each number beside its line", async () => {
     const page = await open();
     try {
+      await viewport(page, PHONE);
       await settleAll(page);
       await page.evaluate(`${LONG}.scrollIntoView({ block: "center" })`);
       const before = await page.evaluate(VIEW(LONG));
@@ -1796,6 +1807,7 @@ describe("scrolling long lines", () => {
   test("typing at a long line's end keeps the caret in view, and Home brings it back clear of the gutter", async () => {
     const page = await editing();
     try {
+      await viewport(page, PHONE);
       const value: string = await page.evaluate(`${LONG}.value`);
       const line = value.indexOf(COMMENT);
       const end = value.indexOf("\n", line);
@@ -1830,6 +1842,7 @@ describe("scrolling long lines", () => {
   test("the keyboard scrolls the lines, in an editable editor and a read-only one", async () => {
     const page = await editing();
     try {
+      await viewport(page, PHONE);
       // Editable: End moves the caret to the long line's end, and the frame follows it.
       const value: string = await page.evaluate(`${LONG}.value`);
       const line = value.indexOf(COMMENT);
@@ -1838,11 +1851,11 @@ describe("scrolling long lines", () => {
       assert.ok((await page.evaluate(VIEW(LONG))).scrollLeft > 0, "End scrolls an editable editor");
       // Read-only, with no caret: the arrow keys scroll the frame, as in any scrolled box, the
       // browser's scroll animating to its end.
-      const readonly = `window.editors.at("readonly", 1)`;
+      const readonly = `window.editors.at("readonly")`;
       const frame = `${readonly}.shadowRoot.querySelector(".editor")`;
       assert.ok(
         await page.evaluate(`${frame}.scrollWidth > ${frame}.clientWidth + 1`),
-        "its lines overflow at 20rem",
+        "its lines overflow at a phone's width",
       );
       await page.evaluate(`${readonly}.focus()`);
       await press(page, "ArrowRight", "ArrowRight", 39);
@@ -1856,8 +1869,9 @@ describe("scrolling long lines", () => {
   test("focus given to a scrolling editor, or a click on its gutter, goes to its text", async () => {
     const page = await editing();
     try {
+      await viewport(page, PHONE);
       for (const state of ["long", "readonly"]) {
-        const editor = `window.editors.at("${state}", 1)`;
+        const editor = `window.editors.at("${state}")`;
         await page.evaluate(`document.activeElement?.blur()`);
         await page.evaluate(`${editor}.focus()`);
         assert.equal(

@@ -18,9 +18,9 @@
 // demo's accessibility tree: a region named by its label, the toolbar, the tabs and the panel on
 // a program demo, the editor, the log, and the timings, its fences no part of it. The fences: the
 // SDK's Shiki markup read as plain text and run, and without script, every fence shows as the
-// page's code. At 20rem each demo fits its column, and wide, at 1280px and 1120px and either side
-// of the 44rem at which the console and timings share a row, every part of every demo lies within
-// it, run or not. The rest of the runtime's proofs, through the same demos, are go-runs.test.ts's;
+// page's code. At a phone's width each demo fits its column, and at 1280px and 1120px, either side
+// of the 44rem at which the console and timings share a row, and a phone's width, every part of
+// every demo lies within it, run or not, the console and timings side by side from the 44rem on. The rest of the runtime's proofs, through the same demos, are go-runs.test.ts's;
 // the page's watch and helpers are go-demos.ts's. Every wait is bounded. Nothing here names the
 // site: its base is package.json's name.
 
@@ -33,6 +33,8 @@ import { launch, until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
+
+import { PHONE, viewport, WIDE } from "./viewport.ts";
 
 import {
   demo,
@@ -119,7 +121,7 @@ describe("loading", () => {
     const watched = await open();
     try {
       const { page } = watched;
-      assert.equal(await page.evaluate(`document.querySelectorAll("sl-go-demo").length`), 19);
+      assert.equal(await page.evaluate(`document.querySelectorAll("sl-go-demo").length`), 10);
       assert.deepEqual(goRequests(watched), []);
       assert.deepEqual(watched.workers, []);
       await pressControl(page, demo("program"), "run");
@@ -624,7 +626,7 @@ describe("the fences", () => {
   test("a program demo's editor holds hello's source as cmd/hello/main.go has it", async () => {
     const { page } = await open();
     try {
-      for (const target of [demo("program"), demo("editable-files"), demo("program", 0, 1)]) {
+      for (const target of [demo("program"), demo("editable-files")]) {
         assert.equal(await page.evaluate(`window.demos.editor(${target}).value`), helloSource);
       }
     } finally {
@@ -667,7 +669,7 @@ describe("the fences", () => {
           pre.getBoundingClientRect().height > 0,
           pre.textContent,
         ]))`);
-      // The states list and the focus state: the 20rem copy is the script's.
+      // The states list and the focus state.
       assert.equal(fences.length, 10);
       for (const demoFences of fences) {
         for (const [visible, tall] of demoFences) assert.ok(visible && tall);
@@ -681,14 +683,15 @@ describe("the fences", () => {
 });
 
 describe("layout", () => {
-  test("at 20rem every demo fits its column, nothing reaching past it", async () => {
+  test("at a phone's width every demo fits its column, nothing reaching past it", async () => {
     const { page } = await open();
     try {
+      await viewport(page, PHONE);
       const overflows: string[] = await page.evaluate(`(() => {
-        const narrow = document.querySelectorAll("#go-demo .states")[1];
-        const limit = narrow.getBoundingClientRect().right + 0.5;
+        const column = document.querySelector("#go-demo .states");
+        const limit = column.getBoundingClientRect().right + 0.5;
         const out = [];
-        for (const demo of narrow.querySelectorAll("sl-go-demo")) {
+        for (const demo of column.querySelectorAll("sl-go-demo")) {
           const parts = [demo, ...demo.shadowRoot.querySelectorAll("*")];
           for (const part of parts) {
             const box = part.getBoundingClientRect();
@@ -698,10 +701,12 @@ describe("layout", () => {
         return out;
       })()`);
       assert.deepEqual(overflows, []);
-      assert.ok(
+      assert.equal(
         await page.evaluate(
-          `document.querySelectorAll("#go-demo .states")[1].getBoundingClientRect().width <= 320`,
+          `document.documentElement.scrollWidth > document.documentElement.clientWidth`,
         ),
+        false,
+        "the page doesn't scroll sideways",
       );
     } finally {
       await page.close();
@@ -738,7 +743,7 @@ describe("layout", () => {
     return { out, side, stacked };
   })()`;
 
-  test("wide and at the side-by-side threshold, every part of every demo lies within it, run or not", async () => {
+  test("wide, at the side-by-side threshold, and at a phone's width, every part of every demo lies within it, run or not", async () => {
     const { page } = await open();
     try {
       // A handler's run and a program's fill a console and a timings table.
@@ -747,12 +752,7 @@ describe("layout", () => {
       await pressControl(page, demo("program"), "run");
       await says(page, demo("program"), "Finished hello, exit code 0");
       const resize = async (width: number) => {
-        await page.cdp("Emulation.setDeviceMetricsOverride", {
-          width,
-          height: 900,
-          deviceScaleFactor: 1,
-          mobile: false,
-        });
+        await viewport(page, width);
         await settle(page);
       };
       // The viewport at which the wide demos are exactly 44rem, the go demo's threshold, from
@@ -763,13 +763,15 @@ describe("layout", () => {
         rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
       })`);
       const threshold = Math.ceil(700 + 44 * rem - demoWidth);
-      for (const width of [1280, 1120, threshold + 8, threshold, threshold - 8]) {
+      for (const width of [WIDE, 1120, threshold + 8, threshold, threshold - 8, PHONE]) {
         await resize(width);
         const { out, side, stacked } = await page.evaluate(WITHIN);
         assert.deepEqual(out, [], `${width}px`);
-        if (width >= threshold) assert.ok(side > 0, `${width}px: some demo side by side`);
-        else assert.equal(side, 0, `${width}px: every demo stacked`);
-        assert.ok(stacked > 0, `${width}px: the 20rem column's demos stacked`);
+        if (width >= threshold) {
+          assert.ok(side > 0 && stacked === 0, `${width}px: every demo side by side`);
+        } else {
+          assert.ok(side === 0 && stacked > 0, `${width}px: every demo stacked`);
+        }
       }
     } finally {
       await page.close();

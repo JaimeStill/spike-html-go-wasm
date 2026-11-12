@@ -51,8 +51,8 @@ evidence, and path are in `context/README.md`.
       and a program's, Ctrl or Cmd+Enter from inside a demo alone, Alt or Shift with Enter running
       nothing, Help listing no Run, the authoring error, Stop, two demos sharing the runner,
       editable files and focus after a delete, Reset, its accessibility tree, its fences with and
-      without script, the 20rem column, and every part inside the demo at wide widths and at the
-      side-by-side threshold;
+      without script, and every part inside the demo at wide widths, either side of the
+      side-by-side threshold, and at a phone's width;
     - the runtime, through the Go demos: hello and the probe's handlers in one worker, a held
       module reused and scenarios switched in place with no fetch, Stop ending the probe's spin
       with the next call fetching nothing new and one worker live, a Run while another run or a
@@ -77,8 +77,8 @@ The components are Lit elements with shadow roots, prefixed `sl-`, in `web/compo
 module defines its element when it is imported and exports its tag name as `tagName`; the
 element's shadow root adopts the foundation's reset and elements sheets, then its own, a CSS
 module script beside it. A page imports a component's module, and the build bundles it.
-`components.html` shows each component's states, labelled, again at 20rem, and focused by the
-keyboard. The directory's other modules are the components' internals, each documented in its own
+`components.html` shows each component's states once, labelled, its layout following the
+viewport, and focused by the keyboard. The directory's other modules are the components' internals, each documented in its own
 comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-themes.ts`, and
 `tokenizer.ts`.
 
@@ -370,7 +370,7 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
   - Layout: one column: the toolbar, the files, then the console and the timings. Once the demo
     is 44rem wide, the console and the timings share a row, the timings in a 16rem column and the
     console taking the rest. Every part stays inside the demo at every width, and the demo fits a
-    20rem column. Nothing moves.
+    phone's width. Nothing moves.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the

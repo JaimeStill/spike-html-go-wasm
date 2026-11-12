@@ -1,9 +1,10 @@
 // The components page's script (components.html): it defines the components, by importing their
 // modules, and builds each component's states into its section, every state once in the states
-// list, again in the 20rem list, and the focus state after its section's focus-start mark; the
-// screenshot command captures each section alone, the others hidden, and focuses its mark, then
-// the page's first, before pressing Tab to reach it, and the browser tier each. Each state is a
-// figure, its label the caption, built fresh for each list, so no element is shared between them.
+// list, and the focus state after its section's focus-start mark; the layout follows the viewport,
+// so the narrow layout is a narrow viewport's. The screenshot command captures each section alone,
+// the others hidden, and focuses its mark, then the page's first, before pressing Tab to reach it,
+// and the browser tier each. Each state is a figure, its label the caption, built fresh for each
+// list, so no element is shared between them.
 // Nothing here loads Go on load: the page's one runner starts its worker and fetches a module only
 // on a demo's Run.
 //
@@ -32,7 +33,7 @@
 //
 // The timings' states (sl-timings): a cold load's five phases, a held instance's call alone, a
 // program's instantiate and run, the call after Stop, which instantiates and starts afresh with no
-// fetch, no run yet, and the 20rem column holding them. The page owns each state's RunTimings,
+// fetch, and no run yet. The page owns each state's RunTimings,
 // fresh for each list, recording a script of the timing events a runner would send, with no Go,
 // some out of the phase order, as a runner's can arrive. One state's specimen aid, a button,
 // begins a new run in place of the last when pressed, so a capture of the page never catches it
@@ -55,8 +56,7 @@
 // it; a program demo with editable files; handler demos for files, its text input, and for crash,
 // which panics outside any handler; a handler demo whose fence is the SDK's Shiki markup, as
 // a Markdown page renders it; a handler demo holding two fences, an authoring error; and two
-// demos, spin and format, sharing the runner. The page copies the states list into the 20rem list,
-// the fences with it, and gives every demo the page's one runner, the runtime's Runner, which
+// demos, spin and format, sharing the runner. The page gives every demo the page's one runner, the runtime's Runner, which
 // TypeScript checks against the demo's declared subset, DemoRunner, where the page creates it.
 // Nothing runs until a Run is pressed, so a capture of the page is the same every time.
 
@@ -104,14 +104,14 @@ function figure({ key, label, build }: State, list: string): HTMLElement {
   return state;
 }
 
-/** Builds the states into the section's lists: every state into each .states, and the focus
- * state, when the component takes focus, into .focus. */
+/** Builds the states into the section's lists: every state into .states, and the focus state,
+ * when the component takes focus, into .focus. */
 function specimens(section: string, states: State[], focus?: State): void {
   const root = document.querySelector(`#${section}`);
   if (!root) throw new Error(`components.html has no #${section}`);
-  for (const [i, list] of root.querySelectorAll(".states").entries()) {
-    list.append(...states.map((state) => figure(state, `${section}-${i}`)));
-  }
+  root
+    .querySelector(".states")
+    ?.append(...states.map((state) => figure(state, `${section}-states`)));
   if (focus) root.querySelector(".focus")?.append(figure(focus, `${section}-focus`));
 }
 
@@ -796,13 +796,10 @@ specimens(
  * from the runtime. It starts no worker and fetches nothing until a demo's Run. */
 const runner = new Runner() satisfies DemoRunner;
 
-/** The Go demo's states, written in the page: copied into the 20rem list, fences and all, and
- * every demo given the runner. */
+/** The Go demo's states, written in the page: every demo given the runner. */
 function goDemos(): void {
   const section = document.querySelector("#go-demo");
   if (!section) throw new Error("components.html has no #go-demo");
-  const [states, narrow] = section.querySelectorAll(".states");
-  narrow.append(...[...states.children].map((state) => state.cloneNode(true)));
   for (const demo of section.querySelectorAll("sl-go-demo")) demo.runner = runner;
 }
 
