@@ -72,12 +72,15 @@ for the Go packages.
   (`scripts/build-toolchain.ts`), in the worker, and fetches each standard-library package's
   archive per import through `go/toolchain/manifest.json`. `playground.html` is one screen: a
   heading, an intro, a closed disclosure of what a program can be, and one fixed, source-mode
-  sl-go-demo, opening on hello's source, that fills the rest of the viewport. Planned: workspace
+  sl-go-demo, opening on hello's source, that fills the rest of the viewport a gutter above its
+  bottom: an app page, main across the body's content width by named lines, the prose on an 80ch
+  column and the demo on the full one. Planned: workspace
   modules' archives, added when the sqlate and scenarios tasks first require them.
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
-  over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its size container and
-  divides that height among its parts in three width bands; for it, sl-console's `fill` takes the
+  over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its parent's layout makes
+  it, never below a floor in lines of its editor and console, and divides that height among its
+  parts in three width bands; for it, sl-console's `fill` takes the
   height given, sl-controls' `steady` keeps the status to one line, and sl-controls, given an
   `Arrangement`, shows a Layout group, which the demo shows from 64rem. The file tabs and the
   fixed demo's output tabs share one sheet, `tabs.css`. No component holds authoritative state:

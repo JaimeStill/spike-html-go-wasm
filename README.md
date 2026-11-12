@@ -88,12 +88,14 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       file the reader adds read through `os.ReadFile` from the working directory, nothing a run
       writes outliving it;
     - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
-      at 900px: with the disclosure closed, the demo's container takes every row left, the demo
-      is as tall as the container and ends at the viewport's bottom edge, the page doesn't
-      scroll, and no script sizes the demo; opening the disclosure shrinks the container down to
-      its floor, half the viewport's height, where every part stays inside the demo, the editor
-      shows three lines, the console's log shows two, and the page scrolls down but never
-      sideways; closing it restores the screen;
+      at 900px, at 1120x800, and at 900x700: with the disclosure closed, the demo takes every row
+      left and ends a gutter above the viewport's bottom edge, the one gutter that holds the page
+      off both sides, every part's bottom border inside the demo and in view, in each arrangement
+      from 64rem; the page doesn't scroll, and no script sizes the demo; opening the disclosure
+      takes its rows from the demo, down to its floor, where the editor's frame holds six of its
+      lines and the console's log two, one of them exactly, and the page scrolls down, the demo a
+      gutter above its end, but never sideways; closing it restores the screen; on a short
+      screen, 390x600 or 1376x500, the demo holds its floor, closed or open;
     - the playground's fixed layout, at 390px, 1120px, and 1376px, and with the demo half a rem
       either side of 44rem and 64rem: each width lays out its band, and from 64rem each
       arrangement places the parts as it says; a paste of 500 lines, 10,000 printed lines, and a
@@ -122,7 +124,7 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   each band of its fixed demo: 390px with the output panel's Output tab and again with its
   Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
   each chosen through the Layout menu, and with the menu open; and 1376px with the disclosure
-  open, the demo at its floor. `--width <px>`, one of the SDK's three, captures that width alone
+  open, the demo yielding its rows, every part's bottom border a gutter above the viewport's. `--width <px>`, one of the SDK's three, captures that width alone
   on every page, as `mise run screenshots --page components/controls --width 390`; the
   playground's 900px capture is taken only when no width is given. Any other width is a usage
   error naming the three. `scripts/screenshots.ts` takes `--width`, which the capture bin
@@ -180,8 +182,8 @@ foundation's (`foundation.tokens.*` through `foundation.theme-menu`), then `site
 and the browser tier reads that order on each page. Every rule a page adds is in
 `web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
 specificity: the header-actions group at the header's inline end, the space between `main >
-section`s on every page, the components page's specimens, and the playground's one screen, which
-only a body of class `app` takes. Its spaces are the foundation's `--space-*` steps.
+section`s on every page, the components page's specimens, and the app page, the playground's
+one screen, which only a body of class `app` takes. Its spaces are the foundation's `--space-*` steps.
 
 A hand page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
@@ -202,17 +204,25 @@ reload opens on hello again, and no file is shared or stored.
 
 ### The one-screen page
 
-The page fits one screen, laid out in CSS alone, by the shared sheet's rules for its body, of
-class `app` (see "Pages"). The body is at least the viewport's height, a
-grid of the header over main. Main is a grid of the heading, the intro, a closed disclosure
-("What you can build here"), and the demo's container, a size container whose `1fr` row takes
-every row the others leave; the fixed demo fills it (`100cqb`). Opening the disclosure takes its
-rows from the container, down to a floor of half the viewport's height (`minmax(50dvh, 1fr)`),
-where a phone's width still shows seven lines of the editor and two and a half of the console;
-below the floor the page grows and scrolls. The container spans the body's whole content width,
-beyond main's 80ch, so the demo reaches its wide band, while main and the page's prose keep
-their reading width. The disclosure says, in the reader's terms, what a program can be, where its
-other files go, how Run and Stop behave, and that edits last only as long as the tab.
+The playground is an app page, a workspace rather than an article, laid out in CSS alone by the
+shared sheet's rules for its body, of class `app` (see "Pages"). It keeps the SDK's shell, the
+header and the body's inline gutter, and changes three things about it. The body is one column
+at every width, the header over main, where `site.css` gives it three from 70rem, with main a
+reading column in the middle. The body is at least the viewport's height (`100dvh`), and main
+takes every row the header leaves, where `site.css` packs the rows at the top. And one gutter,
+`--page-gutter`, the `--space-m` the shell already holds the body off the viewport's sides with,
+spaces the inline sides and the block end alike.
+
+Main spans the body's content width, a grid of named lines: `content`, the prose's 80ch, centered
+between two equal side tracks, and `full`, the content and both sides. The heading, the intro,
+and a closed disclosure ("What you can build here") sit on `content`; the fixed demo sits on
+`full`, in the last row, `1fr`, every row the prose leaves, so it ends a gutter above the
+viewport's bottom, every part's bottom border in view. The demo's own width sets its bands.
+Opening the disclosure takes its rows from the demo, down to the demo's floor (`sl-go-demo`,
+"Fixed layout"); below the floor, the page grows and scrolls down, never sideways. The SDK's
+shell checks all run on the page but main's reading width, and the spike's own check holds the
+prose to 80ch, centered. The disclosure says, in the reader's terms, what a program can be, where
+its other files go, how Run and Stop behave, and that edits last only as long as the tab.
 
 ### The Layout menu and the stored arrangement
 
@@ -334,7 +344,9 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   and scrolls inside; it is no flex item, which would lay out every row again on each append.
   With `fill`, the console takes the block size its container gives it, whatever the log holds:
   the bar sits on top and the log takes the rest, scrolling inside. The log's frame has
-  `contain: size`, so no row is measured to size it.
+  `contain: size`, so no row is measured to size it, and is at least as many of its own lines tall
+  as the host's `--sl-console-min-lines` gives, none by default; a fixed Go demo sets its floor's
+  there.
   - Attributes: `label` (the log's accessible name, "Output" by default) and `fill` (a boolean:
     fill the given block size rather than grow with the log).
   - Properties: `log`, the `ConsoleLog` its owner creates and writes; `null`, the default, shows
@@ -577,11 +589,18 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
     is 44rem wide, the console and the timings share a row, the timings in a 16rem column and the
     console taking the rest. Every part stays inside the demo at every width, and the demo fits a
     phone's width. Nothing moves.
-  - Fixed layout: with `fixed`, the demo is as tall as its nearest size container (`100cqb`),
-    which the page lays out; the demo reads no viewport unit and runs no script to size itself.
-    With no size container, the unit falls back to the small viewport's height. The parts divide
-    that height in fractions, never in lengths, and each scrolls inside its own frame, so typing
-    or pasting any number of lines, any output, and a full timings table change no part's box:
+  - Fixed layout: with `fixed`, the demo is as tall as the box its parent's layout gives it
+    (`block-size: 100%`, as a grid row's stretch gives it), never below its floor; it reads no
+    viewport or container block unit, runs no script to size itself, and needs no size
+    container. The floor is stated once, in lines of the parts' own text: six of the editor's and
+    two of the console's log (`--editor-lines` and `--console-lines`, in `lh`), so it follows the
+    type profile and zoom. The editor, the log, and the timings contain their size, so the floor,
+    the demo's `min-content` height, is the toolbar, the tabs, and the gaps as each band lays them
+    out, plus those lines, at the parts' shares: the least height at which both show their lines.
+    In the default profiles, at a phone's width, where the toolbar wraps, it is about 392px, and
+    from 64rem, editor left, about 221px. The parts divide the demo's height in fractions, never in lengths, and each scrolls
+    inside its own frame, so typing or pasting any number of lines, any output, and a full timings
+    table change no part's box:
     the editor fills its frame, the console fills its own (`fill`), the timings scroll in theirs,
     and the toolbar's status is `steady`. Container queries on the demo's own width choose one
     of three bands:

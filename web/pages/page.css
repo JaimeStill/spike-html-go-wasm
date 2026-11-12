@@ -11,8 +11,8 @@
  * reorder every layer on the page, and an unlayered one would sit above every layer.
  *
  * Every space is a foundation --space-* step. The rules each page shares come first, then the
- * components page's specimens, then the playground's one screen, which only a body of class app
- * takes, so the index and the components page keep the site's reading layout.
+ * components page's specimens, then the playground's app page, its one screen, which only a body
+ * of class app takes, so the index and the components page keep the site's reading layout.
  * Adapted from spike-html-apps-components (19d4f59): demo/demo.css, its page layout the consumer's,
  * in a layer of its own after the foundation's.
  */
@@ -59,53 +59,67 @@
     font-size: var(--text-s);
   }
 
-  /* The playground, a body of class app: one screen. The body is at least the viewport's height,
-     a column of the header and main, main taking every row the header leaves; the foundation's
-     reset sets the body's minimum by the small viewport, and the page takes the dynamic one, which
-     is the viewport as it is. From 70rem site.css makes the body a grid of three columns, its rows
-     packed at the top; here its rows fill the body instead, and below 70rem the body is a grid of
-     one column. The body is also the container the demo's container reads its width from,
-     100cqi. */
+  /* The playground, a body of class app: an app page, a workspace rather than an article. It keeps
+     the shell site.css lays out, the body's inline gutter, the header and its row, and changes three
+     things about it, each for the workspace:
+     - The body is one column at every width, the header over main, where site.css makes it, from
+       70rem, three columns with main's reading column in the middle: a tool takes the body's whole
+       content width, and the prose keeps its reading column inside main instead, by named lines.
+     - The body is the viewport's height, at least, and its rows fill it, main taking every row the
+       header leaves, where site.css packs them at the top: the page is one screen. The foundation's
+       reset holds the body to the small viewport's height; the page takes the dynamic one, the
+       viewport as it is.
+     - One gutter, --page-gutter, the --space-m site.css holds the body off the viewport's sides
+       with, spaces the inline sides and the block end alike, where site.css ends main on its own
+       --space-2xl: the demo ends a gutter above the viewport's bottom, its every edge in view.
+     Nothing here is measured by script, and nothing reads the demo's size. */
   body.app {
-    container-type: inline-size;
-    display: grid;
-    grid-template-rows: auto 1fr;
-    align-content: normal;
-    min-block-size: 100dvh;
-  }
-  @media (width < 70rem) {
-    body.app {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-  /* Main fills its row, a column of the heading, the intro, and the disclosure, each its own
-     height, then the demo's container, taking every row they leave, but never less than the
-     floor, half the viewport's height, the least share at which every part of the demo stays
-     usable: at a phone's width, the editor shows seven lines and the console two and a half, where
-     45% left the console under two. An open disclosure takes its space from the container, down
-     to the floor; past it, main and the body grow, and the page scrolls. Main's 80ch reading width
-     and its centring stay site.css's, as the SDK's shell checks hold them; its foot keeps no
-     padding, so the demo's bottom edge is the viewport's. */
-  body.app > main {
+    --page-gutter: var(--space-m);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto minmax(50dvh, 1fr);
-    align-self: stretch;
+    grid-template-rows: auto 1fr;
+    align-items: stretch;
+    align-content: stretch;
+    min-block-size: 100dvh;
+    padding-inline: var(--page-gutter);
+    padding-block-end: var(--page-gutter);
+  }
+  body.app > header {
+    grid-column: 1;
+  }
+  /* Main spans the body's content width, a grid of named lines: the content column, the prose's
+     80ch, centered between two equal side tracks, which take what the content leaves and none below
+     80ch; and the full column, the content and both sides. The heading, the intro, and the
+     disclosure sit on the content column, each its own height; the demo on the full column, in the
+     last row, 1fr, every row the prose leaves, as a stretched grid item. Opening the disclosure
+     grows its row and takes the space from the demo's, down to the demo's own floor; past it, main
+     and the body grow by the rest, and the page scrolls down, never sideways. The gutter below is
+     the body's, so main ends on its last row. */
+  body.app > main {
+    grid-area: 2 / 1;
+    display: grid;
+    grid-template-columns:
+      [full-start] minmax(0, 1fr)
+      [content-start] minmax(0, 80ch)
+      [content-end] minmax(0, 1fr)
+      [full-end];
+    grid-template-rows: repeat(3, auto) [demo-start] 1fr [demo-end];
+    inline-size: auto;
+    max-inline-size: none;
+    margin-inline: 0;
     padding-block-end: 0;
   }
-  /* The disclosure sits apart from the demo below it, open or closed. The space is its own, not
-     the container's, so the container's row is the demo's whole height. */
+  body.app > main > * {
+    grid-column: content;
+  }
+  /* The disclosure sits apart from the demo below it, open or closed. */
   body.app > main > details {
     margin-block-end: var(--space-m);
   }
-  /* The demo's container: a size container, so the fixed demo inside it, 100cqb, is as tall as
-     its row. The playground is a tool, so the container takes the body's whole content width,
-     beyond main's 80ch, 100cqi of the body, its margins, negative where main is narrower,
-     centering it on main, which site.css centers in the body at every width. Its own width, which
-     it gives the demo, sets the demo's bands. */
-  body.app .demo-container {
-    container-type: size;
-    inline-size: 100cqi;
-    margin-inline: calc((100% - 100cqi) / 2);
+  /* The demo: the full column, its own width setting its bands, and the last row's whole height,
+     which a fixed demo fills (go-demo.css). */
+  body.app > main > sl-go-demo {
+    grid-column: full;
+    grid-row: demo;
   }
 }

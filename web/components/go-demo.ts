@@ -62,9 +62,11 @@
 // the active file, focus staying on Rename; Delete removes the active file and focuses the tab
 // now active.
 //
-// The fixed layout: with `fixed`, the demo is as tall as its nearest size container, which the page
-// lays out, reading no viewport unit and running no script to size itself, and each part keeps a
-// share of that height and scrolls inside it, so no edit, output, or timing changes any part's box.
+// The fixed layout: with `fixed`, the demo is as tall as the box its parent's layout gives it,
+// never below its floor, six lines of the editor and two of the console's log over the toolbar and
+// the tabs, reading no viewport or container block unit, running no script to size itself, and
+// needing no size container; each part keeps a share of that height and scrolls inside it, so no
+// edit, output, or timing changes any part's box.
 // Its arrangement follows its own width, by container queries in go-demo.css: below 44rem, the
 // editor over one output panel whose tablist, Output and Timings, shows the console or the timings;
 // from 44rem to 64rem, the editor over the console and the timings side by side; and from 64rem,
@@ -263,9 +265,9 @@ interface Owned {
  * instead, every .go file as package main, and runs its main, naming no scenario. The files are
  * the light DOM's fences (see the module's note). `editable-files` adds New file, Rename, and
  * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
- * to 8 columns, 4 by default. `fixed` holds the demo to the block size of its nearest size
- * container, which the page lays out (100cqb); each part keeps its share of that height, scrolling
- * inside it, in a layout that follows the demo's width (see the module's note). `arrangement`, an
+ * to 8 columns, 4 by default. `fixed` makes the demo as tall as the box its parent's layout gives
+ * it, never below its floor in lines of its parts (go-demo.css); each part keeps its share of that
+ * height, scrolling inside it, in a layout that follows the demo's width (see the module's note). `arrangement`, an
  * Arrangement the page writes, places a fixed demo's parts from 64rem and shows its toolbar's
  * Layout menu there; with none, the editor is left and the menu isn't shown. `label` names the
  * demo, a region; by default it names the scenario and the handler, "probe format demo", or, on a
@@ -322,7 +324,8 @@ export class GoDemo extends LitElement {
   declare tabSize: string | null;
   /** The demo's accessible name, unless the default. */
   declare label: string | null;
-  /** Whether the demo is held to its size container's block size, each part to its share. */
+  /** Whether the demo is as tall as its parent's layout makes it, above its floor, each part to
+   * its share. */
   declare fixed: boolean;
   /** The page's arrangement, which the demo renders from and never writes; null places the editor
    * left and shows no Layout menu. */

@@ -5,14 +5,14 @@
      own compiler and linker in the page's worker, then runs main; nothing loads Go, or starts the
      worker, until a Run. Its script, web/pages/playground.ts, gives the demo the page's one runner
      and the reader's arrangement.
-     The page is one screen, laid out in CSS alone, the shared sheet's rules for a body of class
-     app (web/pages/page.css): the header, the heading, the intro, a closed
-     disclosure saying what a program can be, then the demo's container, which takes every row of
-     the viewport left. The demo is fixed, as tall as that container, each part in its share, so
-     opening the disclosure takes its space from the demo, down to a floor of half the viewport's
-     height; below that, the page scrolls. The demo takes the body's whole width, main and the prose
-     keeping their reading width. The shell is the index's, the same header, dialogs, and
-     shared sheet; see index.html for each. -->
+     The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
+     body of class app (web/pages/page.css): the header, then main across the body's content
+     width, the heading, the intro, and a closed disclosure saying what a program can be on its
+     80ch content column, then the demo on its full column, in the row the prose leaves, a gutter
+     above the viewport's bottom. The demo is fixed, as tall as that row, each part in its share,
+     so opening the disclosure takes its space from the demo, down to the demo's floor, in lines of
+     its editor and console; below that, the page scrolls down. The shell is the index's, the same
+     header, dialogs, and shared sheet; see index.html for each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -89,8 +89,7 @@
           and you're back to hello.
         </p>
       </details>
-      <div class="demo-container">
-        <sl-go-demo source editable-files fixed label="Playground">
+      <sl-go-demo source editable-files fixed label="Playground">
 <pre><code class="language-go">// Command hello is the spike's first program built for GOOS=js GOARCH=wasm: it imports only the
 // standard library and prints one line. It is a program scenario: the components page's Go demo
 // runs its main to completion in the runtime's worker, which reports the line as stdout output
@@ -106,8 +105,7 @@ func main() {
 	fmt.Printf("hello from Go %s on %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
 </code></pre>
-        </sl-go-demo>
-      </div>
+      </sl-go-demo>
     </main>
     <dialog id="help" aria-labelledby="help-title">
       <header class="dialog-header">

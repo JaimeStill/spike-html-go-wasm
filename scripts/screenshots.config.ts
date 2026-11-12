@@ -7,13 +7,13 @@
 // form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run, and
 // no Go loads; and the playground, --page playground, its demo as before a Run, on hello's source:
 // the viewport alone, the page's one screen, not the page whole, since the page fits its viewport
-// by its demo's container, and a viewport grown to the page would grow the demo with it. It is
+// by its demo's row, and a viewport grown to the page would grow the demo with it. It is
 // captured in each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output
 // tab and again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and
 // 1376px, the wide band in each arrangement, editor left, top, and right, and with the Layout menu
 // open, each chosen by the menu as a reader chooses, so no state depends on what an earlier one
-// stored; and at 1376px with the disclosure open, the demo at its floor, the page scrolled to its
-// top. The components page shows each state once and its layout follows the viewport, so the narrow
+// stored; and at 1376px with the disclosure open, the demo yielding the disclosure's rows, still
+// above its floor, so every part's bottom border shows a gutter above the viewport's. The components page shows each state once and its layout follows the viewport, so the narrow
 // layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the index's,
 // each component's, and the playground's, takes only that width's states, so the 900px capture, at
 // no SDK width, is taken only when every width is. The SDK's widths over the whole components page

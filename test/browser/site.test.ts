@@ -3,17 +3,19 @@
 // a fresh page of each hand page, the index, the components page, and the playground, whose
 // headers have no site nav, which the checks allow, and which a test of its own holds on each: no
 // sl-site-nav in the header, and no site-nav.js loaded, which defines it; the build bundles the
-// module, so the registry rather than a request names it. The crawl, from the index, checks every
+// module, so the registry rather than a request names it. The playground is an app page, its main
+// across the body's content width, so it runs every check but main's reading width,
+// holdsReadingWidth; a check of the spike's own holds its prose, the heading, the intro, and the
+// disclosure, to 80ch, centered, instead. The crawl, from the index, checks every
 // copied page, none here, and loads each hand page it reaches: it reaches exactly the index and,
 // by the index's links, the components page and the playground. No page holds an SDK fence, so
 // the SDK's palette check has nothing to run on; the components page's editors are held to its
 // colors by code-editor.test.ts. Each hand page's cascade layers, read from its sheets in the
 // order the document names them, are the foundation's, then the SDK's site, then page, the
 // shared sheet's (web/pages/page.css), last, and its source holds no inline <style>, which the
-// build would write ahead of the linked sheets. The components page sets every section apart, its heading
-// --space-xl below what came before; the playground has no section, its one screen proved by
-// playground-layout.test.ts. Nothing here names the site: its base is
-// package.json's name.
+// build would write ahead of the linked sheets. The components page sets every section apart, its
+// heading --space-xl below what came before; the playground has no section, its one screen proved
+// by playground-layout.test.ts. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/test/browser/site.test.ts, its checks
@@ -27,8 +29,10 @@ import { after, before, describe, test } from "node:test";
 import { launch } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
-import { crawl, shell } from "@jaimestill/spike-html-hosting-sdk/browser.js";
+import { crawl, holdsReadingWidth, shell } from "@jaimestill/spike-html-hosting-sdk/browser.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
+
+import { viewport } from "./viewport.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -47,10 +51,16 @@ after(async () => {
 /** The hand pages, each by its path under the base. */
 const hand = ["", "components.html", "playground.html"];
 
+/** The app page, the playground, whose main spans the body's content width. */
+const APP = "playground.html";
+
 describe("the site under its base", () => {
   for (const path of hand) {
     const where = path || "the index";
     for (const [name, check] of Object.entries(shell)) {
+      // The playground is an app page: main spans the body's content width, and its prose holds
+      // the reading width instead, by the check below.
+      if (path === APP && check === holdsReadingWidth) continue;
       test(`${name} on ${where}`, async () => {
         const page = await browser.open("about:blank");
         try {
@@ -161,6 +171,42 @@ describe("the site under its base", () => {
           gap >= xl - 0.5,
           `#${id}'s heading sits ${gap}px below what came before, under ${xl}px`,
         );
+      }
+    } finally {
+      await page.close();
+    }
+  });
+
+  test(`${APP}'s prose, its heading, intro, and disclosure, holds its 80ch reading width, centered, at 1600px and 1120px, and the whole width less the gutters at 390px`, async () => {
+    const page = await browser.open(`${server.origin}${APP}`);
+    try {
+      for (const width of [1600, 1120, 390]) {
+        await viewport(page, width);
+        const read: { ch: number; viewport: number; gutter: number; prose: number[][] } =
+          await page.evaluate(`(() => {
+          const main = document.querySelector("main");
+          const probe = document.createElement("div");
+          probe.style.inlineSize = "80ch";
+          main.append(probe);
+          const ch = probe.getBoundingClientRect().width;
+          probe.remove();
+          const viewport = document.documentElement.clientWidth;
+          return {
+            ch,
+            viewport,
+            gutter: parseFloat(getComputedStyle(document.body).paddingInlineStart),
+            prose: [...main.querySelectorAll(":scope > :is(h1, p, details)")].map((element) => {
+              const { left, right, width } = element.getBoundingClientRect();
+              return [left, viewport - right, width];
+            }),
+          };
+        })()`);
+        assert.equal(read.prose.length, 3, "the heading, the intro, and the disclosure");
+        const column = Math.min(read.ch, read.viewport - 2 * read.gutter);
+        for (const [left, right, inline] of read.prose) {
+          assert.ok(Math.abs(inline - column) <= 0.5, `at ${width}px the prose is ${inline}px`);
+          assert.ok(Math.abs(left - right) <= 1, `at ${width}px it is centered, ${left}, ${right}`);
+        }
       }
     } finally {
       await page.close();

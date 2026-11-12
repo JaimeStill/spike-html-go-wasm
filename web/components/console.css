@@ -11,7 +11,9 @@
  * inside it. The frame is no flex or grid item, whose size would be measured from every row on
  * each append (console.ts). With fill, the host is a grid as tall as its container makes it, the
  * bar's row and the frame's, which takes the rest whatever it holds: the frame's size is
- * contained, so no row of it is measured to size it, and the log scrolls inside it. Lines wrap,
+ * contained, so no row of it is measured to size it, and the log scrolls inside it. Its least
+ * height is --sl-console-min-lines of its own lines, none unless the page or a composing element
+ * sets the property on the host, as a fixed Go demo sets its floor's. Lines wrap,
  * anywhere if they must, so nothing scrolls sideways, and keep their spaces, tabs, and blank lines
  * as written.
  *
@@ -95,9 +97,10 @@
 }
 
 /* Filling, the frame is as tall as its row and no taller or shorter for what it holds: its size
-   contained, its rows are never measured to size it. */
+   contained, its rows are never measured to size it. It is never shorter than the lines the host's
+   --sl-console-min-lines asks for, in its own lh. */
 :host([fill]) .frame {
-  min-block-size: 0;
+  min-block-size: calc(var(--sl-console-min-lines, 0) * 1lh);
   max-block-size: none;
   contain: size;
 }

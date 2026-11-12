@@ -84,16 +84,21 @@ export const layout = async (page: Page): Promise<Layout> => {
   })()`);
 };
 
-/** The playground's one screen as laid out: the viewport's height; how far the page scrolls each
- * way; the top and bottom edges, on the page, of the disclosure and of the demo's container, and
- * the demo's height; and whether the disclosure is open. Each length to a hundredth of a px. */
+/** The playground's one screen as laid out: the viewport's height and width, less any scrollbar;
+ * the body's padding at the inline start, the inline end, and the block end, the page's gutter;
+ * how far the page scrolls each way, and its height; the top and bottom edges, on the page, of the
+ * disclosure and of the demo, and the demo's inline start and end in the viewport; and whether the
+ * disclosure is open. Each length to a hundredth of a px. */
 export interface Screen {
   viewport: number;
+  width: number;
+  gutters: [number, number, number];
   down: number;
   sideways: number;
+  height: number;
   details: [number, number];
-  container: [number, number];
-  demo: number;
+  demo: [number, number];
+  sides: [number, number];
   open: boolean;
 }
 
@@ -107,21 +112,38 @@ export const screen = async (page: Page): Promise<Screen> => {
       return [round(top + scrollY), round(bottom + scrollY)];
     };
     const html = document.documentElement;
+    const body = getComputedStyle(document.body);
     const details = document.querySelector("main > details");
+    const demo = ${PLAYGROUND}.getBoundingClientRect();
     return {
       viewport: innerHeight,
+      width: html.clientWidth,
+      gutters: [body.paddingInlineStart, body.paddingInlineEnd, body.paddingBlockEnd].map(parseFloat),
       down: html.scrollHeight - html.clientHeight,
       sideways: html.scrollWidth - html.clientWidth,
+      height: html.scrollHeight,
       details: edges(details),
-      container: edges(document.querySelector(".demo-container")),
-      demo: round(${PLAYGROUND}.getBoundingClientRect().height),
+      demo: edges(${PLAYGROUND}),
+      sides: [round(demo.left), round(demo.right)],
       open: details.open,
     };
   })()`);
 };
 
-/** The demo container's floor, as a share of the viewport's height: playground.html's. */
-export const FLOOR = 0.5;
+/** The fixed demo's floor, in lines of each part's own text, go-demo.css's --editor-lines and
+ * --console-lines: the editor's frame and the console's log frame are never shorter. */
+export const FLOOR = { editor: 6, log: 2 };
+
+/** The editor's frame's and the console's log frame's heights, each in lines of its own text. */
+export const frameLines = (page: Page): Promise<{ editor: number; log: number }> =>
+  page.evaluate(`(() => {
+    const root = ${PLAYGROUND}.shadowRoot;
+    const editor = root.querySelector("sl-code-editor").shadowRoot.querySelector(".editor");
+    const log = root.querySelector("sl-console").shadowRoot.querySelector(".frame");
+    const lines = (frame) =>
+      frame.getBoundingClientRect().height / parseFloat(getComputedStyle(frame).lineHeight);
+    return { editor: lines(editor), log: lines(log) };
+  })()`);
 
 /** Opens or closes the playground's disclosure by a click on its summary, as a reader does,
  * resolving once it is open or closed. */

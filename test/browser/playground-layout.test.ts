@@ -2,13 +2,17 @@
 // serves it, dist/ under the base by the SDK's served(), Vite's preview, in the pinned
 // chrome-headless-shell.
 //
-// The page is one screen, in CSS alone: at the SDK's three capture widths, each at its capture
-// height and at 900px, with the disclosure closed, the demo's container takes every row the header,
-// the heading, the intro, and the disclosure leave, the demo as tall as it, its bottom edge the
-// viewport's, the page scrolling neither way, and no script sizing the demo. Opening the disclosure
-// takes its space from the container, down to its floor, half the viewport's height, where every
-// part stays inside the demo, the editor showing three lines and the console's log two; below the
-// floor the page scrolls down, never sideways; closing it puts the screen back as it was.
+// The page is one screen, in CSS alone, an app page (web/pages/page.css): at the SDK's three
+// capture sizes, each also 900px tall, at 1120x800, and at the middle capture's 900x700, with the
+// disclosure closed, the demo takes every row the header, the heading, the intro, and the
+// disclosure leave, and ends a gutter above the viewport's bottom edge, the one gutter that holds
+// the page off both its sides, every part's bottom border inside the demo and in view, the page
+// scrolling neither way, in each arrangement from 64rem, and no script sizing the demo. Opening
+// the disclosure takes its space from the demo, down to its floor, the least height at which the
+// editor's frame holds six of its lines and the console's log two, one of them at exactly that;
+// below the floor the page scrolls down, never sideways, the demo ending a gutter above the page's
+// end; closing it puts the screen back as it was. On a short screen, 390x600 or 1376x500, the
+// demo holds its floor, closed or open.
 //
 // The demo's parts keep their shares of its height at every width: at the SDK's three capture
 // widths, 390, 1120, and 1376 px, and at widths that put the demo itself half a rem either side of
@@ -39,6 +43,7 @@ import {
   arrange,
   disclose,
   FLOOR,
+  frameLines,
   screen,
   type Screen,
   type AXNode,
@@ -132,34 +137,104 @@ const choose = (page: Page, part: "console" | "timings") =>
     `${PLAYGROUND}.shadowRoot.querySelector('.output-tabs [data-part="${part}"]').click()`,
   );
 
-/** Asserts that the demo's container ends at the viewport's bottom edge and the page scrolls
- * neither way, the demo as tall as its container. */
-function oneScreen(shown: Screen, where: string): void {
-  const [top, bottom] = shown.container;
-  assert.ok(Math.abs(bottom - shown.viewport) <= 0.5, `${where}: the container ends at ${bottom}`);
-  assert.ok(Math.abs(shown.demo - (bottom - top)) <= 0.5, `${where}: the demo fills its container`);
-  assert.deepEqual([shown.down, shown.sideways], [0, 0], `${where}: the page scrolls neither way`);
+/** Asserts that the page has one gutter, the body's padding at both inline sides and at the block
+ * end, and that the demo spans the body's content width, a gutter from each side. */
+function guttered(shown: Screen, where: string): number {
+  const [gutter, ...others] = shown.gutters;
+  assert.ok(gutter > 0, `${where}: the page has a gutter`);
+  assert.deepEqual(others, [gutter, gutter], `${where}: one gutter at the sides and the block end`);
+  const [start, end] = shown.sides;
+  assert.ok(Math.abs(start - gutter) <= 0.5, `${where}: the demo starts a gutter in, at ${start}`);
+  assert.ok(Math.abs(shown.width - gutter - end) <= 0.5, `${where}: the demo ends a gutter in`);
+  return gutter;
 }
 
-/** The SDK's capture widths, each at its capture height and at 900px. */
-const SCREENS = WIDTHS.flatMap(({ width, height }) => [
-  { width, height },
-  { width, height: 900 },
-]);
+/** Asserts that every part shown, its bottom border among it, lies inside the demo and ends no
+ * lower than the bottom given. */
+function above({ parts }: Layout, bottom: number, where: string): void {
+  for (const [name, { box, shown }] of Object.entries(parts)) {
+    if (!shown) continue;
+    const end = box[1] + box[3];
+    assert.ok(
+      end <= bottom + 0.5,
+      `${where}: the ${name}'s bottom border, ${end}, is above ${bottom}`,
+    );
+  }
+}
+
+/** Asserts the page is one screen: the demo ends a gutter above the viewport's bottom edge, every
+ * part's bottom border inside the demo and in view, and the page scrolls neither way. */
+async function oneScreen(page: Page, shown: Screen, where: string): Promise<void> {
+  const gutter = guttered(shown, where);
+  const bottom = shown.viewport - gutter;
+  assert.deepEqual([shown.down, shown.sideways], [0, 0], `${where}: the page scrolls neither way`);
+  assert.ok(Math.abs(shown.demo[1] - bottom) <= 0.5, `${where}: the demo ends at ${shown.demo[1]}`);
+  const laid = await layout(page);
+  contained(laid, where);
+  above(laid, bottom, where);
+}
+
+/** Asserts the demo is at its floor: the page scrolls down, never sideways, the demo ending a
+ * gutter above the page's end with every part inside it, the editor's frame and the console's log
+ * each at least its floor's lines, and one of them at exactly that, as the floor is the least
+ * height that holds both. */
+async function atFloor(page: Page, shown: Screen, where: string): Promise<void> {
+  const gutter = guttered(shown, where);
+  assert.ok(shown.down > 0, `${where}: the page scrolls down`);
+  assert.equal(shown.sideways, 0, `${where}: the page never scrolls sideways`);
+  const bottom = shown.height - gutter;
+  assert.ok(Math.abs(shown.demo[1] - bottom) <= 0.5, `${where}: the demo ends at ${shown.demo[1]}`);
+  const laid = await layout(page);
+  contained(laid, where);
+  above(laid, bottom, where);
+  const lines = await frameLines(page);
+  assert.ok(
+    lines.editor >= FLOOR.editor - 0.02,
+    `${where}: the editor shows ${lines.editor} lines`,
+  );
+  assert.ok(lines.log >= FLOOR.log - 0.02, `${where}: the log shows ${lines.log} lines`);
+  const least = Math.min(lines.editor - FLOOR.editor, lines.log - FLOOR.log);
+  assert.ok(least <= 0.05, `${where}: a part is at its floor, ${JSON.stringify(lines)}`);
+}
+
+/** The SDK's capture sizes, each also 900px tall, the 1120px width also 800px tall, and the
+ * middle capture's, 900x700. */
+const SCREENS = [
+  ...WIDTHS.flatMap(({ width, height }) => [
+    { width, height },
+    { width, height: 900 },
+  ]),
+  { width: 1120, height: 800 },
+  { width: 900, height: 700 },
+];
 
 describe("the playground's one screen", () => {
-  test("with the disclosure closed, the demo's container takes every row left, the demo's bottom edge the viewport's, and the page scrolls neither way, with no script sizing the demo", async () => {
+  test("with the disclosure closed, the demo takes every row left and ends a gutter above the viewport's bottom, every part's bottom border in view, the page scrolling neither way, with no script sizing the demo", async () => {
     const page = await open();
     try {
       for (const { width, height } of SCREENS) {
+        const where = `${width}x${height}`;
         await viewport(page, width, height);
         const shown = await screen(page);
         assert.equal(shown.open, false, "the disclosure opens closed");
-        oneScreen(shown, `${width}x${height}`);
-        // Above the floor, so the closed page never scrolls at the capture sizes.
-        const [top, bottom] = shown.container;
-        assert.ok(bottom - top > FLOOR * height, `${width}x${height}: above the floor`);
+        await oneScreen(page, shown, where);
+        // Above the floor, so the closed page never scrolls at these sizes.
+        const lines = await frameLines(page);
+        assert.ok(
+          lines.editor > FLOOR.editor && lines.log > FLOOR.log,
+          `${where}: above the floor`,
+        );
       }
+      // From 64rem, in each arrangement, at the wide captures' sizes.
+      for (const { width, height } of WIDTHS.filter(({ width }) => width > PHONE)) {
+        await viewport(page, width, height);
+        for (const placement of PLACEMENTS) {
+          await arrange(page, placement);
+          await oneScreen(page, await screen(page), `${width}x${height}, editor ${placement}`);
+        }
+      }
+      // The reader's choice is kept for the origin: the default again for the tests after.
+      await arrange(page, "left");
       const styled = await page.evaluate(`${PLAYGROUND}.getAttribute("style")`);
       assert.equal(styled, null, "the page sets no style on the demo");
     } finally {
@@ -167,51 +242,56 @@ describe("the playground's one screen", () => {
     }
   });
 
-  test("opening the disclosure takes its space from the demo's container, down to the floor, below which the page scrolls down and never sideways; closing it puts the screen back", async () => {
+  test("opening the disclosure takes its space from the demo, down to the floor, below which the page scrolls down and never sideways; closing it puts the screen back", async () => {
     const page = await open();
     try {
-      // At 1800px tall the open disclosure leaves the container above its floor at every width;
-      // at the capture heights it leaves less, and the floor holds.
-      const cases = WIDTHS.flatMap(({ width, height }) => [
-        { width, height: 1800, floored: false },
-        { width, height, floored: true },
-      ]);
+      // At 1800px tall, and at 1376x860, the open disclosure leaves the demo above its floor; at
+      // the phone's and 1120px's capture heights and the middle capture's, the floor holds.
+      const cases = [
+        ...WIDTHS.map(({ width }) => ({ width, height: 1800, floored: false })),
+        { width: 1376, height: 860, floored: false },
+        { width: 390, height: 844, floored: true },
+        { width: 1120, height: 700, floored: true },
+        { width: 900, height: 700, floored: true },
+      ];
       for (const { width, height, floored } of cases) {
-        const where = `${width}x${height}`;
+        const where = `${width}x${height}, open`;
         await viewport(page, width, height);
         const closed = await screen(page);
         await disclose(page, true);
         const opened = await screen(page);
-        const [top, bottom] = opened.container;
-        assert.ok(opened.details[1] > closed.details[1], `${where}: the disclosure grows`);
-        assert.equal(opened.sideways, 0, `${where}: the page never scrolls sideways`);
+        const grown = opened.details[1] - closed.details[1];
+        assert.ok(grown > 0, `${where}: the disclosure grows`);
         if (floored) {
-          assert.ok(height - top < FLOOR * height, `${where}: the rows left are under the floor`);
-          assert.ok(
-            Math.abs(opened.demo - FLOOR * height) <= 0.5,
-            `${where}: the demo at its floor`,
-          );
-          assert.ok(Math.abs(bottom - (height + opened.down)) <= 0.5, `${where}: the page's end`);
-          assert.ok(opened.down > 0, `${where}: the page scrolls down`);
-          // At the floor, every part lies inside the demo, the editor's frame holding three of its
-          // lines and the console's log frame two of its own.
-          const laid = await layout(page);
-          contained(laid, where);
-          const lines: number[] = await page.evaluate(`(() => {
-            const root = ${PLAYGROUND}.shadowRoot;
-            const editor = root.querySelector("sl-code-editor").shadowRoot.querySelector(".editor");
-            const log = root.querySelector("sl-console").shadowRoot.querySelector(".frame");
-            return [editor, log].map((frame) => parseFloat(getComputedStyle(frame).lineHeight));
-          })()`);
-          assert.ok(laid.parts.editor.box[3] >= 3 * lines[0], `${where}: the editor shows 3 lines`);
-          assert.ok(laid.parts.log.box[3] >= 2 * lines[1], `${where}: the log shows 2 lines`);
+          await atFloor(page, opened, where);
         } else {
-          oneScreen(opened, `${where}, open`);
-          assert.ok(opened.demo > FLOOR * height, `${where}: above the floor`);
-          assert.ok(opened.demo < closed.demo, `${where}: the demo yields the disclosure's rows`);
+          await oneScreen(page, opened, where);
+          const shrunk = closed.demo[1] - closed.demo[0] - (opened.demo[1] - opened.demo[0]);
+          assert.ok(
+            Math.abs(shrunk - grown) <= 0.5,
+            `${where}: the demo yields the disclosure's rows`,
+          );
         }
         await disclose(page, false);
         assert.deepEqual(await screen(page), closed, `${where}: closed again`);
+      }
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("on a short screen the demo holds its floor, closed or open, and the page scrolls down, never sideways", async () => {
+    const page = await open();
+    try {
+      for (const { width, height } of [
+        { width: 390, height: 600 },
+        { width: 1376, height: 500 },
+      ]) {
+        await viewport(page, width, height);
+        await atFloor(page, await screen(page), `${width}x${height}`);
+        await disclose(page, true);
+        await atFloor(page, await screen(page), `${width}x${height}, open`);
+        await disclose(page, false);
       }
     } finally {
       await page.close();

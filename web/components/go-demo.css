@@ -12,24 +12,23 @@
  * console taking what they leave, every part within the demo. Every gap is a foundation space. The
  * parts draw their own focus; nothing here moves, so reduced motion has nothing to stop.
  *
- * A fixed demo is as tall as its nearest size container, 100cqb, which the page lays out; it reads
- * no viewport unit and runs no script to size itself, so whatever the page sets around it, the
- * demo takes the height the page leaves it. (With no size container, the unit falls back to the
- * small viewport's height.) The host's own inline-size container is not its own query container,
- * so the bands still follow the demo's own width. Its parts share that height in fractions,
- * never in lengths, each part's share a frame it scrolls inside, so nothing a part holds changes
- * its box: the toolbar its own line, then the files 3fr, about 60% of what is left, and the output
- * 2fr. Each band places the same parts again, by grid areas, so a band change keeps every part's
- * content and scroll position, and names itself in --band, which the script reads:
- * - phone, below 44rem: the toolbar, the files, then one output panel, its tablist over the
- *   console or the timings, the two in one cell, the one unselected hidden by visibility, so it
- *   keeps its scroll and its layout.
- * - middle, from 44rem to 64rem: the files over the console and the timings side by side, the
- *   timings in their 16rem track, as a demo that isn't fixed lays them out.
- * - wide, from 64rem: the arrangement go-demo.ts names in data-placement, the page's, editor left
- *   with none. Left: the files, 3fr, beside a column, 2fr, of the console, 3fr, over the timings,
- *   2fr, under the toolbar. Right: its mirror, the column first. Top: the middle band's layout,
- *   which the wide band leaves as it is.
+ * A fixed demo is as tall as the box its parent's layout gives it: block-size 100%, which a grid
+ * or flex parent's stretch, or a parent of definite height, resolves. It reads no viewport or
+ * container block unit, runs no script to size itself, and needs no size container around it. It
+ * is never below its floor, its min-content height, which the floor's two counts set, stated once
+ * on the host, in lines of the parts' own text: the editor's frame --editor-lines tall and the
+ * console's log --console-lines, each in lh, so the floor follows the type profile and zoom. The
+ * editor, the console's log (sl-console's fill), and the timings contain their size, so nothing
+ * they hold reaches the demo's min-content height, and the floor is the toolbar's row, the tabs, and
+ * the gaps as they lay out in each band, plus those lines, the shares below holding at the floor
+ * too: the least height at which the editor and the log each show their lines. Wherever the page
+ * gives less, the demo keeps its floor and the page grows. The host's own inline-size container is
+ * not its own query container, so the bands follow the demo's own width. Its parts share its
+ * height in fractions, never in lengths, each part's share a frame it scrolls inside, so nothing a
+ * part holds changes its box: the toolbar its own line, then the files 3fr, about 60% of what is
+ * left, and the output 2fr. Each band places the same parts again, by grid areas, so a band change
+ * keeps every part's content and scroll position, and names itself in --band, which the script
+ * reads:
  * The editor fills its frame, the console fills its own (sl-console's fill), and the timings
  * scroll in theirs.
  *
@@ -75,8 +74,15 @@
 }
 
 /* The fixed layout: the phone band, then the wider bands' changes to it. */
+/* The floor's two counts: six lines of the editor and two of the console's log, the most that fit
+   the page's one screen at a phone's capture size, 390x844, where the toolbar wraps to two rows and
+   the output panel has its tablist, so the closed playground never scrolls; wider, the same counts
+   leave the parts more. */
 :host([fixed]) {
-  block-size: 100cqb;
+  --editor-lines: 6;
+  --console-lines: 2;
+  block-size: 100%;
+  min-block-size: min-content;
 }
 
 :host([fixed]) .demo {
@@ -101,8 +107,19 @@
   grid-template-rows: auto minmax(0, 1fr);
 }
 
+/* The editor fills its row, its size contained, so its lines never size the demo, and its frame
+   is at least the floor's lines tall: the host takes the code's leading, which its frame's text
+   has, so 1lh here is one of the editor's lines. */
 :host([fixed]) :is(.files, #panel) > sl-code-editor {
+  contain: size;
   block-size: 100%;
+  min-block-size: calc(var(--editor-lines) * 1lh);
+  line-height: var(--leading-code);
+}
+
+/* The console's log is at least the floor's lines tall, in its own lines (console.css). */
+:host([fixed]) sl-console {
+  --sl-console-min-lines: var(--console-lines);
 }
 
 :host([fixed]) .output {
@@ -120,8 +137,10 @@
   visibility: hidden;
 }
 
-/* The timings scroll in their share; the table keeps its own width rules. */
+/* The timings scroll in their share, their size contained, so a full table never sizes the demo;
+   the table keeps its own width rules. */
 :host([fixed]) sl-timings {
+  contain: size;
   overflow: auto;
   overscroll-behavior: contain;
 }
