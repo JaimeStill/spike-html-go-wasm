@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** programs
-- **Branch:** programs
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -10,7 +10,7 @@
 2. [x] runtime
 3. [x] components
 4. [x] playground
-5. [ ] programs
+5. [x] programs
 6. [ ] sqlate
 7. [ ] scenarios
 8. [ ] measure
@@ -145,10 +145,6 @@ above; a switch stops the pending run and clears output (9); About's last senten
 bytes are raw as fetched plus their gzip size, since Vite's preview doesn't gzip; stdlib's
 malformed input exits 1 with one errors.As-found stderr line. Slice 1 exports the demo's
 fence-naming rules from the components tier for the page to reuse, rather than duplicating them.
-
-## Progress
-
-slices 5/5 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
@@ -772,6 +768,9 @@ slices 5/5 committed · standards ✓ · spec ✓ · editor ✓
 - programs (spec review): added tests for each program's closure, the archives a program adds in
   one tab, an edit rerunning, a reload restoring every program, and file actions surviving a
   switch.
+- programs (brief): the architect accepted the brief with the report test kept in the browser
+  tier (≈53 s of each check), as behavior 13 has it; moving it to `mise run report:programs` alone
+  stays open for a later task.
 
 ## Notes
 
