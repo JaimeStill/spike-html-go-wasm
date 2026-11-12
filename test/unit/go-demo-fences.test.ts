@@ -1,11 +1,11 @@
 // Every program demo's go fence on the components page is its scenario's source, byte for byte:
 // each sl-go-demo in components.html with no handler and no source attribute runs the prebuilt
 // program, so the code it shows must be the code that program was built from. The playground's one
-// demo, a source demo, opens on the starter: its fences, main.go, lexer.go, parser.go, eval.go,
-// and input.txt, in that order, are cmd/calc's files byte for byte. A fence is a direct-child pre of the demo, its text the pre's text content, as
-// sl-go-demo reads it (web/components/go-demo.ts); its file is the fence's name, its data-file, on
-// the pre or its code, else the pre's title, else main.go, under cmd/<scenario>/, so a one-fence
-// demo's is its entrypoint, cmd/<scenario>/main.go.
+// demo, a source demo, opens on the starter: its fences, main.go, lexer.go, parser.go, eval.go, and
+// input.txt, in that order, are cmd/calc's files byte for byte. A fence is a direct-child pre of
+// the demo, its text the pre's text content, as sl-go-demo reads it (web/components/go-demo.ts);
+// its file is the fence's name, its data-file, on the pre or its code, else the pre's title, else
+// main.go, under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go.
 // The written demos are every demo's source: the pages' scripts add none.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the

@@ -88,7 +88,8 @@ const archiveDir = "/pkg";
 /** The compile's first file, which makes main the package's name; see the header. */
 const clauseFile = "/clause/main.go";
 
-const isGo = (file: BuildFile) => file.name.endsWith(".go");
+/** Whether a file is Go source, which the compiler reads; every other file only the run reads. */
+export const isGo = (file: BuildFile) => file.name.endsWith(".go");
 
 /** One token of Go source, as far as the import declarations need: an identifier or keyword, an
  * import path's string literal, unquoted, or one punctuation character. */

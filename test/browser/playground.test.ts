@@ -14,7 +14,8 @@
 // loop, and the next build fetches no toolchain module; and a file the reader adds is read through
 // os.ReadFile from the working directory, with nothing a run writes outliving it. What the build
 // proves beyond these, through the components page's source demo, is go-build.test.ts's; the
-// helpers are go-builds.ts's and go-demos.ts's. Every wait is bounded. Nothing here names the site: its base is package.json's name.
+// helpers are go-builds.ts's and go-demos.ts's. Every wait is bounded. Nothing here names the site:
+// its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

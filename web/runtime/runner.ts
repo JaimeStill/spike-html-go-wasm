@@ -26,6 +26,7 @@
 // which Vite gives as import.meta.env.BASE_URL. Loading another scenario replaces the one before
 // in place, in the same worker; loading the one held is a no-op.
 
+import { isGo } from "./build.ts";
 import {
   BUILT_SCENARIO,
   BUILT_URL,
@@ -138,7 +139,7 @@ export class Runner {
     this.#preempt();
     const given = files.map(({ name, text }) => ({ name, text }));
     // Only the .go files reach the compiler and the linker; the rest reach only the run.
-    const key = JSON.stringify(given.filter(({ name }) => name.endsWith(".go")));
+    const key = JSON.stringify(given.filter(isGo));
     const load = this.#begin(BUILT_SCENARIO, BUILT_URL);
     const built = this.#built;
     try {
