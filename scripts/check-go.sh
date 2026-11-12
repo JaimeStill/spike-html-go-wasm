@@ -3,7 +3,8 @@
 # gofmt, go vet, go fix, go mod tidy, and golangci-lint (.golangci.yml), each failing on what it
 # finds, without -race, which js/wasm doesn't support. Then the runtime's wasm_exec.js, which must
 # be the pinned Go's lib/wasm/wasm_exec.js byte for byte below its one provenance line, so a Go
-# bump fails here until it's recopied; and no .wasm tracked in git, the build's output alone.
+# bump fails here until it's recopied; and no .wasm or .a archive tracked in git, the build's
+# output alone.
 # Then the module's Go tests, run as wasm under node twice: on node's fs, by the pinned Go's
 # lib/wasm/go_js_wasm_exec, all but test/memfs, which refuses any fs but the runtime's; and on the
 # runtime's in-memory fs, web/runtime/fs.ts, by scripts/go-memfs-exec.sh, every package.
@@ -52,8 +53,8 @@ mapfile -t on_node < <(go list ./... | grep -vx "$module/test/memfs")
 "${trimmed[@]}" go test -timeout=1m -exec "$(go env GOROOT)/lib/wasm/go_js_wasm_exec" "${on_node[@]}"
 "${trimmed[@]}" go test -count=1 -timeout=1m -exec "$PWD/scripts/go-memfs-exec.sh" ./...
 
-tracked=$(git ls-files '*.wasm')
+tracked=$(git ls-files '*.wasm' '*.a')
 if [[ -n "$tracked" ]]; then
-  printf 'a .wasm is tracked; the build writes it to dist/:\n%s\n' "$tracked" >&2
+  printf 'a .wasm or an archive is tracked; the build writes it to dist/:\n%s\n' "$tracked" >&2
   exit 1
 fi

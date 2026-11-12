@@ -18,17 +18,18 @@ evidence, and path are in `context/README.md`.
 - `mise run check`: run every check, reading no network. It lints with ESLint (the web tiers'
   import direction, and the check that the build left no CSS module script), Prettier,
   shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm` and fails unless
-  `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` is tracked. It runs the
-  Go tests as wasm under node twice: on node's fs, and on the runtime's in-memory fs, where
-  `test/memfs` drives it through package `os`. It type-checks the configs, the web tiers, and the
-  suite with tsc and runs `mise run build`.
+  `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` or `.a` archive is
+  tracked. It runs the Go tests as wasm under node twice: on node's fs, and on the runtime's
+  in-memory fs, where `test/memfs` drives it through package `os`. It type-checks the configs,
+  the web tiers, and the suite with tsc and runs `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
-    by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
-    tests the components' five models (`EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`,
-    and `RunState`): their operations, refusals, and change events. It holds each program demo's
-    go fence on the components page to its scenario's source, byte for byte. It fails if a module
-    under `web/components` or `web/pages` registers a page shortcut through the foundation's
-    `keys.js`.
+    by-tag rule, the currency and live commands' logic, the in-memory fs's error codes, and the
+    playground's toolchain: each file its manifest names under its content's hash, and its import
+    closure equal to Go's own `go list -deps`. It tests the components' five models
+    (`EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations,
+    refusals, and change events. It holds each program demo's go fence on the components page to
+    its scenario's source, byte for byte. It fails if a module under `web/components` or
+    `web/pages` registers a page shortcut through the foundation's `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
     and the crawl, and proves each component on the components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
@@ -60,8 +61,10 @@ evidence, and path are in `context/README.md`.
       printing to stderr and exiting 2.
 - `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
-  (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`. A bare `vite build`
-  omits the wasm.
+  (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`, and the playground's
+  toolchain into `dist/go/toolchain/` (`scripts/build-toolchain.ts`): Go's compiler and linker
+  built for `GOOS=js`, an archive for each standard-library package, and `manifest.json`, the one
+  file that names them, each by its content's hash. A bare `vite build` omits the wasm.
 - `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths,
   390px, 1120px, and 1376px, and each component on the components page alone at each of them,
   `--page components/<component>`, as `--page components/console`. `--width <px>`, one of the
