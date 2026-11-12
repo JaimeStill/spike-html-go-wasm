@@ -4,27 +4,27 @@
 //
 // The select, beside the heading in the prose's title row, is labelled Program, in the
 // accessibility tree as a combobox of that name, and offers Calculator, Basics, Generics,
-// Concurrency, and Standard library, Calculator chosen. Choosing Basics shows its files, main.go and shapes.go, in the one demo in
-// place, main.go active, with no reload and no request; its Run builds and prints basics' exact
-// output, as its own go test holds it, with exit 0. Choosing Generics, or Concurrency, shows its
-// files, main.go and stack.go, or main.go and pipeline.go, main.go active, with no request, and
-// its Run prints its exact output, as its go test holds it, with exit 0: Concurrency's in a fixed
-// order whatever turns its goroutines take. Choosing Standard library shows main.go and the
-// input.json it reads, and its Run prints its report with exit 0; an edit to input.json alone
-// reruns it with no Go compile or link and no request, as the runner reuses the last build when
-// no .go file changed, and a malformed input.json prints the one stderr line naming its JSON
-// error, with exit 1. Each program keeps its own files for the tab's life: edits,
-// and the active file, survive switching away and back, and Reset restores the program on screen
-// alone. A switch while a run is pending stops the run, the status saying it stopped, and every
-// switch clears the console and the timings; the next Run runs the program now shown. Switching
-// back to a program built earlier compiles and links it again, its build not held, but fetches no
-// archive the worker holds. The fragment names the program shown: the page opens on the program
-// it names, and on the calculator with none or one that names no program; a choice writes its
-// fragment as a new history entry, and Back, Forward, and an edited fragment show the program it
-// names, with its edits, the select following, with no reload. The page's
-// one screen, at the SDK's widths in both font sets, and its shell checks are
-// playground-layout-suite.ts's and site.test.ts's, with the select in place; the fences' bytes are
-// the unit tier's (go-demo-fences.test.ts). The helpers are go-demos.ts's, go-builds.ts's, and
+// Concurrency, and Standard library, Calculator chosen. Choosing Basics shows its files, main.go
+// and shapes.go, in the one demo in place, main.go active, with no reload and no request; its Run
+// builds and prints basics' exact output, as its own go test holds it, with exit 0. Choosing
+// Generics, or Concurrency, shows its files, main.go and stack.go, or main.go and pipeline.go,
+// main.go active, with no request, and its Run prints its exact output, as its go test holds it,
+// with exit 0: Concurrency's in a fixed order whatever turns its goroutines take. Choosing Standard
+// library shows main.go and the input.json it reads, and its Run prints its report with exit 0; an
+// edit to input.json alone reruns it with no Go compile or link and no request, as the runner
+// reuses the last build when no .go file changed, and a malformed input.json prints the one stderr
+// line naming its JSON error, with exit 1. Each program keeps its own files for the tab's life:
+// edits, and the active file, survive switching away and back, and Reset restores the program on
+// screen alone. A switch while a run is pending stops the run, the status saying it stopped, and
+// every switch clears the console and the timings; the next Run runs the program now shown.
+// Switching back to a program built earlier compiles and links it again, its build not held, but
+// fetches no archive the worker holds. The fragment names the program shown: the page opens on the
+// program it names, and on the calculator with none or one that names no program; a choice writes
+// its fragment as a new history entry, and Back, Forward, and an edited fragment show the program
+// it names, with its edits, the select following, with no reload. The page's one screen, at the
+// SDK's widths in both font sets, and its shell checks are playground-layout-suite.ts's and
+// site.test.ts's, with the select in place; the fences' bytes are the unit tier's
+// (go-demo-fences.test.ts). The helpers are go-demos.ts's, go-builds.ts's, and
 // playground-layouts.ts's. Every wait is bounded. Nothing here names the site: its base is
 // package.json's name.
 

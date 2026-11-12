@@ -60,8 +60,7 @@ const shipped = (program: string): FileSet => {
   if (program !== CALCULATOR && !template) {
     throw new Error(`playground.html has no template for the program ${program}`);
   }
-  const fences = readFences(template ? template.content : demo, true);
-  return new FileSet(fences.map(({ name, text }) => ({ name, text })));
+  return new FileSet(readFences(template ? template.content : demo, true));
 };
 
 /** Every program's set, by the program's name, the select's options' values. */

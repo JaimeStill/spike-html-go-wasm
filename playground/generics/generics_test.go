@@ -1,9 +1,9 @@
 //nolint:testpackage // A main package can't be imported, so its tests run inside it, through main.
 
-// generics' main, its whole output and its exit, as the playground shows them: main returns, so
-// the program exits 0, and a call to os.Exit would end this test binary instead. The check runs
-// this test on node's fs and on the runtime's in-memory fs (scripts/check-go.sh). Then the
-// generic functions, the Stack, and the iterators on their own: a single argument, an empty stack, and each
+// generics' main, its whole output and its exit, as the playground shows them: main returns, so the
+// program exits 0, and a call to os.Exit would end this test binary instead. The check runs this
+// test on node's fs and on the runtime's in-memory fs (scripts/check-go.sh). Then the generic
+// functions, the Stack, and the iterators on their own: a single argument, an empty stack, and each
 // iterator stopping when the loop over it does.
 package main
 

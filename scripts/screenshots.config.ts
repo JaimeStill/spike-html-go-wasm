@@ -5,27 +5,26 @@
 // component, --page components/<component>, each the page whole at each of the same widths, one
 // state per width, with every other component's section hidden, and the controls' with New file's
 // form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run, and
-// no Go loads; and the playground, --page playground, its demo as before a Run, on the starter:
-// the viewport alone, the page's one screen, not the page whole, since the page fits its viewport
-// by its demo's row, and a viewport grown to the page would grow the demo with it. It is captured
-// in each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
+// no Go loads; and the playground, --page playground, its demo as before a Run, on the starter: the
+// viewport alone, the page's one screen, not the page whole, since the page fits its viewport by
+// its demo's row, and a viewport grown to the page would grow the demo with it. It is captured in
+// each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
 // again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and 1376px,
 // the wide band in each arrangement, editor left, top, and right, and with the Layout menu open,
 // each chosen by the menu as a reader chooses, so no state depends on what an earlier one stored;
 // and at 1376px with the About dialog open, opened by its button in the header; and at each of the
 // SDK's widths with each of Basics, Generics, Concurrency, and Standard library chosen in the
-// Program select, as a reader chooses it. The components page shows each state once
-// and its layout follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, and
-// the playground's, takes only that width's states, so the 900px capture, at no SDK width, is taken
-// only when every width is. The SDK's widths over the whole components page grew with every
-// component, so each component is captured alone. The description's facets, --all's profiles, the
-// registry's profiles, and its server, which serves the site as the browser tier serves it, by the
-// SDK's served(), under the base, are the SDK's.
-// Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
-// description the SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.2): template/scripts/screenshots.config.ts, its pages
-// the hand pages, as the site copies no tree for contentPages to list; the components page split
-// into a page per component, a state per width.
+// Program select, as a reader chooses it. The components page shows each state once and its layout
+// follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by
+// --width, every page, the index's, each component's, and the playground's, takes only that width's
+// states, so the 900px capture, at no SDK width, is taken only when every width is. The SDK's
+// widths over the whole components page grew with every component, so each component is captured
+// alone. The description's facets, --all's profiles, the registry's profiles, and its server, which
+// serves the site as the browser tier serves it, by the SDK's served(), under the base, are the
+// SDK's. Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
+// description the SDK's. Adapted from spike-html-hosting-sdk (v0.6.2):
+// template/scripts/screenshots.config.ts, its pages the hand pages, as the site copies no tree for
+// contentPages to list; the components page split into a page per component, a state per width.
 
 import { join } from "node:path";
 
