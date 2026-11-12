@@ -2,7 +2,7 @@
 // go-demo.test.ts, which proves sl-go-demo, go-runs.test.ts and go-build.test.ts, which prove the
 // runtime through it, and playground.test.ts, which proves the playground: a page opened with
 // every request it and its workers send watched, every worker it starts counted, live until it
-// detaches, and helpers installed on the page that read what a demo shows.
+// detaches, and helpers installed on the page that read what a demo shows, again after a reload.
 //
 // The worker fetches the modules itself, and the page's own Network domain never sees a worker's
 // requests, so each page auto-attaches to its workers through the page's session, in the
@@ -149,6 +149,16 @@ export async function open(
     await page.evaluate(HELPERS);
   }
   return watched;
+}
+
+/** Reloads the watched page, a page that holds Go demos, resolving once it has loaded again,
+ * painted, and has the helpers installed again. */
+export async function reload({ page }: Watched): Promise<void> {
+  const loaded = new Promise((resolve) => page.on("Page.loadEventFired", resolve));
+  await page.cdp("Page.reload");
+  await loaded;
+  await page.evaluate(SETTLED);
+  await page.evaluate(HELPERS);
 }
 
 /** The Go the page requested, a worker's script, a .wasm module, or wasm_exec.js, which the

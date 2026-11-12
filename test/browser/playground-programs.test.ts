@@ -10,12 +10,15 @@
 // Generics, or Concurrency, shows its files, main.go and stack.go, or main.go and pipeline.go,
 // main.go active, with no request, and its Run prints its exact output, as its go test holds it,
 // with exit 0: Concurrency's in a fixed order whatever turns its goroutines take. Choosing Standard
-// library shows main.go and the input.json it reads, and its Run prints its report with exit 0; an
-// edit to input.json alone reruns it with no Go compile or link and no request, as the runner
+// library shows main.go and the input.json it reads, and its Run prints its report with exit 0.
+// Each program's first Run from a fresh worker fetches the manifest, the compiler, the linker, and
+// its closure's archives alone, and an edit to its main.go reruns the edited program, compiled and
+// linked; in one tab, a program's first Run fetches only the archives its closure adds beyond those
+// the worker holds, none when it holds them all. For stdlib, an edit to input.json alone reruns it with no Go compile or link and no request, as the runner
 // reuses the last build when no .go file changed, and a malformed input.json prints the one stderr
 // line naming its JSON error, with exit 1. Each program keeps its own files for the tab's life:
-// edits, and the active file, survive switching away and back, and Reset restores the program on
-// screen alone. A switch while a run is pending stops the run, the status saying it stopped, and
+// edits, New file, Rename, and Delete, and the active file, survive switching away and back, Reset
+// restores the program on screen alone, and a reload restores every program as shipped. A switch while a run is pending stops the run, the status saying it stopped, and
 // every switch clears the console and the timings; the next Run runs the program now shown.
 // Switching back to a program built earlier compiles and links it again, its build not held, but
 // fetches no archive the worker holds. The fragment names the program shown: the page opens on the
@@ -31,15 +34,32 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { after, before, describe, test } from "node:test";
+import { after, before, describe, test, type TestContext } from "node:test";
 
 import { launch, until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
-import { BUILD, build, BUILT_PHASES, DONE, retype, toolchainRequests } from "./go-builds.ts";
-import { goRequests, open as openPage, pressControl, says, shown } from "./go-demos.ts";
+import {
+  archivesOf,
+  BUILD,
+  build,
+  BUILT_PHASES,
+  DONE,
+  retype,
+  TOOLS,
+  toolchainRequests,
+} from "./go-builds.ts";
+import {
+  goRequests,
+  open as openPage,
+  pressControl,
+  reload,
+  says,
+  shown,
+  type Watched,
+} from "./go-demos.ts";
 import { axQuery, paste, PLAYGROUND } from "./playground-layouts.ts";
 
 const root = join(import.meta.dirname, "../..");
@@ -182,9 +202,34 @@ const FILES: Record<string, string[]> = {
   stdlib: ["main.go", "input.json"],
 };
 
+/** The standard packages each program's .go files import, whose closure its first Run fetches. */
+const IMPORTS: Record<string, string[]> = {
+  calc: ["errors", "fmt", "os", "strconv", "strings", "unicode"],
+  basics: ["fmt", "math"],
+  generics: ["cmp", "fmt", "iter", "slices", "strings"],
+  concurrency: ["cmp", "fmt", "slices", "sync", "time"],
+  stdlib: [
+    "bytes",
+    "cmp",
+    "encoding/json",
+    "errors",
+    "fmt",
+    "io/fs",
+    "os",
+    "regexp",
+    "slices",
+    "strconv",
+    "text/template",
+  ],
+};
+
+/** An edit to a program's main.go, appended to it, that changes what the program prints: a line
+ * before the rest. Every program's main.go imports fmt. */
+const EDIT = '\nfunc init() { fmt.Println("EDITED") }\n';
+
 /** Chooses the program in the select, as a reader's choice changes it, and waits until the demo's
- * tabs show the program's files. */
-async function choose(page: Page, program: string) {
+ * tabs show the program's files, the names given, its shipped ones by default. */
+async function choose(page: Page, program: string, names = FILES[program]) {
   await page.evaluate(`(() => {
     const picker = ${PICKER};
     picker.value = ${JSON.stringify(program)};
@@ -195,7 +240,7 @@ async function choose(page: Page, program: string) {
     page,
     `[...window.demos.part(${PLAYGROUND}, "sl-file-tabs").shadowRoot
       .querySelectorAll('[role="tab"]')].map((tab) => tab.dataset.name).join()
-      === ${JSON.stringify(FILES[program].join())}`,
+      === ${JSON.stringify(names.join())}`,
     2000,
   );
 }
@@ -234,6 +279,62 @@ const files = (page: Page): Promise<{ names: string[]; active: string; value: st
     value: window.demos.editor(${PLAYGROUND}).value,
   })`);
 
+/** Opens the form of New file or Rename, types the name, and submits it, resolving once the file
+ * of that name is active. */
+async function submit(page: Page, control: "new" | "rename", name: string) {
+  await pressControl(page, PLAYGROUND, control);
+  const input = `window.demos.part(${PLAYGROUND}, "sl-controls").shadowRoot.querySelector("#${control}-name")`;
+  await until(page, `${input}.matches(":focus")`, 2000);
+  await page.evaluate(`${input}.select()`);
+  await page.cdp("Input.insertText", { text: name });
+  await page.evaluate(`${input}.form.requestSubmit()`);
+  await until(page, `window.demos.tab(${PLAYGROUND}) === ${JSON.stringify(name)}`, 2000);
+}
+
+/** The text of each of the demo's files, by name, each read by selecting its tab. */
+async function contents(page: Page): Promise<Record<string, string>> {
+  const texts: Record<string, string> = {};
+  for (const name of (await files(page)).names) {
+    await select(page, name);
+    texts[name] = (await files(page)).value;
+  }
+  return texts;
+}
+
+/** Each of the program's files as playground/ holds it, by name. */
+const shipped = (program: string) =>
+  Object.fromEntries(FILES[program].map((name) => [name, source(program, name)]));
+
+/** Runs the program shown, the first Run from the page's fresh worker, and proves it prints the
+ * output with exit 0 and fetches the manifest, the compiler, the linker, and its closure's archives
+ * alone; then appends EDIT to main.go, active, and proves the Run that follows compiles and links
+ * the edited program, which prints EDITED before the output. */
+async function coldThenEdited(
+  t: TestContext,
+  watched: Watched,
+  program: string,
+  output: { stream: string; text: string }[],
+) {
+  const { page } = watched;
+  const ran = await build(page, PLAYGROUND, DONE);
+  assert.deepEqual(ran.lines, output);
+  assert.deepEqual(ran.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
+  const fetched = toolchainRequests(watched);
+  t.diagnostic(`${program} from a fresh worker: ${fetched.length - 1 - TOOLS.length} archives`);
+  assert.equal(fetched[0], "manifest.json");
+  assert.deepEqual(
+    fetched.slice(1).sort(),
+    [...TOOLS, ...archivesOf(IMPORTS[program])].sort(),
+    "the toolchain and the program's closure, each once",
+  );
+
+  assert.equal((await files(page)).active, "main.go");
+  await paste(page, EDIT);
+  const edited = await build(page, PLAYGROUND, DONE);
+  assert.deepEqual(edited.lines, [{ stream: "stdout", text: "EDITED" }, ...output]);
+  assert.deepEqual(edited.phases, BUILT_PHASES, "compiled and linked again");
+}
+
 describe("the playground's programs", () => {
   test("the Program select sits beside the heading, offers Calculator, Basics, Generics, Concurrency, and Standard library, Calculator chosen, and is in the accessibility tree by its label", async () => {
     const { page } = await open();
@@ -263,7 +364,7 @@ describe("the playground's programs", () => {
     }
   });
 
-  test("choosing Basics shows its files in place, main.go active, with no reload and no request, and its Run prints its exact output with exit 0", async () => {
+  test("choosing Basics shows its files in place, main.go active, with no reload and no request; its first Run fetches its closure alone and prints its exact output with exit 0, and an edit to main.go reruns the edited program", async (t) => {
     const watched = await open();
     const { page } = watched;
     try {
@@ -279,9 +380,7 @@ describe("the playground's programs", () => {
       assert.deepEqual(watched.requests.slice(from), [], "no request");
       assert.equal(await page.evaluate(`document.querySelectorAll("sl-go-demo").length`), 1);
 
-      const ran = await build(page, PLAYGROUND, DONE);
-      assert.deepEqual(ran.lines, BASICS_OUTPUT);
-      assert.deepEqual(ran.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
+      await coldThenEdited(t, watched, "basics", BASICS_OUTPUT);
 
       // Back to the calculator: its files, and the console and timings cleared.
       await choose(page, "calc");
@@ -298,7 +397,7 @@ describe("the playground's programs", () => {
     ["concurrency", "Concurrency", CONCURRENCY_OUTPUT],
     ["stdlib", "Standard library", STDLIB_OUTPUT],
   ] as const) {
-    test(`choosing ${label} shows its files in place, main.go active, with no request, and its Run prints its exact output with exit 0`, async () => {
+    test(`choosing ${label} shows its files in place, main.go active, with no request; its first Run fetches its closure alone and prints its exact output with exit 0, and an edit to main.go reruns the edited program`, async (t) => {
       const watched = await open();
       const { page } = watched;
       try {
@@ -311,9 +410,7 @@ describe("the playground's programs", () => {
         });
         assert.deepEqual(watched.requests.slice(from), [], "no request");
 
-        const ran = await build(page, PLAYGROUND, DONE);
-        assert.deepEqual(ran.lines, output);
-        assert.deepEqual(ran.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
+        await coldThenEdited(t, watched, program, output);
       } finally {
         await page.close();
       }
@@ -444,6 +541,105 @@ describe("the playground's programs", () => {
         ["manifest.json"],
         "the manifest revalidated, and no toolchain module or archive fetched",
       );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("in one tab, each program's first Run fetches only the archives its closure adds beyond those the worker holds", async (t) => {
+    const watched = await open();
+    const { page } = watched;
+    try {
+      await build(page, PLAYGROUND, DONE);
+      const held = new Set(archivesOf(IMPORTS.calc));
+      const adding: Record<string, number> = {};
+      for (const program of ["stdlib", "generics", "concurrency", "basics"]) {
+        await choose(page, program);
+        const from = watched.requests.length;
+        await build(page, PLAYGROUND, DONE);
+        const added = archivesOf(IMPORTS[program]).filter((archive) => !held.has(archive));
+        adding[program] = added.length;
+        assert.deepEqual(
+          toolchainRequests(watched, from).sort(),
+          ["manifest.json", ...added].sort(),
+          `${program}: the manifest revalidated, and only the archives its closure adds`,
+        );
+        added.forEach((archive) => held.add(archive));
+      }
+      t.diagnostic(`archives added: ${JSON.stringify(adding)}`);
+      assert.ok(adding.stdlib > 0, "stdlib's closure adds archives to the calculator's");
+      assert.equal(adding.basics, 0, "basics' closure is held by then, so it fetches none");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("New file, Rename, and Delete on a program's files survive a switch away and back", async () => {
+    const { page } = await open();
+    try {
+      await choose(page, "basics");
+      await submit(page, "new", "notes.txt");
+      await retype(page, PLAYGROUND, "to do");
+      await submit(page, "rename", "todo.txt");
+      await select(page, "shapes.go");
+      await pressControl(page, PLAYGROUND, "delete");
+      const changed = ["main.go", "todo.txt"];
+      await until(
+        page,
+        `[...window.demos.part(${PLAYGROUND}, "sl-file-tabs").shadowRoot
+          .querySelectorAll('[role="tab"]')].map((tab) => tab.dataset.name).join()
+          === ${JSON.stringify(changed.join())}`,
+        2000,
+      );
+      const before = await files(page);
+
+      await choose(page, "calc");
+      assert.deepEqual(
+        await files(page),
+        { names: FILES.calc, active: "main.go", value: source("calc", "main.go") },
+        "the calculator's files untouched",
+      );
+      await choose(page, "basics", changed);
+      assert.deepEqual(
+        await files(page),
+        before,
+        "basics' files as left, the active one with them",
+      );
+      assert.deepEqual(await contents(page), {
+        "main.go": source("basics", "main.go"),
+        "todo.txt": "to do",
+      });
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("a reload restores every program as shipped: its files, byte for byte, and no other", async () => {
+    const watched = await open();
+    const { page } = watched;
+    try {
+      await choose(page, "basics");
+      await paste(page, "// basics, edited\n");
+      await choose(page, "generics");
+      await select(page, "stack.go");
+      await paste(page, "// generics, edited\n");
+      await choose(page, "concurrency");
+      await submit(page, "new", "notes.txt");
+      await choose(page, "basics");
+      assert.ok((await files(page)).value.includes("// basics, edited"), "the edit made");
+
+      await page.evaluate(`window.notReloaded = true`);
+      await reload(watched);
+      assert.equal(await page.evaluate(`window.notReloaded`), undefined, "reloaded");
+      for (const [program] of PROGRAMS) {
+        await choose(page, program);
+        assert.deepEqual(
+          (await files(page)).names,
+          FILES[program],
+          `${program}: its shipped files alone`,
+        );
+        assert.deepEqual(await contents(page), shipped(program), `${program}: as shipped`);
+      }
     } finally {
       await page.close();
     }
