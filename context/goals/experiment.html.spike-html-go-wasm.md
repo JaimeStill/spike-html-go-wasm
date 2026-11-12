@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** handoff
+- **Task:** components
+- **Branch:** components
 
 ## Tasks
 
@@ -181,6 +181,13 @@ Out of scope  compiling or linking source in the page, and running an edited pro
               component to a shared layer.
 Door          two-way: the components stay in this repository unreleased, the runtime change
               is local, and the components page is a public page that can be removed.
+
+## Handoff
+
+PR #3's check fails in CI: "at 20rem the toolbar wraps between its groups, each group whole on
+its row" (test/browser/controls.test.ts): the files group (New file, Rename, Delete) splits over two
+rows on the runner, whose monospace fallback is wider than the local font. Next move: fix the
+files group's fit at 20rem on this branch, push, then merge PR #3.
 
 ## Decisions
 
