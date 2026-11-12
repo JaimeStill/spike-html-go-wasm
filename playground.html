@@ -7,9 +7,10 @@
      then runs main; nothing loads Go, or starts the worker, until a Run. Its script,
      web/pages/playground.ts, gives the demo the page's one runner and the reader's arrangement,
      and the files of the program chosen in the Program select, beside the heading in the prose's
-     title row: Calculator, the starter, whose files are the demo's fences, or Basics or Generics,
-     whose files are the fences of the template after the demo whose data-program names it, each
-     fence equal byte for byte to its file in playground/<program>/ (the unit tier holds it). A template renders
+     title row: Calculator, the starter, whose files are the demo's fences, or Basics, Generics, or
+     Concurrency, whose files are the fences of the template after the demo whose data-program
+     names it, each fence equal byte for byte to its file in playground/<program>/ (the unit tier
+     holds it). A template renders
      nothing; the script builds a file set from its fences by the demo's own rules, and keeps one
      per program for the tab's life.
      The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
@@ -100,6 +101,7 @@
               <option value="calc" selected>Calculator</option>
               <option value="basics">Basics</option>
               <option value="generics">Generics</option>
+              <option value="concurrency">Concurrency</option>
             </select>
           </label>
         </div>
@@ -851,6 +853,198 @@ func (s *Stack[T]) All() iter.Seq[T] {
 }
 </code></pre>
       </template>
+      <template data-program="concurrency">
+<pre data-file="main.go"><code class="language-go">// Command concurrency tours Go's concurrency: goroutines, functions that run alongside the rest of
+// the program; channels, which pass values from one goroutine to another and make one wait for
+// the other; select, which waits on several channels at once; a sync.WaitGroup, which waits for a
+// group of goroutines to finish; and a pipeline, stages joined by channels, in pipeline.go.
+//
+// Under GOOS=js, as here in the browser, GOMAXPROCS is 1: the goroutines take turns on one thread
+// rather than run in parallel, though each behaves as it would anywhere. Whatever order they take
+// their turns in, the program prints the same lines on every run, since no line depends on that
+// order: each result goes in its own place and is printed once all are in, or comes over a
+// channel whose sends and receives fix the order themselves.
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func main() {
+	// A WaitGroup's Go starts a goroutine and counts it; Wait returns once every one has finished.
+	// Each goroutine writes only its own element of lengths, so none gets in another's way.
+	words := []string{"goroutine", "channel", "select", "pipeline"}
+	lengths := make([]int, len(words))
+	var wg sync.WaitGroup
+	for i, w := range words {
+		wg.Go(func() { lengths[i] = len(w) })
+	}
+	wg.Wait()
+	fmt.Println("Goroutines, one per word, then Wait:")
+	for i, w := range words {
+		fmt.Printf("  %-10s %d letters\n", w, lengths[i])
+	}
+
+	// An unbuffered channel hands a value straight from sender to receiver, each waiting for the
+	// other, so the two goroutines here, main and the doubler, take strict turns.
+	ping, pong := make(chan int), make(chan int)
+	go func() {
+		defer close(pong)
+		for n := range ping {
+			pong &lt;- 2 * n
+		}
+	}()
+	fmt.Println("\nChannels, taking turns:")
+	for n := 1; n &lt;= 3; n++ {
+		ping &lt;- n
+		fmt.Printf("  sent %d, got back %d\n", n, &lt;-pong)
+	}
+	close(ping)
+
+	fmt.Println("\nSelect:")
+	// With a default case, select doesn't wait: nothing is ready, so default runs.
+	empty := make(chan string)
+	select {
+	case s := &lt;-empty:
+		fmt.Println("  received", s)
+	default:
+		fmt.Println("  nothing ready, so the default case ran")
+	}
+
+	// time.After answers a channel that receives once the time is up, so a select on it and on a
+	// channel nothing sends to gives up after 10ms rather than wait forever.
+	never := make(chan string)
+	select {
+	case s := &lt;-never:
+		fmt.Println("  received", s)
+	case &lt;-time.After(10 * time.Millisecond):
+		fmt.Println("  nothing came within 10ms, so the timeout case ran")
+	}
+
+	// Select takes from whichever of two channels is ready, in whatever order the senders run, so
+	// the totals, not the order, are what it prints. generate is pipeline.go's.
+	evens, odds := tally(generate(2, 4, 6, 8), generate(1, 3, 5))
+	fmt.Printf("  from evens: %d values, sum %d\n", evens.count, evens.sum)
+	fmt.Printf("  from odds:  %d values, sum %d\n", odds.count, odds.sum)
+
+	fmt.Println("\nA pipeline, squared by three workers:")
+	results := collect(merge(square(generate(1, 2, 3, 4, 5, 6)), square(generate(7, 8)),
+		square(generate(9, 10))))
+	total := 0
+	for _, r := range results {
+		fmt.Printf("  %2d squared is %3d\n", r.n, r.square)
+		total += r.square
+	}
+	fmt.Println("  total", total)
+}
+
+// count is a running count and sum of the values received from one channel.
+type count struct {
+	count, sum int
+}
+
+// tally receives from a and b, whichever is ready, until both are closed, and answers each one's
+// count and sum. A closed channel is set to nil, since a nil channel is never ready, so select stops
+// choosing it.
+func tally(a, b &lt;-chan int) (fromA, fromB count) {
+	for a != nil || b != nil {
+		select {
+		case v, ok := &lt;-a:
+			if !ok {
+				a = nil
+				continue
+			}
+			fromA.count++
+			fromA.sum += v
+		case v, ok := &lt;-b:
+			if !ok {
+				b = nil
+				continue
+			}
+			fromB.count++
+			fromB.sum += v
+		}
+	}
+	return fromA, fromB
+}
+</code></pre>
+<pre data-file="pipeline.go"><code class="language-go">package main
+
+import (
+	"cmp"
+	"slices"
+	"sync"
+)
+
+// A pipeline is a chain of stages, each a goroutine that receives values from one channel and
+// sends what it makes of them down another, closing that channel when its input is done. Here
+// generate starts each chain, square works over it, merge joins the chains into one channel, and
+// collect gathers what comes out, in order.
+
+// A result is a number and its square.
+type result struct {
+	n, square int
+}
+
+// generate answers a channel that receives each of nums, then is closed.
+func generate(nums ...int) &lt;-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for _, n := range nums {
+			out &lt;- n
+		}
+	}()
+	return out
+}
+
+// square answers a channel that receives each number from in with its square, then is closed once
+// in is.
+func square(in &lt;-chan int) &lt;-chan result {
+	out := make(chan result)
+	go func() {
+		defer close(out)
+		for n := range in {
+			out &lt;- result{n, n * n}
+		}
+	}()
+	return out
+}
+
+// merge answers one channel that receives every value from each of ins, in whatever order they
+// come, and is closed once all of them are: a WaitGroup counts the goroutines still copying, and
+// one more goroutine waits on it to close the channel.
+func merge(ins ...&lt;-chan result) &lt;-chan result {
+	out := make(chan result)
+	var wg sync.WaitGroup
+	for _, in := range ins {
+		wg.Go(func() {
+			for r := range in {
+				out &lt;- r
+			}
+		})
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
+
+// collect receives every value from in until it's closed, and answers them ordered by number, so
+// the order the stages ran in doesn't show.
+func collect(in &lt;-chan result) []result {
+	var results []result
+	for r := range in {
+		results = append(results, r)
+	}
+	slices.SortFunc(results, func(a, b result) int { return cmp.Compare(a.n, b.n) })
+	return results
+}
+</code></pre>
+      </template>
     </main>
     <dialog id="about" aria-labelledby="about-title">
       <header class="dialog-header">
@@ -880,8 +1074,11 @@ func (s *Stack[T]) All() iter.Seq[T] {
         files, so anything the program writes is gone by the next one.
       </p>
       <p>
-        Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays
-        loaded after a Stop, so the next Run is quick. Your edits live only in this tab: reload,
+        Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. Goroutines take turns on
+        one thread: they sleep, wait, and talk over channels as usual, but CPU-heavy work doesn't
+        run any faster in parallel. A program that waits forever, say on a channel nothing sends
+        to, never finishes and shows no deadlock error; press Stop. The compiler stays loaded after
+        a Stop, so the next Run is quick. Your edits live only in this tab: reload,
         and you're back to where you started.
       </p>
       <p>

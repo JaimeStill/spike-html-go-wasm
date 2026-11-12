@@ -5,11 +5,12 @@
 // input.txt, in that order, are playground/calc's files byte for byte. Each other program the
 // playground's Program select offers is a template in the page, its data-program the program's
 // name, whose fences are playground/<program>'s files byte for byte, as the page's script builds
-// the program's file set from them by the demo's rules: basics, its main.go and shapes.go, and
-// generics, its main.go and stack.go. A fence is a direct-child pre of the demo or the template,
-// its text the pre's text content, as sl-go-demo reads it (web/components/fences.ts); its file is
-// the fence's name, its data-file, on the pre or its code, else the pre's title, else main.go,
-// under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go. The written demos and templates are every
+// the program's file set from them by the demo's rules: basics, its main.go and shapes.go;
+// generics, its main.go and stack.go; and concurrency, its main.go and pipeline.go. A fence is a
+// direct-child pre of the demo or the template, its text the pre's text content, as sl-go-demo
+// reads it (web/components/fences.ts); its file is the fence's name, its data-file, on the pre or
+// its code, else the pre's title, else main.go, under cmd/<scenario>/, so a one-fence demo's is
+// its entrypoint, cmd/<scenario>/main.go. The written demos and templates are every
 // program's source: the pages' scripts add none.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the
@@ -217,12 +218,13 @@ describe("the playground's program templates", () => {
   const html = readFileSync(join(root, "playground.html"), "utf8");
   const templates = writtenTemplates(html);
 
-  test("are found: basics, its main.go and shapes.go, and generics, its main.go and stack.go, every one read", () => {
+  test("are found: basics, its main.go and shapes.go, generics, its main.go and stack.go, and concurrency, its main.go and pipeline.go, every one read", () => {
     assert.deepEqual(
       templates.map(({ program, fences }) => [program, fences.map(({ name }) => name)]),
       [
         ["basics", ["main.go", "shapes.go"]],
         ["generics", ["main.go", "stack.go"]],
+        ["concurrency", ["main.go", "pipeline.go"]],
       ],
     );
   });

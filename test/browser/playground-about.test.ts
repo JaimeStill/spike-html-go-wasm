@@ -10,7 +10,8 @@
 // Escape, or Close, closes it, focus back where it was before it opened. A typed into the editor
 // types and opens nothing. In the accessibility tree the button is named About and the dialog
 // "About the playground", modal. The dialog holds, after its header row, the three paragraphs
-// approved with the brief, then what a Run downloads, then the link to the spike's question and
+// approved with the brief, the third with the programs task's goroutine and deadlock sentences
+// after "Stop to cancel", then what a Run downloads, then the link to the spike's question and
 // evidence, the index, in that order and in those words. The SDK's shell checks hold the button
 // and the dialog to the components' shortcut dialog pattern, and Help's list to the page's
 // bindings, A's among them (site.test.ts). Every wait is bounded.
@@ -63,14 +64,18 @@ const LEDE =
   "here in your browser.";
 
 /** The dialog's content after its header row, each block's text, in order: the three paragraphs
- * approved with the brief, what a Run downloads, and the link. */
+ * approved with the brief, the third with the goroutine and deadlock sentences after "Stop to
+ * cancel", what a Run downloads, and the link. */
 const ABOUT_TEXT = [
   "Your .go files build together as one main package, using only the standard library. There's " +
     "no go.mod, no other packages of your own, no cgo or assembly, and nothing passed in as " +
     "arguments or standard input.",
   'Any other file you add sits next to your program, so os.ReadFile("input.txt") will find it. ' +
     "Each Run starts fresh from your files, so anything the program writes is gone by the next one.",
-  "Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The compiler stays loaded " +
+  "Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. Goroutines take turns on " +
+    "one thread: they sleep, wait, and talk over channels as usual, but CPU-heavy work doesn't " +
+    "run any faster in parallel. A program that waits forever, say on a channel nothing sends to, " +
+    "never finishes and shows no deadlock error; press Stop. The compiler stays loaded " +
     "after a Stop, so the next Run is quick. Your edits live only in this tab: reload, and you're " +
     "back to where you started.",
   "The first Run downloads the compiler, the linker, and the standard-library packages your " +

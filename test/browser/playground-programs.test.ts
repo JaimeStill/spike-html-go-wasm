@@ -3,11 +3,13 @@
 // chrome-headless-shell, the page's and its worker's requests read through CDP (go-demos.ts).
 //
 // The select, beside the heading in the prose's title row, is labelled Program, in the
-// accessibility tree as a combobox of that name, and offers Calculator, Basics, and Generics,
-// Calculator chosen. Choosing Basics shows its files, main.go and shapes.go, in the one demo in
+// accessibility tree as a combobox of that name, and offers Calculator, Basics, Generics, and
+// Concurrency, Calculator chosen. Choosing Basics shows its files, main.go and shapes.go, in the one demo in
 // place, main.go active, with no reload and no request; its Run builds and prints basics' exact
-// output, as its own go test holds it, with exit 0. Choosing Generics shows its main.go and
-// stack.go, main.go active, and its Run prints its exact output, as its go test holds it, exit 0. Each program keeps its own files for the tab's life: edits,
+// output, as its own go test holds it, with exit 0. Choosing Generics, or Concurrency, shows its
+// files, main.go and stack.go, or main.go and pipeline.go, main.go active, with no request, and
+// its Run prints its exact output, as its go test holds it, with exit 0: Concurrency's in a fixed
+// order whatever turns its goroutines take. Each program keeps its own files for the tab's life: edits,
 // and the active file, survive switching away and back, and Reset restores the program on screen
 // alone. A switch while a run is pending stops the run, the status saying it stopped, and every
 // switch clears the console and the timings; the next Run runs the program now shown. The page's
@@ -56,6 +58,7 @@ const PROGRAMS = [
   ["calc", "Calculator"],
   ["basics", "Basics"],
   ["generics", "Generics"],
+  ["concurrency", "Concurrency"],
 ];
 
 /** A program's file, as playground/ holds it. */
@@ -104,11 +107,39 @@ const GENERICS_OUTPUT = [
   "  first five even, labelled: [#0 #2 #8 #34 #144]",
 ].map((text) => ({ stream: "stdout", text }));
 
+/** What concurrency prints, every run, as its own go test holds it: each line on stdout. */
+const CONCURRENCY_OUTPUT = [
+  "Goroutines, one per word, then Wait:",
+  "  goroutine  9 letters",
+  "  channel    7 letters",
+  "  select     6 letters",
+  "  pipeline   8 letters",
+  "",
+  "Channels, taking turns:",
+  "  sent 1, got back 2",
+  "  sent 2, got back 4",
+  "  sent 3, got back 6",
+  "",
+  "Select:",
+  "  nothing ready, so the default case ran",
+  "  nothing came within 10ms, so the timeout case ran",
+  "  from evens: 4 values, sum 20",
+  "  from odds:  3 values, sum 9",
+  "",
+  "A pipeline, squared by three workers:",
+  ...Array.from({ length: 10 }, (_, i) => {
+    const n = i + 1;
+    return `  ${String(n).padStart(2)} squared is ${String(n * n).padStart(3)}`;
+  }),
+  "  total 385",
+].map((text) => ({ stream: "stdout", text }));
+
 /** Each program's files, in the demo's order. */
 const FILES: Record<string, string[]> = {
   calc: ["main.go", "lexer.go", "parser.go", "eval.go", "input.txt"],
   basics: ["main.go", "shapes.go"],
   generics: ["main.go", "stack.go"],
+  concurrency: ["main.go", "pipeline.go"],
 };
 
 /** Chooses the program in the select, as a reader's choice changes it, and waits until the demo's
@@ -148,7 +179,7 @@ const files = (page: Page): Promise<{ names: string[]; active: string; value: st
   })`);
 
 describe("the playground's programs", () => {
-  test("the Program select sits beside the heading, offers Calculator, Basics, and Generics, Calculator chosen, and is in the accessibility tree by its label", async () => {
+  test("the Program select sits beside the heading, offers Calculator, Basics, Generics, and Concurrency, Calculator chosen, and is in the accessibility tree by its label", async () => {
     const { page } = await open();
     try {
       const picker: { options: string[][]; value: string; beside: boolean } =
@@ -206,26 +237,31 @@ describe("the playground's programs", () => {
     }
   });
 
-  test("choosing Generics shows its files in place, main.go active, and its Run prints its exact output with exit 0", async () => {
-    const watched = await open();
-    const { page } = watched;
-    try {
-      const from = watched.requests.length;
-      await choose(page, "generics");
-      assert.deepEqual(await files(page), {
-        names: FILES.generics,
-        active: "main.go",
-        value: source("generics", "main.go"),
-      });
-      assert.deepEqual(watched.requests.slice(from), [], "no request");
+  for (const [program, label, output] of [
+    ["generics", "Generics", GENERICS_OUTPUT],
+    ["concurrency", "Concurrency", CONCURRENCY_OUTPUT],
+  ] as const) {
+    test(`choosing ${label} shows its files in place, main.go active, with no request, and its Run prints its exact output with exit 0`, async () => {
+      const watched = await open();
+      const { page } = watched;
+      try {
+        const from = watched.requests.length;
+        await choose(page, program);
+        assert.deepEqual(await files(page), {
+          names: FILES[program],
+          active: "main.go",
+          value: source(program, "main.go"),
+        });
+        assert.deepEqual(watched.requests.slice(from), [], "no request");
 
-      const ran = await build(page, PLAYGROUND, DONE);
-      assert.deepEqual(ran.lines, GENERICS_OUTPUT);
-      assert.deepEqual(ran.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
-    } finally {
-      await page.close();
-    }
-  });
+        const ran = await build(page, PLAYGROUND, DONE);
+        assert.deepEqual(ran.lines, output);
+        assert.deepEqual(ran.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
+      } finally {
+        await page.close();
+      }
+    });
+  }
 
   test("edits survive a switch, with the active file, and Reset restores the program on screen alone", async () => {
     const { page } = await open();
