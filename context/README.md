@@ -72,10 +72,12 @@ for the Go packages.
   (`scripts/build-toolchain.ts`), in the worker, and fetches each standard-library package's
   archive per import through `go/toolchain/manifest.json`. The runner reuses the last build when
   only non-Go files change (`isGo` in `build.ts`), so editing `input.txt` alone reruns the program
-  without building. `playground.html` is one screen: a heading, a two-sentence lede, and one fixed,
-  source-mode sl-go-demo that opens on the starter program, fills the rest of the viewport, and
-  ends one gutter above its bottom, in the machine's fonts and in DejaVu, CI's; what a program can
-  be is in an About dialog the header opens. Planned: workspace modules' archives, added when the
+  without building. `playground.html` is one screen: the heading, a two-sentence lede, and one
+  fixed, source-mode sl-go-demo that opens on the starter program, fills the rest of the
+  viewport, and ends one gutter above its bottom. The page's detail, what a program can be and
+  how Run and Stop behave, is in an About dialog that the header's About button opens. The
+  check's layout tests run twice: in the machine's fonts, and in a pinned DejaVu font set, the
+  six faces of Ubuntu's fonts-dejavu-core. Planned: workspace modules' archives, added when the
   sqlate and scenarios tasks first require them.
 - **Starter program** (`playground/calc`, a package main outside `cmd/`, not a scenario): a
   calculator language whose files the playground opens on; it runs the script in `input.txt`. The

@@ -151,8 +151,8 @@ const menuOpen: Step = async (page: Page) => {
 
 /** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
  * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
- * Layout menu open; and the widest with the About dialog open, each named as the SDK names a page's,
- * the width last. */
+ * Layout menu open; and the widest with the About dialog open, each named as the SDK names a
+ * page's, the width last. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
   const state = (

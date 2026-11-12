@@ -6,12 +6,13 @@
 // order: About a glyph button in the shell's pattern, its glyph the icons layer's info-16, its key
 // A shown in a kbd, its hint "About". A, a click, or Enter on About opens the dialog, its title
 // heading focused and its Close's hint closed past the interest delay; Tab moves focus to Close;
-// Escape, or Close, closes it, focus back where it was before it opened. A typed into the editor types and opens nothing. In the accessibility tree the button is
-// named About and the dialog "About the playground", modal. The dialog holds, after its header row,
-// the three paragraphs approved with the brief, then what a Run downloads, then the link to the
-// spike's question and evidence, the index, in that order and in those words. The SDK's shell
-// checks hold the button and the dialog to the components' shortcut dialog pattern, and Help's
-// list to the page's bindings, A's among them (site.test.ts). Every wait is bounded.
+// Escape, or Close, closes it, focus back where it was before it opened. A typed into the editor
+// types and opens nothing. In the accessibility tree the button is named About and the dialog
+// "About the playground", modal. The dialog holds, after its header row, the three paragraphs
+// approved with the brief, then what a Run downloads, then the link to the spike's question and
+// evidence, the index, in that order and in those words. The SDK's shell checks hold the button
+// and the dialog to the components' shortcut dialog pattern, and Help's list to the page's
+// bindings, A's among them (site.test.ts). Every wait is bounded.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";

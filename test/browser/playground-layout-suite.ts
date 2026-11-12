@@ -2,8 +2,8 @@
 // serves it, dist/ under the base by the SDK's served(), Vite's preview, in the pinned
 // chrome-headless-shell, drawing in the font set the test file that imports this suite chose
 // (fonts.ts): playground-layout.test.ts runs it in the machine's fonts, and
-// playground-layout-dejavu.test.ts in DejaVu, the fonts an Ubuntu runner draws with, under a
-// test-only fontconfig, where a first test proves the page draws in DejaVu alone.
+// playground-layout-dejavu.test.ts in the pinned DejaVu font set, under a test-only fontconfig,
+// where a first test proves the page draws in DejaVu alone.
 //
 // The page is one screen, in CSS alone, an app page (web/pages/page.css): at the SDK's three
 // capture sizes, each also 900px tall, at 1120x800, and at the middle capture's 900x700, the demo

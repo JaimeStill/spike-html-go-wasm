@@ -257,7 +257,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 ```
 Behaviors     18. (restated, prose and fonts) The prose column holds the heading and the lede
                   alone. One screen holds at 390, 1120, and 1376 px under the default type
-                  profile, in the machine's fonts and in a vendored DejaVu font set; past that
+                  profile, in the machine's fonts and in a pinned DejaVu font set; past that
                   (larger type, text zoom) the demo holds its floor and the page scrolls down,
                   never sideways. (The rest of behavior 18 stands; with no disclosure, its
                   clauses about the disclosure are dropped.)
@@ -285,7 +285,7 @@ Slices        13. The fix: the lede, the header's About button and dialog#about 
 
 ## Progress
 
-fix: slice 13 done · standards done · spec done · editor —
+fix: slice 13 done · standards done · spec done · editor done
 
 ## Decisions
 
@@ -820,7 +820,7 @@ fix: slice 13 done · standards done · spec done · editor —
   <kbd>Ctrl+Enter</kbd> beside "press Run". The detail lives in an About dialog opened from the
   header. Rejected: the disclosure, which costs a line and grows with the reader's font; a
   section on the index page, which navigates away and loses unsaved edits.
-- playground (fix): one screen is proven in the machine's fonts and in a vendored DejaVu font
+- playground (fix): one screen is proven in the machine's fonts and in a pinned DejaVu font
   set. Rejected: the machine's fonts alone, which made every local run optimistic (46px of
   headroom locally, -1.77px under DejaVu); pinning one font, which would hide real overflows.
 - playground (fix): the status-line test derives its expectation from measured widths.
@@ -828,6 +828,22 @@ fix: slice 13 done · standards done · spec done · editor —
 - playground (session error): PR #6 merged with CI red, because `gh pr checks --watch` was
   piped through `tail` and its exit code was lost. SHIP runs `[remote] merge` exactly as
   configured, unpiped.
+- playground (fix, build): About comes first in the header's group, so Help and Settings keep
+  their places at the inline end.
+- playground (fix, build): About's shortcut is A, which no other binding on the page or in the
+  shell takes.
+- playground (fix, build): mise fetches DejaVu as a pinned http tool, `http:dejavu-fonts` 2.37,
+  its sha256 taken from the download by hand. Preflight fails when the installed version doesn't
+  match the pin. Rejected: the TTFs vendored in git.
+- playground (fix, build): the layout tests are one shared suite, `playground-layout-suite.ts`,
+  and two entry files, one for each font set.
+- playground (fix, build): `web/pages/page.css` lets the header-actions group shrink and wrap on
+  every page. A test at 200% text zoom found the page scrolling 30px sideways at 390px, because
+  site.css sets the group `flex: none`.
+- playground (fix, build): the short-screen floor test moved from 1376x500 to 1376x400:
+  without the disclosure, 1376x500 no longer pushes the demo down to its floor.
+- playground (fix, standards review): the About test dropped the assertions that restated its
+  markup; it holds the dialog's behavior.
 
 ## Notes
 
@@ -914,6 +930,17 @@ fix: slice 13 done · standards done · spec done · editor —
   and on the in-memory fs.
 - calc's closure is 58 archives (~5.0 MB gzip), one more than hello's.
 
+- With the minimal lede, the demo stands 230px above its floor at 390x844, in the machine's fonts
+  and in the DejaVu set alike.
+- The local machine's fonts (CaskaydiaMono, Liberation Sans) differ from CI's, so a layout test
+  proves little until it also runs in a pinned font set.
+- A pipe in a gating command loses the command's exit code; the merge command runs unpiped.
+- Intake candidate: the SDK's site.css sets `.header-actions { flex: none }`, which fails reflow
+  (WCAG 1.4.10) on a page with no nav at a phone's width and large text. The SDK should let the
+  group shrink and wrap.
+- Intake candidate: the coordinator's architecture or the SDK could offer a browser-test helper
+  that runs a suite in a pinned font set.
+
 ## Pending edits
 
 - coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", a candidate principle
@@ -928,8 +955,9 @@ fix: slice 13 done · standards done · spec done · editor —
   and workspace archives" becomes "per-package standard-library archives", since the sqlate and
   scenarios tasks add their modules' archives; and "the playground page" becomes "the playground
   page, an app page around sl-go-demo's fixed layout with a Layout menu whose choice the page
-  stores, opening on a calculator-language starter program", since the summary otherwise omits
-  the redirect's, the layout foundation's, and the starter's work.
+  stores, opening on a calculator-language starter program, its detail in an About dialog", since
+  the summary otherwise omits the redirect's, the layout foundation's, the starter's, and the
+  fix's work.
 - coordinator · roadmap.toml: the sqlate and scenarios tasks' summaries add "with the module's
   js/wasm archives added to the playground's manifest".
 - coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"

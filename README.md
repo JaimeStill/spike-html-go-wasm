@@ -116,13 +116,13 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       the timings' track is `sl-timings`' least width, 28ch of its table, and the steady status
       asks for 24ch of its own text, sharing the toolbar's line at 50rem and taking its own at a
       phone's width, each one property that moves every reader when set on its element;
-    - the playground's one screen, fixed layout, and reservations again in DejaVu, the fonts an
-      Ubuntu runner, CI's, draws with: `test/browser/playground-layout-dejavu.test.ts` runs the
-      suite `playground-layout.test.ts` runs in the machine's fonts, under a test-only fontconfig
-      (`test/browser/fonts.ts`, written under TMPDIR) that lets the browser see Ubuntu's
-      `fonts-dejavu-core` set alone, from the pinned `http:dejavu-fonts`, and first proves the
-      page draws in DejaVu Sans and DejaVu Sans Mono alone, so a layout that holds in one font
-      set and not the other fails on any machine;
+    - the playground's one screen, fixed layout, and reservations again in a pinned DejaVu font
+      set, the six faces of Ubuntu's `fonts-dejavu-core`, from `http:dejavu-fonts`:
+      `test/browser/playground-layout-dejavu.test.ts` runs the suite that
+      `playground-layout.test.ts` runs in the machine's fonts, under a test-only fontconfig
+      (`test/browser/fonts.ts`, written under TMPDIR) that shows the browser those six faces
+      alone, and first proves the page draws in DejaVu Sans and DejaVu Sans Mono alone, so a
+      layout that holds in one font set and not the other fails on any machine;
     - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
       absent below; the menu opens `--space-3xs` below Layout, at its inline start, as wide as its
       items and inside the viewport, and has the expected accessibility tree and the APG keys;
@@ -203,11 +203,11 @@ bundles the four into the one stylesheet every page links. The cascade layers ar
 foundation's (`foundation.tokens.*` through `foundation.theme-menu`), then `site`, then `page`,
 and the browser tier reads that order on each page. Every rule a page adds is in
 `web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
-specificity: the header-actions group at the header's inline end, wrapping its buttons only where
-the row can't hold them, as the playground's three at a phone's width and twice the text size,
-the space between `main > section`s on every page, the components page's specimens, and the app
-page, the playground's one screen, which only a body of class `app` takes. Its spaces are the
-foundation's `--space-*` steps.
+specificity: the header-actions group at the header's inline end, shrinking and wrapping its
+buttons where the row can't hold them on one line, as the playground's three at a phone's width
+and twice the text size; the space between `main > section`s on every page; the components page's
+specimens; and the app page, the playground's one screen, which only a body of class `app` takes.
+Its spaces are the foundation's `--space-*` steps.
 
 A hand page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
@@ -261,8 +261,8 @@ bottom, every part's bottom border in view. The demo's own width sets its bands.
 viewport leaves the demo less than its floor (`sl-go-demo`, "Fixed layout"), as on a short screen
 or at a larger type or text zoom, the page grows and scrolls down, never sideways. The SDK's shell
 checks all run on the page but main's reading width, and the spike's own check holds the prose to
-80ch, centered. The one screen holds in the machine's fonts and in DejaVu, each proved by the
-browser tier, which reports how far above its floor the demo stands at each capture size.
+80ch, centered. The browser tier proves the one screen in the machine's fonts and in the pinned
+DejaVu set, and reports how far above its floor the demo stands at each capture size.
 
 The playground's detail is in its About dialog, `dialog#about`, out of the screen's flow, so no
 font costs the demo a line of it. About, the header's first glyph button, before the shell's Help

@@ -1,7 +1,7 @@
 // The browser tier's font sets, which a test file chooses before it launches the browser: the
-// machine's, the browser's own fontconfig, by default; or DejaVu, the fonts an Ubuntu runner, CI's,
-// draws with, by useDejaVu(), so a layout that holds locally is proved in CI's fonts by name, on
-// any machine, and CI's run doesn't hold them by accident.
+// machine's, the browser's own fontconfig, by default; or, by useDejaVu(), a pinned DejaVu set, the
+// six faces of Ubuntu's fonts-dejavu-core, so every machine, local or CI, also proves the layout
+// in one known font set.
 //
 // DejaVu is mise.toml's http:dejavu-fonts pin, the release archive at its sha256, which mise run
 // install fetches and the browser task names in DEJAVU_FONTS, the archive's install directory. The
@@ -32,7 +32,7 @@ const DEJAVU: Fonts = {
   families: { sans: "DejaVu Sans", mono: "DejaVu Sans Mono" },
 };
 
-/** The files of Ubuntu's fonts-dejavu-core, the set a runner has, in the archive's ttf/. */
+/** The six faces of Ubuntu's fonts-dejavu-core, as files in the archive's ttf/. */
 const CORE = [
   "DejaVuSans.ttf",
   "DejaVuSans-Bold.ttf",
@@ -42,7 +42,8 @@ const CORE = [
   "DejaVuSerif-Bold.ttf",
 ];
 
-/** Each generic family the foundation's font stacks end on, and the DejaVu family it resolves to. */
+/** Each generic family the foundation's font stacks end on, and the DejaVu family it resolves
+ * to. */
 const GENERICS = {
   "system-ui": "DejaVu Sans",
   "sans-serif": "DejaVu Sans",

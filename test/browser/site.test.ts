@@ -1,21 +1,21 @@
 // The site's build, as Pages serves it: dist/ under the base, by the SDK's served(), Vite's
 // preview, loaded in the pinned chrome-headless-shell. Each of the SDK's shell checks is a test on
-// a fresh page of each hand page, the index, the components page, and the playground, whose
-// headers have no site nav, which the checks allow, and which a test of its own holds on each: no
+// a fresh page of each hand page, the index, the components page, and the playground, whose headers
+// have no site nav, which the checks allow, and which a test of its own holds on each: no
 // sl-site-nav in the header, and no site-nav.js loaded, which defines it; the build bundles the
 // module, so the registry rather than a request names it. The playground is an app page, its main
 // across the body's content width, so it runs every check but main's reading width,
-// holdsReadingWidth; a check of the spike's own holds its prose, the heading and the lede, to
-// 80ch, centered, instead. The crawl, from the index, checks every
-// copied page, none here, and loads each hand page it reaches: it reaches exactly the index and,
-// by the index's links, the components page and the playground. No page holds an SDK fence, so
-// the SDK's palette check has nothing to run on; the components page's editors are held to its
-// colors by code-editor.test.ts. Each hand page's cascade layers, read from its sheets in the
-// order the document names them, are the foundation's, then the SDK's site, then page, the
-// shared sheet's (web/pages/page.css), last, and its source holds no inline <style>, which the
-// build would write ahead of the linked sheets. The components page sets every section apart, its
-// heading --space-xl below what came before; the playground has no section, its one screen proved
-// by playground-layout.test.ts. Nothing here names the site: its base is package.json's name.
+// holdsReadingWidth; a check of the spike's own holds its prose, the heading and the lede, to 80ch,
+// centered, instead. The crawl, from the index, checks every copied page, none here, and loads each
+// hand page it reaches: it reaches exactly the index and, by the index's links, the components page
+// and the playground. No page holds an SDK fence, so the SDK's palette check has nothing to run on;
+// the components page's editors are held to its colors by code-editor.test.ts. Each hand page's
+// cascade layers, read from its sheets in the order the document names them, are the foundation's,
+// then the SDK's site, then page, the shared sheet's (web/pages/page.css), last, and its source
+// holds no inline <style>, which the build would write ahead of the linked sheets. The components
+// page sets every section apart, its heading --space-xl below what came before; the playground has
+// no section, its one screen proved by playground-layout.test.ts. Nothing here names the site: its
+// base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/test/browser/site.test.ts, its checks
