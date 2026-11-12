@@ -1,14 +1,14 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** components
-- **Branch:** components
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
 1. [x] site
 2. [x] runtime
-3. [ ] components
+3. [x] components
 4. [ ] playground
 5. [ ] programs
 6. [ ] sqlate
@@ -181,10 +181,6 @@ Out of scope  compiling or linking source in the page, and running an edited pro
               component to a shared layer.
 Door          two-way: the components stay in this repository unreleased, the runtime change
               is local, and the components page is a public page that can be removed.
-
-## Progress
-
-slices 10/10 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
