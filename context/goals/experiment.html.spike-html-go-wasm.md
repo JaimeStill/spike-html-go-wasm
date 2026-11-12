@@ -1,15 +1,15 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** playground
-- **Branch:** playground
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
 1. [x] site
 2. [x] runtime
 3. [x] components
-4. [ ] playground
+4. [x] playground
 5. [ ] programs
 6. [ ] sqlate
 7. [ ] scenarios
@@ -179,7 +179,7 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   program exits 1 if any line failed and 0 otherwise. The shipped input.txt runs
                   clean, and a comment at its top suggests a line to try that fails. It imports only
                   light standard packages (no encoding/json or net/http), and reads plainly, about
-                  200 lines with doc comments. `go test` in the check proves its output and exit for
+                  350 lines with doc comments. `go test` in the check proves its output and exit for
                   the shipped input.txt and for a failing script. Under GOOS=js it is vetted and
                   tested in the check, never built to dist/, and follows the Go module's layer rules
                   (a root-level package that imports only the standard library). A result of
@@ -251,10 +251,6 @@ Out of scope  persisting files, sharing, and a Format button; workspace modules'
 Door          two-way: nothing is released, the build outputs are regenerated on every build
               and never tracked, go.mod gains no requirement, and the playground is a public
               page that can be removed.
-
-## Progress
-
-slices 12/12 committed · standards done · spec done · editor done (starter program)
 
 ## Decisions
 
@@ -781,8 +777,10 @@ slices 12/12 committed · standards done · spec done · editor done (starter pr
   quoting style; TestLines gained a left-associativity case, which nothing tested; runner.ts and
   build.ts share build.ts's `isGo`.
 - playground (starter, open): the four .go files are ~350 lines with doc comments, against the
-  brief's "about 200". Not decided; the session brief raises it with the architect.
+  brief's "about 200". Settled by the architect: accepted (the next line).
 
+- playground (starter, architect): behavior 21's size is "about 350 lines with doc comments".
+  The session's own brief draft had said "about 200", a guess no round asked for.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
