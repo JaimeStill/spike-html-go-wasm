@@ -3,13 +3,17 @@
 // chrome-headless-shell, the page's and its worker's requests read through CDP (go-demos.ts).
 //
 // The select, beside the heading in the prose's title row, is labelled Program, in the
-// accessibility tree as a combobox of that name, and offers Calculator, Basics, Generics, and
-// Concurrency, Calculator chosen. Choosing Basics shows its files, main.go and shapes.go, in the one demo in
+// accessibility tree as a combobox of that name, and offers Calculator, Basics, Generics,
+// Concurrency, and Standard library, Calculator chosen. Choosing Basics shows its files, main.go and shapes.go, in the one demo in
 // place, main.go active, with no reload and no request; its Run builds and prints basics' exact
 // output, as its own go test holds it, with exit 0. Choosing Generics, or Concurrency, shows its
 // files, main.go and stack.go, or main.go and pipeline.go, main.go active, with no request, and
 // its Run prints its exact output, as its go test holds it, with exit 0: Concurrency's in a fixed
-// order whatever turns its goroutines take. Each program keeps its own files for the tab's life: edits,
+// order whatever turns its goroutines take. Choosing Standard library shows main.go and the
+// input.json it reads, and its Run prints its report with exit 0; an edit to input.json alone
+// reruns it with no Go compile or link and no request, as the runner reuses the last build when
+// no .go file changed, and a malformed input.json prints the one stderr line naming its JSON
+// error, with exit 1. Each program keeps its own files for the tab's life: edits,
 // and the active file, survive switching away and back, and Reset restores the program on screen
 // alone. A switch while a run is pending stops the run, the status saying it stopped, and every
 // switch clears the console and the timings; the next Run runs the program now shown. The page's
@@ -30,8 +34,8 @@ import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
 import { BUILD, build, DONE, retype } from "./go-builds.ts";
-import { open as openPage, pressControl, says, shown } from "./go-demos.ts";
-import { axQuery, PLAYGROUND } from "./playground-layouts.ts";
+import { goRequests, open as openPage, pressControl, says, shown } from "./go-demos.ts";
+import { axQuery, paste, PLAYGROUND } from "./playground-layouts.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -59,6 +63,7 @@ const PROGRAMS = [
   ["basics", "Basics"],
   ["generics", "Generics"],
   ["concurrency", "Concurrency"],
+  ["stdlib", "Standard library"],
 ];
 
 /** A program's file, as playground/ holds it. */
@@ -134,12 +139,42 @@ const CONCURRENCY_OUTPUT = [
   "  total 385",
 ].map((text) => ({ stream: "stdout", text }));
 
+/** What stdlib prints for its shipped input.json, every run, as its own go test holds it: each
+ * line on stdout. */
+const STDLIB_OUTPUT = [
+  "calc v1.1.0: 8 commits by 3 authors",
+  "",
+  "Features:",
+  "  c47d2a6  -       comments start with # and run to the end of the line",
+  "  e2a9d48  eval    report division by zero (#9, #14)",
+  "  4d1e7a2  parser  parse a leading minus as negation (#14)",
+  "",
+  "Fixes:",
+  "  b83f0c9  lexer   accept a number that starts with a dot (#12)",
+  "  93ac27f  parser  reject a let with no name (#17)",
+  "",
+  "Other:",
+  "  71c5e30  -       explain let in the doc comment",
+  "  5be8c14  lexer   cover numbers with two dots",
+  "",
+  "Not in the conventional form:",
+  '  0f6b1d5  "tidy up before the release"',
+  "",
+  "By author, most commits first:",
+  "  Ada   4",
+  "  Grace 3",
+  "  Linus 1",
+  "",
+  "Issues referenced: #9, #12, #14, #17",
+].map((text) => ({ stream: "stdout", text }));
+
 /** Each program's files, in the demo's order. */
 const FILES: Record<string, string[]> = {
   calc: ["main.go", "lexer.go", "parser.go", "eval.go", "input.txt"],
   basics: ["main.go", "shapes.go"],
   generics: ["main.go", "stack.go"],
   concurrency: ["main.go", "pipeline.go"],
+  stdlib: ["main.go", "input.json"],
 };
 
 /** Chooses the program in the select, as a reader's choice changes it, and waits until the demo's
@@ -179,7 +214,7 @@ const files = (page: Page): Promise<{ names: string[]; active: string; value: st
   })`);
 
 describe("the playground's programs", () => {
-  test("the Program select sits beside the heading, offers Calculator, Basics, Generics, and Concurrency, Calculator chosen, and is in the accessibility tree by its label", async () => {
+  test("the Program select sits beside the heading, offers Calculator, Basics, Generics, Concurrency, and Standard library, Calculator chosen, and is in the accessibility tree by its label", async () => {
     const { page } = await open();
     try {
       const picker: { options: string[][]; value: string; beside: boolean } =
@@ -240,6 +275,7 @@ describe("the playground's programs", () => {
   for (const [program, label, output] of [
     ["generics", "Generics", GENERICS_OUTPUT],
     ["concurrency", "Concurrency", CONCURRENCY_OUTPUT],
+    ["stdlib", "Standard library", STDLIB_OUTPUT],
   ] as const) {
     test(`choosing ${label} shows its files in place, main.go active, with no request, and its Run prints its exact output with exit 0`, async () => {
       const watched = await open();
@@ -262,6 +298,66 @@ describe("the playground's programs", () => {
       }
     });
   }
+
+  test("an edit to stdlib's input.json alone reruns it with no Go compile or link and no request, and a malformed input.json prints the one line naming its JSON error, with exit 1", async () => {
+    const watched = await open();
+    const { page } = watched;
+    try {
+      await choose(page, "stdlib");
+      await build(page, PLAYGROUND, DONE);
+
+      let from = watched.requests.length;
+      await select(page, "input.json");
+      await paste(
+        page,
+        '{"project": "calc", "version": "v1.1.1", "commits": [\n' +
+          '  {"hash": "a1b2c3d", "author": "Grace", "message": "fix(eval): round -0 to 0 (#21)"},\n' +
+          '  {"hash": "f00d5e7", "author": "Linus", "message": "bump the version"}\n' +
+          "]}\n",
+        true,
+      );
+      const rerun = await build(page, PLAYGROUND, DONE);
+      assert.deepEqual(
+        rerun.lines,
+        [
+          "calc v1.1.1: 2 commits by 2 authors",
+          "",
+          "Fixes:",
+          "  a1b2c3d  eval    round -0 to 0 (#21)",
+          "",
+          "Not in the conventional form:",
+          '  f00d5e7  "bump the version"',
+          "",
+          "By author, most commits first:",
+          "  Grace 1",
+          "  Linus 1",
+          "",
+          "Issues referenced: #21",
+        ].map((text) => ({ stream: "stdout", text })),
+      );
+      assert.deepEqual(rerun.phases, ["Instantiate", "Run"], "no Go compile or link");
+      assert.deepEqual(
+        goRequests({ ...watched, requests: watched.requests.slice(from) }),
+        [],
+        "nothing fetched",
+      );
+
+      from = watched.requests.length;
+      await paste(page, '{\n  "commits": [\n    { "hash": "4d1e7a2" },\n  ]\n}\n', true);
+      const failed = await build(page, PLAYGROUND, "Finished main, exit code 1");
+      assert.deepEqual(failed.lines, [
+        {
+          stream: "stderr",
+          text: "input.json:4:3: syntax error: invalid character ']' looking for beginning of value",
+        },
+      ]);
+      assert.deepEqual(failed.rows.at(-1), { kind: "exit", text: "main exited with code 1" });
+      assert.deepEqual(failed.phases, ["Instantiate", "Run"]);
+      assert.deepEqual(goRequests({ ...watched, requests: watched.requests.slice(from) }), []);
+    } finally {
+      await page.close();
+    }
+  });
 
   test("edits survive a switch, with the active file, and Reset restores the program on screen alone", async () => {
     const { page } = await open();

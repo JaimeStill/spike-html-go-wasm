@@ -13,7 +13,7 @@
 // the wide band in each arrangement, editor left, top, and right, and with the Layout menu open,
 // each chosen by the menu as a reader chooses, so no state depends on what an earlier one stored;
 // and at 1376px with the About dialog open, opened by its button in the header, and with each of
-// Basics, Generics, and Concurrency chosen in the Program select, as a reader chooses it. The components page shows each state once
+// Basics, Generics, Concurrency, and Standard library chosen in the Program select, as a reader chooses it. The components page shows each state once
 // and its layout follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, and
 // the playground's, takes only that width's states, so the 900px capture, at no SDK width, is taken
 // only when every width is. The SDK's widths over the whole components page grew with every
@@ -116,6 +116,7 @@ const CHOSEN = [
   ["basics", "Basics", "shapes.go"],
   ["generics", "Generics", "stack.go"],
   ["concurrency", "Concurrency", "pipeline.go"],
+  ["stdlib", "Standard library", "input.json"],
 ] as const;
 
 /** Chooses the program in the playground's Program select, as a reader's choice changes it,
@@ -178,7 +179,7 @@ const menuOpen: Step = async (page: Page) => {
 /** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
  * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
  * Layout menu open; and the widest with the About dialog open, and with each program but the
- * calculator chosen in the Program select, Basics, Generics, and Concurrency, each named as the SDK names a page's, the width last. */
+ * calculator chosen in the Program select, Basics, Generics, Concurrency, and Standard library, each named as the SDK names a page's, the width last. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
   const state = (

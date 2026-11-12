@@ -1,0 +1,34 @@
+{
+  "project": "calc",
+  "version": "v1.1.0",
+  "commits": [
+    {
+      "hash": "4d1e7a2",
+      "author": "Ada",
+      "message": "feat(parser): parse a leading minus as negation (#14)"
+    },
+    {
+      "hash": "b83f0c9",
+      "author": "Grace",
+      "message": "fix(lexer): accept a number that starts with a dot (#12)"
+    },
+    { "hash": "71c5e30", "author": "Ada", "message": "docs: explain let in the doc comment" },
+    {
+      "hash": "e2a9d48",
+      "author": "Linus",
+      "message": "feat(eval): report division by zero (#9, #14)"
+    },
+    { "hash": "0f6b1d5", "author": "Grace", "message": "tidy up before the release" },
+    {
+      "hash": "93ac27f",
+      "author": "Ada",
+      "message": "fix(parser): reject a let with no name (#17)"
+    },
+    { "hash": "5be8c14", "author": "Grace", "message": "test(lexer): cover numbers with two dots" },
+    {
+      "hash": "c47d2a6",
+      "author": "Ada",
+      "message": "feat: comments start with # and run to the end of the line"
+    }
+  ]
+}
