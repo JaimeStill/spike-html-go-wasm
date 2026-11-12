@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
+- **State:** building
 - **Task:** playground
 - **Branch:** playground
 
@@ -91,6 +91,42 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   program's limits, and the working directory's files), and the playground page.
                   The context's capabilities list the playground as built, and the direction
                   checks hold every tier unchanged.
+              13. sl-go-demo gains a `fixed` attribute. A fixed demo is as tall as the dynamic
+                  viewport less the page header, at every width, and each part keeps a reserved
+                  share of that height, set as a fraction of the demo, never as an absolute
+                  length: pasting or typing any number of lines, a run's output of any length,
+                  and a full timings table change no part's box, and each part scrolls inside
+                  its own frame. A demo without `fixed` lays out as before.
+              14. A fixed demo's layout follows its own width. Below 44rem: the toolbar, the
+                  tabs over the editor (about 60% of the height), then one output panel whose
+                  tablist, "Output" and "Timings", selects the console or the timings, the
+                  console first; the tablist keeps the file tabs' keyboard model (roving
+                  tabindex, Left and Right wrapping, Home and End) and its accessibility tree.
+                  From 44rem to 64rem: the editor over a row of the console and the timings'
+                  16rem track. From 64rem: the reader's arrangement (behavior 15): the editor
+                  left or right of a column of the console over the timings, or the editor top,
+                  over the console and timings row. A run, a Stop, a build failure, or a
+                  layout change preserves each part's content and scroll position.
+              15. From 64rem, a fixed demo's toolbar shows a Layout menu button in its own group
+                  after the files group. It opens a menu of three radio items, "Editor left",
+                  "Editor top", and "Editor right", the current one checked, with the APG menu
+                  button's keyboard (Enter, Space, and Down open it on the checked item; Up and
+                  Down move; Enter or Space chooses and closes; Escape closes; focus returns to
+                  the button). Choosing changes the arrangement in place, with no reload and no
+                  change to the run state. Below 64rem the group isn't shown. Editor left is the
+                  default.
+              16. The arrangement is the reader's preference, held by a DOM-free model that
+                  validates it and kept in localStorage under the spike's own key, read in a
+                  try/catch. A reload, and every fixed demo on the origin, opens in the stored
+                  arrangement; blocked storage, an empty store, or a value the model refuses
+                  opens in editor left. A demo writes nothing to storage but the choice made.
+              17. The playground's demo is fixed. In the browser tier, at 390, 1120, and 1376
+                  px and either side of 44rem and 64rem, pasting 500 lines into the editor and
+                  printing 10,000 lines change no part's box, the page never scrolls sideways,
+                  and every part sits inside the demo, in each arrangement where it is offered.
+                  The captures show each band, each wide arrangement, and the phone's Output and
+                  Timings tabs. The README documents `fixed`, the bands, the Layout menu, and
+                  the stored preference.
 Test seams    mise run check: the unit tier for 1 and the fence equality in 9, and the build's
               compile and link steps over the runtime's in-memory fs under node for 2, 4, and 5.
               The browser tier, the built site under its base in chrome-headless-shell with the
@@ -113,19 +149,26 @@ Slices        1. Upgrade: chrome-headless-shell 157.0.8103.78 (its sha256 and si
               5. The playground page: hello's source, the index link, the shell checks, the
                  crawl, the fence test, behavior 10's fetch and run proofs, the live command's
                  two checks, the captures, and the docs.
+              6. The fixed layout: the `fixed` attribute, its three bands with editor left as the
+                 wide arrangement, the phone's Output and Timings tabs, the playground's demo
+                 fixed, the box-stability tests at every width, the captures, and the docs.
+              7. The reader's arrangement: the preference model and its unit tests, the Layout
+                 menu button and menu in the toolbar from 64rem, editor top and editor right,
+                 the stored choice read on load, with browser tests, captures, and docs.
 Out of scope  persisting files, sharing, and a Format button; workspace modules' archives (the
               sqlate and scenarios tasks add them as they first require them); go.mod, local
               subpackages, cgo, assembly, and go:embed in a built program; argv and stdin for a
               built program; go vet and go test in the page; the four programs (the programs
               task); timings on the live site and the size report (the measure task); Firefox and
               Safari runs; any release, or any change to a reference repository.
+              Draggable dividers; editor-only and output-only views (redirect).
 Door          two-way: nothing is released, the build outputs are regenerated on every build
               and never tracked, go.mod gains no requirement, and the playground is a public
               page that can be removed.
 
 ## Progress
 
-slices 5/5 committed · standards done · spec done · editor done
+slices 5/7 committed · standards — · spec — · editor — (redirect: fixed layout)
 
 ## Decisions
 
@@ -496,6 +539,22 @@ slices 5/5 committed · standards done · spec done · editor done
 - playground: the live command resolves the compiler's path against the manifest's URL.
 - playground: the playground's browser tests don't prove a missing import or Stop during a build
   again; `test/browser/go-build.test.ts` proves both through the components page's source demo.
+- playground (redirect): the layout is fixed through a `fixed` opt-in on sl-go-demo. Rejected:
+  the page's own CSS sizing each part through custom properties.
+- playground (redirect): the shares are measured against the dynamic viewport's height, so the
+  tool fits one screen at every width. Rejected: an aspect ratio of the demo's width.
+- playground (redirect): below 44rem the console and the timings are two tabs of one output
+  panel. Rejected: three stacked shares, a few lines each at 390 px.
+- playground (redirect): from 44rem to 64rem, the editor over a row of the console and the
+  timings, as before with fixed heights. Rejected: the timings in the toolbar's row.
+- playground (redirect): from 64rem the reader chooses editor left, top, or right, editor left by
+  default, as codepen.io's Editor Layout. Rejected: one wide layout; only left and top.
+- playground (redirect): fixed proportions. Rejected: draggable dividers.
+- playground (redirect): no single-part views. Rejected: codepen.io's "Editors" and "Preview".
+- playground (redirect): the choice is a Layout menu button in the demo's toolbar. Rejected: a
+  row in the page's Settings dialog, the SDK's sl-settings in a reference repository.
+- playground (redirect): the arrangement is kept in localStorage under the spike's own key, as
+  the foundation keeps the theme. Rejected: forgetting it on reload.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
