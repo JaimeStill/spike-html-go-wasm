@@ -21,9 +21,9 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   shellcheck, and actionlint. It lints the Go module under `GOOS=js GOARCH=wasm` and fails unless
   `web/runtime/wasm_exec.js` matches the pinned Go's copy and no `.wasm` or `.a` archive is
   tracked. It runs the Go tests as wasm under node twice: on node's fs, and on the runtime's
-  in-memory fs, where `test/memfs` drives it through package `os`, and where `cmd/calc`'s tests
-  run the playground's starter over its shipped `input.txt` and over a script with failing
-  lines, holding its output and its exit code. It type-checks the configs,
+  in-memory fs, where `test/memfs` drives it through package `os`, and where
+  `playground/calc`'s tests run the playground's starter over its shipped `input.txt` and over a
+  script with failing lines, holding its output and its exit code. It type-checks the configs,
   the web tiers, and the suite with tsc and runs `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
@@ -36,10 +36,9 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
     `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change
     events.
     It holds each program demo's go fence on the components page to its scenario's source, byte
-    for byte, and the playground's demo to the starter's files in `cmd/calc/`, its four `.go`
-    files and its `input.txt`. It fails if a module
-    under `web/components` or `web/pages` registers a page shortcut through the foundation's
-    `keys.js`.
+    for byte, and the playground's demo to the starter's files in `playground/calc/`, its four
+    `.go` files and its `input.txt`. It fails if a module under `web/components` or `web/pages`
+    registers a page shortcut through the foundation's `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
     and the crawl, reads each hand page's cascade layers (the foundation's, then `site`, then
     `page`) and finds no inline `<style>` in its source, and proves each component on the
@@ -207,16 +206,17 @@ layer. A page rule goes in `web/pages/page.css`.
 ## Playground
 
 `playground.html` holds one `sl-go-demo` in the source mode, with `editable-files` and `fixed`,
-opening on the starter, a tiny calculator language in `cmd/calc/`, its files as they are:
+opening on the starter, a tiny calculator language in `playground/calc/`, its files as they are:
 `main.go`, active, which reads `input.txt` from the working directory and runs it line by line;
 `lexer.go`, `parser.go`, and `eval.go`, which turn each line into tokens, a syntax tree, and a
 value; and `input.txt`, a worked shopping total whose top comment suggests a line to try that
 fails. A script has `let` bindings, decimal numbers, `+ - * /` with unary minus and parentheses,
 and `#` comments; each line's result prints on stdout, a `let` as `name = value`, and a failing
 line prints `input.txt:<line>: <reason>` on stderr, the run going on, and the program exiting 1.
-The check builds the starter for `GOOS=js` with the other entrypoints and runs its Go tests.
-Its script, `web/pages/playground.ts`,
-gives the demo the page's one `Runner` and the reader's arrangement. Nothing loads Go until a
+The starter isn't a scenario and no page loads it prebuilt, so it lives outside `cmd/` and the
+build never writes it to `dist/`: the check vets it and runs its Go tests under `GOOS=js`, on
+node's fs and on the in-memory fs. Its script, `web/pages/playground.ts`, gives the demo the
+page's one `Runner` and the reader's arrangement. Nothing loads Go until a
 Run: the first fetches the manifest, the compiler, the linker, and the archives of the program's
 import closure, and a later Run fetches the manifest again and only the archives a new import
 adds (see "Runtime", `build(files)`). The program's limits and its working directory are the

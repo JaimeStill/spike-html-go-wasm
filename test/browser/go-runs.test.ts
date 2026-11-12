@@ -88,7 +88,7 @@ async function hold(page: Page): Promise<{ paused: string[]; release(): Promise<
 }
 
 describe("the Go modules under the base", () => {
-  for (const name of ["hello", "probe", "calc"]) {
+  for (const name of ["hello", "probe"]) {
     test(`${name}.wasm answers 200 as application/wasm`, async () => {
       const response = await fetch(new URL(`go/${name}.wasm`, server.origin));
       assert.equal(response.status, 200);

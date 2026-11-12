@@ -1,11 +1,11 @@
 <!doctype html>
 <!-- The playground, a hand page: one sl-go-demo in the source mode, its files editable and
-     editable-files on, which opens on the starter, a tiny calculator language: cmd/calc's
+     editable-files on, which opens on the starter, a tiny calculator language: playground/calc's
      main.go, lexer.go, parser.go, and eval.go, main.go active, then the input.txt it reads, each
-     fence equal byte for byte to its file in cmd/calc/ (the unit tier holds it). Run compiles and links the reader's files with Go's
-     own compiler and linker in the page's worker, then runs main; nothing loads Go, or starts the
-     worker, until a Run. Its script, web/pages/playground.ts, gives the demo the page's one runner
-     and the reader's arrangement.
+     fence equal byte for byte to its file in playground/calc/ (the unit tier holds it). Run
+     compiles and links the reader's files with Go's own compiler and linker in the page's worker,
+     then runs main; nothing loads Go, or starts the worker, until a Run. Its script,
+     web/pages/playground.ts, gives the demo the page's one runner and the reader's arrangement.
      The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
      body of class app (web/pages/page.css): the header, then main across the body's content
      width, its prose, one block of the heading, the intro, and a closed disclosure saying what a
@@ -442,8 +442,12 @@ func (e env) eval(x expr) (float64, error) {
 }
 
 // format writes a value to 12 significant digits, enough to hide floating point's last-digit
-// noise, so 0.1 + 0.2 prints 0.3.
+// noise, so 0.1 + 0.2 prints 0.3. Negative zero, as 0 * -1 gives, prints 0: -0 == 0, so the
+// comparison folds it into positive zero.
 func format(value float64) string {
+	if value == 0 {
+		value = 0
+	}
 	return strconv.FormatFloat(value, 'g', 12, 64)
 }
 </code></pre>

@@ -2,20 +2,20 @@
 // under the base by the SDK's served(), Vite's preview, in the pinned chrome-headless-shell, the
 // worker's fetches read through CDP (go-demos.ts).
 //
-// The page holds one source demo with editable files, opening on the starter, cmd/calc's four .go
-// files and its input.txt, main.go active, and requests no Go and starts no worker before a Run.
-// The first Run fetches the manifest, the compiler, the linker, and only the starter's closure of
-// archives, and prints the starter's results with exit 0 and every phase of a build. An edit to
-// input.txt alone builds nothing: the Run fetches nothing, shows no Go compile or link, and prints
-// the new input's results, a failing line's report on stderr with exit 1. A Run after an edit to
-// main.go fetches the manifest alone, no toolchain module and no archive already held, and prints
-// what the edited program now prints; a new standard import fetches only the archives its closure
-// adds. A compile error shows the compiler's output and its exit and runs nothing; Stop ends a busy
-// loop, and the next build fetches no toolchain module; and a file the reader adds is read through
-// os.ReadFile from the working directory, with nothing a run writes outliving it. What the build
-// proves beyond these, through the components page's source demo, is go-build.test.ts's; the
-// helpers are go-builds.ts's and go-demos.ts's. Every wait is bounded. Nothing here names the site:
-// its base is package.json's name.
+// The page holds one source demo with editable files, opening on the starter, playground/calc's
+// four .go files and its input.txt, main.go active, and requests no Go and starts no worker before
+// a Run. The first Run fetches the manifest, the compiler, the linker, and only the starter's
+// closure of archives, and prints the starter's results with exit 0 and every phase of a build. An
+// edit to input.txt alone builds nothing: the Run fetches nothing, shows no Go compile or link, and
+// prints the new input's results, a failing line's report on stderr with exit 1. A Run after an
+// edit to main.go fetches the manifest alone, no toolchain module and no archive already held, and
+// prints what the edited program now prints; a new standard import fetches only the archives its
+// closure adds. A compile error shows the compiler's output and its exit and runs nothing; Stop
+// ends a busy loop, and the next build fetches no toolchain module; and a file the reader adds is
+// read through os.ReadFile from the working directory, with nothing a run writes outliving it. What
+// the build proves beyond these, through the components page's source demo, is go-build.test.ts's;
+// the helpers are go-builds.ts's and go-demos.ts's. Every wait is bounded. Nothing here names the
+// site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -61,9 +61,9 @@ const PLAYGROUND = `document.querySelector("sl-go-demo")`;
 /** Opens the playground, watched (go-demos.ts). */
 const open = () => openPage(browser, server.origin, "playground.html");
 
-/** The starter's files, in the demo's order, as cmd/calc holds them. */
+/** The starter's files, in the demo's order, as playground/calc holds them. */
 const STARTER = ["main.go", "lexer.go", "parser.go", "eval.go", "input.txt"];
-const mainSource = readFileSync(join(root, "cmd/calc/main.go"), "utf8");
+const mainSource = readFileSync(join(root, "playground/calc/main.go"), "utf8");
 
 /** The standard packages the starter's .go files import, whose closure its first Run fetches. */
 const STARTER_IMPORTS = ["errors", "fmt", "os", "strconv", "strings", "unicode"];

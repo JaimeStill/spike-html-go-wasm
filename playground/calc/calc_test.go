@@ -107,6 +107,8 @@ func TestLines(t *testing.T) {
 		{line: "16 / 4 / 2", want: "2"},
 		{line: "-2 * -(1 + 2)", want: "6"},
 		{line: "0.1 + 0.2 # rounded", want: "0.3"},
+		{line: "0 * -1", want: "0"},
+		{line: "-0", want: "0"},
 		{line: "let half = 1 / 2", want: "half = 0.5"},
 		{line: "  # only a comment", want: ""},
 		{line: "2 3", err: `unexpected "3"`},

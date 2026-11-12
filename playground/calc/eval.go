@@ -78,7 +78,11 @@ func (e env) eval(x expr) (float64, error) {
 }
 
 // format writes a value to 12 significant digits, enough to hide floating point's last-digit
-// noise, so 0.1 + 0.2 prints 0.3.
+// noise, so 0.1 + 0.2 prints 0.3. Negative zero, as 0 * -1 gives, prints 0: -0 == 0, so the
+// comparison folds it into positive zero.
 func format(value float64) string {
+	if value == 0 {
+		value = 0
+	}
 	return strconv.FormatFloat(value, 'g', 12, 64)
 }
