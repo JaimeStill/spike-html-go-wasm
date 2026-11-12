@@ -25,7 +25,11 @@ evidence, and path are in `context/README.md`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, the in-memory fs's error codes, and the
     playground's toolchain: each file its manifest names under its content's hash, and its import
-    closure equal to Go's own `go list -deps`. It tests the components' five models
+    closure equal to Go's own `go list -deps`; and the build steps, Go's compiler and linker
+    compiling and linking a program over that toolchain on the in-memory fs: hello built and run,
+    a compile error and a package clause other than main as the compiler writes them, an import
+    the manifest lacks refused before the compiler runs, and a non-Go file read from the run's
+    working directory. It tests the components' five models
     (`EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations,
     refusals, and change events. It holds each program demo's go fence on the components page to
     its scenario's source, byte for byte. It fails if a module under `web/components` or
