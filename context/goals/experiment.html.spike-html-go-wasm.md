@@ -115,7 +115,7 @@ Door          two-way: nothing is released; go.mod gains two requirements, and t
 
 ## Progress
 
-slices 5/5 committed · standards ✓ · spec — · editor —
+slices 5/5 committed · standards ✓ · spec ✓ · editor —
 
 ## Decisions
 
