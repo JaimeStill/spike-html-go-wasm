@@ -125,7 +125,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 1/5 committed · standards — · spec — · editor —
+slices 2/5 committed · standards — · spec — · editor —
 
 ## Decisions
 
