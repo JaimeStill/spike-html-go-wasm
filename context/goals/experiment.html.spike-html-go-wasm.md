@@ -229,7 +229,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 11/11 committed · standards — · spec — · editor — (layout foundation)
+slices 11/11 committed · standards done · spec — · editor — (layout foundation)
 
 ## Decisions
 
