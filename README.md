@@ -9,9 +9,8 @@ The GitHub Pages site of spike-html-go-wasm, made from the template of
 `components.html`, the components page, which shows each component in `web/components/` in each
 of its states, its Go demos running Go through the runtime in `web/runtime/`; and
 `playground.html`, the playground, where the reader edits Go and builds and runs it in the page
-(see "Playground"). The site copies no
-Markdown tree: `content.json` records none, and `content/` holds nothing. The spike's question,
-evidence, and path are in `context/README.md`.
+(see "Playground"). The site copies no Markdown tree: `content.json` records none, and `content/`
+holds nothing. The spike's question, evidence, and path are in `context/README.md`.
 
 ## Tasks
 
@@ -25,18 +24,18 @@ evidence, and path are in `context/README.md`.
   in-memory fs, where `test/memfs` drives it through package `os`. It type-checks the configs,
   the web tiers, and the suite with tsc and runs `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
-    by-tag rule, the currency and live commands' logic, the in-memory fs's error codes, and the
-    playground's toolchain: each file its manifest names under its content's hash, and its import
-    closure equal to Go's own `go list -deps`; and the build steps, Go's compiler and linker
-    compiling and linking a program over that toolchain on the in-memory fs: hello built and run,
-    a compile error and a package clause other than main as the compiler writes them, an import
+    by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
+    checks the playground's toolchain: each file its manifest names exists under its content's
+    hash, and the manifest's import closure equals Go's own `go list -deps`. It runs Go's
+    compiler and linker over that toolchain on the in-memory fs: hello built and run, a compile
+    error and a package clause other than main reported as the compiler writes them, an import
     the manifest lacks refused before the compiler runs, and a non-Go file read from the run's
-    working directory. It tests the components' five models
-    (`EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations,
-    refusals, and change events. It holds each program demo's go fence on the components page to
-    its scenario's source, byte for byte, and the playground's demo to hello's,
-    `cmd/hello/main.go`. It fails if a module under `web/components` or
-    `web/pages` registers a page shortcut through the foundation's `keys.js`.
+    working directory. It tests the components' five models (`EditorSettings`, `FileSet`,
+    `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change events.
+    It holds each program demo's go fence on the components page to its scenario's source, byte
+    for byte, and the playground's demo to hello's, `cmd/hello/main.go`. It fails if a module
+    under `web/components` or `web/pages` registers a page shortcut through the foundation's
+    `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
     and the crawl, and proves each component on the components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
@@ -147,12 +146,12 @@ are `protocol.ts`'s.
 `playground.html` holds one `sl-go-demo` in the source mode, with `editable-files`, opening on
 hello's source, `cmd/hello/main.go` as it is. Its script, `web/pages/playground.ts`, gives the
 demo the page's one `Runner`. Nothing loads Go until a Run: the first fetches the manifest, the
-compiler, the linker, and the archives of the program's import closure, and a later Run fetches the
-manifest again and only the archives a new import adds (see "Runtime", `build(files)`). The
-program's limits and its working directory are the build's; New file adds a file, so a non-Go
-file such as `input.txt` is read through `os.ReadFile`. Stop keeps the compiled toolchain.
-The reader's files live only in the page: a reload opens on hello again, and nothing is shared or
-stored.
+compiler, the linker, and the archives of the program's import closure, and a later Run fetches
+the manifest again and only the archives a new import adds (see "Runtime", `build(files)`). The
+program's limits and its working directory are the build's. New file adds a file, so the program
+can read a non-Go file such as `input.txt` through `os.ReadFile`. Stop keeps the compiled
+toolchain. The reader's files live only in the page: a reload opens on hello again, and nothing
+is shared or stored.
 
 ## Components
 
@@ -161,9 +160,9 @@ module defines its element when it is imported and exports its tag name as `tagN
 element's shadow root adopts the foundation's reset and elements sheets, then its own, a CSS
 module script beside it. A page imports a component's module, and the build bundles it.
 `components.html` shows each component's states once, labelled, its layout following the
-viewport, and focused by the keyboard. The directory's other modules are the components' internals, each documented in its own
-comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-themes.ts`, and
-`tokenizer.ts`.
+viewport, and focused by the keyboard. The directory's other modules are the components'
+internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `reasons.ts`,
+`subscription.ts`, `syntax-themes.ts`, and `tokenizer.ts`.
 
 - `./code-editor.js`: `sl-code-editor`, a plain-text source editor: a `contenteditable` element
   in plaintext-only mode, exposed as a multiline textbox, beside a gutter of line numbers. Its Go
@@ -399,17 +398,17 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
   and a `ConsoleLog`, a `RunTimings`, and a `RunState` of its own; it is the only writer of each,
   and applies every request its parts send. It imports nothing from the runtime and fetches
   nothing: it reads `DemoRunner`, the runtime's `Runner`'s structural subset, `load`, `build`,
-  `run`, `stop`, and `listen`, with the output, exit, and timing events re-declared (`DemoEvent`), and
-  the page that passes it the runtime's `Runner` has TypeScript check the one against the other
-  there (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
+  `run`, `stop`, and `listen`, with the output, exit, and timing events re-declared
+  (`DemoEvent`), and the page that passes it the runtime's `Runner` has TypeScript check the one
+  against the other there (`new Runner() satisfies DemoRunner`). Go loads only on a Run.
   - Modes: with `handler` named, Run loads the scenario and calls that handler with the one file's
     text, editable; its answer, a string as it is or anything else as indented JSON, or its error,
     shows as the console's result block. With none, Run runs the prebuilt program's main: the
     fences are read-only, the file tabs show over the editor, a tabpanel they control, and the
-    exit shows as the console's status line. With `source`, the demo is built from source: Run
-    builds its files through the runner's `build`, every `.go` file as package main and every
-    other file in the program's working directory (see "Runtime" for the program's limits), then
-    runs its main as the program mode does, the status naming it `main`; the fences are editable.
+    exit shows as the console's status line. With `source`, Run builds the files through the
+    runner's `build`, every `.go` file as package main and every other file in the program's
+    working directory (see "Runtime" for the program's limits), then runs its main as the program
+    mode does, the status naming it `main`; the fences are editable.
     A failed build shows the compiler's or linker's output, its exit, and the error as the result
     block, and runs nothing. Each Run clears the console and begins the timings afresh; the
     toolbar's status says how it ended.
@@ -418,16 +417,16 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
     load to its run's settling, so each console holds only its own demo's output, and a demo
     whose run another demo's Run stops records it as stopped. Stop stops the runner only while
     the demo's own run is pending.
-  - Attributes: `scenario` (required but on a source demo: the Go scenario Run loads), `handler`
-    (the handler Run calls; absent, Run runs the program's main), `source` (a boolean: Run builds
-    the files and runs the built program's main; a source demo names no scenario and no handler),
-    `editable-files` (a boolean: New file, Rename, and Delete on a program or source demo; a
-    handler demo, holding its one input, ignores it), `wrap` (a boolean: long lines wrap),
-    `tab-size` (a tab's width, 1 to 8 columns, 4 by default), and `label` (the demo's accessible
-    name, "<scenario> <handler> demo" by default, "Go source demo" on a source demo). A change to
-    `handler` or `source` rebuilds the files from the fences; `wrap` and `tab-size` change the settings in
-    place; while an authoring error shows, a change to `scenario`, `wrap`, or `tab-size` builds
-    the demo again, so a mended attribute mends it.
+  - Attributes: `scenario` (the Go scenario Run loads, required except on a source demo),
+    `handler` (the handler Run calls; absent, Run runs the program's main), `source` (a boolean:
+    Run builds the files and runs the built program's main; a source demo names no scenario and
+    no handler), `editable-files` (a boolean: New file, Rename, and Delete on a program or source
+    demo; a handler demo, holding its one input, ignores it), `wrap` (a boolean: long lines
+    wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), and `label` (the demo's
+    accessible name, "<scenario> <handler> demo" by default, "Go source demo" on a source demo).
+    A change to `handler` or `source` rebuilds the files from the fences; `wrap` and `tab-size`
+    change the settings in place; while an authoring error shows, a change to `scenario`,
+    `wrap`, or `tab-size` builds the demo again, so a mended attribute mends it.
   - Properties: `runner`, a `DemoRunner`, the page's one runner, `null` by default, which runs
     nothing; `problem`, read-only, the authoring error's reason, or `null`; and the attributes'.
   - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
@@ -436,16 +435,16 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
     `data-file`, else the pre's `title`, else a default from the fence's language, a
     `data-language` or a `language-<name>` class on either: `main.go` for go, `input.json` for
     json, `input.txt` for any other; with no language, as Shiki's markup carries none, `main.go`
-    on a program or source demo and `input.json` on a handler demo. Each file's grammar follows its name's
-    extension. The fences are read once the document has parsed them, and stay in the light DOM
-    unchanged: before the element upgrades, and without script, they render as the page's code;
-    once upgraded they are no part of the flat tree, neither rendered nor in the accessibility
-    tree, and the editor alone shows their text.
-  - Authoring errors: no scenario, a source demo naming a scenario or a handler, no fence, more than one fence on a handler demo, a name the
-    file set refuses (two fences both defaulting to `main.go` among them), or a tab size the
-    settings refuse. The demo shows "Authoring error:" and the reason, on the page's red mixed
-    into its surface, describes its region with it, slots the fences back as written, and
-    doesn't run.
+    on a program or source demo and `input.json` on a handler demo. Each file's grammar follows
+    its name's extension. The fences are read once the document has parsed them, and stay in
+    the light DOM unchanged: before the element upgrades, and without script, they render as the
+    page's code; once upgraded they are no part of the flat tree, neither rendered nor in the
+    accessibility tree, and the editor alone shows their text.
+  - Authoring errors: no scenario, a source demo naming a scenario or a handler, no fence, more
+    than one fence on a handler demo, a name the file set refuses (two fences both defaulting to
+    `main.go` among them), or a tab size the settings refuse. The demo shows "Authoring error:"
+    and the reason, on the page's red mixed into its surface, describes its region with it,
+    slots the fences back as written, and doesn't run.
   - Files: New file adds the file, selects it, and focuses the editor; Rename renames the active
     file, focus staying on Rename; Delete removes the active file, unless the last, and focuses
     the tab now active; Reset restores every file's text as given.
@@ -489,8 +488,9 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
     adds the phase's time to the current run, or replaces the time it has.
   - Reading: `phases`, the current run's phases as frozen snapshots, `{ phase, ms }`, only those
     recorded, in the runtime's phase order (`PHASES`: fetch, compile, go-compile, link,
-    instantiate, start, call, run) whatever order they arrived in, the same array until the timings change; `total`, their
-    sum in ms; `ms(phase)`; and `runs`, how many runs have begun, 0 before the first.
+    instantiate, start, call, run) whatever order they arrived in, the same array until the
+    timings change; `total`, their sum in ms; `ms(phase)`; and `runs`, how many runs have
+    begun, 0 before the first.
   - Refusals: a record it can't apply throws, naming the reason, and changes nothing: a
     `TypeError` for a phase that isn't a string or a time that isn't a number, a `RangeError` for
     a phase the runtime doesn't name or a time that is negative, NaN, or infinite.
@@ -499,16 +499,16 @@ comments: `aria.ts`, `highlights.ts`, `reasons.ts`, `subscription.ts`, `syntax-t
     and a record that adds a phase or changes its time; a record of the time a phase has sends
     none. The unit tier tests it under node.
 - `./timings.js`: `sl-timings`, the last run's phases as a table: a row for each phase the run
-  had, in phase order, its name and its time, and a total row. WebAssembly's compile phase is
-  "Wasm compile", apart from a build's "Go compile" and "Link". It renders the `RunTimings` it is
-  given, follows each change it sends, listening only to the timings it holds while it is in the
-  document, and never writes them; a new run replaces the last as the timings do. Times are
-  formatted by `Intl.NumberFormat` as ms, to a tenth while they round under 10 ms ("4.2 ms") and
-  whole from there, grouped ("1,535 ms"), as `formatMs(ms)` gives them, right-aligned in tabular
-  numerals; the total row is set apart by a heavier rule and weight. With no run yet the table
-  says "No run yet.", and with a run begun and no phase timed, "No phase timed yet.", with no
-  total. The table is as wide as its content, at least 16rem or its container's width, and never
-  wider than its container. Nothing moves.
+  had, in phase order, its name and its time, and a total row. It labels WebAssembly's compile
+  phase "Wasm compile", to tell it from a build's "Go compile" and "Link". It renders the
+  `RunTimings` it is given, follows each change it sends, listening only to the timings it holds
+  while it is in the document, and never writes them; a new run replaces the last as the timings
+  do. Times are formatted by `Intl.NumberFormat` as ms, to a tenth while they round under 10 ms
+  ("4.2 ms") and whole from there, grouped ("1,535 ms"), as `formatMs(ms)` gives them,
+  right-aligned in tabular numerals; the total row is set apart by a heavier rule and weight.
+  With no run yet the table says "No run yet.", and with a run begun and no phase timed, "No
+  phase timed yet.", with no total. The table is as wide as its content, at least 16rem or its
+  container's width, and never wider than its container. Nothing moves.
   - Attributes: `label` (the table's caption and accessible name, "Timings" by default).
   - Properties: `timings`, the `RunTimings` its owner creates and writes; `null`, the default,
     shows no run yet; and `label`, as its attribute.

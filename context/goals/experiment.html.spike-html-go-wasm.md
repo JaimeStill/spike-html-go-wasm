@@ -125,7 +125,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 5/5 committed · standards done · spec done · editor —
+slices 5/5 committed · standards done · spec done · editor done
 
 ## Decisions
 
@@ -465,6 +465,37 @@ slices 5/5 committed · standards done · spec done · editor —
 - playground: no persistence; a reload restores the program as given. Rejected: localStorage,
   OPFS, and a URL fragment.
 - playground: no Format button. Rejected: a gofmt handler scenario.
+- playground: the toolchain's unit test builds the toolchain into a temporary directory, because
+  test:unit doesn't depend on the build, and the build empties `dist/`. Rejected: reading the
+  toolchain from `dist/`.
+- playground: `closure()` and the `Manifest` types live in the runtime tier,
+  `web/runtime/manifest.ts`.
+- playground: a toolchain file's name is `<stem>.<the first 16 hex digits of its SHA-256>.<ext>`,
+  and each archive sits under `std/<import path>`. The manifest lists `unsafe` with no archive and
+  leaves out six test-only standard packages. The archives come from `go list -trimpath -export`.
+- playground: the compiler writes its diagnostics to stdout, not stderr, and the build passes both
+  streams to the console as written.
+- playground: the compiler doesn't check the package clause, and only the linker refuses a program
+  that isn't package main, so the build passes the compiler a hidden first file,
+  `/clause/main.go` (`package main`), and the compiler refuses the reader's file of any other
+  package ("lib.go:1:1: package lib; expected package main").
+- playground: a build and a built program's run both use `/work` as the working directory.
+- playground: the worker doesn't keep archives across Stop, because fmt's closure is ~22 MB and a
+  copy posted from the page would double the memory; the next build fetches them again, over the
+  HTTP cache, under their hashed names. Rejected: posting the archives to the fresh worker.
+- playground: the runner decides whether an unchanged build reuses the held program, and sends the
+  worker an adopt of it, so reuse survives a Stop or a load in between, and an unchanged rebuild
+  requests nothing, not even the manifest.
+- playground: the worker posts the tools as soon as it compiles them (a "tools" reply), so a Stop
+  during Go compile or link keeps them.
+- playground: the runner holds a built program as the scenario `main`.
+- playground: a source demo that names a scenario or a handler is an authoring error.
+- playground: a failed build shows the step's exit line and the error as the result block.
+- playground: the worker drops the tools and archives the current manifest no longer names.
+- playground: the compiler exits with code 2 on a compile error.
+- playground: the live command resolves the compiler's path against the manifest's URL.
+- playground: the playground's browser tests don't prove a missing import or Stop during a build
+  again; `test/browser/go-build.test.ts` proves both through the components page's source demo.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
@@ -473,7 +504,8 @@ slices 5/5 committed · standards done · spec done · editor —
 - A browser running a wasm build is another runtime layer; this spike's answer bears on the
   `elemental-runtime-layers` backlog goal.
 - wasm_exec.js caps argv and the environment together at 12 KB; `GOOS=js` go test under node
-  needs a trimmed environment, and the playground's compile and link argv must fit too.
+  needs a trimmed environment. The playground's compile and link argv fit, because the build
+  passes the archives' paths in importcfg files.
 - SDK v0.6.1's site.css places header-actions at the inline end only beside a site nav; an
   intake candidate.
 - Vite's preview doesn't gzip, so the live command alone proves the gzip assertion, against the
@@ -509,7 +541,18 @@ slices 5/5 committed · standards done · spec done · editor —
   foundation ships, so no page has to know.
 
 - The 100 GB/month soft bandwidth limit on Pages works out to about 5,000 cold playground runs a
-  month. This belongs in the answer task's verdict.
+  month, if Pages gzips the archives: a cold hello build fetches the compiler and linker (~13.8 MB
+  gzip) and fmt's closure (22.2 MB raw, ~4.8 MB gzip). Pages serves `.a` files without a specific
+  content type; Pages gzipped another Pages site's `.a` served that way (ccbrown.github.io's
+  prebuilt/runtime.a), but this site's isn't yet read. Uncompressed, a cold run is ~36 MB, about
+  2,800 runs a month. The measure task settles it; the answer task's verdict carries it.
+- All 144 MB of standard-library archives deploy to Pages, though each program fetches only its
+  closure.
+- Chrome's cold WebAssembly.compile of the 52 MB compiler reads ~74–123 ms, which suggests lazy
+  compilation, so its real cost may fall inside the Go compile phase. The measure task should
+  read the phases with that in mind.
+- A cold playground build, locally, takes ~0.5–0.7 s to fetch, 1.1–1.5 s to Go compile, and
+  0.6–0.95 s to link; after an edit, ~0.12–0.24 s to Go compile and ~0.35–0.5 s to link.
 - Whether sqlate, go-core, and go-web-sdk build archives for js/wasm is unknown. The sqlate and
   scenarios tasks settle it. The newest versions so far come from local tags only, so check
   them against the remotes when those tasks plan.
@@ -523,3 +566,11 @@ slices 5/5 committed · standards done · spec done · editor —
   EditorSettings.
 - coordinator · roadmap.toml: in the components task's summary, "sl-run-controls" becomes
   "sl-controls", and "with a specimen page" becomes "with a components page".
+- coordinator · roadmap.toml: in the playground task's summary, "per-package standard-library
+  and workspace archives" becomes "per-package standard-library archives", since the sqlate and
+  scenarios tasks add their modules' archives.
+- coordinator · roadmap.toml: the sqlate and scenarios tasks' summaries add "with the module's
+  js/wasm archives added to the playground's manifest".
+- coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"
+  becomes "cold, cached, and in-place timings, a playground build's Go compile and link among
+  them".

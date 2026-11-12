@@ -56,22 +56,23 @@ for the Go packages.
   `cmd/probe`), which imports only the standard library and the bridge and serves four handlers
   that prove the runtime: format, files, spin, and crash. Planned: sqlate, go-core graph, and
   go-web-sdk handlers in-process.
-- **Runtime** (`web/runtime`, the SDK tier): `runner.ts` exports the `Runner` type (load, run,
-  stop; output, exit, and timing events), and starts one dedicated worker, `worker.ts`, on the
-  first load. The worker fetches a module over the HTTP cache, compiles it, and runs instances of
-  it through `wasm_exec.js` over the in-memory fs in `fs.ts`, which `install-fs.ts` installs
-  first. `protocol.ts` holds the events and the messages between the runner and the worker. The
-  runner runs one load or run at a time: a new request first stops the pending one, so every event
-  belongs to the request that is pending. Stop terminates the worker and posts the compiled module
-  to a fresh one.
+- **Runtime** (`web/runtime`, the SDK tier): `runner.ts` exports the `Runner` type (load, build,
+  run, stop; output, exit, and timing events), and starts one dedicated worker, `worker.ts`, on
+  the first load or build. The worker fetches a module over the HTTP cache, compiles it, and runs
+  instances of it through `wasm_exec.js` over the in-memory fs in `fs.ts`, which `install-fs.ts`
+  installs first. `protocol.ts` holds the events and the messages between the runner and the
+  worker. The runner runs one load, build, or run at a time: a new request first stops the
+  pending one, so every event belongs to the request that is pending. Stop terminates the worker
+  and posts the compiled program, compiler, and linker to a fresh one. `README.md`, "Runtime",
+  documents each request.
 - **Go tests on the in-memory fs** (`test/memfs`): a Go test program that the check runs under
   node on the runtime's fs, through package `os`.
-- **Playground**: Go's own `cmd/compile` and `cmd/link`, built by the pinned Go for `GOOS=js`
-  (`scripts/build-toolchain.ts`), run in the worker by the runner's build request
-  (`web/runtime/build.ts`), with each standard-library package's archive fetched per import
-  through `go/toolchain/manifest.json`; `playground.html` holds one source-mode sl-go-demo opening
-  on hello's source. Planned: workspace modules' archives, as the sqlate and scenarios tasks
-  first require them.
+- **Playground**: the runner's build request (`web/runtime/build.ts`) runs Go's own
+  `cmd/compile` and `cmd/link`, built by the pinned Go for `GOOS=js`
+  (`scripts/build-toolchain.ts`), in the worker, and fetches each standard-library package's
+  archive per import through `go/toolchain/manifest.json`. `playground.html` holds one
+  source-mode sl-go-demo that opens on hello's source. Planned: workspace modules' archives, added
+  when the sqlate and scenarios tasks first require them.
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
   over a runner the page passes in. No component holds authoritative state: DOM-free models,
@@ -79,11 +80,10 @@ for the Go packages.
   one owner, sl-go-demo or the page. No component imports the runtime. `README.md`, "Components",
   documents each module.
 - **Pages** (`web/pages`, the apps tier, for the scripts a page loads): `components.html`, a hand
-  page whose script, `web/pages/components.ts`, shows every component's states, again at 20rem;
+  page whose script, `web/pages/components.ts`, shows every component's states once;
   its Go demos run hello and the probe's handlers over the page's one runner. `playground.html`,
   a hand page whose script, `web/pages/playground.ts`, gives its one source demo the page's
-  runner. Planned: hand pages
-  and rendered Markdown embedding `<sl-go-demo>` around a go fence.
+  runner. Planned: hand pages and rendered Markdown embedding `<sl-go-demo>` around a go fence.
 
 ## Path
 
