@@ -76,8 +76,8 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
               9. A playground page, linked from the index, holds one editable-files sl-go-demo
                  in the source mode. It opens on hello's source, equal byte for byte to the hello
                  entrypoint under the unit tier. The page requests no Go before a Run. It passes
-                 every SDK shell check, and the crawl reaches the index, the components page,
-                 and the playground alone.
+                 every SDK shell check except reading width, its prose holds 80ch, centred, and
+                 the crawl reaches the index, the components page, and the playground alone.
               10. On the playground page in the browser tier, the first Run fetches the
                   manifest, the compiler, the linker, and only hello's closure of archives, and
                   prints hello with exit 0 and every phase of behavior 7. A Run after an edit
@@ -91,13 +91,16 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   program's limits, and the working directory's files), and the playground page.
                   The context's capabilities list the playground as built, and the direction
                   checks hold every tier unchanged.
-              13. sl-go-demo gains a `fixed` attribute. A fixed demo is as tall as
-                  its container: it fills the block size of its nearest size container and
-                  reads no viewport unit and runs no script to size itself. Each part keeps a
-                  reserved share of that height, set as a fraction of the demo, never as an
-                  absolute length: pasting or typing any number of lines, a run's output of any
-                  length, and a full timings table change no part's box, and each part scrolls
-                  inside its own frame. A demo without `fixed` lays out as before.
+              13. sl-go-demo gains a `fixed` attribute. A fixed demo is as tall as the
+                  box its parent's layout gives it, never below its own floor, which it states
+                  once in lines of its parts (the toolbar, and a set number of editor and console
+                  lines, in lh), so the floor follows the type profile and zoom. It reads no
+                  viewport or container block unit, runs no script to size itself, and needs no
+                  size-container ancestor. Each part keeps a reserved share of the demo as a
+                  fraction, never an absolute length: pasting or typing any number of lines, a
+                  run's output of any length, and a full timings table change no part's box, and
+                  each part scrolls inside its own frame. A demo without `fixed` lays out as
+                  before.
               14. A fixed demo's layout follows its own width. Below 44rem: the toolbar, the
                   tabs over the editor (about 60% of the height), then one output panel whose
                   tablist, "Output" and "Timings", selects the console or the timings, the
@@ -107,7 +110,13 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   16rem track. From 64rem: the reader's arrangement (behavior 15): the editor
                   left or right of a column of the console over the timings, or the editor top,
                   over the console and timings row. A run, a Stop, a build failure, or a
-                  layout change preserves each part's content and scroll position.
+                  layout change preserves each part's content and scroll position. The toolbar
+                  status's reserved width and the timings' track are each stated once, as a named property in their content's unit (ch for the status's
+                  text), read wherever the size is needed, so no literal is kept in step across
+                  sheets. The Layout menu's width is bounded by its containing block, not by a
+                  viewport unit. The demo's script reads its width band, named only in CSS, just
+                  where the accessibility tree changes (the output panels' tabpanel roles) and
+                  for whether the Layout group shows.
               15. From 64rem, a fixed demo's toolbar shows a Layout menu button in its own group
                   after the files group. It opens a menu of three radio items, "Editor left",
                   "Editor top", and "Editor right", the current one checked, with the APG menu
@@ -128,15 +137,15 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   The captures show each band, each wide arrangement, and the phone's Output and
                   Timings tabs. The README documents `fixed`, the bands, the Layout menu, and
                   the stored preference.
-              18. The playground is one screen, laid out in CSS alone: the header, the heading,
-                  the intro, a closed disclosure, then the demo's container, which takes every
-                  row of the viewport that is left. At 390, 1120, and 1376 px, with the
-                  disclosure closed, the demo ends the page's inline gutter above the
-                  viewport's bottom edge, so every part's bottom border shows, and the page
-                  scrolls neither way. Opening the disclosure takes its space from the demo's
-                  container, down to a floor at which every part stays usable (stated as a
-                  share, not a length); below that floor the page scrolls. The page runs no
-                  script to measure its header.
+              18. The playground is an app page in the shared page layer: the header,
+                  then main across the body's content width, laid out by named grid lines, with
+                  the heading, the intro, and the closed disclosure on an 80ch content column and
+                  the demo on the full column. One gutter token spaces the page's inline sides and
+                  its block end, so the demo ends that gutter above the viewport's bottom, and
+                  every part's bottom border shows, at 390, 1120, and 1376 px, with the page
+                  scrolling neither way. Opening the disclosure takes its space from the demo,
+                  down to the demo's floor; below that, the page scrolls down, never sideways.
+                  Nothing is measured by script.
               19. The disclosure's summary and text say plainly, in a person's voice, what a
                   program can be, where its other files go, how Run and Stop behave, and that
                   edits last only as long as the tab, starting from the wording approved with
@@ -152,6 +161,11 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The
                   compiler stays loaded after a Stop, so the next Run is quick. Your edits live
                   only in this tab: reload, and you're back to hello.
+              20. Every hand page's own rules sit in one shared sheet in a `page` cascade
+                  layer after the SDK's `site` layer, with no inline or unlayered page rule left
+                  on any page. The index and the components page render as before (their
+                  existing tests and captures), and a browser test reads the layer order:
+                  the foundation's layers, then `site`, then `page`.
 Test seams    mise run check: the unit tier for 1 and the fence equality in 9, and the build's
               compile and link steps over the runtime's in-memory fs under node for 2, 4, and 5.
               The browser tier, the built site under its base in chrome-headless-shell with the
@@ -185,6 +199,20 @@ Slices        1. Upgrade: chrome-headless-shell 157.0.8103.78 (its sha256 and si
                  becomes one screen with the disclosure under the intro, and the box-stability,
                  one-screen, and disclosure tests run at every width, along with the captures
                  and the docs.
+              9. The page layer: one shared sheet in the pages tier holding the three pages'
+                 rules (header-actions placement, section spacing, the components page's
+                 specimen rules) in `@layer page`. Index and components unchanged. Layer-order
+                 test. Docs.
+              10. The workspace frame: the playground's app-page mode (named content and full
+                  lines, one gutter token, header and main rows); `fixed` restated as stretch,
+                  with the floor in lines on the host; the wrapper div, body container, 100cqb,
+                  cqi breakout, and minmax(50dvh, 1fr) removed; the playground's shell checks all
+                  except reading width, plus the prose-column check; the one-screen, gutter,
+                  bottom-border, floor, disclosure, and box-stability tests at every width and
+                  arrangement; captures; docs.
+              11. The reservations: the status's width in ch and the timings' track, each as one
+                  property; the Layout menu's width bound; the band read limited as behavior 14
+                  says, with a README note; box-stability tests rerun; captures.
 Out of scope  persisting files, sharing, and a Format button; workspace modules' archives (the
               sqlate and scenarios tasks add them as they first require them); go.mod, local
               subpackages, cgo, assembly, and go:embed in a built program; argv and stdin for a
@@ -192,13 +220,16 @@ Out of scope  persisting files, sharing, and a Format button; workspace modules'
               task); timings on the live site and the size report (the measure task); Firefox and
               Safari runs; any release, or any change to a reference repository.
               Draggable dividers; editor-only and output-only views (redirect).
+              A page mode for tools in the SDK, and a page-layout sheet in the SDK or the
+              foundation: intake candidates, since the spike never writes a reference
+              repository (layout foundation).
 Door          two-way: nothing is released, the build outputs are regenerated on every build
               and never tracked, go.mod gains no requirement, and the playground is a public
               page that can be removed.
 
 ## Progress
 
-slices 8/8 committed · standards done · spec done · editor done (redirect: fixed layout)
+slices 8/11 committed · standards — · spec — · editor — (layout foundation)
 
 ## Decisions
 
@@ -630,6 +661,25 @@ slices 8/8 committed · standards done · spec done · editor done (redirect: fi
 - playground (architect, after the brief): the demo ends the page's inline gutter above the
   viewport's bottom, the same space as at its sides. Rejected: the demo meeting the viewport's
   bottom edge, where every part's bottom border sat on the last pixel and read as cut off.
+- playground (layout foundation): the playground is an app page whose main spans the body's
+  content width, laid out by named lines (the prose on an 80ch column, the demo on the full
+  column). It runs every SDK shell check except holdsReadingWidth, plus a spike check that its
+  prose holds 80ch, centred. Rejected: the reading shell with the demo breaking out through
+  100cqi and negative margins (reverses slice 6's "Rejected: widening main").
+- playground (layout foundation): a fixed demo fills the box its parent's layout gives it, by
+  grid stretch. Rejected: 100cqb of a size-container wrapper, which needs the wrapper, falls back
+  to the small viewport, and lays out 0px tall in Chrome when given a minimum.
+- playground (layout foundation): the floor is counted in lines of the demo's parts, stated once
+  by the component. Rejected: 50dvh, which is 300px on a short phone and 450px on a desktop.
+- playground (layout foundation): every hand page's rules sit in one shared sheet in `@layer
+  page`, after `site`. Rejected: unlayered inline <style> per page (Vite places it before the
+  bundled sheets, and the header-actions rule was copied into three pages).
+- playground (layout foundation): the script keeps reading the band named in CSS, but only for
+  the tabpanel roles and the Layout group. Rejected: a CSS-only band, since no shipped API
+  reports container-query state to script and CSS can't set a role.
+- playground (layout foundation): the status's reserved width (in ch) and the timings' track are
+  each one named property. Rejected: the room left on the toolbar's line, about 104px at 390,
+  which would cut most statuses to a word.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
@@ -698,6 +748,11 @@ slices 8/8 committed · standards done · spec done · editor done (redirect: fi
   through a paste event.
 - In Chrome, an element with `min-block-size` on a size container in a grid row laid out 0px
   tall; set the floor on the grid track instead.
+
+- Intake candidates: the SDK has no page mode for tools, and holdsReadingWidth assumes a
+  reading page; a page-layout sheet (gutter, section spacing, content and full named lines) in
+  the SDK or foundation. Pitfall: Vite places a hand page's inline <style> before the bundled
+  sheets, so an inline @layer declares ahead of the foundation's.
 
 ## Pending edits
 
