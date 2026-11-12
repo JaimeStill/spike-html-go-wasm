@@ -77,7 +77,7 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                  imports nothing from the runtime and fetches nothing itself.
               9. A playground page, linked from the index, holds one editable-files sl-go-demo
                  in the source mode. It opens on the starter program (behavior 21), its fences
-                 equal byte for byte to playground/calc's files and its input.txt under the unit tier.
+                 equal byte for byte to playground/calc's files and its input.txt in the unit tier.
                  The page requests no Go before a Run. It passes every SDK shell check except
                  reading width, its prose holds 80ch, centred, and the crawl reaches the index,
                  the components page, and the playground alone.
