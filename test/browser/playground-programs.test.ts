@@ -3,10 +3,11 @@
 // chrome-headless-shell, the page's and its worker's requests read through CDP (go-demos.ts).
 //
 // The select, beside the heading in the prose's title row, is labelled Program, in the
-// accessibility tree as a combobox of that name, and offers Calculator and Basics, Calculator
-// chosen. Choosing Basics shows its files, main.go and shapes.go, in the one demo in place, main.go
-// active, with no reload and no request; its Run builds and prints basics' exact output, as its
-// own go test holds it, with exit 0. Each program keeps its own files for the tab's life: edits,
+// accessibility tree as a combobox of that name, and offers Calculator, Basics, and Generics,
+// Calculator chosen. Choosing Basics shows its files, main.go and shapes.go, in the one demo in
+// place, main.go active, with no reload and no request; its Run builds and prints basics' exact
+// output, as its own go test holds it, with exit 0. Choosing Generics shows its main.go and
+// stack.go, main.go active, and its Run prints its exact output, as its go test holds it, exit 0. Each program keeps its own files for the tab's life: edits,
 // and the active file, survive switching away and back, and Reset restores the program on screen
 // alone. A switch while a run is pending stops the run, the status saying it stopped, and every
 // switch clears the console and the timings; the next Run runs the program now shown. The page's
@@ -54,6 +55,7 @@ const PICKER = `document.querySelector("main > .prose > .title select#program")`
 const PROGRAMS = [
   ["calc", "Calculator"],
   ["basics", "Basics"],
+  ["generics", "Generics"],
 ];
 
 /** A program's file, as playground/ holds it. */
@@ -81,10 +83,32 @@ const BASICS_OUTPUT = [
   "  a square, its sides 2",
 ].map((text) => ({ stream: "stdout", text }));
 
+/** What generics prints, every run, as its own go test holds it: each line on stdout. */
+const GENERICS_OUTPUT = [
+  "Sum:",
+  "  ints     10",
+  "  floats   0.75",
+  "  Celsius  18.5C",
+  "",
+  "Largest:",
+  "  of 3, 9, 4            9",
+  "  of pear, apple, plum  plum",
+  "",
+  "A Stack[string]:",
+  "  top down: out last in first",
+  '  popped "out", 3 left',
+  "  an empty Stack[int] pops 0, false",
+  "",
+  "Iterators:",
+  "  Fibonacci under 100: 0 1 1 2 3 5 8 13 21 34 55 89",
+  "  first five even, labelled: [#0 #2 #8 #34 #144]",
+].map((text) => ({ stream: "stdout", text }));
+
 /** Each program's files, in the demo's order. */
 const FILES: Record<string, string[]> = {
   calc: ["main.go", "lexer.go", "parser.go", "eval.go", "input.txt"],
   basics: ["main.go", "shapes.go"],
+  generics: ["main.go", "stack.go"],
 };
 
 /** Chooses the program in the select, as a reader's choice changes it, and waits until the demo's
@@ -124,7 +148,7 @@ const files = (page: Page): Promise<{ names: string[]; active: string; value: st
   })`);
 
 describe("the playground's programs", () => {
-  test("the Program select sits beside the heading, offers Calculator and Basics, Calculator chosen, and is in the accessibility tree by its label", async () => {
+  test("the Program select sits beside the heading, offers Calculator, Basics, and Generics, Calculator chosen, and is in the accessibility tree by its label", async () => {
     const { page } = await open();
     try {
       const picker: { options: string[][]; value: string; beside: boolean } =
@@ -177,6 +201,27 @@ describe("the playground's programs", () => {
       const back = await shown(page, PLAYGROUND);
       assert.deepEqual([back.rows, back.phases], [[], []], "the console and the timings cleared");
       assert.equal((await files(page)).value, source("calc", "main.go"));
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("choosing Generics shows its files in place, main.go active, and its Run prints its exact output with exit 0", async () => {
+    const watched = await open();
+    const { page } = watched;
+    try {
+      const from = watched.requests.length;
+      await choose(page, "generics");
+      assert.deepEqual(await files(page), {
+        names: FILES.generics,
+        active: "main.go",
+        value: source("generics", "main.go"),
+      });
+      assert.deepEqual(watched.requests.slice(from), [], "no request");
+
+      const ran = await build(page, PLAYGROUND, DONE);
+      assert.deepEqual(ran.lines, GENERICS_OUTPUT);
+      assert.deepEqual(ran.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
     } finally {
       await page.close();
     }

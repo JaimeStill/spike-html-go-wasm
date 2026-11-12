@@ -2,11 +2,12 @@
 # The site build's Go step, after Vite's, which empties dist/ (vite.config.ts): each entrypoint
 # under cmd/ built for GOOS=js GOARCH=wasm by the pinned Go, into dist/go/<name>.wasm, which the
 # preview and Pages serve at <base>go/ and the runtime's worker fetches; never playground/'s
-# programs, the starter, calc, and basics, which the playground builds from source, no page loads
-# prebuilt, and the check vets and tests alone (scripts/check-go.sh). wasm_exec.js isn't copied
-# there: Vite bundles the committed web/runtime/wasm_exec.js into the worker. -trimpath and -s -w
-# keep the build free of local paths and of the symbol and DWARF tables. Then the playground's toolchain, Go's compiler and linker, the
-# standard library's archives, and their manifest, into dist/go/toolchain/
+# programs, the starter, calc, and the others the Program select offers, which the playground
+# builds from source, no page loads prebuilt, and the check vets and tests alone
+# (scripts/check-go.sh). wasm_exec.js isn't copied there: Vite bundles the committed
+# web/runtime/wasm_exec.js into the worker. -trimpath and -s -w keep the build free of local paths
+# and of the symbol and DWARF tables. Then the playground's toolchain, Go's compiler and linker,
+# the standard library's archives, and their manifest, into dist/go/toolchain/
 # (scripts/build-toolchain.ts). Reads no network (GOPROXY=off, GOTOOLCHAIN=local); writes dist/go/.
 set -euo pipefail
 

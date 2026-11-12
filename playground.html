@@ -7,9 +7,9 @@
      then runs main; nothing loads Go, or starts the worker, until a Run. Its script,
      web/pages/playground.ts, gives the demo the page's one runner and the reader's arrangement,
      and the files of the program chosen in the Program select, beside the heading in the prose's
-     title row: Calculator, the starter, whose files are the demo's fences, or Basics, whose files
-     are the fences of the template after the demo whose data-program names it, each fence equal
-     byte for byte to its file in playground/basics/ (the unit tier holds it). A template renders
+     title row: Calculator, the starter, whose files are the demo's fences, or Basics or Generics,
+     whose files are the fences of the template after the demo whose data-program names it, each
+     fence equal byte for byte to its file in playground/<program>/ (the unit tier holds it). A template renders
      nothing; the script builds a file set from its fences by the demo's own rules, and keeps one
      per program for the tab's life.
      The page is an app page, one screen, laid out in CSS alone by the shared sheet's rules for a
@@ -99,6 +99,7 @@
             <select id="program" name="program" autocomplete="off">
               <option value="calc" selected>Calculator</option>
               <option value="basics">Basics</option>
+              <option value="generics">Generics</option>
             </select>
           </label>
         </div>
@@ -642,6 +643,211 @@ func NewSquare(side float64) Square {
 // embedded Rect's.
 func (s Square) String() string {
 	return fmt.Sprintf("square of side %g", s.Width)
+}
+</code></pre>
+      </template>
+      <template data-program="generics">
+<pre data-file="main.go"><code class="language-go">// Command generics tours Go's generics: functions and types with type parameters, which the
+// compiler checks once for every type they may be given. A constraint, an interface, limits a type
+// parameter to the types that have what the function needs, such as + or &lt;; Stack, in stack.go, is
+// a generic type, a stack of any one type of value; and iterators, functions a for range calls
+// with the loop's body, chain small generic steps over a sequence that never ends. It prints the
+// same lines on every run.
+package main
+
+import (
+	"cmp"
+	"fmt"
+	"iter"
+	"slices"
+	"strings"
+)
+
+// Number is a constraint: an interface that lists types rather than methods, so it can only limit
+// a type parameter. The ~ admits every type whose underlying type is listed, Celsius among them.
+type Number interface {
+	~int | ~float64
+}
+
+// Celsius is a temperature: a named type whose underlying type is float64, so it's a Number.
+type Celsius float64
+
+// String makes a Celsius print with its unit.
+func (c Celsius) String() string {
+	return fmt.Sprintf("%gC", float64(c))
+}
+
+// Sum adds xs, whichever Number type they are; the constraint is what lets it use +.
+func Sum[T Number](xs ...T) T {
+	var total T
+	for _, x := range xs {
+		total += x
+	}
+	return total
+}
+
+// Largest answers the largest of its arguments, the first of any tie. cmp.Ordered, the standard
+// library's constraint, admits every type that &lt; works on, strings among them.
+func Largest[T cmp.Ordered](first T, rest ...T) T {
+	best := first
+	for _, x := range rest {
+		if x &gt; best {
+			best = x
+		}
+	}
+	return best
+}
+
+func main() {
+	// The compiler infers T from the arguments, or it can be given, as Sum[Celsius] is.
+	fmt.Println("Sum:")
+	fmt.Printf("  %-8s %v\n", "ints", Sum(1, 2, 3, 4))
+	fmt.Printf("  %-8s %v\n", "floats", Sum(0.5, 0.25))
+	fmt.Printf("  %-8s %v\n", "Celsius", Sum[Celsius](21.5, -3))
+
+	fmt.Println("\nLargest:")
+	fmt.Printf("  %-21s %v\n", "of 3, 9, 4", Largest(3, 9, 4))
+	fmt.Printf("  %-21s %v\n", "of pear, apple, plum", Largest("pear", "apple", "plum"))
+
+	// Stack[string] is the generic type given string: Push takes only strings, Pop answers them.
+	var words Stack[string]
+	for w := range strings.FieldsSeq("first in last out") {
+		words.Push(w)
+	}
+	fmt.Println("\nA Stack[string]:")
+	fmt.Print("  top down:")
+	for w := range words.All() {
+		fmt.Print(" ", w)
+	}
+	fmt.Println()
+	top, _ := words.Pop()
+	fmt.Printf("  popped %q, %d left\n", top, words.Len())
+
+	// An empty Stack[int] answers int's zero value, and false.
+	var numbers Stack[int]
+	n, ok := numbers.Pop()
+	fmt.Printf("  an empty Stack[int] pops %d, %t\n", n, ok)
+
+	// Fibonacci never ends, so the loop over it does, with break.
+	fmt.Println("\nIterators:")
+	fmt.Print("  Fibonacci under 100:")
+	for n := range Fibonacci() {
+		if n &gt;= 100 {
+			break
+		}
+		fmt.Print(" ", n)
+	}
+	fmt.Println()
+
+	// Each step takes a sequence and answers another, pulling one value at a time, so the chain
+	// works over an endless sequence: Take stops it after five.
+	even := func(n int) bool { return n%2 == 0 }
+	label := func(n int) string { return fmt.Sprintf("#%d", n) }
+	fmt.Println("  first five even, labelled:",
+		slices.Collect(Take(Map(Filter(Fibonacci(), even), label), 5)))
+}
+
+// Fibonacci is an iterator over the Fibonacci numbers, 0, 1, 1, 2, and on without end, until the
+// loop's body stops it: yield answers false once the body breaks, and Fibonacci returns.
+func Fibonacci() iter.Seq[int] {
+	return func(yield func(int) bool) {
+		a, b := 0, 1
+		for yield(a) {
+			a, b = b, a+b
+		}
+	}
+}
+
+// Filter answers the values of seq that keep is true of, in their order.
+func Filter[T any](seq iter.Seq[T], keep func(T) bool) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for v := range seq {
+			if keep(v) &amp;&amp; !yield(v) {
+				return
+			}
+		}
+	}
+}
+
+// Map answers f of each value of seq, in their order: two type parameters, since f may answer
+// a type of its own.
+func Map[T, U any](seq iter.Seq[T], f func(T) U) iter.Seq[U] {
+	return func(yield func(U) bool) {
+		for v := range seq {
+			if !yield(f(v)) {
+				return
+			}
+		}
+	}
+}
+
+// Take answers the first n values of seq, then stops it.
+func Take[T any](seq iter.Seq[T], n int) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		if n &lt;= 0 {
+			return
+		}
+		i := 0
+		for v := range seq {
+			if !yield(v) {
+				return
+			}
+			i++
+			if i == n {
+				return
+			}
+		}
+	}
+}
+</code></pre>
+<pre data-file="stack.go"><code class="language-go">package main
+
+import (
+	"iter"
+	"slices"
+)
+
+// A Stack is a generic type: a last-in, first-out stack of values of one type, T, its type
+// parameter. Stack[string] and Stack[int] are two types, each as if written out by hand, and the
+// zero Stack of either is empty and ready to use.
+type Stack[T any] struct {
+	items []T
+}
+
+// Push puts v on top.
+func (s *Stack[T]) Push(v T) {
+	s.items = append(s.items, v)
+}
+
+// Pop takes the top value off and answers it and true, or T's zero value and false if the stack
+// is empty.
+func (s *Stack[T]) Pop() (T, bool) {
+	if len(s.items) == 0 {
+		var zero T
+		return zero, false
+	}
+	top := s.items[len(s.items)-1]
+	s.items = s.items[:len(s.items)-1]
+	return top, true
+}
+
+// Len answers how many values the stack holds.
+func (s *Stack[T]) Len() int {
+	return len(s.items)
+}
+
+// All is an iterator over the stack's values from the top down, leaving them in place. A for
+// range over it calls it with a yield function holding the loop's body; when the body breaks,
+// yield answers false, and All returns. It ranges over slices.Backward, the standard library's
+// own iterator over a slice from its end.
+func (s *Stack[T]) All() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for _, v := range slices.Backward(s.items) {
+			if !yield(v) {
+				return
+			}
+		}
+	}
 }
 </code></pre>
       </template>
