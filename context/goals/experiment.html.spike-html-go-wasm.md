@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** playground (fix)
-- **Branch:** playground-fix
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -282,10 +282,6 @@ Slices        13. The fix: the lede, the header's About button and dialog#about 
                   first run); one-screen tests at 390, 1120, and 1376 in both fonts; About
                   dialog tests; captures; docs.
 ```
-
-## Progress
-
-fix: slice 13 done · standards done · spec done · editor done
 
 ## Decisions
 
