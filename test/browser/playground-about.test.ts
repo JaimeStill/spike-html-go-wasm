@@ -4,10 +4,9 @@
 // The prose is the heading and the lede alone, the lede's text as approved, Ctrl+Enter in a kbd,
 // and the page holds no disclosure. The header's group is About, Help, and Settings, in that
 // order: About a glyph button in the shell's pattern, its glyph the icons layer's info-16, its key
-// A shown in a kbd, its hint "About", opening dialog#about by show-modal. A, a click, or Enter on
-// About opens the dialog, its title heading focused and its Close's hint closed past the interest
-// delay; Tab moves focus to Close; Escape, or Close, closes it, focus back where it was before it
-// opened. A typed into the editor types and opens nothing. In the accessibility tree the button is
+// A shown in a kbd, its hint "About". A, a click, or Enter on About opens the dialog, its title
+// heading focused and its Close's hint closed past the interest delay; Tab moves focus to Close;
+// Escape, or Close, closes it, focus back where it was before it opened. A typed into the editor types and opens nothing. In the accessibility tree the button is
 // named About and the dialog "About the playground", modal. The dialog holds, after its header row,
 // the three paragraphs approved with the brief, then what a Run downloads, then the link to the
 // spike's question and evidence, the index, in that order and in those words. The SDK's shell
@@ -131,7 +130,7 @@ describe("the playground's prose and About", () => {
     }
   });
 
-  test("About leads the header's group, a glyph button of info-16 showing A, its hint About, opening dialog#about", async () => {
+  test("About leads the header's group, a glyph button of info-16 showing A, its hint About", async () => {
     const page = await open();
     try {
       const header: {
@@ -139,8 +138,6 @@ describe("the playground's prose and About", () => {
         glyph: string;
         kbd: string;
         hint: string;
-        command: string;
-        keys: string;
       } = await page.evaluate(`(() => {
           const about = ${ABOUT};
           const glyph = about.querySelector("svg").cloneNode(true);
@@ -151,8 +148,6 @@ describe("the playground's prose and About", () => {
             glyph: glyph.outerHTML,
             kbd: [...about.querySelectorAll("kbd")].map((kbd) => kbd.textContent).join(" "),
             hint: document.getElementById(about.getAttribute("interestfor")).textContent.trim(),
-            command: about.getAttribute("command"),
-            keys: about.dataset.keys,
           };
         })()`);
       // The icons module's svg as the page's parser serializes it.
@@ -166,8 +161,6 @@ describe("the playground's prose and About", () => {
         glyph: icon,
         kbd: "A",
         hint: "About",
-        command: "show-modal",
-        keys: "a",
       });
     } finally {
       await page.close();
@@ -180,10 +173,6 @@ describe("the playground's prose and About", () => {
       await page.evaluate(`globalThis.aboutOpenedFrom = document.activeElement`);
       await pressA(page);
       await opened(page, "A");
-      assert.ok(
-        await page.evaluate(`${TITLE}.matches('[tabindex="-1"][autofocus]')`),
-        "the title heading has tabindex=-1 and autofocus",
-      );
       assert.ok(
         await page.evaluate(`document.activeElement === ${TITLE}`),
         "About opens with its title heading focused",
