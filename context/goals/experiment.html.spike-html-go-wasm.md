@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** programs
+- **Branch:** programs
 
 ## Tasks
 
@@ -17,271 +17,138 @@
 9. [ ] review
 10. [ ] answer
 
-## Task brief · playground
-
-Problem       The page runs only Go the build compiled ahead of time: a reader can edit a
-              program demo's fences but can't run what they wrote, so the spike can't yet show
-              whether arbitrary Go compiles in the page (evidence 9), and the programs task has
-              nothing to run its four programs from source on. Go's own compiler and linker,
-              built unchanged for GOOS=js, already compile, link, and run hello on the runtime's
-              in-memory fs under node. What's missing is their packaging for the site, the
-              standard library's archives fetched per import through a manifest, a build request
-              in the runtime, a third sl-go-demo mode, and the playground page.
-Behaviors     1. The site build writes Go's compiler and linker, built by the pinned Go for
-                 GOOS=js; an archive for every standard-library package that builds for js/wasm;
-                 and a manifest naming the Go version, the compiler and linker, and each
-                 package's archive and direct imports. Every file but the manifest has a
-                 content-hashed name that only the manifest gives. No .wasm or archive is
-                 tracked, and the build reads no network. Under the unit tier, each file the
-                 manifest names exists, and its name matches its content hash. For a fixture
-                 program, the closure the manifest gives equals the pinned Go's own dependency
-                 list for it, and an import-free main still closes over runtime's packages.
-              2. The runner gains a build request, which takes the program's files. In the
-                 worker it reads the manifest, revalidated on every build. It resolves the
-                 imports of the .go files and fetches the compiler, the linker, and the archives
-                 of the import closure that the worker doesn't hold yet. It compiles every .go
-                 file as package main and links the result. It compiles the linked module and
-                 holds it as the loaded scenario, so the existing run runs its main to its exit.
-                 A build whose .go files are identical to the last successful build's holds that
-                 program again and fetches, compiles, and links nothing; its non-Go files go to
-                 the program's working directory as given, so a Run after editing only
-                 input.txt runs the held program over the new file.
-              3. A build runs alone as a load does. Started while another request is pending,
-                 it first stops that request, which rejects with "stopped". Every event between
-                 a build's start and its settling belongs to that build.
-              4. A failed build runs nothing. The compiler's or linker's stderr reaches the
-                 console as written, its positions relative to the reader's file names (e.g.
-                 "main.go:5:27: undefined: x"), with its exit code, and the build rejects naming
-                 the failed step. An import the manifest doesn't hold fails before the compiler
-                 runs, naming the package. A file whose package clause isn't main fails in the
-                 compiler.
-              5. A built program runs over a fresh in-memory fs whose working directory holds
-                 every non-Go file of the build, so os.ReadFile of "input.txt" reads that file's
-                 text. Nothing a run writes outlives the run.
-              6. Stop during a build or a run ends it as Stop does now. The fresh worker adopts
-                 the compiled compiler and linker beside the built program, so the next build
-                 fetches and compiles no toolchain module, and the next run runs the program
-                 with no build.
-              7. A build's timings add two phases beside the existing ones: Go compile and link.
-                 The phase order is fetch, compile, Go compile, link, instantiate, start, call,
-                 run. The timings label the existing compile phase "Wasm compile", and a phase
-                 timed in several parts (the toolchain's and the program's Wasm compile) reports
-                 its sum once. Runs that build nothing show the same phases as before.
-              8. sl-go-demo gains a third mode, built from source. Run builds the demo's files
-                 through the runner and then runs the program's main, its exit in the console.
-                 The fences are editable, and editable-files applies. Ctrl or Cmd+Enter, Stop,
-                 Reset, the timings, and the file tabs behave as in the program mode. A failed
-                 build shows behavior 4's output and exit and runs nothing. The demo's runner
-                 subset gains build, which TypeScript checks against the runtime's Runner in
-                 the page. The handler and program modes are unchanged, and the demo still
-                 imports nothing from the runtime and fetches nothing itself.
-              9. A playground page, linked from the index, holds one editable-files sl-go-demo
-                 in the source mode. It opens on the starter program (behavior 21), its fences
-                 equal byte for byte to playground/calc's files and its input.txt in the unit tier.
-                 The page requests no Go before a Run. It passes every SDK shell check except
-                 reading width, its prose holds 80ch, centred, and the crawl reaches the index,
-                 the components page, and the playground alone.
-              10. On the playground page in the browser tier, the first Run fetches the
-                  manifest, the compiler, the linker, and only the starter's closure of
-                  archives, and prints the starter's results with exit 0 and every phase of
-                  behavior 7. A Run after an edit
-                  fetches no toolchain module and no archive already held. A new standard import
-                  fetches only the archives its closure adds. An edited program that prints
-                  something else prints it. A compile error, Stop during a busy loop, and a
-                  non-Go file read through os.ReadFile each behave as behaviors 4, 6, and 5 say.
-              11. mise run live also holds the deployed manifest at 200 and the compiler it names
-                  as application/wasm, gzip-encoded when gzip is accepted.
-              12. The README documents the build request, the source mode (its attributes, the
-                  program's limits, and the working directory's files), and the playground page.
-                  The context's capabilities list the playground as built, and the direction
-                  checks hold every tier unchanged.
-              13. sl-go-demo gains a `fixed` attribute. A fixed demo is as tall as the
-                  box its parent's layout gives it, never below its own floor, which it states
-                  once in lines of its parts (the toolbar, and a set number of editor and console
-                  lines, in lh), so the floor follows the type profile and zoom. It reads no
-                  viewport or container block unit, runs no script to size itself, and needs no
-                  size-container ancestor. Each part keeps a reserved share of the demo as a
-                  fraction, never an absolute length: pasting or typing any number of lines, a
-                  run's output of any length, and a full timings table change no part's box, and
-                  each part scrolls inside its own frame. A demo without `fixed` lays out as
-                  before.
-              14. A fixed demo's layout follows its own width. Below 44rem: the toolbar, the tabs
-                  over the editor (about 60% of the height), then one output panel whose tablist,
-                  "Output" and "Timings", selects the console or the timings, the console first; the
-                  tablist keeps the file tabs' keyboard model (roving tabindex, Left and Right
-                  wrapping, Home and End) and its accessibility tree. From 44rem to 64rem: the
-                  editor over a row of the console and the timings' track. From 64rem:
-                  the reader's arrangement (behavior 15): the editor left or right of a column of
-                  the console over the timings, or the editor top, over the console and timings row.
-                  A run, a Stop, a build failure, or a layout change preserves each part's content
-                  and scroll position. The toolbar status's reserved width and the timings' track
-                  are each stated once, as a named property in their content's unit (ch for the
-                  status's text), read wherever the size is needed, so no literal is kept in step
-                  across sheets. The Layout menu's width is bounded by its containing block, not by
-                  a viewport unit. The demo's script reads its width band, named only in CSS, just
-                  where the accessibility tree changes (the output panels' tabpanel roles) and for
-                  whether the Layout group shows.
-              15. From 64rem, a fixed demo's toolbar shows a Layout menu button in its own group
-                  after the files group. It opens a menu of three radio items, "Editor left",
-                  "Editor top", and "Editor right", the current one checked, with the APG menu
-                  button's keyboard (Enter, Space, and Down open it on the checked item; Up and
-                  Down move; Enter or Space chooses and closes; Escape closes; focus returns to
-                  the button). Choosing changes the arrangement in place, with no reload and no
-                  change to the run state. Below 64rem the group isn't shown. Editor left is the
-                  default.
-              16. The arrangement is the reader's preference, held by a DOM-free model that
-                  validates it and kept in localStorage under the spike's own key, read in a
-                  try/catch. A reload, and every fixed demo on the origin, opens in the stored
-                  arrangement; blocked storage, an empty store, or a value the model refuses
-                  opens in editor left. A demo writes nothing to storage but the choice made.
-              17. The playground's demo is fixed. In the browser tier, at 390, 1120, and 1376
-                  px and either side of 44rem and 64rem, pasting 500 lines into the editor and
-                  printing 10,000 lines change no part's box, the page never scrolls sideways,
-                  and every part sits inside the demo, in each arrangement where it is offered.
-                  The captures show each band, each wide arrangement, and the phone's Output and
-                  Timings tabs. The README documents `fixed`, the bands, the Layout menu, and
-                  the stored preference.
-              18. The playground is an app page in the shared page layer: the header,
-                  then main across the body's content width, laid out by named grid lines, with
-                  the heading, the intro, and the closed disclosure on an 80ch content column and
-                  the demo on the full column. One gutter token spaces the page's inline sides and
-                  its block end, so the demo ends that gutter above the viewport's bottom, and
-                  every part's bottom border shows, at 390, 1120, and 1376 px, with the page
-                  scrolling neither way. Opening the disclosure takes its space from the demo,
-                  down to the demo's floor; below that, the page scrolls down, never sideways.
-                  Nothing is measured by script.
-              19. The disclosure's summary and text say plainly, in a person's voice, what a
-                  program can be, where its other files go, how Run and Stop behave, and that
-                  edits last only as long as the tab, starting from the wording approved with
-                  this brief:
-
-                  summary: What you can build here
-                  Your .go files build together as one main package, using only the standard
-                  library. There's no go.mod, no other packages of your own, no cgo or
-                  assembly, and nothing passed in as arguments or standard input.
-                  Any other file you add sits next to your program, so
-                  os.ReadFile("input.txt") will find it. Each Run starts fresh from your files,
-                  so anything the program writes is gone by the next one.
-                  Press Ctrl+Enter (Cmd+Enter on a Mac) to run, and Stop to cancel. The
-                  compiler stays loaded after a Stop, so the next Run is quick. Your edits live
-                  only in this tab: reload, and you're back to where you started.
-              20. Every hand page's own rules sit in one shared sheet in a `page` cascade
-                  layer after the SDK's `site` layer, with no inline or unlayered page rule left
-                  on any page. The index and the components page render as before (their
-                  existing tests and captures), and a browser test reads the layer order:
-                  the foundation's layers, then `site`, then `page`.
-              21. The starter is a small calculator language in one package main, in
-                  playground/calc: main.go reads input.txt from the working directory, and lexer.go,
-                  parser.go, and eval.go turn each line into tokens, a syntax tree, and a value. The
-                  script has `let` bindings, the four arithmetic operators, parentheses, and
-                  comments. Each line's result prints on stdout. A line that fails prints
-                  "input.txt:<line>: <reason>" on stderr, and the run goes on to the next line; the
-                  program exits 1 if any line failed and 0 otherwise. The shipped input.txt runs
-                  clean, and a comment at its top suggests a line to try that fails. It imports only
-                  light standard packages (no encoding/json or net/http), and reads plainly, about
-                  350 lines with doc comments. `go test` in the check proves its output and exit for
-                  the shipped input.txt and for a failing script. Under GOOS=js it is vetted and
-                  tested in the check, never built to dist/, and follows the Go module's layer rules
-                  (a root-level package that imports only the standard library). A result of
-                  negative zero prints 0.
-Test seams    mise run check: the unit tier for 1 and the fence equality in 9, and the build's
-              compile and link steps over the runtime's in-memory fs under node for 2, 4, and 5.
-              The browser tier, the built site under its base in chrome-headless-shell with the
-              worker's fetches read through CDP, for 2 to 10 through the runner and sl-go-demo.
-              The live command's assertions against local servers for 11.
-Slices        1. Upgrade: chrome-headless-shell 157.0.8103.78 (its sha256 and size taken by hand)
-                 and prettier 3.10.1. Done when mise run currency exits 0 and the check passes.
-              2. The toolchain and the archives: the build step writes the compiler, the linker,
-                 the standard library's archives, and the manifest, each file under its hashed
-                 name. The manifest and closure tests run in the unit tier.
-              3. The build steps: compile and link of given files over seeded archives on the
-                 in-memory fs, proven under node in the unit tier: hello builds and runs, a
-                 compile error with relative positions, an import the manifest lacks, a package
-                 clause other than main, and a non-Go file read from the working directory.
-              4. Building in the page: the runner's build request in the worker (the manifest
-                 revalidated, archives fetched per closure and held, an unchanged build reused),
-                 the Go compile and link phases with the timings' labels, Stop re-adopting the
-                 toolchain, and sl-go-demo's source mode. A source demo on the components page
-                 proves them in the browser tier, with a README entry.
-              5. The playground page: hello's source, the index link, the shell checks, the
-                 crawl, the fence test, behavior 10's fetch and run proofs, the live command's
-                 two checks, the captures, and the docs.
-              6. The fixed layout: the `fixed` attribute, its three bands with editor left as the
-                 wide arrangement, the phone's Output and Timings tabs, the playground's demo
-                 fixed, the box-stability tests at every width, the captures, and the docs.
-              7. The reader's arrangement: the preference model and its unit tests, the Layout
-                 menu button and menu in the toolbar from 64rem, editor top and editor right,
-                 the stored choice read on load, with browser tests, captures, and docs.
-              8. The demo's height from its container: `fixed` fills its size container, the
-                 header-measuring script and its custom property are removed, the playground
-                 becomes one screen with the disclosure under the intro, and the box-stability,
-                 one-screen, and disclosure tests run at every width, along with the captures
-                 and the docs.
-              9. The page layer: one shared sheet in the pages tier holding the three pages'
-                 rules (header-actions placement, section spacing, the components page's
-                 specimen rules) in `@layer page`. Index and components unchanged. Layer-order
-                 test. Docs.
-              10. The workspace frame: the playground's app-page mode (named content and full
-                  lines, one gutter token, header and main rows); `fixed` restated as stretch,
-                  with the floor in lines on the host; the wrapper div, body container, 100cqb,
-                  cqi breakout, and minmax(50dvh, 1fr) removed; the playground's shell checks all
-                  except reading width, plus the prose-column check; the one-screen, gutter,
-                  bottom-border, floor, disclosure, and box-stability tests at every width and
-                  arrangement; captures; docs.
-              11. The reservations: the status's width in ch and the timings' track, each as one
-                  property; the Layout menu's width bound; the band read limited as behavior 14
-                  says, with a README note; box-stability tests rerun; captures.
-              12. The starter program: cmd/calc with its tests in the check; the playground's fences
-                  replaced by its four files and input.txt, with the fence check; the build-reuse
-                  rule for non-Go files in the runner, with a browser test where an input.txt edit
-                  runs with no Go compile or link; behavior 10's first-Run proofs moved to the
-                  starter's closure and output; the captures; the docs (README Playground, the
-                  disclosure stays as approved); the starter moved from cmd/calc to playground/calc,
-                  out of the build's entrypoints and dist/; negative zero printed as 0.
-Out of scope  persisting files, sharing, and a Format button; workspace modules' archives (the
-              sqlate and scenarios tasks add them as they first require them); go.mod, local
-              subpackages, cgo, assembly, and go:embed in a built program; argv and stdin for a
-              built program; go vet and go test in the page; the four programs (the programs
-              task); timings on the live site and the size report (the measure task); Firefox and
-              Safari runs; any release, or any change to a reference repository.
-              Draggable dividers; editor-only and output-only views (redirect).
-              A page mode for tools in the SDK, and a page-layout sheet in the SDK or the
-              foundation: intake candidates, since the spike never writes a reference
-              repository (layout foundation).
-Door          two-way: nothing is released, the build outputs are regenerated on every build
-              and never tracked, go.mod gains no requirement, and the playground is a public
-              page that can be removed.
-
-### Fix amendment · playground-fix (behaviors 18 and 19 restated, 22 new)
+## Task brief · programs
 
 ```
-Behaviors     18. (restated, prose and fonts) The prose column holds the heading and the lede
-                  alone. One screen holds at 390, 1120, and 1376 px under the default type
-                  profile, in the machine's fonts and in a pinned DejaVu font set; past that
-                  (larger type, text zoom) the demo holds its floor and the page scrolls down,
-                  never sideways. (The rest of behavior 18 stands; with no disclosure, its
-                  clauses about the disclosure are dropped.)
-              19. (restated) An About dialog holds the playground's detail under the heading
-                  "About the playground": the three approved paragraphs, as last approved
-                  (ending "reload, and you're back to where you started."), then "The first Run
-                  downloads the compiler, the linker, and the standard-library packages your
-                  program imports; later Runs download only what a new import adds.", then the
-                  link "The spike's question and evidence".
-              22. (new) The page's lede reads: "Edit the Go below and press Run
-                  (<kbd>Ctrl+Enter</kbd>). Go's own compiler and linker build it right here in
-                  your browser." An info glyph button in the header, beside Help and Settings
-                  and in the same pattern (glyph button, hint, a key shortcut if the header's
-                  pattern gives one), opens the About dialog. The dialog has Close, its keyboard
-                  and focus behave as Help's do, and its accessibility tree names it. The
-                  button and the dialog pass the SDK's shell checks for header actions and
-                  dialogs.
-Slices        13. The fix: the lede, the header's About button and dialog#about with its
-                  content; the disclosure removed; the browser tier's layout tests run a second
-                  time under a test-only fontconfig over vendored DejaVu (vendored in the
-                  repository or fetched from a pinned release and cached, offline after the
-                  first run); one-screen tests at 390, 1120, and 1376 in both fonts; About
-                  dialog tests; captures; docs.
+Problem       Evidence 12 is unproven. The playground opens only on the
+              calculator starter, so the spike hasn't shown basics, generics,
+              concurrency, and standard-library Go edited and run in the page,
+              or what each one costs to load, compile, link, and run. The
+              programs exist to exercise those costs: each one's closure and
+              phase timings are what the spike measures, not its size.
+Behaviors     1. Basics is a package main beside the starter's. It covers
+                 structs, methods, function values, and interfaces, and prints
+                 the same output every run, exit 0.
+              2. Generics, likewise: a type-parameter constraint, a generic
+                 type, and a range-over-func iterator.
+              3. Concurrency, likewise: goroutines, channels, select, a
+                 WaitGroup, and a pipeline; its doc comment notes GOMAXPROCS
+                 is 1 under GOOS=js. Output in a fixed order whatever the
+                 scheduling.
+              4. Standard library ("stdlib") reads input.json from its working
+                 directory, decodes it with encoding/json, works over it with
+                 slices and regexp, and prints a text/template report, exit 0.
+                 A malformed input.json prints one stderr line naming the JSON
+                 error, found through errors.As, and exits 1.
+              5. Each program is sized by its topic, no line target. Each is
+                 vetted and tested under GOOS=js on node's fs and on the
+                 runtime's in-memory fs, proving exact stdout and exit code
+                 (and the malformed input for stdlib). No program is built
+                 into the site; each follows the Go module's layer rules.
+              6. The playground has a native select labelled "Program" beside
+                 its heading: Calculator, Basics, Generics, Concurrency,
+                 Standard library. Choosing one shows that program's files in
+                 the one demo in place, first file active, no reload and no
+                 request. The page stays one screen at 390, 1120, and 1376 px
+                 in the machine's fonts and the DejaVu set, passes the SDK's
+                 shell checks, and the select is in the accessibility tree
+                 with its label.
+              7. sl-go-demo takes a FileSet as a property from the page and
+                 holds no file set of its own while one is given; editing,
+                 file actions, Reset, and Run work on the given set. A demo
+                 given none builds from its fences as before (components page
+                 unchanged). The page keeps one FileSet per program, built from
+                 the program's fences by the same rules the demo uses.
+              8. Edits survive switching within the tab, with the active file.
+                 Reset restores only the program on screen. A reload restores
+                 every program as shipped.
+              9. Switching programs while a run is pending stops that run,
+                 recorded as stopped. Each switch clears the console and the
+                 timings.
+              10. The calculator's files stay the demo's fences. Each other
+                  program is a template in the page whose fences equal its
+                  package's files byte for byte, checked in the unit tier by
+                  the existing fence reader.
+              11. The fragment names the program: #calc, #basics, #generics,
+                  #concurrency, #stdlib. Choosing writes it as a new history
+                  entry; Back, Forward, and an edited fragment show the program
+                  named, keeping its edits. No or unknown fragment opens the
+                  calculator. The index's evidence 12 links each program.
+              12. In the browser tier, each program's first Run fetches only
+                  its closure's archives beyond those the worker holds and
+                  prints its exact output and exit code. An edit to main.go
+                  reruns the edited program. Switching back to a program built
+                  earlier compiles and links again, fetching no archive the
+                  worker holds. Changing only stdlib's input.json reruns with
+                  no Go compile or link; a malformed input.json shows
+                  behavior 4's line and exit 1.
+              13. The browser tier reports, never as a gate, each program's
+                  cold phase timings (fetch, Wasm compile, Go compile, link,
+                  instantiate, start, run) from a fresh worker and empty
+                  cache, its warm timings after an edit, and its closure:
+                  archive count, raw bytes as fetched, gzip bytes. The session
+                  brief's Evidence carries the table.
+              14. About adds, after "Stop to cancel": "Goroutines take turns
+                  on one thread: they sleep, wait, and talk over channels as
+                  usual, but CPU-heavy work doesn't run any faster in
+                  parallel. A program that waits forever, say on a channel
+                  nothing sends to, never finishes and shows no deadlock
+                  error; press Stop." Its last sentence becomes: "Your edits
+                  to each program live only in this tab, so you can switch
+                  away and come back to them: reload, and you're back to where
+                  you started." The About text test holds both.
+              15. The README documents the programs, the picker, the FileSet
+                  property, and the fragment; the context's capabilities list
+                  them as built. The direction checks hold every tier
+                  unchanged, except the property's type, which the pages tier
+                  already imports.
+Test seams    mise run check: Go tests under GOOS=js on both filesystems for
+              1–5; the unit tier's fence reader for 10; the browser tier
+              through the playground's select, its fragment, and sl-go-demo
+              over the page's runner for 6–9 and 11–14, with the components
+              page's demo tests for 7's unchanged fallback.
+Slices        1. Picker with Calculator and Basics: basics and its tests; the
+                 FileSet property with the fence fallback kept; the page's
+                 FileSet per program by the demo's fence rules; the select;
+                 edits surviving a switch, Reset scoped, a switch stopping the
+                 pending run and clearing output; basics' template and fence
+                 check; browser tests for exact output, a switch keeping
+                 edits, one-screen and shell tests in both font sets;
+                 captures.
+              2. Generics: package and tests, template and fence check,
+                 browser run to exact output, capture.
+              3. Concurrency: package and tests, template and fence check,
+                 browser run to exact output, About's goroutine and deadlock
+                 sentences with their test.
+              4. Standard library: package, input.json, tests for shipped and
+                 malformed input; template and fence check; browser runs to
+                 exact output, input.json alone rerunning with no compile or
+                 link, malformed input's exit 1.
+              5. Deep link and report: fragment with history and calculator
+                 fallback; index links from evidence 12; switching back
+                 recompiling with no archive fetched; per-program timing and
+                 closure report; About's last sentence; README, context
+                 capabilities; captures of each program at the SDK's widths.
+Out of scope  Edits kept across a reload; one build held per program; programs
+              written to load a phase heavily; live-site timings and gzip and
+              the size report (measure task); Markdown pages (sqlate task);
+              workspace modules' archives; go vet or go test in the page; the
+              programs on the components page or in the demo's toolbar; any
+              release or change to a reference repository.
+Door          two-way: nothing is released, go.mod gains no requirement, no
+              program is built into the site, and the picker, templates, and
+              FileSet property can each be removed.
 ```
+
+Choices made beyond the rounds, approved with this brief: the option labels and fragment names
+above; a switch stops the pending run and clears output (9); About's last sentence (14); report
+bytes are raw as fetched plus their gzip size, since Vite's preview doesn't gzip; stdlib's
+malformed input exits 1 with one errors.As-found stderr line. Slice 1 exports the demo's
+fence-naming rules from the components tier for the page to reuse, rather than duplicating them.
+
+## Progress
+
+slices 0/5 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -840,6 +707,40 @@ Slices        13. The fix: the lede, the header's About button and dialog#about 
   without the disclosure, 1376x500 no longer pushes the demo down to its floor.
 - playground (fix, standards review): the About test dropped the assertions that restated its
   markup; it holds the dialog's behavior.
+- programs: the four programs live in a picker on the playground that switches its one demo in
+  place. Rejected: a hand page per program; four demos stacked on one page.
+- programs: each program is a package main beside the starter's, vetted and tested under GOOS=js
+  on both filesystems, never built into the site, its fences checked byte for byte. Rejected:
+  fences only in the page.
+- programs: every program prints the same output every run, asserted exactly. Rejected: printed
+  timings.
+- programs: only the standard-library program reads an input file, input.json, which reruns
+  without a build when edited. Rejected: all four self-contained.
+- programs: the standard-library program keeps encoding/json and text/template (85 archives,
+  ~8.0 MB gzip on a cold Run). Rejected: dropping text/template (75 archives, 6.9 MB).
+- programs: no line target; each program is sized by its topic, and performance (load, compile,
+  link, and run timings, and closure bytes) is what the programs exercise. Rejected: ~100–150
+  lines each (architect).
+- programs: the picker is a native select labelled "Program" beside the heading. Rejected: a menu
+  button in the demo's toolbar.
+- programs: sl-go-demo takes a FileSet as a property, and the page keeps one per program,
+  superseding "the programs task authors only go fences". Rejected: swapping in a new demo per
+  program.
+- programs: edits survive switching within the tab, and Reset restores only the program on
+  screen. Rejected: switching back to the program as shipped.
+- programs: the other programs' text is a template per program in the page, checked by the fence
+  reader. Rejected: Vite ?raw imports of the Go files.
+- programs: the fragment names the program, choosing writes it, Back and Forward follow it, and an
+  unknown fragment opens the calculator. Rejected: no deep link.
+- programs: the playground opens on the calculator. Rejected: basics.
+- programs: About gains the goroutine and deadlock sentences as drafted in round 2.
+- programs: the programs are illustrations sized by their topics. Rejected: programs built to load
+  one phase heavily.
+- programs: the browser tier reports each program's cold and warm phase timings and closure bytes,
+  never as a gate, with the table in the session brief. Rejected: leaving every number to the
+  measure task.
+- programs: switching back to a program compiles and links it again from the archives the worker
+  holds. Rejected: holding one built program per program.
 
 ## Notes
 
