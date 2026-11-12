@@ -148,7 +148,7 @@ fence-naming rules from the components tier for the page to reuse, rather than d
 
 ## Progress
 
-slices 1/5 committed · standards — · spec — · editor —
+slices 3/5 committed · standards — · spec — · editor —
 
 ## Decisions
 
