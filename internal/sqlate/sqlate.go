@@ -32,9 +32,9 @@ import (
 //go:embed patterns
 var patterns embed.FS
 
-// Statement is the name the compile handler gives the statement it is called with, the file it
+// statement is the name the compile handler gives the statement it is called with, the file it
 // compiles it as, statement.sql, which sqlate's messages name.
-const Statement = "statement"
+const statement = "statement"
 
 // Serve serves the scenario's handler, printing to standard output, and never returns.
 func Serve() {
@@ -42,23 +42,22 @@ func Serve() {
 }
 
 // Handlers is the scenario's handlers by name, compile alone, printing its one line to stdout.
-// The catalog is built once, here, as a program builds it where it starts; a catalog that won't
-// build, a defect in the embedded patterns, rejects every call with sqlate's message.
+// The catalog is built once, here, as a program builds it where it starts. A catalog that won't
+// build is a defect in the embedded patterns, a wiring mistake, so it panics with sqlate's
+// message, at startup, before any call.
 func Handlers(stdout io.Writer) map[string]bridge.Handler {
-	catalog, err := Catalog()
+	catalog, err := newCatalog()
+	if err != nil {
+		panic(fmt.Sprintf("sqlate: the embedded patterns: %v", err))
+	}
 	return map[string]bridge.Handler{
-		"compile": func(input string) (any, error) {
-			if err != nil {
-				return nil, err
-			}
-			return compile(stdout, catalog, input)
-		},
+		"compile": func(input string) (any, error) { return compile(stdout, catalog, input) },
 	}
 }
 
-// Catalog is the catalog every statement compiles against: PostgreSQL's patterns first, then
+// newCatalog is the catalog every statement compiles against: PostgreSQL's patterns first, then
 // each embedded namespace, in name order, as playground/sqlate builds its own.
-func Catalog() (*query.Catalog, error) {
+func newCatalog() (*query.Catalog, error) {
 	root, err := fs.Sub(patterns, "patterns")
 	if err != nil {
 		return nil, err
@@ -81,12 +80,12 @@ func Catalog() (*query.Catalog, error) {
 // SQL with $n placeholders, printing one line naming its tier and its parameters in the order
 // they bind; or it rejects with sqlate's message, printing nothing.
 func compile(stdout io.Writer, catalog *query.Catalog, input string) (any, error) {
-	files := fstest.MapFS{Statement + ".sql": {Data: []byte(input)}}
+	files := fstest.MapFS{statement + ".sql": {Data: []byte(input)}}
 	statements, err := catalog.Compile(files, ".", postgres.Dialect{})
 	if err != nil {
 		return nil, err
 	}
-	st := statements.Statement(Statement)
+	st := statements.Statement(statement)
 	_, _ = fmt.Fprintf(stdout, "compile: %s, %s\n", st.Tier(), parameters(st.Params()))
 	return st.Text(), nil
 }
