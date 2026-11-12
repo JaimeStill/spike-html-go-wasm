@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** handoff
+- **State:** building
 - **Task:** components
 - **Branch:** components
 
@@ -182,12 +182,9 @@ Out of scope  compiling or linking source in the page, and running an edited pro
 Door          two-way: the components stay in this repository unreleased, the runtime change
               is local, and the components page is a public page that can be removed.
 
-## Handoff
+## Progress
 
-PR #3's check fails in CI: "at 20rem the toolbar wraps between its groups, each group whole on
-its row" (test/browser/controls.test.ts): the files group (New file, Rename, Delete) splits over two
-rows on the runner, whose monospace fallback is wider than the local font. Next move: fix the
-files group's fit at 20rem on this branch, push, then merge PR #3.
+slices 10/10 · standards ✓ · spec ✓ · editor ✓ · redirect: CI toolbar fit, page widths — in progress
 
 ## Decisions
 
@@ -491,6 +488,16 @@ files group's fit at 20rem on this branch, push, then merge PR #3.
 - components: the file tabs' rule is the row's background, which the selected tab's bar paints
   over, so every tab stays inside the row. Rejected: a border overlapped by each tab's negative
   margin, which overflowed the row by a line and drew a vertical scrollbar.
+- components (after brief, CI redirect): below the width where a toolbar group's labels fit,
+  measured by a container query, sl-controls' buttons show the glyph alone, the name kept as the
+  accessible name and shown as a hint. Rejected: a group wrapping onto rows of its own, and
+  shorter labels, both still dependent on the font's width (CI's monospace fallback is wider
+  than the local font and split the files group at 20rem).
+- components (after brief, architect): the components page shows each state once, with no 20rem
+  copies; the layout responds to the viewport, and the tests and captures prove the narrow
+  layout at real widths. `mise run screenshots` takes an optional `--width <px>` (one of 390,
+  1120, 1376, the SDK's widths) and captures each component at every width otherwise, one pass
+  per width. Rejected: labelled breakpoint copies on the page, which doubled its height.
 ## Notes
 
 - sqlate's own currency trails (pgx 5.12.0, golangci-lint 2.15.0, mise go 1.27.4); that belongs to
