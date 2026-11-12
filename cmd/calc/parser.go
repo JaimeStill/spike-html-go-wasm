@@ -95,13 +95,18 @@ func (p *parser) product() (expr, error) { return p.chain("*/", p.factor) }
 // chain parses operands joined by any of ops, grouping from the left, so 8 - 2 - 1 is 5.
 func (p *parser) chain(ops string, operand func() (expr, error)) (expr, error) {
 	left, err := operand()
-	for err == nil && p.peek().kind == operator && strings.Contains(ops, p.peek().text) {
+	if err != nil {
+		return nil, err
+	}
+	for p.peek().kind == operator && strings.Contains(ops, p.peek().text) {
 		op := p.next().text
-		var right expr
-		right, err = operand()
+		right, err := operand()
+		if err != nil {
+			return nil, err
+		}
 		left = binary{op, left, right}
 	}
-	return left, err
+	return left, nil
 }
 
 // factor parses a negation, a number, a name, or a sum in parentheses.
@@ -110,7 +115,10 @@ func (p *parser) factor() (expr, error) {
 	switch {
 	case t.text == "-":
 		operand, err := p.factor()
-		return negation{operand}, err
+		if err != nil {
+			return nil, err
+		}
+		return negation{operand}, nil
 	case t.kind == number:
 		return literal(t.value), nil
 	case t.kind == name:

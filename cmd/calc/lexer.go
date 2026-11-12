@@ -63,7 +63,7 @@ func lex(line string) ([]token, error) {
 			i++
 			tokens = append(tokens, token{kind: operator, text: string(c)})
 		default:
-			return nil, fmt.Errorf("unexpected %q", c)
+			return nil, fmt.Errorf("unexpected %q", string(c))
 		}
 	}
 	return append(tokens, token{kind: end}), nil

@@ -47,7 +47,10 @@ func (e env) eval(x expr) (float64, error) {
 		return value, nil
 	case negation:
 		value, err := e.eval(x.operand)
-		return -value, err
+		if err != nil {
+			return 0, err
+		}
+		return -value, nil
 	case binary:
 		left, err := e.eval(x.left)
 		if err != nil {
