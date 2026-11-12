@@ -1,12 +1,14 @@
 // mise run screenshots' command, the tooling's spike-html-apps-screenshots on
-// scripts/screenshots.config.ts, run as the task runs it. With the SDK's capture run, the index,
-// light, to the terminal, under a scratch TMPDIR, it leaves nothing there, and with --keep leaves
-// what it printed, so the first run's empty TMPDIR is the output's cleanup, not a capture that
-// never wrote. A component's capture, --page components/<component>, takes its section alone: the
-// capture file names a page for every section of the components page, its open step hides every
-// other section and leaves the component's focus-start mark the page's first, or none for a
-// component with no focus state, and a run of one prints that component's few tiles alone and
-// leaves nothing under its TMPDIR.
+// scripts/screenshots.config.ts, run by scripts/screenshots.ts as the task runs it. With the SDK's
+// capture run, the index, light, to the terminal, under a scratch TMPDIR, it leaves nothing there,
+// and with --keep leaves what it printed, so the first run's empty TMPDIR is the output's cleanup,
+// not a capture that never wrote. A component's capture, --page components/<component>, takes its
+// section alone: the capture file names a page for every section of the components page, a state
+// at each of the SDK's widths, its open step hides every other section and leaves the component's
+// focus-start mark the page's first, or none for a component with no focus state, and a run of one
+// at one --width prints that component's few tiles at that width alone and leaves nothing under
+// its TMPDIR. A --width not among the SDK's, or with no value, is a usage error naming the widths,
+// capturing nothing.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -21,16 +23,48 @@ import { after, before, describe, test } from "node:test";
 import { launch } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
-import { keepsCaptures, leavesNoCapture } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
-import { command, served } from "@jaimestill/spike-html-hosting-sdk/served.js";
+import {
+  keepsCaptures,
+  leavesNoCapture,
+  WIDTHS,
+} from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
+import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
 import description, { COMPONENTS } from "../../scripts/screenshots.config.ts";
 
 const root = join(import.meta.dirname, "../..");
 const config = join(root, "scripts/screenshots.config.ts");
+const script = join(root, "scripts/screenshots.ts");
 
 /** A run's bound: the build is served and one page captured in a few seconds. */
 const RUN = 120_000;
+
+/** A run of the task's script, as mise run screenshots runs it, light, to the terminal, with the
+ * flags after, under a fresh scratch TMPDIR, removed once the run's leftovers are read: its exit
+ * status, its stderr, the capture files it printed, and its TMPDIR's files after. */
+function task(...flags: string[]) {
+  const dir = mkdtempSync(join(tmpdir(), "screenshots."));
+  try {
+    const { status, stdout, stderr, error } = spawnSync(
+      process.execPath,
+      [script, "--scheme", "light", "--output", "terminal", ...flags],
+      {
+        cwd: root,
+        env: { ...process.env, TMPDIR: dir, NODE_DISABLE_COMPILE_CACHE: "1" },
+        encoding: "utf8",
+        timeout: RUN,
+      },
+    );
+    assert.ifError(error);
+    const printed = stdout
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.endsWith(".png"));
+    return { status, stderr, printed, left: readdirSync(dir, { recursive: true }) };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 describe("mise run screenshots' command", () => {
   test("captures the index under TMPDIR and leaves nothing there", () => {
@@ -96,42 +130,37 @@ describe("a component's capture", () => {
     }
   });
 
-  test("a run of one component prints its section's few tiles alone and leaves nothing under TMPDIR", () => {
-    const dir = mkdtempSync(join(tmpdir(), "screenshots."));
-    try {
-      const args = [
-        config,
-        "--page",
-        "components/console",
-        "--scheme",
-        "light",
-        "--output",
-        "terminal",
-      ];
-      const { status, stdout, stderr, error } = spawnSync(
-        command(root, "spike-html-apps-screenshots"),
-        args,
-        {
-          cwd: root,
-          env: { ...process.env, TMPDIR: dir, NODE_DISABLE_COMPILE_CACHE: "1" },
-          encoding: "utf8",
-          timeout: RUN,
-        },
+  test("the capture file captures each component at each of the SDK's widths, one state a width, the width in its name", () => {
+    const widths = WIDTHS.map(({ width }) => width);
+    for (const component of COMPONENTS) {
+      const described = description.pages.find(({ name }) => name === `components/${component}`);
+      assert.deepEqual(
+        described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
+        widths.map((width) => [`components-${component}-${width}`, width, true]),
+        component,
       );
-      assert.ifError(error);
-      assert.equal(status, 0, stderr);
-      const printed = stdout
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.endsWith(".png"));
-      assert.ok(printed.length > 0, "it printed its captures");
-      for (const path of printed)
-        assert.match(path, /-components-console--flexoki-regular-mono-light/);
-      // The console's section alone is a few tiles of 1200px; the whole page is over twenty.
-      assert.ok(printed.length <= 8, `${printed.length} tiles: ${printed.join(", ")}`);
-      assert.deepEqual(readdirSync(dir, { recursive: true }), [], "TMPDIR is left empty");
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a run of one component at one --width prints that width's few tiles of its section alone and leaves nothing under TMPDIR", () => {
+    const run = task("--page", "components/console", "--width", "390");
+    assert.equal(run.status, 0, run.stderr);
+    assert.ok(run.printed.length > 0, "it printed its captures");
+    for (const path of run.printed) {
+      assert.match(path, /-components-console-390--flexoki-regular-mono-light--\d+of\d+\.png$/);
+    }
+    // The console's section alone is a few tiles of 1200px; the whole page is over twenty.
+    assert.ok(run.printed.length <= 8, `${run.printed.length} tiles: ${run.printed.join(", ")}`);
+    assert.deepEqual(run.left, [], "TMPDIR is left empty");
+  });
+
+  test("a --width not among the SDK's is a usage error naming them, and captures nothing", () => {
+    for (const flags of [["--width", "500"], ["--width=1280"], ["--width"]]) {
+      const run = task("--page", "components/console", ...flags);
+      assert.equal(run.status, 2, flags.join(" "));
+      assert.match(run.stderr, /390, 1120, 1376/, flags.join(" "));
+      assert.deepEqual(run.printed, [], flags.join(" "));
+      assert.deepEqual(run.left, [], "TMPDIR is left empty");
     }
   });
 });

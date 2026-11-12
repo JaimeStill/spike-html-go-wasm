@@ -2,8 +2,8 @@
 // modules, and builds each component's states into its section, every state once in the states
 // list, and the focus state after its section's focus-start mark; the layout follows the viewport,
 // so the narrow layout is a narrow viewport's. The screenshot command captures each section alone,
-// the others hidden, and focuses its mark, then the page's first, before pressing Tab to reach it,
-// and the browser tier each. Each state is a figure, its label the caption, built fresh for each
+// the others hidden, at each of the SDK's widths, and focuses its mark, then the page's first,
+// before pressing Tab to reach it, and the browser tier each. Each state is a figure, its label the caption, built fresh for each
 // list, so no element is shared between them.
 // Nothing here loads Go on load: the page's one runner starts its worker and fetches a module only
 // on a demo's Run.

@@ -62,9 +62,13 @@ evidence, and path are in `context/README.md`.
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
   (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`. A bare `vite build`
   omits the wasm.
-- `mise run screenshots`: capture the pages, light and dark: the index at 390px, 1120px, and
-  1376px, and each component on the components page alone at 1280px,
-  `--page components/<component>`, as `--page components/console`.
+- `mise run screenshots`: capture the pages, light and dark: the index at the SDK's widths,
+  390px, 1120px, and 1376px, and each component on the components page alone at each of them,
+  `--page components/<component>`, as `--page components/console`. `--width <px>`, one of the
+  three, captures that width alone, the index's and each component's, as
+  `mise run screenshots --page components/controls --width 390`; any other width is a usage
+  error naming them. `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't
+  know, and hands it to the capture file.
 - `mise run currency`: report every pin behind its latest, the SDK's tag and go.mod's direct
   requirements among them.
 - `mise run live [base URL]`: check that the deployed site, at its Pages URL or the base given,

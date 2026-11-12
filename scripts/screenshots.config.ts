@@ -1,26 +1,51 @@
-// mise run screenshots' capture file, which the tooling's spike-html-apps-screenshots bin runs: the
-// SDK's description of the index, --page index, captured whole at 390px, 1120px, and 1376px, and
-// also with Help open and with Settings open at each; and the components page as one capture name per component, --page components/<component>,
-// each the page whole at 1280×800 with every other component's section hidden, and the controls'
-// with New file's form open on its refusal; the Go demo's presses nothing, so every demo shows as
-// before a Run, and no Go loads. The SDK's three widths over the whole components page grew with
-// every component, 68 images for the editor alone, so each component is captured alone, at one
-// width. The description's facets, --all's profiles, the registry's profiles, and its
-// server, which serves the site as the browser tier serves it, by the SDK's served(), under the
-// base, are the SDK's.
+// mise run screenshots' capture file, which the tooling's spike-html-apps-screenshots bin runs,
+// through scripts/screenshots.ts, which takes the task's --width: the SDK's description of the
+// index, --page index, captured whole at the SDK's widths, 390px, 1120px, and 1376px, and also
+// with Help open and with Settings open at each; and the components page as one capture name per
+// component, --page components/<component>, each the page whole at each of the same widths, one
+// state per width, with every other component's section hidden, and the controls' with New file's
+// form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run,
+// and no Go loads. The page shows each state once and its layout follows the viewport, so the
+// narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the
+// index's and each component's, takes only that width's states. The SDK's widths over the whole
+// components page grew with every component, so each component is captured alone. The
+// description's facets, --all's profiles, the registry's profiles, and its server, which serves
+// the site as the browser tier serves it, by the SDK's served(), under the base, are the SDK's.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.2): template/scripts/screenshots.config.ts, its pages
 // the hand pages, as the site copies no tree for contentPages to list; the components page split
-// into a page per component, each one state.
+// into a page per component, a state per width.
 
 import { join } from "node:path";
 
 import type { Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
-import type { DescribedPage, Step } from "@jaimestill/spike-html-apps-tooling/screenshots.js";
-import { description } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
+import type {
+  DescribedPage,
+  DescribedState,
+  Step,
+} from "@jaimestill/spike-html-apps-tooling/screenshots.js";
+import { description, WIDTHS } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 
 const root = join(import.meta.dirname, "..");
+
+/** The width to capture alone, from SCREENSHOTS_WIDTH, which scripts/screenshots.ts sets from
+ * --width once it has checked it; or undefined, every width. Any other value is refused. */
+function onlyWidth(): number | undefined {
+  const given = process.env.SCREENSHOTS_WIDTH;
+  if (given === undefined || given === "") return undefined;
+  const width = WIDTHS.find((viewport) => String(viewport.width) === given)?.width;
+  if (width === undefined) {
+    const widths = WIDTHS.map((viewport) => viewport.width).join(", ");
+    throw new Error(`SCREENSHOTS_WIDTH ${given} isn't a capture width: ${widths}`);
+  }
+  return width;
+}
+
+const only = onlyWidth();
+
+/** Whether a state is captured: every state, or with a width given, those at it. */
+const kept = (state: DescribedState) => only === undefined || state.viewport?.width === only;
 
 /** The components page's sections, by id, each a component's, in the page's order. */
 export const COMPONENTS = [
@@ -67,26 +92,26 @@ const opened =
 
 const described = description({ root, pages: ["index.html", "components.html"] });
 
-/** The components page as a page per component: its path, one state whole at 1280×800 with the
- * component's section alone, the state's name its files', with no slash. */
+/** The components page as a page per component: its path, and a state whole at each of the SDK's
+ * widths with the component's section alone, the state's name its files', with no slash, the
+ * width last, as the index's are. */
 const perComponent = ({ path }: DescribedPage): DescribedPage[] =>
   COMPONENTS.map((component) => ({
     name: `components/${component}`,
     caption: `${path}, ${component}`,
     path,
-    states: [
-      {
-        name: `components-${component}`,
-        viewport: { width: 1280, height: 800 },
-        full: true,
-        open: opened(component),
-      },
-    ],
+    states: WIDTHS.map((viewport) => ({
+      name: `components-${component}-${viewport.width}`,
+      caption: `${path}, ${component}, ${viewport.width}px`,
+      viewport,
+      full: true,
+      open: opened(component),
+    })),
   }));
 
 export default {
   ...described,
-  pages: described.pages.flatMap((page) =>
-    page.name === "components" ? perComponent(page) : [page],
-  ),
+  pages: described.pages
+    .flatMap((page) => (page.name === "components" ? perComponent(page) : [page]))
+    .map((page) => ({ ...page, states: page.states?.filter(kept) })),
 };
