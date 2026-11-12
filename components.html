@@ -45,6 +45,13 @@
       body > header > .header-actions {
         margin-inline-start: auto;
       }
+      /* A section opens on its heading, which the foundation's elements layer gives no top margin
+         as its container's first child, and the foundation leaves the space between sections to
+         the page: the section takes it. From spike-html-apps-components (19d4f59): demo/demo.css,
+         its main > section rule. */
+      main > section {
+        margin-block-start: var(--space-xl);
+      }
       /* A component's states, one figure each, stacked. */
       .states {
         display: grid;
