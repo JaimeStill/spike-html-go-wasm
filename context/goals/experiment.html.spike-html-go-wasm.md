@@ -107,7 +107,7 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                   console first; the tablist keeps the file tabs' keyboard model (roving
                   tabindex, Left and Right wrapping, Home and End) and its accessibility tree.
                   From 44rem to 64rem: the editor over a row of the console and the timings'
-                  16rem track. From 64rem: the reader's arrangement (behavior 15): the editor
+                  track (behavior 14). From 64rem: the reader's arrangement (behavior 15): the editor
                   left or right of a column of the console over the timings, or the editor top,
                   over the console and timings row. A run, a Stop, a build failure, or a
                   layout change preserves each part's content and scroll position. The toolbar
@@ -229,7 +229,7 @@ Door          two-way: nothing is released, the build outputs are regenerated on
 
 ## Progress
 
-slices 11/11 committed · standards done · spec — · editor — (layout foundation)
+slices 11/11 committed · standards done · spec done · editor — (layout foundation)
 
 ## Decisions
 
