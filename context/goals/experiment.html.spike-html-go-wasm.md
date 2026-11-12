@@ -77,9 +77,10 @@ Behaviors     1. The site build writes Go's compiler and linker, built by the pi
                  imports nothing from the runtime and fetches nothing itself.
               9. A playground page, linked from the index, holds one editable-files sl-go-demo
                  in the source mode. It opens on the starter program (behavior 21), its fences
-                 equal byte for byte to cmd/calc's files and its input.txt under the unit tier. The page requests no Go before a Run. It passes
-                 every SDK shell check except reading width, its prose holds 80ch, centred, and
-                 the crawl reaches the index, the components page, and the playground alone.
+                 equal byte for byte to cmd/calc's files and its input.txt under the unit tier.
+                 The page requests no Go before a Run. It passes every SDK shell check except
+                 reading width, its prose holds 80ch, centred, and the crawl reaches the index,
+                 the components page, and the playground alone.
               10. On the playground page in the browser tier, the first Run fetches the
                   manifest, the compiler, the linker, and only the starter's closure of
                   archives, and prints the starter's results with exit 0 and every phase of
