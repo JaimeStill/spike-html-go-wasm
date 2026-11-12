@@ -1,8 +1,9 @@
 // The playground's prose and its About dialog, playground.html: the build as Pages serves it,
 // dist/ under the base by the SDK's served(), Vite's preview, in the pinned chrome-headless-shell.
 //
-// The prose is the heading and the lede alone, the lede's text as approved, Ctrl+Enter in a kbd,
-// and the page holds no disclosure. The header's group is About, Help, and Settings, in that
+// The prose is the title row, the heading and the Program select's label beside it, and the lede
+// alone, the lede's text as approved, Ctrl+Enter in a kbd, and the page holds no disclosure; the
+// select itself is playground-programs.test.ts's. The header's group is About, Help, and Settings, in that
 // order: About a glyph button in the shell's pattern, its glyph the icons layer's info-16, its key
 // A shown in a kbd, its hint "About". A, a click, or Enter on About opens the dialog, its title
 // heading focused and its Close's hint closed past the interest delay; Tab moves focus to Close;
@@ -105,23 +106,31 @@ async function closed(page: Page, how: string): Promise<boolean> {
 }
 
 describe("the playground's prose and About", () => {
-  test("the prose is the heading and the lede alone, Ctrl+Enter in a kbd, and the page holds no disclosure", async () => {
+  test("the prose is the title row, the heading and the Program select's label, and the lede alone, Ctrl+Enter in a kbd, and the page holds no disclosure", async () => {
     const page = await open();
     try {
-      const prose: { children: string[]; lede: string; kbd: string[]; details: number } =
-        await page.evaluate(`(() => {
+      const prose: {
+        children: string[];
+        title: string[];
+        lede: string;
+        kbd: string[];
+        details: number;
+      } = await page.evaluate(`(() => {
           const prose = document.querySelector("main > .prose");
           const lede = prose.querySelector(":scope > p");
+          const said = (element) => element.textContent.replace(/\\s+/g, " ").trim();
           return {
-            children: [...prose.children].map((child) => child.localName + ": " +
-              child.textContent.replace(/\\s+/g, " ").trim()),
-            lede: lede.textContent.replace(/\\s+/g, " ").trim(),
+            children: [...prose.children].map((child) => child.localName + "." + child.className),
+            title: [...prose.querySelector(":scope > .title").children].map((child) =>
+              child.localName + ": " + (child.localName === "h1" ? said(child) : said(child.firstChild))),
+            lede: said(lede),
             kbd: [...lede.querySelectorAll("kbd")].map((kbd) => kbd.textContent),
             details: document.querySelectorAll("details").length,
           };
         })()`);
       assert.deepEqual(prose, {
-        children: ["h1: Playground", `p: ${LEDE}`],
+        children: ["div.title", "p."],
+        title: ["h1: Playground", "label: Program"],
         lede: LEDE,
         kbd: ["Ctrl+Enter"],
         details: 0,

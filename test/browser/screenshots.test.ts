@@ -11,7 +11,7 @@
 // capturing nothing. The playground's capture, --page playground, is the viewport alone in each
 // band of its fixed demo, the phone's also with its Timings tab, and the wide band's in each
 // arrangement and with the Layout menu open, each chosen by the menu, and the widest with the
-// About dialog open.
+// About dialog open and with Basics chosen in the Program select.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -157,7 +157,7 @@ describe("a component's capture", () => {
     assert.deepEqual(run.left, [], "TMPDIR is left empty");
   });
 
-  test("the capture file captures the playground's viewport in each band of its fixed demo, the phone's Timings tab, the wide band in each arrangement and with the Layout menu open, and the About dialog open", () => {
+  test("the capture file captures the playground's viewport in each band of its fixed demo, the phone's Timings tab, the wide band in each arrangement and with the Layout menu open, the About dialog open, and Basics chosen", () => {
     const described = description.pages.find(({ name }) => name === "playground");
     const [phone, ...wide] = WIDTHS.map(({ width }) => width);
     assert.deepEqual(
@@ -173,6 +173,7 @@ describe("a component's capture", () => {
           [`playground-menu-${width}`, width, false],
         ]),
         [`playground-about-${wide.at(-1)}`, wide.at(-1), false],
+        [`playground-basics-${wide.at(-1)}`, wide.at(-1), false],
       ],
     );
   });
@@ -180,7 +181,8 @@ describe("a component's capture", () => {
   test("the playground's wide states choose their arrangement by the Layout menu, and the menu's state leaves it open", async () => {
     const described = description.pages.find(({ name }) => name === "playground");
     const wide = (described?.states ?? []).filter(
-      ({ name, viewport }) => viewport?.width === 1376 && !name?.includes("about"),
+      ({ name, viewport }) =>
+        viewport?.width === 1376 && !name?.includes("about") && !name?.includes("basics"),
     );
     const expected = [
       ["left", false],

@@ -12,9 +12,9 @@
 // again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and 1376px,
 // the wide band in each arrangement, editor left, top, and right, and with the Layout menu open,
 // each chosen by the menu as a reader chooses, so no state depends on what an earlier one stored;
-// and at 1376px with the About dialog open, opened by its button in the header. The components page
-// shows each state once and its layout follows the viewport, so the narrow layout is the 390px
-// capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, and
+// and at 1376px with the About dialog open, opened by its button in the header, and with Basics
+// chosen in the Program select, as a reader chooses it. The components page shows each state once
+// and its layout follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, and
 // the playground's, takes only that width's states, so the 900px capture, at no SDK width, is taken
 // only when every width is. The SDK's widths over the whole components page grew with every
 // component, so each component is captured alone. The description's facets, --all's profiles, the
@@ -110,6 +110,22 @@ const aboutOpen: Step = async (page: Page) => {
   await until(page, `document.getElementById("about").matches(":modal")`, 5000);
 };
 
+/** Chooses Basics in the playground's Program select, as a reader's choice changes it, resolving
+ * once the demo shows its files. */
+const basicsChosen: Step = async (page: Page) => {
+  await page.evaluate(`(() => {
+    const picker = document.querySelector("select#program");
+    picker.value = "basics";
+    picker.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await until(
+    page,
+    `document.querySelector("sl-go-demo").shadowRoot.querySelector("sl-file-tabs").shadowRoot
+      .querySelector('[role="tab"][data-name="shapes.go"]') !== null`,
+    5000,
+  );
+};
+
 /** Selects the playground demo's Timings tab, its phone band's output panel. */
 const timingsTab: Step = async (page: Page) => {
   await page.evaluate(
@@ -151,8 +167,8 @@ const menuOpen: Step = async (page: Page) => {
 
 /** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
  * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
- * Layout menu open; and the widest with the About dialog open, each named as the SDK names a
- * page's, the width last. */
+ * Layout menu open; and the widest with the About dialog open, and with Basics chosen in the
+ * Program select, each named as the SDK names a page's, the width last. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
   const state = (
@@ -179,6 +195,7 @@ const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
       state(viewport, menuOpen, "menu-", "Layout menu, "),
     ]),
     state(wide.at(-1) ?? phone, aboutOpen, "about-", "About open, "),
+    state(wide.at(-1) ?? phone, basicsChosen, "basics-", "Basics chosen, "),
   ];
 };
 
