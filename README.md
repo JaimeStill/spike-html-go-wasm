@@ -246,6 +246,213 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
   `go/toolchain/manifest.json`, and the compiler it names as `application/wasm`, gzip-encoded. It
   reads the network and isn't part of the check; the unit tier holds its assertions against local
   servers.
+- `mise run measure [base URL]`: print evidence of the deployed site, at its Pages URL or the base
+  given, judging no number. Its head names the deployed commit, the `vcs.revision` Go stamped into
+  the live `go/hello.wasm`, and for the Pages URL the latest successful github-pages deployment
+  `gh` reports, with whether they agree, and the date. Its size table has one row per prebuilt
+  module, `hello`, `probe`, `sqlate`, and `websdk`, per toolchain module, the compiler and the
+  linker the live manifest names, and per program the site builds in the page, its closure: the
+  archives the runtime's `programClosure` resolves for `playground/<program>/`'s files, tests left
+  out, against the live manifest. Each row gives the raw bytes, the bytes on the wire for a
+  browser's `Accept-Encoding: gzip, deflate, br` (Pages serves gzip alone), and the bytes at
+  brotli 11 by node's zlib; a closure's row gives its file count, the requests a revalidation
+  makes once the 10-minute max-age expires. Its drift report builds each prebuilt module twice into
+  TMPDIR with `scripts/build-go-modules.sh`, the site build's flags, each build with a `GOCACHE` of
+  its own, and holds the two against each other and the live module against the first, byte for
+  byte, giving each difference's byte counts and the build settings Go stamped differently, as
+  `vcs.revision` and `vcs.modified`. Its desktop timings, `scripts/measure-timings.ts`, give one
+  table per demo page, the components page, the Markdown pages, the sqlate page, and the
+  playground once per program, read in the pinned chrome-headless-shell with the network allowed:
+  cold, in a fresh profile; cached, a fresh page and worker within the max-age; and in place, a
+  further Run on the held worker. Each row gives the page's first-contentful-paint, whether any
+  `.wasm` was requested before Run, Run's click to the first output, the run's phases as the
+  demo's timings show them, and the bytes transferred during the run, each the median and max of
+  five readings. A reading that fails is listed under "Not measured" and never fails the command.
+  `--readings N`, `--pages a,b`, and `--skip-sizes` narrow a development run. It reads the network
+  and `gh`, writes nothing outside TMPDIR and Go's caches, and isn't part of the check; the unit
+  tier holds its report layer, `scripts/measure-report.ts`, on fixtures.
+
+## Measurements
+
+Measured on 2026-11-13 against the deployed site, commit 13d8348, which `mise run measure` read
+from the live `go/hello.wasm`'s `vcs.revision` and which gh's latest github-pages deployment
+agrees with. The sizes, the drift, and the desktop timings below are its output, the tables cut to
+fit; the iPhone readings were taken by hand. They are evidence, not gates. To reproduce them, run
+`mise run measure` (see "Tasks").
+
+- **Desktop:** this Linux machine, an Intel Core Ultra 9 185H, in the pinned chrome-headless-shell
+  157.0.8103.78 at 1280×720, over wired Ethernet on home broadband.
+- **iPhone:** an iPhone 16 Pro Max, in Chrome for iOS (WebKit, as every iOS browser must be), over
+  Wi-Fi.
+
+### Sizes
+
+Each row's raw bytes, its bytes as Pages served them for `Accept-Encoding: gzip, deflate, br`, and
+its bytes at brotli 11 by node's zlib. Pages serves gzip alone, even when br is accepted, with a
+max-age of 600 s. A closure's Files is its archive count, the requests a revalidation makes once
+the max-age expires.
+
+| Name | Files | Raw | Served (gzip) | Brotli 11 |
+| --- | ---: | ---: | ---: | ---: |
+| hello.wasm | 1 | 2,473,987 | 737,953 | 546,453 |
+| probe.wasm | 1 | 4,611,666 | 1,306,343 | 935,804 |
+| sqlate.wasm | 1 | 7,805,306 | 2,236,249 | 1,591,807 |
+| websdk.wasm | 1 | 7,772,444 | 2,216,568 | 1,582,333 |
+| compile (toolchain) | 1 | 52,647,487 | 10,756,470 | 6,904,791 |
+| link (toolchain) | 1 | 12,291,570 | 3,331,171 | 2,313,778 |
+| calc closure | 58 | 22,644,840 | 5,142,991 | 3,809,962 |
+| basics closure | 57 | 22,208,134 | 5,025,935 | 3,720,168 |
+| generics closure | 58 | 22,644,840 | 5,142,991 | 3,809,962 |
+| concurrency closure | 57 | 22,208,134 | 5,025,935 | 3,720,168 |
+| stdlib closure | 85 | 36,402,466 | 8,258,489 | 6,120,924 |
+| sqlate closure | 219 | 96,118,342 | 20,375,470 | 14,892,704 |
+| graph closure | 77 | 30,468,458 | 6,988,025 | 5,185,798 |
+
+### Reproducibility
+
+Each prebuilt module, hello, probe, sqlate, and websdk, built twice locally with a `GOCACHE` of
+its own, matched byte for byte. Each local build differed from the live module only in the build
+settings Go stamps from version control: the commit, its time, and `vcs.modified`, true locally,
+where the tree was dirty, and false in the live build.
+
+| Module | Local vs local | Local bytes | Live bytes | Live − local | Differing build settings |
+| --- | --- | ---: | ---: | ---: | --- |
+| hello.wasm | match | 2,473,992 | 2,473,987 | −5 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
+| probe.wasm | match | 4,611,671 | 4,611,666 | −5 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
+| sqlate.wasm | match | 7,805,311 | 7,805,306 | −5 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
+| websdk.wasm | match | 7,772,452 | 7,772,444 | −8 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
+
+The measure command reports the difference and doesn't remove it; dropping the stamp, with
+`-buildvcs=false` or otherwise, is left to final-review.
+
+### Desktop timings
+
+Each cell is the median / max of 5 readings, in ms; Run bytes in bytes. Cold is a fresh browser
+profile, its HTTP cache empty; cached is then a fresh page and worker in that browser within the
+max-age; in place is a further Run on the cold page's worker. Readable is the page's
+first-contentful-paint; .wasm before Run is whether any `.wasm` was requested before Run's click,
+and on every page none was; First result is Run's click to the console's first output; the phases
+are the demo's timings, and Total is their sum. Run bytes are what the page and its workers
+transferred from Run's click to the run's end, 0 when the HTTP cache answered all; a building
+page's cached runs and main.go rebuilds transfer some 100 to 200 B, as its worker revalidates
+the toolchain manifest on every build (`cache: "no-cache"`, `web/runtime/worker.ts`), while every
+module and archive comes from the HTTP cache. A program switch whose closure adds archives also
+fetches those. The building pages' tables leave out Instantiate, at most 1.5 ms in median, though
+their Total counts it; "—" marks a cell the state has no reading for.
+
+#### Components page, components.html
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Instantiate | Start | Call | Run | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 364 / 388 | no | 151 / 299 | 95 / 249 | 4.2 / 4.9 | 0.7 / 1.1 | 8.6 / 9.0 | 3.8 / 4.0 | — | 112 / 266 | 1,307,583 / 1,307,591 |
+| cached | 232 / 232 | no | 52 / 66 | 15 / 19 | 4.2 / 4.6 | 0.7 / 1.0 | 8.6 / 9.6 | 4.1 / 4.4 | — | 33 / 37 | 0 / 0 |
+| in place: scenario switch, probe to hello | — | — | 68 / 84 | 46 / 62 | 3.1 / 3.3 | 0.6 / 0.7 | — | — | 7.9 / 8.4 | 58 / 73 | 738,541 / 738,555 |
+
+#### sqlate compile (Markdown), sqlate-compile.html
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Instantiate | Start | Call | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 192 / 228 | no | 199 / 217 | 123 / 149 | 6.1 / 6.4 | 1.1 / 1.2 | 28 / 30 | 7.6 / 10 | 169 / 189 | 2,237,969 / 2,238,009 |
+| cached | 44 / 44 | no | 84 / 85 | 23 / 24 | 5.7 / 6.2 | 1.1 / 1.3 | 28 / 37 | 7.5 / 8.4 | 65 / 74 | 0 / 0 |
+| in place: rerun | — | — | 15 / 17 | — | — | — | — | 0.5 / 0.8 | 0.5 / 0.8 | 0 / 0 |
+
+#### go-web-sdk handlers (Markdown), go-web-sdk-handlers.html
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Instantiate | Start | Call | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 200 / 276 | no | 197 / 396 | 124 / 333 | 5.6 / 6.2 | 1.1 / 1.2 | 17 / 17 | 8.1 / 8.6 | 156 / 365 | 2,218,188 / 2,297,378 |
+| cached | 44 / 48 | no | 67 / 67 | 23 / 25 | 6.1 / 6.4 | 1.1 / 1.2 | 17 / 19 | 8.2 / 8.3 | 56 / 57 | 0 / 0 |
+| in place: rerun | — | — | 17 / 17 | — | — | — | — | 0.6 / 0.9 | 0.6 / 0.9 | 0 / 0 |
+
+#### go-core graph (Markdown), go-core-graph.html
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Go compile | Link | Run | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 208 / 280 | no | 2,137 / 2,217 | 666 / 735 | 35 / 36 | 1,047 / 1,064 | 328 / 336 | 17 / 18 | 2,094 / 2,171 | 21,122,491 / 21,122,755 |
+| cached | 64 / 68 | no | 1,688 / 1,769 | 194 / 199 | 35 / 38 | 1,068 / 1,127 | 331 / 364 | 20 / 20 | 1,646 / 1,740 | 114 / 157 |
+| in place: rerun | — | — | 17 / 18 | — | — | — | — | 2.0 / 2.5 | 2.6 / 3.5 | 0 / 0 |
+| in place: main.go edited, rebuilt | — | — | 573 / 577 | 21 / 32 | 4.1 / 5.0 | 311 / 328 | 193 / 209 | 1.7 / 1.7 | 545 / 548 | 143 / 153 |
+
+#### sqlate page, sqlate.html
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Go compile | Link | Run | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 204 / 300 | no | 3,338 / 3,683 | 1,097 / 1,333 | 37 / 37 | 1,518 / 1,549 | 584 / 653 | 48 / 53 | 3,284 / 3,623 | 34,551,098 / 34,551,523 |
+| cached | 52 / 56 | no | 2,592 / 2,689 | 342 / 349 | 38 / 40 | 1,549 / 1,601 | 579 / 601 | 46 / 50 | 2,553 / 2,636 | 105 / 115 |
+| in place: rerun | — | — | 17 / 19 | — | — | — | — | 6.6 / 7.3 | 8.1 / 9.1 | 0 / 0 |
+| in place: main.go edited, rebuilt | — | — | 1,158 / 1,174 | 22 / 34 | 8.1 / 9.2 | 629 / 656 | 421 / 462 | 4.7 / 8.1 | 1,112 / 1,127 | 144 / 204 |
+
+#### Playground, calc, playground.html#calc
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Go compile | Link | Run | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 200 / 200 | no | 1,893 / 1,932 | 616 / 621 | 33 / 33 | 854 / 872 | 331 / 335 | 15 / 17 | 1,848 / 1,868 | 19,272,122 / 19,272,276 |
+| cached | 48 / 52 | no | 1,461 / 1,475 | 166 / 177 | 33 / 34 | 875 / 894 | 334 / 350 | 13 / 14 | 1,426 / 1,437 | 101 / 166 |
+| in place: main.go edited, rebuilt | — | — | 433 / 447 | 21 / 27 | 3.7 / 4.6 | 198 / 202 | 185 / 191 | 1.9 / 2.1 | 412 / 419 | 143 / 151 |
+| in place: program switch to basics | — | — | 329 / 362 | 21 / 29 | 3.6 / 4.2 | 123 / 144 | 156 / 161 | 11 / 12 | 317 / 348 | 90 / 143 |
+
+#### Playground, basics, playground.html#basics
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Go compile | Link | Run | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 208 / 224 | no | 1,758 / 1,791 | 608 / 621 | 33 / 35 | 711 / 765 | 330 / 352 | 14 / 19 | 1,704 / 1,745 | 19,154,814 / 19,154,854 |
+| cached | 52 / 56 | no | 1,325 / 1,334 | 167 / 170 | 33 / 35 | 744 / 767 | 335 / 352 | 13 / 14 | 1,300 / 1,304 | 106 / 117 |
+| in place: main.go edited, rebuilt | — | — | 378 / 393 | 21 / 24 | 3.3 / 3.9 | 158 / 166 | 166 / 181 | 1.7 / 2.4 | 351 / 366 | 143 / 152 |
+| in place: program switch to generics | — | — | 623 / 636 | 44 / 46 | 3.0 / 3.6 | 382 / 389 | 153 / 160 | 13 / 16 | 595 / 610 | 117,531 / 117,556 |
+
+#### Playground, generics, playground.html#generics
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Go compile | Link | Run | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 204 / 212 | no | 2,094 / 2,131 | 624 / 650 | 33 / 34 | 1,073 / 1,088 | 305 / 334 | 15 / 19 | 2,048 / 2,078 | 19,272,120 / 19,272,352 |
+| cached | 56 / 60 | no | 1,633 / 1,673 | 171 / 176 | 32 / 35 | 1,085 / 1,112 | 295 / 316 | 14 / 18 | 1,603 / 1,627 | 103 / 106 |
+| in place: main.go edited, rebuilt | — | — | 534 / 579 | 21 / 22 | 3.2 / 3.5 | 318 / 345 | 166 / 173 | 2.0 / 3.4 | 512 / 547 | 151 / 203 |
+| in place: program switch to concurrency | — | — | 402 / 412 | 21 / 33 | 3.9 / 4.8 | 179 / 191 | 157 / 165 | 23 / 24 | 391 / 398 | 104 / 166 |
+
+#### Playground, concurrency, playground.html#concurrency
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Go compile | Link | Run | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 204 / 208 | no | 1,937 / 2,131 | 620 / 827 | 33 / 33 | 878 / 914 | 330 / 346 | 25 / 28 | 1,901 / 2,097 | 19,154,936 / 19,154,993 |
+| cached | 56 / 56 | no | 1,506 / 1,520 | 169 / 174 | 33 / 34 | 910 / 930 | 334 / 347 | 27 / 31 | 1,480 / 1,492 | 143 / 163 |
+| in place: main.go edited, rebuilt | — | — | 421 / 470 | 20 / 22 | 3.8 / 4.5 | 198 / 234 | 177 / 185 | 13 / 13 | 408 / 458 | 143 / 151 |
+| in place: program switch to stdlib | — | — | 930 / 945 | 138 / 154 | 6.4 / 7.2 | 439 / 444 | 290 / 313 | 31 / 32 | 911 / 920 | 3,240,890 / 3,241,467 |
+
+#### Playground, stdlib, playground.html#stdlib
+
+| State | Readable | .wasm before Run | First result | Fetch | Wasm compile | Go compile | Link | Run | Total | Run bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 204 / 220 | no | 2,565 / 2,776 | 739 / 978 | 36 / 38 | 1,212 / 1,230 | 474 / 497 | 36 / 41 | 2,520 / 2,735 | 22,396,436 / 22,396,555 |
+| cached | 60 / 128 | no | 2,029 / 2,170 | 198 / 262 | 38 / 41 | 1,261 / 1,352 | 465 / 472 | 36 / 40 | 2,000 / 2,141 | 115 / 166 |
+| in place: main.go edited, rebuilt | — | — | 733 / 894 | 22 / 23 | 7.7 / 13 | 372 / 412 | 293 / 377 | 7.1 / 15 | 702 / 838 | 143 / 195 |
+| in place: program switch to calc | — | — | 388 / 721 | 21 / 27 | 3.3 / 6.2 | 168 / 342 | 163 / 298 | 12 / 25 | 361 / 699 | 114 / 158 |
+
+### iPhone readings
+
+On 2026-11-13, one reading each, read by hand from each demo's timings table, on the subset the
+architect chose: the sqlate page, the go-core graph page, the components page, and the
+playground's calc. Cached reloads were not taken, and whether any `.wasm` was requested before
+Run was not recorded on the phone (on the desktop, none was on any page). "—" marks a phase not
+captured or not in the run.
+
+| Page and state | Fetch | Wasm compile | Go compile | Link | Instantiate | Start | Call | Run | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| sqlate.html, cold in an Incognito tab | — | — | — | 479 | 7.0 | — | — | 28 | 3,301 |
+| sqlate.html, first run in a regular tab | — | — | — | 480 | 6.0 | — | — | 21 | 3,329 |
+| sqlate.html, in place: rerun | — | — | — | — | 9.0 | — | — | 12 | 21 |
+| go-core-graph.html, first run | 265 | 111 | 672 | 370 | 2.0 | — | — | 9.0 | 1,429 |
+| go-core-graph.html, in place: rerun | — | — | — | — | 2.0 | — | — | 5.0 | 7.0 |
+| components.html, probe's format, first run | 155 | 16 | — | — | 2.0 | 8.0 | 2.0 | — | 183 |
+| components.html, in place: rerun | — | — | — | — | — | — | 5.0 | — | 5.0 |
+| playground.html#calc, first run | — | — | — | 344 | 1.0 | — | — | 9.0 | 1,357 |
+| playground.html#calc, in place: rerun | — | — | — | — | 4.0 | — | — | 4.0 | 8.0 |
+
+The sqlate page's Fetch, Wasm compile, and Go compile, and the calc program's phases before Link,
+were not captured. The go-core graph's first run was in a regular tab with its cache state
+unconfirmed; its Fetch suggests the HTTP cache answered. An earlier phone reading, taken during
+the sqlate task, gave 36 s for the sqlate page's cold Run. It did not reproduce: the 2026-11-13
+cold run, in an Incognito tab, took 3.3 s, on par with the desktop. Its cause is unknown, and
+final-review may look into it.
 
 ## Runtime
 
