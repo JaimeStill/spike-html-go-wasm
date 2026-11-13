@@ -246,6 +246,23 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
   `go/toolchain/manifest.json`, and the compiler it names as `application/wasm`, gzip-encoded. It
   reads the network and isn't part of the check; the unit tier holds its assertions against local
   servers.
+- `mise run measure [base URL]`: print evidence of the deployed site, at its Pages URL or the base
+  given, judging no number. Its head names the deployed commit, the `vcs.revision` Go stamped into
+  the live `go/hello.wasm`, and for the Pages URL the latest successful github-pages deployment
+  `gh` reports, with whether they agree, and the date. Its size table has one row per prebuilt
+  module, `hello`, `probe`, `sqlate`, and `websdk`, per toolchain module, the compiler and the
+  linker the live manifest names, and per program the site builds in the page, its closure: the
+  archives the runtime's `programClosure` resolves for `playground/<program>/`'s files, tests left
+  out, against the live manifest. Each row gives the raw bytes, the bytes on the wire for a
+  browser's `Accept-Encoding: gzip, deflate, br` (Pages serves gzip alone), and the bytes at
+  brotli 11 by node's zlib; a closure's row gives its file count, the requests a revalidation
+  makes once the 10-minute max-age expires. Its drift report builds each prebuilt module twice into
+  TMPDIR with `scripts/build-go-modules.sh`, the site build's flags, each build with a `GOCACHE` of
+  its own, and holds the two against each other and the live module against the first, byte for
+  byte, giving each difference's byte counts and the build settings Go stamped differently, as
+  `vcs.revision` and `vcs.modified`. It reads the network and `gh`, writes nothing outside TMPDIR,
+  and isn't part of the check; the unit tier holds its report layer, `scripts/measure-report.ts`,
+  on fixtures.
 
 ## Runtime
 
