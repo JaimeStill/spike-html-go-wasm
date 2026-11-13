@@ -333,9 +333,10 @@ first-contentful-paint; .wasm before Run is whether any `.wasm` was requested be
 and on every page none was; First result is Run's click to the console's first output; the phases
 are the demo's timings, and Total is their sum. Run bytes are what the page and its workers
 transferred from Run's click to the run's end, 0 when the HTTP cache answered all; a building
-page's cached and in-place runs transfer some 100 to 200 B, as its worker revalidates the
-toolchain manifest on every build (`cache: "no-cache"`, `web/runtime/worker.ts`), while every
-module and archive comes from the HTTP cache. The building
+page's cached runs and main.go rebuilds transfer some 100 to 200 B, as its worker revalidates
+the toolchain manifest on every build (`cache: "no-cache"`, `web/runtime/worker.ts`), while every
+module and archive comes from the HTTP cache. A program switch whose closure adds archives also
+fetches those. The building
 pages' tables leave out Instantiate, at most 1.5 ms in median, though their Total counts it; "—"
 marks a cell the state has no reading for.
 
