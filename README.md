@@ -58,7 +58,7 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
     fences to its files in `playground/<program>/`, the sqlate page's fences to
     `playground/sqlate/`'s files, the graph page's one source demo to `playground/graph/main.go`,
     and the go-web-sdk page's demo to one handler demo, websdk's `request`, its file
-    `request.http`, around one http fence. It holds the sqlate scenario's embedded patterns to the program's
+    `request.http`, around one fence naming no language. It holds the sqlate scenario's embedded patterns to the program's
     pattern files, byte for byte (`test/unit/sqlate-patterns.test.ts`), and tests a Go demo's fence
     naming rules (`web/components/file-names.ts`). It fails if a module under `web/components` or
     `web/pages` registers a page shortcut through the foundation's `keys.js`.
@@ -151,12 +151,12 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
       running the edit; a failing constructor's one stderr line with exit 1; and a cycle's panic
       with exit 2;
     - the go-web-sdk page (`test/browser/go-web-sdk-handlers.test.ts`): its one handler demo named
-      `request.http` by its `file` attribute, shown plain, and no Go before a Run; the first Run
-      fetching the worker and `go/websdk.wasm` alone and answering the seeded list; a POST, then a
-      GET of the new id, on the instance held, fetching nothing; an update, then the same update
-      again answering 412; and text that isn't an HTTP/1.1 request rejected naming why, the
-      instance outliving it with every write kept; then a report, never a gate, of
-      `go/websdk.wasm`'s bytes, raw and gzip, and the cold Run's phase timings;
+      `request.http` by its `file` attribute, plain in the page's markup and in the editor, and no
+      Go before a Run; the first Run fetching the worker and `go/websdk.wasm` alone and answering
+      the seeded list; a POST, then a GET of the new id, on the instance held, fetching nothing;
+      an update, then the same update again answering 412; and text that isn't an HTTP/1.1
+      request rejected naming why, the instance outliving it with every write kept; then a report,
+      never a gate, of `go/websdk.wasm`'s bytes, raw and gzip, and the cold Run's phase timings;
     - the playground's prose and About: the prose is the heading and the lede alone, and the page
       holds no disclosure; About leads the header's group, a glyph button showing A; A, a click, or
       Enter opens the About dialog on its title, Tab reaches its Close, and Close or Escape closes
@@ -642,9 +642,12 @@ tests the handler under `GOOS=js` on both filesystems.
 
 `markdown/go-web-sdk-handlers.md` renders to `go-web-sdk-handlers.html`, a Markdown page as
 `sqlate-compile.html` is (see "The Markdown page"). It holds one `sl-go-demo` naming the scenario,
-`websdk`, its handler, `request`, and its file, `request.http`, around one ordinary `http` fence,
-a `GET /projects` request. The editor has no grammar for `.http`, so the request shows as plain
-text; Shiki highlights the page's other `http` fences at build. Its prose explains what runs, the
+`websdk`, its handler, `request`, and its file, `request.http`, around one ordinary fence naming
+no language, a `GET /projects` request. The build highlights only a fence that names a language,
+so the demo's fence renders as marked's plain `<pre><code>`, and the editor has no grammar for
+`.http`, so the request shows as plain text before the demo upgrades and after. Shiki highlights
+the prose's fences at build: the requests to try, each an `http` fence, and the stale update's
+problem, a `json` fence, which the palette check reads. Its prose explains what runs, the
 Router, the Group and the Module, the middleware, the problems, the seeded instance, and the
 in-process call, and shows the other requests to try as fences: a create, a read by id, an
 update with `If-Match`, the same update again, stale, and an id that isn't a UUID. The first Run

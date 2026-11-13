@@ -5,10 +5,12 @@
 // checks, palette check, and crawl run on it beside the other pages' (site.test.ts); this file
 // proves its demo.
 //
-// The page holds one handler demo, written in the Markdown as raw HTML around an ordinary http
-// fence: sl-go-demo naming the websdk scenario, its request handler, and its file, request.http,
-// which names the fence, as the rendered markup carries no name; the editor has no grammar for
-// .http, so the request shows plain. The page requests no Go and starts no worker on load. The
+// The page holds one handler demo, written in the Markdown as raw HTML around an ordinary fence
+// naming no language: sl-go-demo naming the websdk scenario, its request handler, and its file,
+// request.http, which names the fence, as the rendered markup carries no name. The build leaves
+// the fence plain, marked's own <pre><code> with no class and no token span, as Shiki highlights
+// only a labelled fence (the page's prose fences are http, highlighted); the editor has no grammar
+// for .http, so the request shows plain before the demo upgrades and after. The page requests no Go and starts no worker on load. The
 // first Run fetches the worker and go/websdk.wasm alone and answers the seeded list as HTTP/1.1
 // text, through every phase of a cold load. A POST then a GET of the new project's id run on the
 // instance already held, fetching nothing, each a Call alone, and the GET answers what the POST
@@ -41,10 +43,10 @@ const root = join(import.meta.dirname, "../..");
 /** The page's one demo, as an expression. */
 const DEMO = `document.querySelector("sl-go-demo")`;
 
-/** The request the page's fence holds, as markdown/go-web-sdk-handlers.md writes it, with no
- * final line break, as the SDK's Shiki markup renders none. */
+/** The request the page's fence holds, as markdown/go-web-sdk-handlers.md writes it, with its
+ * final line break, which marked's plain markup keeps. */
 const REQUEST = readFileSync(join(root, "markdown/go-web-sdk-handlers.md"), "utf8").match(
-  /<sl-go-demo [^>]*>\n\n```http\n([\s\S]*?)\n```\n\n<\/sl-go-demo>/,
+  /<sl-go-demo [^>]*>\n\n```\n([\s\S]*?\n)```\n\n<\/sl-go-demo>/,
 )?.[1];
 
 /** The Go a first Run fetches: the worker and the scenario's module, alone. */
@@ -123,8 +125,11 @@ async function send(request: string): Promise<string> {
 }
 
 describe("the Markdown page's request demo", () => {
-  test("is the fence's request, named request.http by the file attribute, shown plain", async () => {
-    assert.ok(REQUEST, "markdown/go-web-sdk-handlers.md holds the demo's http fence");
+  test("is the fence's request, named request.http by the file attribute, plain in the markup and the editor", async () => {
+    assert.ok(
+      REQUEST,
+      "markdown/go-web-sdk-handlers.md holds the demo's fence, naming no language",
+    );
     assert.deepEqual(
       await page.evaluate(`(() => {
         const demo = ${DEMO};
@@ -133,9 +138,12 @@ describe("the Markdown page's request demo", () => {
           document.querySelectorAll("sl-go-demo").length,
           demo.scenario, demo.handler, demo.getAttribute("file"),
           editor.value, editor.label, editor.language,
+          [...demo.querySelectorAll(":scope > pre, :scope > pre > code")].map((el) => el.className),
+          demo.querySelectorAll(":scope > pre span").length,
+          demo.querySelector(":scope > pre").textContent,
         ];
       })()`),
-      [1, "websdk", "request", "request.http", REQUEST, "request.http", ""],
+      [1, "websdk", "request", "request.http", REQUEST, "request.http", "", ["", ""], 0, REQUEST],
     );
   });
 

@@ -19,7 +19,8 @@
 // one source demo, a raw sl-go-demo around one ordinary go fence, read from the Markdown before
 // the SDK renders it: the fence is playground/graph's one file, main.go, byte for byte. The
 // go-web-sdk page, markdown/go-web-sdk-handlers.md, holds one handler demo, read the same way:
-// the websdk scenario's request handler, its file request.http, around one http fence, a request.
+// the websdk scenario's request handler, its file request.http, around one fence naming no
+// language, which the build leaves plain, a request.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the
 // page's hand-written markup, so a small reader suffices, held to the HTML parser's rules where
@@ -323,7 +324,7 @@ describe("the graph page's demo", () => {
 describe("the go-web-sdk page's demo", () => {
   const markdown = readFileSync(join(root, "markdown/go-web-sdk-handlers.md"), "utf8");
 
-  test("is one handler demo, websdk's request, its file request.http, around one http fence", () => {
+  test("is one handler demo, websdk's request, its file request.http, around one fence naming no language", () => {
     assert.deepEqual(
       markdownDemos(markdown).map(({ attrs, fences }) => [
         attrs.has("source"),
@@ -332,7 +333,7 @@ describe("the go-web-sdk page's demo", () => {
         attrs.get("file"),
         fences.map(({ info }) => info),
       ]),
-      [[false, "websdk", "request", "request.http", ["http"]]],
+      [[false, "websdk", "request", "request.http", [""]]],
     );
   });
 

@@ -11,7 +11,7 @@ loads until the first Run.
 
 <sl-go-demo scenario="websdk" handler="request" file="request.http" label="request demo">
 
-```http
+```
 GET /projects HTTP/1.1
 Host: example.com
 ```
@@ -96,7 +96,7 @@ Every error is answered as an RFC 9457 problem, `application/problem+json`, carr
 id. go-web-sdk's own errors map themselves, a bad query or path parameter or body to `400` and a
 missing or malformed `If-Match` to `428` or `400`. The scenario maps its store's two, an unknown id
 to `404` and a stale version to `412`, their text the problem's detail. The stale update above
-answers, on one line:
+answers this problem, its body printed on one line, laid out here over several:
 
 ```json
 {
@@ -124,7 +124,9 @@ run, with no listener, connection, or network between them.
 The page is written in the spike's own `markdown/` directory and rendered by the hosting SDK's
 Markdown pages. The demo is raw HTML around the fence: an `sl-go-demo` naming its scenario,
 `websdk`, its handler, `request`, and its file, `request.http`, which names the fence, since a
-rendered fence carries no name of its own. The editor has no grammar for `.http`, so the request
-shows as plain text. The shell's script gives the demo the page's one runner, the same runtime and
-bridge the hand pages use, and the first Run fetches the worker and the scenario's module; each Run
-after it calls the instance already loaded, fetching nothing.
+rendered fence carries no name of its own. The fence names no language, so the build leaves it
+plain, and the editor has no grammar for `.http`, so the request shows as plain text before the
+demo upgrades and after. The requests to try are `http` fences, which the build highlights. The
+shell's script gives the demo the page's one runner, the same runtime and bridge the hand pages
+use, and the first Run fetches the worker and the scenario's module; each Run after it calls the
+instance already loaded, fetching nothing.
