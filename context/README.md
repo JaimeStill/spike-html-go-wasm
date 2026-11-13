@@ -60,7 +60,13 @@ for the Go packages.
   handler, compile: one statement's text compiled for PostgreSQL against PostgreSQL's patterns
   plus the sqlate program's sample app patterns, embedded byte for byte (the unit tier holds
   it), answering its `$n` SQL and printing its tier and parameters, or rejecting with sqlate's
-  message. Planned: go-core graph and go-web-sdk handlers in-process.
+  message; and websdk (`internal/websdk`, `cmd/websdk`), which imports only the standard library,
+  the bridge, and go-web-sdk's and go-core's packages (the unit tier holds its import listing) and
+  serves one handler, request: one raw HTTP/1.1 request's text, parsed by net/http's
+  `ReadRequest` and served through go-web-sdk's Router's `ServeHTTP` into an `httptest` recorder,
+  with no socket, answered as the response's text. The Router serves a sample projects resource,
+  seeded at startup and kept for the instance's life; `README.md`, "go-web-sdk", documents the
+  request format and the routes.
 - **Runtime** (`web/runtime`, the SDK tier): `runner.ts` exports the `Runner` type (load, build,
   run, stop; output, exit, and timing events), and starts one dedicated worker, `worker.ts`, on
   the first load or build. The worker fetches a module over the HTTP cache, compiles it, and runs
@@ -68,8 +74,10 @@ for the Go packages.
   installs first. `protocol.ts` holds the events and the messages between the runner and the
   worker. The runner runs one load, build, or run at a time: a new request first stops the
   pending one, so every event belongs to the request that is pending. Stop terminates the worker
-  and posts the compiled program, compiler, and linker to a fresh one. `README.md`, "Runtime",
-  documents each request.
+  and posts the compiled program, compiler, and linker to a fresh one. When an instance exits, the
+  worker clears its scheduled timeouts in the Go object's `exit` hook, so no timer `wasm_exec.js`
+  leaves scheduled resumes the exited program; `wasm_exec.js` stays the pinned Go's copy.
+  `README.md`, "Runtime", documents each request and the guard.
 - **Go tests on the in-memory fs** (`test/memfs`): a Go test program that the check runs under
   node on the runtime's fs, through package `os`.
 - **Playground**: the runner's build request (`web/runtime/build.ts`) runs Go's own
@@ -77,9 +85,10 @@ for the Go packages.
   (`scripts/build-toolchain.ts`), in the worker, and fetches each package's archive per import
   through `go/toolchain/manifest.json`, which names the standard library's, under `std/`, and the
   site's pinned modules', under `mod/`: every package of go.mod's requirements the repository's
-  own packages depend on, which are sqlate's and its dependencies'. A program imports the standard
-  library and the site's pinned modules. The runner reuses the last build when only non-Go files
-  change (`isGo` in `build.ts`), so editing `input.txt` alone reruns the program without building.
+  own packages depend on, which are sqlate's, go-core's, and go-web-sdk's and their dependencies'.
+  A program imports the standard library and the site's pinned modules. The runner reuses the
+  last build when only non-Go files change (`isGo` in `build.ts`), so editing `input.txt` alone
+  reruns the program without building.
   `playground.html` is one screen: the heading with the Program select beside it, a two-sentence
   lede, and one fixed, source-mode sl-go-demo that shows the chosen program, fills the rest of the
   viewport, and ends one gutter above its bottom. The select offers the starter and the four
@@ -90,8 +99,7 @@ for the Go packages.
   entry; no fragment, or an unknown one, opens the calculator. The page's detail, what a program can
   be and how Run and Stop behave, is in an About dialog that the header's About button opens. The
   check's layout tests run twice: in the machine's fonts, and in a pinned DejaVu font set, the six
-  faces of Ubuntu's fonts-dejavu-core. The scenarios task adds its modules' archives as it first
-  requires them.
+  faces of Ubuntu's fonts-dejavu-core.
 - **Programs** (`playground/<program>`, each a package main outside `cmd/`, not a scenario): the
   starter, `calc`, a calculator language whose files are the playground demo's own fences, which
   runs the script in `input.txt`; and four programs whose files are templates in the page:
@@ -106,7 +114,11 @@ for the Go packages.
   pattern in namespace `ns` and any other `.sql` a statement, and prints each statement; then
   `guard.go` runs the edit statement, guarded by the version statement, over sqltest's scripted
   driver, its outcome set by `input.json`. A catalog or compile error prints sqlate's message on
-  one stderr line and exits 1.
+  one stderr line and exits 1. And `graph`, also not in the Program select: it wires a small
+  service on go-core's graph, prints the System's layer table, and runs it under lifecycle's
+  Coordinator, each participant printing its start in layer order and its stop in reverse; a
+  constructor's error prints graph's message on one stderr line and exits 1, and a dependency
+  cycle makes Build panic, exit 2.
 - **Components** (`web/components`, the component tier, Lit, `sl-` prefix): sl-code-editor,
   sl-file-tabs, sl-console, sl-controls, sl-timings, and sl-go-demo, which composes the other five
   over a runner the page passes in. With `fixed`, sl-go-demo is as tall as its parent's layout
@@ -147,13 +159,21 @@ for the Go packages.
 - **Markdown pages** (`markdown/`, the spike's own tree, never copied into `content/`):
   `vite.config.ts` gives the SDK's `markdownPages` the directory as one tree's source, its
   repository URL and a ref it reads only for external links, which the tree has none of, so
-  `markdown/sqlate-compile.md` builds to `sqlate-compile.html`, filled into
-  `markdown-shell.html`, the index's shell with the Pages and Contents drawers and no site nav.
-  The shell's script, `web/pages/markdown.ts`, gives every `<sl-go-demo>` on the page the page's
-  one runner and wires the drawers; Go loads only on a Run. The page embeds the sqlate
-  scenario's compile handler around an ordinary sql fence, which the plugin highlights at build,
-  named `statement.sql` by the demo's `file` attribute. It passes the SDK's shell checks, palette
-  check, and crawl, which counts it a hand page.
+  each `markdown/<page>.md` builds to `<page>.html`, filled into `markdown-shell.html`, the
+  index's shell with the Pages and Contents drawers and no site nav. The shell's script,
+  `web/pages/markdown.ts`, gives every `<sl-go-demo>` on the page the page's one runner and wires
+  the drawers; Go loads only on a Run. `sqlate-compile.html` embeds the sqlate scenario's compile
+  handler around an ordinary sql fence, which the plugin highlights at build, named
+  `statement.sql` by the demo's `file` attribute. `go-core-graph.html` embeds a source demo around
+  one go fence, byte for byte `playground/graph/main.go` (the unit tier holds it), which a Run
+  builds in the page. `go-web-sdk-handlers.html` embeds the websdk scenario's request handler
+  around a fence naming no language, named `request.http`, plain text before and after the demo
+  upgrades; its prose's `http` and `json` fences are highlighted at build. A demo's fence isn't
+  shown once the demo upgrades, so each page's prose also holds highlighted fences for the palette
+  check. Each page passes the SDK's shell checks, palette check, and crawl. `content.json`
+  records no tree, so the site test (`test/browser/site.test.ts`) crawls from a scratch root under
+  TMPDIR whose `content.json` records `markdown/` as one copied tree, and the crawl checks each
+  rendered page as a copied page, pagers and site index included.
 
 ## Path
 
