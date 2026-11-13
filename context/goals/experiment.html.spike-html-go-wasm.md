@@ -94,8 +94,8 @@ Behaviors     1. go.mod requires go-core v0.12.0 and go-web-sdk v0.17.0 by tag, 
                   scenario's module alone and answers the seeded list; a POST then a GET run on
                   the instance already loaded, with no further fetch; a stale PUT gets 412;
                   malformed text is rejected, and the instance outlives it.
-              13. The bridge, the runtime, sl-go-demo, and sl-code-editor serve both pages
-                  unchanged. The tokenizer's grammars stay Go's, JSON's, and SQL's alone.
+              13. The bridge, sl-go-demo, and sl-code-editor serve both pages unchanged, and the
+                  runtime changes only by the exit-race guard, landed first (escalation 1). The tokenizer's grammars stay Go's, JSON's, and SQL's alone.
               14. Reports, never a gate: the programs report adds the graph page's source demo
                   (cold and warm phase timings, and its closure's archive count, raw bytes, and
                   gzip bytes), and the browser tier reports the go-web-sdk scenario's module raw
@@ -113,6 +113,10 @@ Test seams    mise run check: Go tests under GOOS=js on both filesystems for 2-4
 Slices        1. The graph program: the two requirements; the program's wiring, layer table, and
                  lifecycle trace; its error and panic exits; tests on both filesystems; the
                  manifest's new archives in the toolchain test.
+              2a. The exit-race guard (escalation 1): the runtime's worker treats wasm_exec.js's
+                 "Go program has already exited", thrown after the program's own exit, as that
+                 exit with its code, wasm_exec.js untouched; a runtime test forces a timer-driven
+                 exit; the browser tier gains a per-test timeout, so a stall fails by name.
               2. The graph page: the Markdown page with its one-file source demo and the fence
                  check; browser tests for exact output, an edit, a failing constructor, and a
                  cycle; the programs report entry; the index's evidence 10 link and the crawl
@@ -136,7 +140,7 @@ Door          two-way: nothing is released. go.mod gains two requirements, and t
 
 ## Progress
 
-slices 1/4 committed · standards — · spec — · editor —
+slices 1/5 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -828,6 +832,17 @@ slices 1/4 committed · standards — · spec — · editor —
   http grammar, which adds ~80 KB gzip to the tokenizer.
 - scenarios: the sample API's data is seeded at startup and kept for the instance's life; a Stop
   or a reload reseeds it. Rejected: resetting to the seed on every call.
+- scenarios (escalation 1): wasm_exec.js's timer callback resumes Go again after wasmExit, which
+  never clears _scheduledTimeouts, so a program that exits in a timer-driven resume throws "Go
+  program has already exited" (Go 1.27.4's shim). The runtime's worker guards it as the program's
+  own exit, landed as its own slice; wasm_exec.js stays byte for byte the pinned Go's. Rejected:
+  patching the copied shim, and dropping the browser exit-1 case.
+- scenarios (escalation 2): the browser tier gets a per-test timeout, so a stall fails naming the
+  test instead of hanging the check; a timings.test.ts stall under the parallel tier's load is
+  recorded for final-review. Rejected: rerunning by hand.
+- scenarios (build): the site test hands the SDK's crawl a scratch root whose content.json records
+  markdown/ as one tree, so the crawl checks the rendered pages as copied pages (SDK v0.6.2's crawl
+  counts any page not in content.json a hand page, which may have no pager).
 
 ## Notes
 
