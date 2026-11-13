@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** scenarios
+- **Branch:** scenarios
 
 ## Tasks
 
@@ -18,101 +18,124 @@
 10. [ ] final-review
 11. [ ] answer
 
-## Task brief · sqlate
+## Task brief · scenarios
 
 ```
-Problem       Evidence 2, 3, and 11 are unproven. No page lets a reader compose sqlate
-              statements from sqlate's patterns and their own, against a real engine's dialect,
-              or run them in-process over a scripted driver. No rendered Markdown page embeds a
-              demo. sqlate is the first workspace module the spike requires: the first test of
-              the by-tag rule, of module archives in the in-page build, and of what a
-              PostgreSQL-backed library costs a page.
-Behaviors     1. go.mod requires sqlate v0.7.0 and sqlate/postgres v0.7.0 by tag, with no
-                 replace; the check and the Pages build read no network beyond install's
-                 download.
-              2. A sqlate program, a package main beside the playground's programs and never
-                 built into the site, reads the .sql files in its working directory. A file
-                 <ns>.<name>.sql is a pattern published in namespace ns; any other .sql is a
-                 statement. It compiles the statements against PostgreSQL's patterns plus the
-                 reader's namespaces, for PostgreSQL's dialect, and prints each statement in
-                 name order: its name, tier, parameters in order, and SQL with $n placeholders.
-                 It exits 0.
-              3. It ships with sample files in go-web-service's style: app patterns (an
-                 identity RETURNING, native with its port note), and statements that include
-                 both sql.* and app.* patterns (a create, a guarded edit, its version check).
-              4. A catalog or compile error (a reserved or repeated namespace, a missing tier,
-                 an unknown include, a native include in a standard statement) prints sqlate's
-                 own message on one stderr line and exits 1.
-              5. A second Go file runs the edit statement, guarded by the version statement,
-                 over sqltest's scripted driver, with no socket. Its script is set by
-                 input.json's stored version: equal to the version read gives the new version;
-                 another value gives "version mismatch: expected N, current M"; null gives
-                 sql.ErrNoRows' message. It prints each driver call (op, $n SQL, bound values).
-                 A missing edit or version statement, or malformed input.json, prints why and
-                 exits 1. testing.TB is satisfied by a commented stand-in.
-              6. The program is vetted and tested under GOOS=js on node's fs and on the
-                 in-memory fs, covering each outcome in 2–5 exactly.
-              7. The playground's manifest adds an archive for every module package the sqlate
-                 program's closure needs, named by hash like the standard library's. The
-                 in-page build resolves module imports through the manifest just as it does
-                 standard ones.
-              8. A sqlate hand page holds the program as an editable-files source demo whose
-                 fences equal the package's files byte for byte (unit tier). In the browser
-                 tier: the first Run prints the exact output; an edit to a .sql file or to
-                 input.json reruns with no Go compile or link; an edit that breaks a statement
-                 shows behavior 4's line and exit 1; a new pattern file in a new namespace can
-                 be included by a statement.
-              9. The editor highlights SQL in every palette with Shiki's grammar, its tokens
-                 matching the SDK fence's colours. A fence labelled sql defaults to a .sql
-                 name, and sl-go-demo's `file` attribute names a fence that names none; an
-                 explicit name wins, and demos without the attribute behave as before.
-              10. A prebuilt sqlate scenario serves one handler, compile: one statement's text,
-                  compiled against PostgreSQL's patterns plus the same sample app patterns
-                  (byte for byte the program's, unit tier), answering its $n SQL and printing
-                  its parameters, or rejecting with sqlate's message. It is tested under
-                  GOOS=js on both filesystems.
-              11. A rendered Markdown page, written in the spike in its own directory and
-                  filled into a Markdown shell by the SDK's markdownPages, embeds the compile
-                  handler demo around an ordinary ```sql fence, named by `file`. The shell's
-                  script gives each demo the page's runner, and Go loads only on Run. The page
-                  passes the SDK's shell checks and crawl; the browser tier proves an edit
-                  recompiling and a refusal.
-              12. The bridge and the runtime serve both pages with no sqlate-specific code,
-                  and sl-go-demo changes only by behavior 9's general addition, landed first.
-              13. The browser tier reports, never as a gate: the source demo's cold and warm
-                  phase timings and closure (archive count, raw, gzip), and the prebuilt
-                  scenario's raw and gzip bytes.
-              14. The index's evidence 2, 3, and 11 link the pages. The README documents the
-                  program, its naming convention, the scenario, both pages, `file`, and the
-                  manifest's modules; the context's capabilities list them, and the playground's
-                  "standard imports only" becomes "standard and the site's pinned modules".
-Test seams    mise run check: Go tests under GOOS=js on both filesystems for 2–6 and 10; the
-              unit tier's fence reader for 8 and 10 and its toolchain test for 7; the browser
-              tier through sl-go-demo over each page's runner for 8, 9, 11, and 13, with the
-              palette-token test for 9.
-Slices        1. The program: the two requirements; the package with its sample patterns and
-                 statements, compile and print, and its error exit; tests on both filesystems.
-              2. In-page sqlate: module archives in the manifest and the build resolving them;
-                 the hand page's source demo and its fence check; browser tests for exact
-                 output, a .sql-only rerun with no compile, a broken statement, a new
-                 namespace; index link for evidence 2; capture.
-              3. The run: the second Go file, input.json, and their tests; browser tests for
-                 the three outcomes and an input.json-only rerun; index link for evidence 3.
-              4. SQL in the editor: the grammar, the .sql default, `file`, the palette-token
-                 test; the hand page highlighted.
-              5. Prebuilt and Markdown: the compile scenario and its tests; the Markdown
-                 directory, shell, script, and page; shell checks and crawl; browser tests;
-                 timing, closure, and size report; index link for evidence 11; README, context
-                 capabilities.
-Out of scope  A live database; the stub dialect; a runtime change giving prebuilt programs
-              files; a directory level in the file set; multi-file demos in Markdown; sqlate in
-              the playground's Program select; //go:embed in the in-page build; live-site
-              timings and the TinyGo comparison (measure task); go-core and go-web-sdk
-              (scenarios task); any write to sqlate, go-web-service, or the SDK.
-Door          two-way: nothing is released; go.mod gains two requirements, and the program,
-              scenario, pages, `file`, the grammar, and the manifest's module entries can each
-              be removed.
+Problem       Evidence 10 is unproven. No page runs go-core's graph or go-web-sdk's handlers.
+              Whether either module builds for GOOS=js was an open note until this plan, and
+              their costs to a page are unmeasured. No Markdown page yet holds a source demo
+              built in the page, and no scenario calls an HTTP handler in-process. Both are the
+              cases v1.repository-docs would embed, so the answer needs them before measure
+              times the site.
+Behaviors     1. go.mod requires go-core v0.12.0 and go-web-sdk v0.17.0 by tag, with no replace.
+                 The check and the Pages build read no network beyond install's download.
+              2. A graph program, a package main beside the playground's programs, one main.go,
+                 never built into the site, wires a small service on go-core's graph: nodes made
+                 by Define, a Value, and a Fresh, with dependencies reached through Use, one
+                 After, and one Group. Built from its roots, it prints the System's layer table.
+                 It then runs the System under lifecycle's Coordinator with a finalized Config:
+                 each participant prints its start in layer order and its stop in reverse, and
+                 the program exits 0.
+              3. A constructor that returns an error fails the Build. The program prints graph's
+                 message, which names the node, on one stderr line and exits 1. A wiring mistake
+                 graph panics on, such as a dependency cycle, panics as Go prints it, with
+                 graph's message naming the cycle's path, and exits 2.
+              4. The program is vetted and tested under GOOS=js on node's fs and on the
+                 in-memory fs, covering behaviors 2 and 3 exactly: the output, a failing
+                 constructor, and a cycle.
+              5. The playground's manifest names an archive for every module package the graph
+                 program's and the go-web-sdk scenario's closures need, and the build gains no
+                 new code to do it. The unit tier's toolchain test asserts that graph's,
+                 lifecycle's, go-web-sdk's, and its middleware's archives are present.
+              6. A rendered Markdown page on go-core's graph, in the spike's own Markdown tree,
+                 embeds the program as a source demo around one ordinary go fence, byte for byte
+                 the program's main.go (unit tier). The browser tier proves: no Go requested on
+                 load; the first Run fetches the toolchain and only the program's closure, and
+                 prints behavior 2's exact output with exit 0; an edit to main.go rebuilds and
+                 runs the edit; an edit that makes a constructor fail shows behavior 3's line and
+                 exit 1; an edit that adds a cycle shows graph's panic and exit 2.
+              7. A prebuilt go-web-sdk scenario, one long-lived instance on the bridge, imports
+                 only the standard library, the bridge, and go-web-sdk's and go-core's packages
+                 (unit tier, by its import listing). It serves one handler, request. The handler
+                 takes a raw HTTP/1.1 request's text, with LF or CRLF line endings, whose body is
+                 everything after the blank line, so the reader counts no bytes. It calls the
+                 scenario's Router through net/http's ServeHTTP into an in-memory recorder, with
+                 no socket, and answers the response as HTTP/1.1 text: the status line, headers
+                 in name order, a blank line, and the body.
+              8. Text that isn't an HTTP/1.1 request (no request line, a malformed header, a
+                 version other than 1.x) is rejected with a message naming why, and the instance
+                 serves the next call.
+              9. The Router serves a sample projects resource (id, code, name, version) through a
+                 Group compiled into a Module, under RequestID and Recoverer. Every response
+                 carries X-Request-Id, and every problem is application/problem+json with
+                 request_id.
+                 - GET /projects pages the projects by ParseQuery's page and size, answered as
+                   NewPage's envelope.
+                 - GET /projects/{id} answers one project. An id that isn't a UUID gets 400, and
+                   an unknown id gets 404.
+                 - POST /projects decodes {code, name} with DecodeJSON and answers 201 with the
+                   new project at version 1. An unknown field or an empty body gets 400.
+                 - PUT /projects/{id} with If-Match: "<version>" updates code and name and
+                   answers the next version. A stale version gets 412, a missing If-Match gets
+                   428, and a malformed one gets 400.
+                 - An unknown path gets 404, and a known path with another method gets 405 with
+                   Allow.
+              10. The projects are seeded at startup with fixed rows and fixed ids, and kept for
+                  the instance's life: a create is listed and readable by later calls, and an
+                  update raises the version that a later stale PUT is refused against. A Stop or
+                  a reload starts from the seed again.
+              11. The scenario is tested under GOOS=js on both filesystems for behaviors 7-10:
+                  each route's status, headers, and body. The request id and new ids are matched
+                  by shape, and the seeded responses are exact.
+              12. A rendered Markdown page on go-web-sdk's handlers embeds the request handler
+                  demo around an ordinary request fence named request.http by `file`, shown as
+                  plain text. Its prose shows the other requests to try as fences. The browser
+                  tier proves: no Go requested on load; the first Run fetches the worker and the
+                  scenario's module alone and answers the seeded list; a POST then a GET run on
+                  the instance already loaded, with no further fetch; a stale PUT gets 412;
+                  malformed text is rejected, and the instance outlives it.
+              13. The bridge, the runtime, sl-go-demo, and sl-code-editor serve both pages
+                  unchanged. The tokenizer's grammars stay Go's, JSON's, and SQL's alone.
+              14. Reports, never a gate: the programs report adds the graph page's source demo
+                  (cold and warm phase timings, and its closure's archive count, raw bytes, and
+                  gzip bytes), and the browser tier reports the go-web-sdk scenario's module raw
+                  and gzip bytes and its cold Run's phase timings.
+              15. The index's evidence 10 links both pages, and the site's crawl reaches them
+                  beside the existing pages and nothing else. Both pages pass the SDK's shell
+                  checks, palette check, and crawl. The README documents the graph program, the
+                  scenario, its request format and routes, and both pages. The context's
+                  capabilities list them, and "Planned: go-core graph and go-web-sdk handlers
+                  in-process" becomes what shipped.
+Test seams    mise run check: Go tests under GOOS=js on both filesystems for 2-4 and 7-11; the
+              unit tier's fence reader for 6, its toolchain test for 5, and its import listing
+              for 7; the browser tier through sl-go-demo over each Markdown page's runner for 6,
+              12, 13, and 14, with the site tests for 15.
+Slices        1. The graph program: the two requirements; the program's wiring, layer table, and
+                 lifecycle trace; its error and panic exits; tests on both filesystems; the
+                 manifest's new archives in the toolchain test.
+              2. The graph page: the Markdown page with its one-file source demo and the fence
+                 check; browser tests for exact output, an edit, a failing constructor, and a
+                 cycle; the programs report entry; the index's evidence 10 link and the crawl
+                 list.
+              3. The go-web-sdk scenario: the request handler, its parsing and printing, the
+                 seeded projects router with its problems, the import listing, tests on both
+                 filesystems, and the Go build's prebuilt list.
+              4. The go-web-sdk page: the Markdown page with its request.http handler demo;
+                 browser tests for the list, a POST then a GET on one instance, a stale PUT, and
+                 malformed text; the size and timing report; the index's evidence 10 link and
+                 the crawl list; the README and the context's capabilities.
+Out of scope  web.Service.Run or a Server over Go's in-memory fake network (recorded as a note
+              for the answer); the health probes; an http grammar or any change to the editor,
+              sl-go-demo, the bridge, or the runtime; the graph program in the playground's
+              Program select; a hand page for either demo; multi-file demos in Markdown; a route
+              that panics to show Recoverer; live-site timings and the TinyGo comparison (the
+              measure task); any write to go-core, go-web-sdk, or the SDK.
+Door          two-way: nothing is released. go.mod gains two requirements, and the program, the
+              scenario, both pages, and the manifest's new entries can each be removed.
 ```
+## Progress
+
+slices 0/4 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -782,6 +805,28 @@ Door          two-way: nothing is released; go.mod gains two requirements, and t
   optimization, and ergonomics reviews of the whole spike that land the optimizations within
   reach and record anything larger or one-way for the answer (evidence 13). Rejected: folding
   them into the screenshot review. measure times each page on desktop and on an iPhone over Wi-Fi.
+- scenarios: go.mod requires go-core v0.12.0 and go-web-sdk v0.17.0, the latest releases on the
+  remotes and proxy.golang.org when the task was planned.
+- scenarios: the go-core demo is a source program the reader edits and builds in the page.
+  Rejected: a prebuilt graph scenario over a node notation of the spike's own.
+- scenarios: the go-core demo shows graph plus lifecycle's Coordinator. Rejected: graph alone,
+  which costs ~1.7 MB less gzip in the page.
+- scenarios: the go-web-sdk demo is a prebuilt scenario with one handler that takes a raw HTTP/1.1
+  request's text and answers the response's text (2.10 MB gzip). Rejected: a source program built
+  in the page (~212 archives, ~32 MB gzip cold), and both.
+- scenarios: the handlers are called at the handler level, through the Router's ServeHTTP into an
+  httptest recorder. Rejected: web.Service.Run over Go's in-memory fake network, which is unproven
+  in a browser and recorded as a note for the answer.
+- scenarios: the scenario serves a sample projects resource API alone. Rejected: the health
+  probes, which answer an orchestrator.
+- scenarios: each library's demo sits on its own rendered Markdown page. Rejected: one page for
+  both, and hand pages.
+- scenarios: the graph program is not offered in the playground's Program select, as sqlate's
+  program isn't.
+- scenarios: request.http shows as plain text, and the editor stays unchanged. Rejected: Shiki's
+  http grammar, which adds ~80 KB gzip to the tokenizer.
+- scenarios: the sample API's data is seeded at startup and kept for the instance's life; a Stop
+  or a reload reseeds it. Rejected: resetting to the seed on every call.
 
 ## Notes
 
