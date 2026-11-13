@@ -268,7 +268,7 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
   `.wasm` was requested before Run, Run's click to the first output, the run's phases as the
   demo's timings show them, and the bytes transferred during the run, each the median and max of
   five readings. `--readings N`, `--pages a,b`, and `--skip-sizes` narrow a development run. It
-  reads the network and `gh`, writes nothing outside TMPDIR, and isn't part of the check; the unit
+  reads the network and `gh`, writes nothing outside TMPDIR and Go's caches, and isn't part of the check; the unit
   tier holds its report layer, `scripts/measure-report.ts`, on fixtures.
 
 ## Measurements
@@ -281,7 +281,8 @@ the command prints what it reads and never fails on a number, so these are evide
 
 - **Desktop:** this Linux machine, an Intel Core Ultra 9 185H, in the pinned chrome-headless-shell
   157.0.8103.78 at 1280×720, over wired Ethernet on home broadband.
-- **iPhone:** an iPhone 16 Pro Max, in Safari, over Wi-Fi.
+- **iPhone:** an iPhone 16 Pro Max, in Chrome for iOS (WebKit, as every iOS browser must be), over
+  Wi-Fi.
 
 ### Sizes
 
@@ -310,10 +311,18 @@ the max-age expires.
 
 Each prebuilt module, hello, probe, sqlate, and websdk, built twice locally with a `GOCACHE` of
 its own, matched byte for byte. Against the live module, each local build differed only in the
-build settings Go stamped from version control: `vcs.revision`, `vcs.time`, and `vcs.modified`,
-which is true when the tree is dirty. Each live module was 5 bytes smaller than the local build
-(websdk 8), the local `vcs.modified` true, from a dirty tree, against the live false. This is
-reported, not fixed; dropping the stamp, with `-buildvcs=false` or otherwise, is final-review's.
+build settings Go stamped from version control: `vcs.modified` is true when the tree is dirty, and
+the local tree was dirty, the live build's clean.
+
+| Module | Local vs local | Local bytes | Live bytes | Live − local | Differing build settings |
+| --- | --- | ---: | ---: | ---: | --- |
+| hello.wasm | match | 2,473,992 | 2,473,987 | −5 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
+| probe.wasm | match | 4,611,671 | 4,611,666 | −5 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
+| sqlate.wasm | match | 7,805,311 | 7,805,306 | −5 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
+| websdk.wasm | match | 7,772,452 | 7,772,444 | −8 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
+
+This is reported, not fixed; dropping the stamp, with `-buildvcs=false` or otherwise, is
+final-review's.
 
 ### Desktop timings
 
@@ -323,7 +332,10 @@ max-age; in place is a further Run on the cold page's worker. Readable is the pa
 first-contentful-paint; .wasm before Run is whether any `.wasm` was requested before Run's click,
 and on every page none was; First result is Run's click to the console's first output; the phases
 are the demo's timings, and Total is their sum. Run bytes are what the page and its workers
-transferred from Run's click to the run's end, 0 when the HTTP cache answered all. The building
+transferred from Run's click to the run's end, 0 when the HTTP cache answered all; a building
+page's cached and in-place runs transfer some 100 to 200 B, as its worker revalidates the
+toolchain manifest on every build (`cache: "no-cache"`, `web/runtime/worker.ts`), while every
+module and archive comes from the HTTP cache. The building
 pages' tables leave out Instantiate, at most 1.5 ms in median, though their Total counts it; "—"
 marks a cell the state has no reading for.
 
@@ -424,7 +436,7 @@ captured or not in the run.
 
 | Page and state | Fetch | Wasm compile | Go compile | Link | Instantiate | Start | Call | Run | Total |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlate.html, cold in a Private tab | — | — | — | 479 | 7.0 | — | — | 28 | 3,301 |
+| sqlate.html, cold in an Incognito tab | — | — | — | 479 | 7.0 | — | — | 28 | 3,301 |
 | sqlate.html, first run in a regular tab | — | — | — | 480 | 6.0 | — | — | 21 | 3,329 |
 | sqlate.html, in place: rerun | — | — | — | — | 9.0 | — | — | 12 | 21 |
 | go-core-graph.html, first run | 265 | 111 | 672 | 370 | 2.0 | — | — | 9.0 | 1,429 |
@@ -438,7 +450,7 @@ The sqlate page's Fetch, Wasm compile, and Go compile, and the calc program's ph
 were not captured. The go-core graph's first run was in a regular tab with its cache state
 unconfirmed; its Fetch suggests the HTTP cache answered. An earlier phone reading, taken during
 the sqlate task, gave 36 s for the sqlate page's cold Run; it did not reproduce, today's cold run
-in a Private tab taking 3.3 s, on par with the desktop. Its cause is unknown; final-review may
+in an Incognito tab taking 3.3 s, on par with the desktop. Its cause is unknown; final-review may
 look.
 
 ## Runtime

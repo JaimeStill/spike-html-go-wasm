@@ -31,7 +31,8 @@
 // by its reason; exits 1 only when an argument can't be taken, the manifest can't be read, as
 // nothing can be weighed against it, the local build fails, or BROWSER_EXECUTABLE names no
 // browser. Never a part of mise run check. Reads the network and gh; writes nothing outside
-// TMPDIR, the browser's profiles among it. scripts/measure-report.ts holds the pure parts, which
+// TMPDIR, the browser's profiles among it, and Go's caches, which go mod download and go build
+// touch. scripts/measure-report.ts holds the pure parts, which
 // test/unit/measure.test.ts runs.
 
 import { spawn } from "node:child_process";
