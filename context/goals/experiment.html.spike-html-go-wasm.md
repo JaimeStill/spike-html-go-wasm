@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** scenarios
-- **Branch:** scenarios
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -12,7 +12,7 @@
 4. [x] playground
 5. [x] programs
 6. [x] sqlate
-7. [ ] scenarios
+7. [x] scenarios
 8. [ ] measure
 9. [ ] review
 10. [ ] final-review
@@ -137,10 +137,6 @@ Out of scope  web.Service.Run or a Server over Go's in-memory fake network (reco
 Door          two-way: nothing is released. go.mod gains two requirements, and the program, the
               scenario, both pages, and the manifest's new entries can each be removed.
 ```
-
-## Progress
-
-slices 5/5 committed · standards done · spec done · editor done
 
 ## Decisions
 
