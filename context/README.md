@@ -174,6 +174,10 @@ for the Go packages.
   records no tree, so the site test (`test/browser/site.test.ts`) crawls from a scratch root under
   TMPDIR whose `content.json` records `markdown/` as one copied tree, and the crawl checks each
   rendered page as a copied page, pagers and site index included.
+- **Measurement** (`scripts/measure.ts`, `scripts/measure-timings.ts`, and
+  `scripts/measure-report.ts`, tooling outside the check): `mise run measure` prints the live
+  site's deployed commit, sizes, build drift, and desktop timings, judging no number. `README.md`,
+  "Tasks", documents the command, and "Measurements" holds its output.
 
 ## Path
 

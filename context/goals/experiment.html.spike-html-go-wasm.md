@@ -126,7 +126,7 @@ Door          two-way: the task adds a command, a README section, and a goal
 
 ## Progress
 
-slices 4/4 committed · standards ✓ · spec — · editor —
+slices 4/4 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
@@ -870,6 +870,29 @@ slices 4/4 committed · standards ✓ · spec — · editor —
   components, and the calc playground (8 readings); the README names the rows measured. Rejected:
   all 37 by hand; Chrome emulation of an iPhone (V8, not WebKit's engine) as a substitute or a
   supplement; WebKit through Playwright, left for the Safari checks the review task owns.
+- measure (build): the module build loop moves into `scripts/build-go-modules.sh`, which the site
+  build and the measure command both run, so the drift report builds with the site build's flags.
+- measure (build): the drift report builds each module twice into TMPDIR, each build with its own
+  `GOCACHE`, so neither build reuses the other's work.
+- measure (build): the deployed commit is the `vcs.revision` Go stamped into the live
+  `go/hello.wasm`, cross-checked against gh's latest successful github-pages deployment for the
+  Pages URL.
+- measure (build): a closure is the runtime's own `programClosure` over the local
+  `playground/<program>/` sources, resolved against the live manifest, so the sizes match what a
+  page's build fetches.
+- measure (build): wire bytes are read through node:http(s), not fetch(), because fetch() decodes
+  the body and hides the served size.
+- measure (build): the browser runs with the network allowed through a shell wrapper in TMPDIR
+  that drops `--host-resolver-rules` from the tooling's launch(), which otherwise resolves loopback
+  only.
+- measure (build): the phases come from sl-timings' model, and the first result from a
+  MutationObserver on the console.
+- measure (build): `--readings`, `--pages`, and `--skip-sizes` narrow a development run, sparing
+  the Pages bandwidth.
+- measure (build): a failed reading is listed under "Not measured" and never fails the command.
+- measure (build): the iPhone readings were taken in Chrome for iOS, which runs WebKit, and
+  recorded as first runs and in-place reruns; sqlate's cold run was confirmed in an Incognito tab.
+  No cached reloads were taken on the phone.
 
 ## Notes
 
@@ -914,19 +937,14 @@ slices 4/4 committed · standards ✓ · spec — · editor —
   components page shipped without it. An intake candidate: a page-layout sheet the SDK or the
   foundation ships, so no page has to know.
 
-- The 100 GB/month soft bandwidth limit on Pages works out to about 5,000 cold playground runs a
-  month, if Pages gzips the archives: a cold hello build fetches the compiler and linker (~13.8 MB
-  gzip) and fmt's closure (22.2 MB raw, ~4.8 MB gzip). Pages serves `.a` files without a specific
-  content type; Pages gzipped another Pages site's `.a` served that way (ccbrown.github.io's
-  prebuilt/runtime.a), but this site's isn't yet read. Uncompressed, a cold run is ~36 MB, about
-  2,800 runs a month. The measure task settles it; the answer task's verdict carries it.
+- For the answer: Pages gzips the toolchain and the archives, so the 100 GB/month soft bandwidth
+  limit on Pages works out to about 5,000 cold playground runs a month; a cold calc run transfers
+  19.3 MB (README.md, "Measurements").
 - All 144 MB of standard-library archives deploy to Pages, though each program fetches only its
   closure.
-- Chrome's cold WebAssembly.compile of the 52 MB compiler reads ~74–123 ms, which suggests lazy
-  compilation, so its real cost may fall inside the Go compile phase. The measure task should
-  read the phases with that in mind.
-- A cold playground build, locally, takes ~0.5–0.7 s to fetch, 1.1–1.5 s to Go compile, and
-  0.6–0.95 s to link; after an edit, ~0.12–0.24 s to Go compile and ~0.35–0.5 s to link.
+- Chrome's cold WebAssembly.compile of the 52 MB compiler reads ~74–123 ms locally and 33–38 ms
+  live, which suggests lazy compilation, so its real cost may fall inside the Go compile phase.
+  For final-review.
 - sqlate v0.7.0 and its dependencies build archives for js/wasm. go-core v0.12.0 and go-web-sdk
   v0.17.0, both on their remotes and proxy.golang.org, build and vet for js/wasm and pass their
   own tests as wasm under node, Server.Start and Service.Run included.
@@ -949,11 +967,6 @@ slices 4/4 committed · standards ✓ · spec — · editor —
 - A `@position-try` fallback's `max-inline-size` replaces the element's own, so the fallback must
   restate any cap the element sets.
 
-- Each playground program's closure, as the report reads it locally: basics and concurrency 57
-  archives (~4.9 MB gzip), calc and generics 58 (~5.0 MB), stdlib 85 (~8.0 MB). For the measure
-  task.
-- Local cold timings per program: ~1.3–2.3 s in total, Go compile the largest phase at
-  0.65–1.3 s; warm, after an edit to main.go, 0.32–0.66 s. For the measure task.
 - The SDK's crawl fails on a fragment link that names no element on the page, so a deep link to
   a page's state needs an element carrying that id.
 - Pasting into an empty file in the editor stores an extra trailing newline, and pasting a whole
@@ -973,10 +986,6 @@ slices 4/4 committed · standards ✓ · spec — · editor —
 - Intake candidate: the coordinator's architecture or the SDK could offer a browser-test helper
   that runs a suite in a pinned font set.
 
-- The sqlate page's program closure is 219 archives, 96.1 MB raw and 19.8 MB gzip, on top of the
-  toolchain's ~13.8 MB gzip, so a cold Run fetches ~34 MB gzip. Locally, its cold Run takes
-  ~6.8 s and a warm one ~2.0 s in the check, ~2.5 s and ~0.9 s run alone. The prebuilt compile
-  scenario, `go/sqlate.wasm`, is 7.8 MB raw and 2.19 MB gzip. For the measure and answer tasks.
 - `sqltest.Open` requires a `testing.TB`; a constructor that takes no test is a candidate for
   sqlate's next goal.
 - Intake candidates for the SDK: markdownPages has no notion of a tree the site writes itself; its
@@ -985,20 +994,25 @@ slices 4/4 committed · standards ✓ · spec — · editor —
   the site test's scratch-root workaround; the SDK could take the site's own Markdown trees.
 - golang.org/x/text and golang.org/x/sync arrive indirectly through pgx and trail their latest;
   `mise run currency` reports direct requirements only.
-- sqlate.html's first, cold Run on an iPhone 16 Pro Max over Wi-Fi took 36 s (architect,
-  2026-11-12), against ~2.5–6.8 s on desktop; measure times phones, and final-review weighs it.
+
+- sqlate.html's 36 s cold Run on an iPhone 16 Pro Max (2026-11-12) did not reproduce: the
+  2026-11-13 cold run, in an Incognito tab, took 3.3 s. The cause is unknown. For final-review.
+- The iPhone readings lack cached reloads, and some phases weren't captured: sqlate's
+  Fetch, Wasm compile, and Go compile, and calc's phases before Link (README.md, "Measurements").
+- Build drift is Go's VCS stamping alone: two local builds match byte for byte, and the live
+  module differs from them only in `vcs.revision`, `vcs.time`, and `vcs.modified`. Building with
+  `-buildvcs=false`, or an equivalent, would make the live module match a local build. For
+  final-review.
+- The review task owns the WebKit and desktop Safari checks; measure considered Playwright's
+  WebKit and left it to review.
+- tinygo 0.44.0 is still installed on the machine though nothing pins it;
+  `mise uninstall tinygo@0.44.0` removes it.
 
 - For the answer: Go's js port has an in-memory fake network (`net_fake.go`), so go-web-sdk's
   Service.Run binds and serves inside the wasm under node. In a browser, net/http's client uses
   fetch unless its Transport sets a Dial function; that path is unproven in a browser. This
   qualifies the framing's "a service can't run there": sockets can't, but an in-process service
   can.
-- The graph program's closure is 77 archives, 30,468,458 bytes raw and 6,809,018 gzip; locally,
-  its cold Run took ~1.7–2.0 s and its warm Run ~0.5–0.6 s. `go/websdk.wasm` is ~7.77 MB raw and
-  ~2.17 MB gzip; locally, its cold Run took Fetch ~21–24 ms, Wasm compile ~6–7 ms, Instantiate
-  ~1.2 ms, Start ~18 ms, and Call ~8 ms. For the measure and answer tasks.
-- Rebuilding `go/websdk.wasm` with no Go change varied its size by ~170 bytes, so the build isn't
-  byte-reproducible; measure should check that.
 - A `timings.test.ts` stall was seen once under the parallel browser tier's load and isn't
   reproduced alone; the per-test bound now fails it by name. For final-review.
 - Intake candidate: Shiki's http grammar statically imports the JavaScript, TypeScript, and Java
@@ -1037,4 +1051,5 @@ slices 4/4 committed · standards ✓ · spec — · editor —
   js/wasm archives added to the playground's manifest. Evidence 10."
 - coordinator · roadmap.toml: in the measure task's summary, "the TinyGo comparison, " goes, so
   it reads "Each module's raw, gzip, and brotli sizes, and cold, cached, and in-place timings on
-  the live site, ...".
+  the live site, a playground build's Go compile and link among them, on desktop and on an iPhone
+  over Wi-Fi. Evidence 4, 5."
