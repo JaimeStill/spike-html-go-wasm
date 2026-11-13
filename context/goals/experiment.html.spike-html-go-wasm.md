@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** measure
-- **Branch:** measure
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -13,7 +13,7 @@
 5. [x] programs
 6. [x] sqlate
 7. [x] scenarios
-8. [ ] measure
+8. [x] measure
 9. [ ] review
 10. [ ] final-review
 11. [ ] answer
@@ -123,10 +123,6 @@ Door          two-way: the task adds a command, a README section, and a goal
               again; and releases nothing. The coordinator's roadmap edit
               waits in the Pending edits for the sync.
 ```
-
-## Progress
-
-slices 4/4 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
