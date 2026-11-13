@@ -15,7 +15,8 @@
 7. [ ] scenarios
 8. [ ] measure
 9. [ ] review
-10. [ ] answer
+10. [ ] final-review
+11. [ ] answer
 
 ## Task brief · sqlate
 
@@ -777,6 +778,10 @@ Door          two-way: nothing is released; go.mod gains two requirements, and t
 - sqlate (build): the compile scenario embeds its patterns as
   `internal/sqlate/patterns/<ns>/<name>.sql`, held byte for byte to the program's by a unit test,
   and panics at startup if they don't build a catalog, as a composition root should.
+- plan (2026-11-13): a final-review task joins between review and answer: performance,
+  optimization, and ergonomics reviews of the whole spike that land the optimizations within
+  reach and record anything larger or one-way for the answer (evidence 13). Rejected: folding
+  them into the screenshot review. measure times each page on desktop and on an iPhone over Wi-Fi.
 
 ## Notes
 
@@ -892,6 +897,8 @@ Door          two-way: nothing is released; go.mod gains two requirements, and t
   Shiki markup drops a fence's language; a Markdown fence can't name its file.
 - golang.org/x/text and golang.org/x/sync arrive indirectly through pgx and trail their latest;
   `mise run currency` reports direct requirements only.
+- sqlate.html's first, cold Run on an iPhone 16 Pro Max over Wi-Fi took 36 s (architect,
+  2026-11-12), against ~2.5–6.8 s on desktop; measure times phones, and final-review weighs it.
 
 ## Pending edits
 
@@ -920,6 +927,3 @@ Door          two-way: nothing is released; go.mod gains two requirements, and t
   compile handler on a rendered Markdown page. Evidence 2, 3, 11."
 - coordinator · roadmap.toml: the scenarios task's summary adds "with the module's js/wasm
   archives added to the playground's manifest".
-- coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"
-  becomes "cold, cached, and in-place timings, a playground build's Go compile and link among
-  them".
