@@ -126,7 +126,7 @@ Door          two-way: the task adds a command, a README section, and a goal
 
 ## Progress
 
-slices 2/4 committed · standards — · spec — · editor —
+slices 3/4 committed · standards — · spec — · editor —
 
 ## Decisions
 

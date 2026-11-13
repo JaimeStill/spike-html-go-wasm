@@ -4,7 +4,8 @@
 // requests a revalidation makes; the comparison of two builds of a module, byte for byte, with
 // the build settings Go stamped into each; and the report's sections, each a list of lines, the
 // size table and the drift report, under a head naming the site, its deployed commit, and the
-// date. A later section, the browser timings, joins them as one more list of lines. Nothing here
+// date; and the desktop timings, each state's readings of a page's run (scripts/measure-timings.ts
+// reads them) aggregated into its median and max, one table per page under a legend. Nothing here
 // reads the network or the disk; the unit tier (test/unit/measure.test.ts) runs each on fixtures.
 // Adapted from spike-html-hosting (421254d): scripts/cost-report.ts, its median, max, brotli, and
 // table.
@@ -17,6 +18,8 @@ import {
   inflateSync,
   brotliDecompressSync,
 } from "node:zlib";
+
+import { PHASES } from "../web/components/run-timings.ts";
 
 /** The median of the values, the mean of the middle two when they are even in number; NaN when
  * there are none. */
@@ -279,6 +282,171 @@ export function driftSection(drifts: readonly Drift[]): string[] {
       lines.push(...live.settings.map((setting) => `    ${setting}`));
     }
   }
+  return lines;
+}
+
+/** A median and a max over readings. */
+export interface Spread {
+  median: number;
+  max: number;
+}
+
+/** The values' median and max, or null when there are none. */
+export function spread(values: readonly number[]): Spread | null {
+  return values.length === 0 ? null : { median: median([...values]), max: max([...values]) };
+}
+
+/** One phase of a run as the demo's timings recorded it: the runtime's name for it, as
+ * web/components/run-timings.ts's PHASES gives it, the timings table's row header, and its ms. */
+export interface PhaseTime {
+  phase: string;
+  label: string;
+  ms: number;
+}
+
+/** One reading of a page's run: the page's first-contentful-paint, in ms from its navigation, and
+ * whether any .wasm was requested before Run's click, each null for a run on a page already open;
+ * the time from Run's click to the console's first output, null when none appeared; the run's
+ * phases as its timings show them; and the bytes the page and its workers transferred over the
+ * network from the click to the run's end, 0 for every response the HTTP cache answered. */
+export interface Reading {
+  readable: number | null;
+  wasmBeforeRun: boolean | null;
+  first: number | null;
+  phases: PhaseTime[];
+  transferred: number;
+}
+
+/** A state's readings of one page, cold, cached, or in place, and why any reading failed. */
+export interface StateReadings {
+  state: string;
+  readings: Reading[];
+  failures: string[];
+}
+
+/** A state's readings aggregated: their count; the median and max of each timing, null where no
+ * reading had it; whether .wasm was requested before Run, in words; each phase's median and max,
+ * by its runtime name; the total, each reading's phases summed; and the bytes transferred. */
+export interface TimingRow {
+  state: string;
+  count: number;
+  readable: Spread | null;
+  wasmBeforeRun: string;
+  first: Spread | null;
+  phases: Map<string, Spread>;
+  total: Spread | null;
+  transferred: Spread | null;
+}
+
+/** The readings' answers to whether .wasm was requested before Run: "no" or "yes" when every
+ * reading agrees, "yes in k of n" when they don't, and "-" when no reading asked. */
+function before(answers: readonly boolean[]): string {
+  if (answers.length === 0) return "-";
+  const yes = answers.filter(Boolean).length;
+  if (yes === 0) return "no";
+  return yes === answers.length ? "yes" : `yes in ${yes} of ${answers.length}`;
+}
+
+/** The values the readings have, each reading's null left out. */
+const present = (values: readonly (number | null)[]) =>
+  values.filter((value): value is number => value !== null);
+
+/** The state's readings aggregated into its row. */
+export function aggregate({ state, readings }: StateReadings): TimingRow {
+  const phases = new Map<string, Spread>();
+  for (const phase of new Set(readings.flatMap((reading) => reading.phases.map((p) => p.phase)))) {
+    const times = readings.flatMap((reading) =>
+      reading.phases.filter((p) => p.phase === phase).map(({ ms }) => ms),
+    );
+    phases.set(phase, spread(times)!);
+  }
+  return {
+    state,
+    count: readings.length,
+    readable: spread(present(readings.map(({ readable }) => readable))),
+    wasmBeforeRun: before(
+      readings.flatMap(({ wasmBeforeRun }) => (wasmBeforeRun === null ? [] : [wasmBeforeRun])),
+    ),
+    first: spread(present(readings.map(({ first }) => first))),
+    phases,
+    total: spread(readings.map((reading) => reading.phases.reduce((sum, { ms }) => sum + ms, 0))),
+    transferred: spread(readings.map(({ transferred }) => transferred)),
+  };
+}
+
+/** A time in ms as the tables give it: to a tenth under 10 ms, whole and grouped from there, as
+ * the demo's timings table shows it. */
+export const ms = (time: number) =>
+  Math.round(time * 10) < 100 ? time.toFixed(1) : Math.round(time).toLocaleString("en-US");
+
+/** A spread's cell, "median / max" in the unit's format, or "-" where there is none. */
+const cell = (value: Spread | null | undefined, format: (n: number) => string) =>
+  value ? `${format(value.median)} / ${format(value.max)}` : "-";
+
+/** The timings' legend, before the pages' tables: what each state and each column reads, and how
+ * many readings each timing is the median and max of. */
+export function timingLegend(readings: number): string[] {
+  return [
+    `Desktop timings, live, in the pinned chrome-headless-shell at 1280×720: each cell the median / max of ${readings} ${readings === 1 ? "reading" : "readings"}, in ms, bytes in bytes`,
+    "  cold: a fresh browser profile, its HTTP cache empty, the page opened and its demo's Run pressed",
+    "  cached: then a fresh page, and its fresh worker, in that browser within the max-age, its Run answered from the HTTP cache",
+    "  in place: then, on the cold page, a further Run on the worker it holds",
+    "  Readable: the page's first-contentful-paint; .wasm before Run: whether any .wasm was requested before Run's click",
+    "  First result: Run's click to the console's first output; the phases as the demo's timings show them, Total their sum",
+    "  Run bytes: what the page and its workers transferred over the network from Run's click to the run's end, 0 when the HTTP cache answered all",
+  ];
+}
+
+/** A page's timings: its name and path, then one table row per state, a column per phase any
+ * state's run had, in the runtime's phase order, each labelled as the demo's timings label it;
+ * then each reading that failed, by its state and reason. */
+export function timingSection(
+  name: string,
+  path: string,
+  states: readonly StateReadings[],
+): string[] {
+  const rows = states.map(aggregate);
+  const labels = new Map(
+    states.flatMap(({ readings }) =>
+      readings.flatMap(({ phases }) => phases.map(({ phase, label }) => [phase, label] as const)),
+    ),
+  );
+  const phases = [
+    ...(PHASES as readonly string[]).filter((phase) => labels.has(phase)),
+    ...[...labels.keys()].filter((phase) => !(PHASES as readonly string[]).includes(phase)),
+  ];
+  const lines = [
+    `${name}, ${path}`,
+    ...table(
+      [
+        [
+          "State",
+          "N",
+          "Readable",
+          ".wasm before Run",
+          "First result",
+          ...phases.map((phase) => labels.get(phase)!),
+          "Total",
+          "Run bytes",
+        ],
+        ...rows.map((row) => [
+          row.state,
+          String(row.count),
+          cell(row.readable, ms),
+          row.wasmBeforeRun,
+          cell(row.first, ms),
+          ...phases.map((phase) => cell(row.phases.get(phase), ms)),
+          cell(row.total, ms),
+          cell(row.transferred, bytes),
+        ]),
+      ],
+      1,
+    ),
+  ];
+  const failures = states.flatMap(({ state, failures }) =>
+    failures.map((failure) => `  ${state}: ${failure}`),
+  );
+  if (failures.length > 0) lines.push("Not measured:", ...failures);
   return lines;
 }
 

@@ -1,5 +1,11 @@
 // mise run measure: evidence of the deployed site, as Pages serves it to a browser, printed and
-// never judged. The base is the Pages URL, or the URL given as the first argument.
+// never judged. The base is the Pages URL, or the URL given as the one positional argument.
+//
+// Flags, so a development run spares the Pages bandwidth: --readings N, the readings of each
+// timing, 5 by default, 0 for none and no browser; --pages a,b, the demo pages timed, by their keys
+// (scripts/measure-timings.ts's PAGES), every page by default; and --skip-sizes, which leaves out
+// the size table and the drift report, and with them the local builds and every module's fetch but
+// hello's, which the head reads the deployed commit from.
 //
 // Sizes: each prebuilt module, <base>go/<name>.wasm for every entrypoint
 // scripts/build-go-modules.sh builds, and the playground's compiler and linker, as the live
@@ -15,12 +21,18 @@
 // other byte for byte, and the live module against the first; each difference gives its byte
 // counts and the build settings Go stamped differently (vcs.revision, vcs.time, vcs.modified).
 //
+// Timings: each demo page's Run, cold, cached, and in place, in the pinned chrome-headless-shell
+// with the network allowed, each timing the median and max of the readings, one table per page;
+// scripts/measure-timings.ts reads them.
+//
 // The head names the deployed commit: the vcs.revision Go stamped into the live hello.wasm, and,
 // for the Pages URL, the latest successful github-pages deployment gh reports for the checkout's
-// repository, with whether the two agree. Exits 0 whatever it measured; exits 1 only when the
-// manifest can't be read, as nothing can be weighed against it. Never a part of mise run check.
-// Reads the network and gh; writes nothing outside TMPDIR. scripts/measure-report.ts holds the
-// pure parts, which test/unit/measure.test.ts runs.
+// repository, with whether the two agree. Exits 0 whatever it measured, a failed reading reported
+// by its reason; exits 1 only when an argument can't be taken, the manifest can't be read, as
+// nothing can be weighed against it, the local build fails, or BROWSER_EXECUTABLE names no
+// browser. Never a part of mise run check. Reads the network and gh; writes nothing outside
+// TMPDIR, the browser's profiles among it. scripts/measure-report.ts holds the pure parts, which
+// test/unit/measure.test.ts runs.
 
 import { spawn } from "node:child_process";
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
@@ -28,6 +40,7 @@ import { get as httpGet, type IncomingMessage } from "node:http";
 import { get as httpsGet } from "node:https";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parseArgs } from "node:util";
 
 import type { BuildFile } from "../web/runtime/build.ts";
 import { programClosure } from "../web/runtime/build.ts";
@@ -42,9 +55,12 @@ import {
   report,
   type SizeRow,
   sizeSection,
+  timingLegend,
+  timingSection,
   weigh,
   type Weight,
 } from "./measure-report.ts";
+import { pagesFor, timings } from "./measure-timings.ts";
 
 /** The site's URL on Pages, the base when no argument gives one. */
 const pages = "https://jaimestill.github.io/spike-html-go-wasm/";
@@ -202,102 +218,162 @@ async function deployedCommit(base: string, hello: Buffer | undefined): Promise<
   return `${fromModule}; ${fromPages}`;
 }
 
-/** Prints the report for the site at `base`. */
-async function main(base: string): Promise<void> {
+/** What the command line asks: the base, the readings of each timing, the pages timed by their
+ * keys, every page when none are named, and whether the sizes and the drift are left out. */
+interface Options {
+  base: string;
+  readings: number;
+  pages: string[] | undefined;
+  skipSizes: boolean;
+}
+
+/** The options the arguments give; throws naming an argument it can't take. */
+function options(args: string[]): Options {
+  const { values, positionals } = parseArgs({
+    args,
+    allowPositionals: true,
+    options: {
+      readings: { type: "string", default: "5" },
+      pages: { type: "string" },
+      "skip-sizes": { type: "boolean", default: false },
+    },
+  });
+  if (positionals.length > 1) throw new Error(`one base URL, not ${positionals.join(" ")}`);
+  const readings = Number(values.readings);
+  if (!Number.isInteger(readings) || readings < 0) {
+    throw new Error(`--readings takes a whole number, 0 or more, not ${values.readings}`);
+  }
+  return {
+    base: positionals[0] ?? pages,
+    readings,
+    pages: values.pages?.split(",").map((key) => key.trim()),
+    skipSizes: values["skip-sizes"],
+  };
+}
+
+/** The size table's and the drift report's sections for the site, the local builds in `scratch`,
+ * and the live hello module's bytes, which the head reads. */
+async function sizesAndDrift(
+  site: URL,
+  scratch: string,
+): Promise<{ sections: string[][]; hello: Buffer | undefined }> {
+  // The two local builds run first, one after the other, so they never contend with each other
+  // or with the brotli weighing for the machine.
+  const first = await localBuild(scratch, "first");
+  const second = await localBuild(scratch, "second");
+
+  const manifestURL = new URL("go/toolchain/manifest.json", site);
+  const manifestWire = await wire(manifestURL);
+  if (manifestWire.status !== 200) {
+    throw new Error(`${manifestURL.href}: ${manifestWire.status}, nothing to weigh against`);
+  }
+  const { body: manifestBody } = await weigh(manifestWire.bytes, manifestWire.encoding);
+  const manifest = JSON.parse(manifestBody.toString("utf8")) as Manifest;
+
+  const names = [...first.keys()];
+  const modules = await pooled(names, (name) => weighed(new URL(`go/${name}.wasm`, site)));
+  const tools = await pooled([manifest.compile, manifest.link], (path) =>
+    weighed(new URL(path, manifestURL)),
+  );
+
+  const closures = programs.map((program) => {
+    try {
+      const archives = programClosure(manifest, programFiles(program)).flatMap((path) => {
+        const archive = manifest.packages[path]?.archive;
+        return archive ? [archive] : [];
+      });
+      return { program, archives };
+    } catch (error) {
+      return { program, archives: error instanceof Error ? error.message : String(error) };
+    }
+  });
+  const wanted = [
+    ...new Set(closures.flatMap(({ archives }) => (Array.isArray(archives) ? archives : []))),
+  ];
+  const fetched = await pooled(wanted, (path) => weighed(new URL(path, manifestURL)));
+  const archives = new Map(wanted.map((path, at) => [path, fetched[at]]));
+
+  const failures: string[] = [];
+  const rows: SizeRow[] = [];
+  const row = (name: string, file: Weighed) => {
+    if (typeof file === "string") failures.push(`${name}: ${file}`);
+    else rows.push(moduleRow(name, file.weight));
+  };
+  names.forEach((name, at) => row(`${name}.wasm`, modules[at]));
+  row("compile (toolchain)", tools[0]);
+  row("link (toolchain)", tools[1]);
+  for (const { program, archives: paths } of closures) {
+    if (typeof paths === "string") {
+      failures.push(`${program} closure: ${paths}`);
+      continue;
+    }
+    const weights = paths.flatMap((path) => {
+      const file = archives.get(path);
+      if (typeof file === "string" || file === undefined) {
+        failures.push(`${program} closure: ${file ?? `${path} not fetched`}`);
+        return [];
+      }
+      return [{ path, weight: file.weight }];
+    });
+    rows.push(closureRow(`${program} closure`, weights));
+  }
+
+  const drifts: Drift[] = names.map((name, at) => {
+    const local = first.get(name)!;
+    const live = modules[at];
+    return {
+      name,
+      local: compare(local, second.get(name)!),
+      live: typeof live === "string" ? live : compare(local, live.body),
+    };
+  });
+
+  const hello = modules[names.indexOf("hello")];
+  const maxAge =
+    [...modules, ...tools]
+      .map((file) => (typeof file === "string" ? null : file.cacheControl))
+      .find((value) => value)
+      ?.match(/max-age=(\d+)/)?.[1] ?? null;
+
+  const sizes = sizeSection(rows, maxAge === null ? "not sent" : `${maxAge} s`);
+  if (failures.length > 0) sizes.push("", "Not weighed:", ...failures.map((f) => `  ${f}`));
+  return {
+    sections: [sizes, driftSection(drifts)],
+    hello: typeof hello === "string" ? undefined : hello?.body,
+  };
+}
+
+/** Prints the report the options ask for. */
+async function main({ base, readings, pages: keys, skipSizes }: Options): Promise<void> {
   const site = new URL(base.endsWith("/") ? base : `${base}/`);
   const date = new Date().toISOString();
+  // Before anything is fetched, so a key no page has fails at once.
+  const timed = pagesFor(keys);
   const scratch = mkdtempSync(join(tmpdir(), "measure-"));
   try {
-    // The two local builds run first, one after the other, so they never contend with each other
-    // or with the brotli weighing for the machine.
-    const first = await localBuild(scratch, "first");
-    const second = await localBuild(scratch, "second");
-
-    const manifestURL = new URL("go/toolchain/manifest.json", site);
-    const manifestWire = await wire(manifestURL);
-    if (manifestWire.status !== 200) {
-      throw new Error(`${manifestURL.href}: ${manifestWire.status}, nothing to weigh against`);
+    const sections: string[][] = [];
+    let hello: Buffer | undefined;
+    if (skipSizes) {
+      const file = await weighed(new URL("go/hello.wasm", site));
+      hello = typeof file === "string" ? undefined : file.body;
+    } else {
+      const measured = await sizesAndDrift(site, scratch);
+      sections.push(...measured.sections);
+      hello = measured.hello;
     }
-    const { body: manifestBody } = await weigh(manifestWire.bytes, manifestWire.encoding);
-    const manifest = JSON.parse(manifestBody.toString("utf8")) as Manifest;
-
-    const names = [...first.keys()];
-    const modules = await pooled(names, (name) => weighed(new URL(`go/${name}.wasm`, site)));
-    const tools = await pooled([manifest.compile, manifest.link], (path) =>
-      weighed(new URL(path, manifestURL)),
-    );
-
-    const closures = programs.map((program) => {
-      try {
-        const archives = programClosure(manifest, programFiles(program)).flatMap((path) => {
-          const archive = manifest.packages[path]?.archive;
-          return archive ? [archive] : [];
-        });
-        return { program, archives };
-      } catch (error) {
-        return { program, archives: error instanceof Error ? error.message : String(error) };
+    if (readings > 0) {
+      sections.push(timingLegend(readings));
+      for (const { page, states } of await timings(site.href, timed, readings, scratch)) {
+        sections.push(timingSection(page.name, page.path, states));
       }
-    });
-    const wanted = [
-      ...new Set(closures.flatMap(({ archives }) => (Array.isArray(archives) ? archives : []))),
-    ];
-    const fetched = await pooled(wanted, (path) => weighed(new URL(path, manifestURL)));
-    const archives = new Map(wanted.map((path, at) => [path, fetched[at]]));
-
-    const failures: string[] = [];
-    const rows: SizeRow[] = [];
-    const row = (name: string, file: Weighed) => {
-      if (typeof file === "string") failures.push(`${name}: ${file}`);
-      else rows.push(moduleRow(name, file.weight));
-    };
-    names.forEach((name, at) => row(`${name}.wasm`, modules[at]));
-    row("compile (toolchain)", tools[0]);
-    row("link (toolchain)", tools[1]);
-    for (const { program, archives: paths } of closures) {
-      if (typeof paths === "string") {
-        failures.push(`${program} closure: ${paths}`);
-        continue;
-      }
-      const weights = paths.flatMap((path) => {
-        const file = archives.get(path);
-        if (typeof file === "string" || file === undefined) {
-          failures.push(`${program} closure: ${file ?? `${path} not fetched`}`);
-          return [];
-        }
-        return [{ path, weight: file.weight }];
-      });
-      rows.push(closureRow(`${program} closure`, weights));
     }
-
-    const drifts: Drift[] = names.map((name, at) => {
-      const local = first.get(name)!;
-      const live = modules[at];
-      return {
-        name,
-        local: compare(local, second.get(name)!),
-        live: typeof live === "string" ? live : compare(local, live.body),
-      };
-    });
-
-    const hello = modules[names.indexOf("hello")];
-    const maxAge =
-      [...modules, ...tools]
-        .map((file) => (typeof file === "string" ? null : file.cacheControl))
-        .find((value) => value)
-        ?.match(/max-age=(\d+)/)?.[1] ?? null;
-    const commit = await deployedCommit(
-      site.href,
-      typeof hello === "string" ? undefined : hello?.body,
-    );
-
-    const sizes = sizeSection(rows, maxAge === null ? "not sent" : `${maxAge} s`);
-    if (failures.length > 0) sizes.push("", "Not weighed:", ...failures.map((f) => `  ${f}`));
-    process.stdout.write(report({ base: site.href, commit, date }, [sizes, driftSection(drifts)]));
+    const commit = await deployedCommit(site.href, hello);
+    process.stdout.write(report({ base: site.href, commit, date }, sections));
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
 }
 
 if (import.meta.main) {
-  await main(process.argv[2] ?? pages);
+  await main(options(process.argv.slice(2)));
 }

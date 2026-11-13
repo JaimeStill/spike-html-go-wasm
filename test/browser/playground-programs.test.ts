@@ -27,9 +27,9 @@
 // it names, with its edits, the select following, with no reload. The page's one screen, at the
 // SDK's widths in both font sets, and its shell checks are playground-layout-suite.ts's and
 // site.test.ts's, with the select in place; the fences' bytes are the unit tier's
-// (go-demo-fences.test.ts). The helpers are go-demos.ts's, go-builds.ts's, and
-// playground-layouts.ts's. Every wait is bounded. Nothing here names the site: its base is
-// package.json's name.
+// (go-demo-fences.test.ts). The helpers are go-demos.ts's, go-builds.ts's, playground-layouts.ts's,
+// and playground-programs.ts's, the select and its programs' files. Every wait is bounded. Nothing
+// here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -61,6 +61,7 @@ import {
   type Watched,
 } from "./go-demos.ts";
 import { axQuery, paste, PLAYGROUND } from "./playground-layouts.ts";
+import { choose, FILES, PICKER } from "./playground-programs.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -78,9 +79,6 @@ after(async () => {
 
 /** Opens the playground, watched (go-demos.ts). */
 const open = () => openPage(browser, server.origin, "playground.html");
-
-/** The Program select. */
-const PICKER = `document.querySelector("main > .prose > .title select#program")`;
 
 /** The programs the select offers, each its value and its option's text, in order. */
 const PROGRAMS = [
@@ -193,15 +191,6 @@ const STDLIB_OUTPUT = [
   "Issues referenced: #9, #12, #14, #17",
 ].map((text) => ({ stream: "stdout", text }));
 
-/** Each program's files, in the demo's order. */
-const FILES: Record<string, string[]> = {
-  calc: ["main.go", "lexer.go", "parser.go", "eval.go", "input.txt"],
-  basics: ["main.go", "shapes.go"],
-  generics: ["main.go", "stack.go"],
-  concurrency: ["main.go", "pipeline.go"],
-  stdlib: ["main.go", "input.json"],
-};
-
 /** The standard packages each program's .go files import, whose closure its first Run fetches. */
 const IMPORTS: Record<string, string[]> = {
   calc: ["errors", "fmt", "os", "strconv", "strings", "unicode"],
@@ -226,24 +215,6 @@ const IMPORTS: Record<string, string[]> = {
 /** An edit to a program's main.go, appended to it, that changes what the program prints: a line
  * before the rest. Every program's main.go imports fmt. */
 const EDIT = '\nfunc init() { fmt.Println("EDITED") }\n';
-
-/** Chooses the program in the select, as a reader's choice changes it, and waits until the demo's
- * tabs show the program's files, the names given, its shipped ones by default. */
-async function choose(page: Page, program: string, names = FILES[program]) {
-  await page.evaluate(`(() => {
-    const picker = ${PICKER};
-    picker.value = ${JSON.stringify(program)};
-    picker.dispatchEvent(new Event("input", { bubbles: true }));
-    picker.dispatchEvent(new Event("change", { bubbles: true }));
-  })()`);
-  await until(
-    page,
-    `[...window.demos.part(${PLAYGROUND}, "sl-file-tabs").shadowRoot
-      .querySelectorAll('[role="tab"]')].map((tab) => tab.dataset.name).join()
-      === ${JSON.stringify(names.join())}`,
-    2000,
-  );
-}
 
 /** Resolves once the demo's tabs show the program's files and the select has it chosen, as a
  * history step or an edited fragment leaves them. */

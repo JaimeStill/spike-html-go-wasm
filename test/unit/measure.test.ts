@@ -1,14 +1,16 @@
 // mise run measure's pure parts, scripts/measure-report.ts, on fixtures, so it reads no network:
 // the median and max over readings; a body weighed from its wire bytes, raw, as served under its
 // encoding, and at brotli 11; a closure's revalidation count, each distinct archive once; two
-// builds compared byte for byte, with the build settings Go stamped differently; and the size table
-// and the drift report as printed. The live run itself is never a test.
+// builds compared byte for byte, with the build settings Go stamped differently; the size table
+// and the drift report as printed; and the desktop timings, each state's readings aggregated into
+// their median and max and a page's table as printed. The live run itself is never a test.
 
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { brotliCompressSync, constants, deflateSync, gzipSync } from "node:zlib";
 
 import {
+  aggregate,
   brotli,
   buildSettings,
   closureRow,
@@ -18,10 +20,15 @@ import {
   max,
   median,
   moduleRow,
+  ms,
+  type Reading,
   report,
   revalidations,
   sizeSection,
+  spread,
   table,
+  timingLegend,
+  timingSection,
   weigh,
   type Weight,
 } from "../../scripts/measure-report.ts";
@@ -248,5 +255,132 @@ describe("the report's formatting", () => {
       ]),
       "measure  https://example.com/\ndeployed commit: abc\ndate: 2026-11-13\n\none\n\ntwo\n",
     );
+  });
+});
+
+/** A cold reading of a handler demo, its phases as the timings record and label them. */
+const handlerReading = (
+  fetch: number,
+  call: number,
+  overrides: Partial<Reading> = {},
+): Reading => ({
+  readable: 200,
+  wasmBeforeRun: false,
+  first: fetch + call + 10,
+  phases: [
+    { phase: "fetch", label: "Fetch", ms: fetch },
+    { phase: "call", label: "Call", ms: call },
+  ],
+  transferred: 1000,
+  ...overrides,
+});
+
+describe("the desktop timings", () => {
+  test("a spread is the median and the max of the values, and none of no values", () => {
+    assert.deepEqual(spread([30, 10, 20, 100]), { median: 25, max: 100 });
+    assert.equal(spread([]), null);
+  });
+
+  test("a state's readings aggregate into each timing's median and max, the total each reading's phases summed", () => {
+    const row = aggregate({
+      state: "cold",
+      readings: [
+        handlerReading(100, 2),
+        handlerReading(300, 4, { readable: 400, transferred: 3000 }),
+        handlerReading(200, 3, { readable: 300, first: null }),
+      ],
+      failures: [],
+    });
+    assert.equal(row.state, "cold");
+    assert.equal(row.count, 3);
+    assert.deepEqual(row.readable, { median: 300, max: 400 });
+    assert.equal(row.wasmBeforeRun, "no");
+    assert.deepEqual(row.first, { median: 213, max: 314 }, "a reading with no output left out");
+    assert.deepEqual(
+      [...row.phases],
+      [
+        ["fetch", { median: 200, max: 300 }],
+        ["call", { median: 3, max: 4 }],
+      ],
+    );
+    assert.deepEqual(row.total, { median: 203, max: 304 });
+    assert.deepEqual(row.transferred, { median: 1000, max: 3000 });
+  });
+
+  test("whether .wasm came before Run reads no, yes, yes in k of n, or a dash where no reading asked", () => {
+    const answered = (...answers: (boolean | null)[]) =>
+      aggregate({
+        state: "s",
+        readings: answers.map((wasmBeforeRun) => handlerReading(1, 1, { wasmBeforeRun })),
+        failures: [],
+      }).wasmBeforeRun;
+    assert.equal(answered(false, false), "no");
+    assert.equal(answered(true, true), "yes");
+    assert.equal(answered(true, false, false), "yes in 1 of 3");
+    assert.equal(answered(null, null), "-");
+  });
+
+  test("no readings aggregate to a count of 0 and no timing", () => {
+    const row = aggregate({ state: "cached", readings: [], failures: ["Failed format: boom"] });
+    assert.equal(row.count, 0);
+    assert.equal(row.readable, null);
+    assert.equal(row.total, null);
+    assert.equal(row.phases.size, 0);
+  });
+
+  test("a time is to a tenth under 10 ms and whole, grouped, from there", () => {
+    assert.equal(ms(0.44), "0.4");
+    assert.equal(ms(9.94), "9.9");
+    assert.equal(ms(9.96), "10");
+    assert.equal(ms(1234.5), "1,235");
+  });
+
+  test("the legend names the readings each cell is the median and max of", () => {
+    assert.match(timingLegend(5)[0], /median \/ max of 5 readings/);
+    assert.match(timingLegend(1)[0], /median \/ max of 1 reading,/);
+  });
+
+  test("a page's table: a row per state, a column per phase any state had, in the runtime's order, and each failure beneath", () => {
+    const lines = timingSection("sqlate compile", "sqlate-compile.html", [
+      {
+        state: "cold",
+        readings: [
+          {
+            readable: 256,
+            wasmBeforeRun: false,
+            first: 273,
+            phases: [
+              { phase: "fetch", label: "Fetch", ms: 190 },
+              { phase: "compile", label: "Wasm compile", ms: 6.4 },
+              { phase: "call", label: "Call", ms: 7.4 },
+            ],
+            transferred: 2237978,
+          },
+        ],
+        failures: [],
+      },
+      {
+        state: "in place: rerun",
+        readings: [
+          {
+            readable: null,
+            wasmBeforeRun: null,
+            first: 16,
+            phases: [{ phase: "call", label: "Call", ms: 0.6 }],
+            transferred: 0,
+          },
+        ],
+        failures: ["Failed compile: no tier"],
+      },
+    ]);
+    assert.deepEqual(lines, [
+      "sqlate compile, sqlate-compile.html",
+      "State            N   Readable  .wasm before Run  First result      Fetch  Wasm compile       Call      Total              Run bytes",
+      "---------------  -  ---------  ----------------  ------------  ---------  ------------  ---------  ---------  ---------------------",
+      "cold             1  256 / 256                no     273 / 273  190 / 190     6.4 / 6.4  7.4 / 7.4  204 / 204  2,237,978 / 2,237,978",
+      "in place: rerun  1          -                 -       16 / 16          -             -  0.6 / 0.6  0.6 / 0.6                  0 / 0",
+      "Not measured:",
+      "  in place: rerun: Failed compile: no tier",
+    ]);
   });
 });

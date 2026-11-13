@@ -260,9 +260,16 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
   TMPDIR with `scripts/build-go-modules.sh`, the site build's flags, each build with a `GOCACHE` of
   its own, and holds the two against each other and the live module against the first, byte for
   byte, giving each difference's byte counts and the build settings Go stamped differently, as
-  `vcs.revision` and `vcs.modified`. It reads the network and `gh`, writes nothing outside TMPDIR,
-  and isn't part of the check; the unit tier holds its report layer, `scripts/measure-report.ts`,
-  on fixtures.
+  `vcs.revision` and `vcs.modified`. Its desktop timings, `scripts/measure-timings.ts`, give one
+  table per demo page, the components page, the Markdown pages, the sqlate page, and the
+  playground once per program, read in the pinned chrome-headless-shell with the network allowed:
+  cold, in a fresh profile; cached, a fresh page and worker within the max-age; and in place, a
+  further Run on the held worker. Each row gives the page's first-contentful-paint, whether any
+  `.wasm` was requested before Run, Run's click to the first output, the run's phases as the
+  demo's timings show them, and the bytes transferred during the run, each the median and max of
+  five readings. `--readings N`, `--pages a,b`, and `--skip-sizes` narrow a development run. It
+  reads the network and `gh`, writes nothing outside TMPDIR, and isn't part of the check; the unit
+  tier holds its report layer, `scripts/measure-report.ts`, on fixtures.
 
 ## Runtime
 

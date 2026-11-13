@@ -2,16 +2,19 @@
 // page's, and the rendered Markdown pages', shared by go-demo.test.ts, which proves sl-go-demo,
 // go-runs.test.ts and go-build.test.ts, which prove the runtime through it, playground.test.ts,
 // which proves the playground, and sqlate-compile.test.ts, go-core-graph.test.ts, and
-// go-web-sdk-handlers.test.ts, which prove the Markdown pages' demos: a page opened with every
-// request it and its workers send watched, every worker it starts counted, live until it detaches,
-// and helpers installed on the page that read what a demo shows, again after a reload.
+// go-web-sdk-handlers.test.ts, which prove the Markdown pages' demos; and by mise run measure's
+// desktop timings (scripts/measure-timings.ts), which read the demos on the live site: a page
+// opened with every request it and its workers send watched, every worker it starts counted, live
+// until it detaches, and helpers installed on the page that read what a demo shows, again after a
+// reload.
 //
 // The worker fetches the modules itself, and the page's own Network domain never sees a worker's
 // requests, so each page auto-attaches to its workers through the page's session, in the
 // protocol's non-flat mode, whose messages travel inside Target events on that session: each
 // worker attached is counted, live until it detaches, waits for the debugger until its Network
-// domain is on, and reports every request it sends. Every wait is bounded. Nothing here names the
-// site: the origin given is the served build's, under its base.
+// domain is on, and reports every request it sends and the bytes each one's response transferred.
+// Every wait is bounded. Nothing here names the site: the origin given is the served build's, under
+// its base, or the live site's.
 
 import { SETTLED, until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
@@ -92,14 +95,16 @@ const HELPERS = `(() => {
 })()`;
 
 /** A page under watch: the origin it was served from, every request it and its workers send, by
- * URL, each worker it started, by its script's URL, and the workers still live, by their
- * sessions. */
+ * URL, each worker it started, by its script's URL, the workers still live, by their sessions,
+ * and each response as it finished loading, its URL and the bytes it transferred over the network
+ * (CDP's encodedDataLength, 0 for one the HTTP cache answered), in the order they finished. */
 export interface Watched {
   page: Page;
   origin: string;
   requests: string[];
   workers: string[];
   live: Set<string>;
+  transfers: { url: string; bytes: number }[];
 }
 
 /** The pages that hold Go demos: the components page, the playground, the sqlate page, and the
@@ -123,7 +128,23 @@ export async function open(
   path = "components.html",
 ): Promise<Watched> {
   const page = await browser.open("about:blank");
-  const watched: Watched = { page, origin, requests: [], workers: [], live: new Set() };
+  const watched: Watched = {
+    page,
+    origin,
+    requests: [],
+    workers: [],
+    live: new Set(),
+    transfers: [],
+  };
+  // Each request's URL by its session, the page's or a worker's, and its id, which only its
+  // session's loadingFinished names.
+  const urls = new Map<string, string>();
+  const sent = (session: string, requestId: string, url: string) => {
+    watched.requests.push(url);
+    urls.set(`${session}:${requestId}`, url);
+  };
+  const finished = (session: string, requestId: string, bytes: number) =>
+    watched.transfers.push({ url: urls.get(`${session}:${requestId}`) ?? "", bytes });
   let lastId = 0;
   page.on("Target.attachedToTarget", ({ sessionId, targetInfo }) => {
     watched.workers.push(targetInfo.url);
@@ -141,11 +162,21 @@ export async function open(
   });
   // A terminated worker detaches.
   page.on("Target.detachedFromTarget", ({ sessionId }) => watched.live.delete(sessionId));
-  page.on("Target.receivedMessageFromTarget", ({ message }) => {
+  page.on("Target.receivedMessageFromTarget", ({ sessionId, message }) => {
     const { method, params } = JSON.parse(message);
-    if (method === "Network.requestWillBeSent") watched.requests.push(params.request.url);
+    if (method === "Network.requestWillBeSent") {
+      sent(sessionId, params.requestId, params.request.url);
+    }
+    if (method === "Network.loadingFinished") {
+      finished(sessionId, params.requestId, params.encodedDataLength);
+    }
   });
-  page.on("Network.requestWillBeSent", ({ request }) => watched.requests.push(request.url));
+  page.on("Network.requestWillBeSent", ({ requestId, request }) =>
+    sent("page", requestId, request.url),
+  );
+  page.on("Network.loadingFinished", ({ requestId, encodedDataLength }) =>
+    finished("page", requestId, encodedDataLength),
+  );
   await page.cdp("Network.enable");
   await page.cdp("Target.setAutoAttach", {
     autoAttach: true,
