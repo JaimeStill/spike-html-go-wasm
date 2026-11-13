@@ -140,7 +140,7 @@ Door          two-way: nothing is released. go.mod gains two requirements, and t
 
 ## Progress
 
-slices 4/5 committed (1, 2a, 2, 3) · standards — · spec — · editor —
+slices 5/5 committed · standards — · spec — · editor —
 
 ## Decisions
 
