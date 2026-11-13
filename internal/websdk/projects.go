@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"sync"
 	"uuid"
@@ -124,7 +125,7 @@ func (s *store) list(w http.ResponseWriter, r *http.Request) error {
 	total := len(s.rows)
 	start := min((q.Page-1)*q.Size, total)
 	end := min(start+q.Size, total)
-	items := append([]project(nil), s.rows[start:end]...)
+	items := slices.Clone(s.rows[start:end])
 	s.mu.Unlock()
 	return web.WriteJSON(w, http.StatusOK, web.NewPage(items, q, web.Paging{
 		Total: &total,

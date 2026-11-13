@@ -14,6 +14,7 @@ package websdk
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -78,7 +79,7 @@ func parse(input string) (*http.Request, error) {
 		rest = after
 	}
 	if len(head) == 0 {
-		return nil, fmt.Errorf("no request line")
+		return nil, errors.New("no request line")
 	}
 	text := strings.Join(head, "\r\n") + "\r\n\r\n"
 	req, err := http.ReadRequest(bufio.NewReader(strings.NewReader(text)))
