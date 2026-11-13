@@ -11,140 +11,107 @@
 3. [x] components
 4. [x] playground
 5. [x] programs
-6. [ ] sqlate
+6. [x] sqlate
 7. [ ] scenarios
 8. [ ] measure
 9. [ ] review
 10. [ ] answer
 
-## Task brief · programs
+## Task brief · sqlate
 
 ```
-Problem       Evidence 12 is unproven. The playground opens only on the
-              calculator starter, so the spike hasn't shown basics, generics,
-              concurrency, and standard-library Go edited and run in the page,
-              or what each one costs to load, compile, link, and run. The
-              programs exist to exercise those costs: each one's closure and
-              phase timings are what the spike measures, not its size.
-Behaviors     1. Basics is a package main beside the starter's. It covers
-                 structs, methods, function values, and interfaces, and prints
-                 the same output every run, exit 0.
-              2. Generics, likewise: a type-parameter constraint, a generic
-                 type, and a range-over-func iterator.
-              3. Concurrency, likewise: goroutines, channels, select, a
-                 WaitGroup, and a pipeline; its doc comment notes GOMAXPROCS
-                 is 1 under GOOS=js. Output in a fixed order whatever the
-                 scheduling.
-              4. Standard library ("stdlib") reads input.json from its working
-                 directory, decodes it with encoding/json, works over it with
-                 slices and regexp, and prints a text/template report, exit 0.
-                 A malformed input.json prints one stderr line naming the JSON
-                 error, found through errors.As, and exits 1.
-              5. Each program is sized by its topic, no line target. Each is
-                 vetted and tested under GOOS=js on node's fs and on the
-                 runtime's in-memory fs, proving exact stdout and exit code
-                 (and the malformed input for stdlib). No program is built
-                 into the site; each follows the Go module's layer rules.
-              6. The playground has a native select labelled "Program" beside
-                 its heading: Calculator, Basics, Generics, Concurrency,
-                 Standard library. Choosing one shows that program's files in
-                 the one demo in place, first file active, no reload and no
-                 request. The page stays one screen at 390, 1120, and 1376 px
-                 in the machine's fonts and the DejaVu set, passes the SDK's
-                 shell checks, and the select is in the accessibility tree
-                 with its label.
-              7. sl-go-demo takes a FileSet as a property from the page and
-                 holds no file set of its own while one is given; editing,
-                 file actions, Reset, and Run work on the given set. A demo
-                 given none builds from its fences as before (components page
-                 unchanged). The page keeps one FileSet per program, built from
-                 the program's fences by the same rules the demo uses.
-              8. Edits survive switching within the tab, with the active file.
-                 Reset restores only the program on screen. A reload restores
-                 every program as shipped.
-              9. Switching programs while a run is pending stops that run,
-                 recorded as stopped. Each switch clears the console and the
-                 timings.
-              10. The calculator's files stay the demo's fences. Each other
-                  program is a template in the page whose fences equal its
-                  package's files byte for byte, checked in the unit tier by
-                  the existing fence reader.
-              11. The fragment names the program: #calc, #basics, #generics,
-                  #concurrency, #stdlib. Choosing writes it as a new history
-                  entry; Back, Forward, and an edited fragment show the program
-                  named, keeping its edits. No or unknown fragment opens the
-                  calculator. The index's evidence 12 links each program.
-              12. In the browser tier, each program's first Run fetches only
-                  its closure's archives beyond those the worker holds and
-                  prints its exact output and exit code. An edit to main.go
-                  reruns the edited program. Switching back to a program built
-                  earlier compiles and links again, fetching no archive the
-                  worker holds. Changing only stdlib's input.json reruns with
-                  no Go compile or link; a malformed input.json shows
-                  behavior 4's line and exit 1.
-              13. The browser tier reports, never as a gate, each program's
-                  cold phase timings (fetch, Wasm compile, Go compile, link,
-                  instantiate, start, run) from a fresh worker and empty
-                  cache, its warm timings after an edit, and its closure:
-                  archive count, raw bytes as fetched, gzip bytes. The session
-                  brief's Evidence carries the table.
-              14. About adds, after "Stop to cancel": "Goroutines take turns
-                  on one thread: they sleep, wait, and talk over channels as
-                  usual, but CPU-heavy work doesn't run any faster in
-                  parallel. A program that waits forever, say on a channel
-                  nothing sends to, never finishes and shows no deadlock
-                  error; press Stop." Its last sentence becomes: "Your edits
-                  to each program live only in this tab, so you can switch
-                  away and come back to them: reload, and you're back to where
-                  you started." The About text test holds both.
-              15. The README documents the programs, the picker, the FileSet
-                  property, and the fragment; the context's capabilities list
-                  them as built. The direction checks hold every tier
-                  unchanged, except the property's type, which the pages tier
-                  already imports.
-Test seams    mise run check: Go tests under GOOS=js on both filesystems for
-              1–5; the unit tier's fence reader for 10; the browser tier
-              through the playground's select, its fragment, and sl-go-demo
-              over the page's runner for 6–9 and 11–14, with the components
-              page's demo tests for 7's unchanged fallback.
-Slices        1. Picker with Calculator and Basics: basics and its tests; the
-                 FileSet property with the fence fallback kept; the page's
-                 FileSet per program by the demo's fence rules; the select;
-                 edits surviving a switch, Reset scoped, a switch stopping the
-                 pending run and clearing output; basics' template and fence
-                 check; browser tests for exact output, a switch keeping
-                 edits, one-screen and shell tests in both font sets;
-                 captures.
-              2. Generics: package and tests, template and fence check,
-                 browser run to exact output, capture.
-              3. Concurrency: package and tests, template and fence check,
-                 browser run to exact output, About's goroutine and deadlock
-                 sentences with their test.
-              4. Standard library: package, input.json, tests for shipped and
-                 malformed input; template and fence check; browser runs to
-                 exact output, input.json alone rerunning with no compile or
-                 link, malformed input's exit 1.
-              5. Deep link and report: fragment with history and calculator
-                 fallback; index links from evidence 12; switching back
-                 recompiling with no archive fetched; per-program timing and
-                 closure report; About's last sentence; README, context
-                 capabilities; captures of each program at the SDK's widths.
-Out of scope  Edits kept across a reload; one build held per program; programs
-              written to load a phase heavily; live-site timings and gzip and
-              the size report (measure task); Markdown pages (sqlate task);
-              workspace modules' archives; go vet or go test in the page; the
-              programs on the components page or in the demo's toolbar; any
-              release or change to a reference repository.
-Door          two-way: nothing is released, go.mod gains no requirement, no
-              program is built into the site, and the picker, templates, and
-              FileSet property can each be removed.
+Problem       Evidence 2, 3, and 11 are unproven. No page lets a reader compose sqlate
+              statements from sqlate's patterns and their own, against a real engine's dialect,
+              or run them in-process over a scripted driver. No rendered Markdown page embeds a
+              demo. sqlate is the first workspace module the spike requires: the first test of
+              the by-tag rule, of module archives in the in-page build, and of what a
+              PostgreSQL-backed library costs a page.
+Behaviors     1. go.mod requires sqlate v0.7.0 and sqlate/postgres v0.7.0 by tag, with no
+                 replace; the check and the Pages build read no network beyond install's
+                 download.
+              2. A sqlate program, a package main beside the playground's programs and never
+                 built into the site, reads the .sql files in its working directory. A file
+                 <ns>.<name>.sql is a pattern published in namespace ns; any other .sql is a
+                 statement. It compiles the statements against PostgreSQL's patterns plus the
+                 reader's namespaces, for PostgreSQL's dialect, and prints each statement in
+                 name order: its name, tier, parameters in order, and SQL with $n placeholders.
+                 It exits 0.
+              3. It ships with sample files in go-web-service's style: app patterns (an
+                 identity RETURNING, native with its port note), and statements that include
+                 both sql.* and app.* patterns (a create, a guarded edit, its version check).
+              4. A catalog or compile error (a reserved or repeated namespace, a missing tier,
+                 an unknown include, a native include in a standard statement) prints sqlate's
+                 own message on one stderr line and exits 1.
+              5. A second Go file runs the edit statement, guarded by the version statement,
+                 over sqltest's scripted driver, with no socket. Its script is set by
+                 input.json's stored version: equal to the version read gives the new version;
+                 another value gives "version mismatch: expected N, current M"; null gives
+                 sql.ErrNoRows' message. It prints each driver call (op, $n SQL, bound values).
+                 A missing edit or version statement, or malformed input.json, prints why and
+                 exits 1. testing.TB is satisfied by a commented stand-in.
+              6. The program is vetted and tested under GOOS=js on node's fs and on the
+                 in-memory fs, covering each outcome in 2–5 exactly.
+              7. The playground's manifest adds an archive for every module package the sqlate
+                 program's closure needs, named by hash like the standard library's. The
+                 in-page build resolves module imports through the manifest just as it does
+                 standard ones.
+              8. A sqlate hand page holds the program as an editable-files source demo whose
+                 fences equal the package's files byte for byte (unit tier). In the browser
+                 tier: the first Run prints the exact output; an edit to a .sql file or to
+                 input.json reruns with no Go compile or link; an edit that breaks a statement
+                 shows behavior 4's line and exit 1; a new pattern file in a new namespace can
+                 be included by a statement.
+              9. The editor highlights SQL in every palette with Shiki's grammar, its tokens
+                 matching the SDK fence's colours. A fence labelled sql defaults to a .sql
+                 name, and sl-go-demo's `file` attribute names a fence that names none; an
+                 explicit name wins, and demos without the attribute behave as before.
+              10. A prebuilt sqlate scenario serves one handler, compile: one statement's text,
+                  compiled against PostgreSQL's patterns plus the same sample app patterns
+                  (byte for byte the program's, unit tier), answering its $n SQL and printing
+                  its parameters, or rejecting with sqlate's message. It is tested under
+                  GOOS=js on both filesystems.
+              11. A rendered Markdown page, written in the spike in its own directory and
+                  filled into a Markdown shell by the SDK's markdownPages, embeds the compile
+                  handler demo around an ordinary ```sql fence, named by `file`. The shell's
+                  script gives each demo the page's runner, and Go loads only on Run. The page
+                  passes the SDK's shell checks and crawl; the browser tier proves an edit
+                  recompiling and a refusal.
+              12. The bridge and the runtime serve both pages with no sqlate-specific code,
+                  and sl-go-demo changes only by behavior 9's general addition, landed first.
+              13. The browser tier reports, never as a gate: the source demo's cold and warm
+                  phase timings and closure (archive count, raw, gzip), and the prebuilt
+                  scenario's raw and gzip bytes.
+              14. The index's evidence 2, 3, and 11 link the pages. The README documents the
+                  program, its naming convention, the scenario, both pages, `file`, and the
+                  manifest's modules; the context's capabilities list them, and the playground's
+                  "standard imports only" becomes "standard and the site's pinned modules".
+Test seams    mise run check: Go tests under GOOS=js on both filesystems for 2–6 and 10; the
+              unit tier's fence reader for 8 and 10 and its toolchain test for 7; the browser
+              tier through sl-go-demo over each page's runner for 8, 9, 11, and 13, with the
+              palette-token test for 9.
+Slices        1. The program: the two requirements; the package with its sample patterns and
+                 statements, compile and print, and its error exit; tests on both filesystems.
+              2. In-page sqlate: module archives in the manifest and the build resolving them;
+                 the hand page's source demo and its fence check; browser tests for exact
+                 output, a .sql-only rerun with no compile, a broken statement, a new
+                 namespace; index link for evidence 2; capture.
+              3. The run: the second Go file, input.json, and their tests; browser tests for
+                 the three outcomes and an input.json-only rerun; index link for evidence 3.
+              4. SQL in the editor: the grammar, the .sql default, `file`, the palette-token
+                 test; the hand page highlighted.
+              5. Prebuilt and Markdown: the compile scenario and its tests; the Markdown
+                 directory, shell, script, and page; shell checks and crawl; browser tests;
+                 timing, closure, and size report; index link for evidence 11; README, context
+                 capabilities.
+Out of scope  A live database; the stub dialect; a runtime change giving prebuilt programs
+              files; a directory level in the file set; multi-file demos in Markdown; sqlate in
+              the playground's Program select; //go:embed in the in-page build; live-site
+              timings and the TinyGo comparison (measure task); go-core and go-web-sdk
+              (scenarios task); any write to sqlate, go-web-service, or the SDK.
+Door          two-way: nothing is released; go.mod gains two requirements, and the program,
+              scenario, pages, `file`, the grammar, and the manifest's module entries can each
+              be removed.
 ```
-
-Choices made beyond the rounds, approved with this brief: the option labels and fragment names
-above; a switch stops the pending run and clears output (9); About's last sentence (14); report
-bytes are raw as fetched plus their gzip size, since Vite's preview doesn't gzip; stdlib's
-malformed input exits 1 with one errors.As-found stderr line. Slice 1 exports the demo's
-fence-naming rules from the components tier for the page to reuse, rather than duplicating them.
 
 ## Decisions
 
@@ -771,6 +738,45 @@ fence-naming rules from the components tier for the page to reuse, rather than d
 - programs (brief): the architect accepted the brief with the report test kept in the browser
   tier (≈53 s of each check), as behavior 13 has it; moving it to `mise run report:programs` alone
   stays open for a later task.
+- sqlate: sqltest's scripted pool is opened outside a test through a commented testing.TB
+  stand-in (sqltest.Open calls only Helper and Cleanup). Rejected: waiting on a sqlate release
+  with a constructor that takes no test.
+- sqlate: the reader composes the demo: editable pattern and statement files, and a main.go that
+  builds a catalog of sqlate's patterns plus theirs and prints the compiled statements, seeded in
+  go-web-service's style. Rejected: a fixed run of sqlate's README guarded edit.
+- sqlate: PostgreSQL's dialect and patterns (sqlate/postgres), since a reader wants a real
+  engine. Rejected: sqltest's stub dialect, despite ~0.6 MB gzip less prebuilt and ~8.5 MB less
+  in-page.
+- sqlate: the demo editor highlights SQL with Shiki's grammar; a sql fence defaults to a .sql
+  name, and sl-go-demo gains a `file` attribute for a fence that names none.
+- sqlate: the Markdown page is the spike's own writing in its own directory, rendered as its own
+  tree. Rejected: copying it into content/ at a commit of its own.
+- sqlate: the playground's manifest adds the site's pinned workspace modules' archives; "standard
+  imports only" becomes "standard and the site's pinned modules".
+- sqlate: the reader's sqlate program compiles in the page (cold Run ~34 MB gzip, reported as a
+  finding). Rejected: a prebuilt program with a runtime change to give it the demo's files.
+- sqlate: in the demo's flat file set, <ns>.<name>.sql is a pattern in namespace ns and any
+  other .sql is a statement. Rejected: a directory level in the file set.
+- sqlate: evidence 3 runs in the same program, a second Go file over sqltest set by input.json.
+  Rejected: a separate prebuilt run demo.
+- sqlate: the Markdown page embeds a prebuilt compile handler around a ```sql fence named by
+  `file`. Rejected: the multi-file program as raw-HTML pre blocks.
+- sqlate (build): the program prints each statement under a `-- <name>: <tier>, parameters $1 a,
+  …` header and prints sqlate's messages unchanged. sqlate's patterns register first, as in
+  go-web-service, so a reader's `sql.*` file gets sqlate's "registered twice".
+- sqlate (build): the playground's manifest takes the repository's own `go list -deps ./...`
+  closure of non-standard, non-main packages, each as `mod/<path>.<hash>.a`, so a later module
+  joins the manifest by being imported.
+- sqlate (build): a version mismatch and no row are results on stdout with exit 0; `input.json`
+  rejects unknown keys and trailing values; a missing `input.json` exits 1.
+- sqlate (build): the fence naming rules live in the DOM-free `file-names.ts`: a fence's own name,
+  then the demo's `file`, then the language's default (`query.sql`), then the mode's default.
+- sqlate (build): markdownPages takes the spike's `markdown/` directory as its one tree's source
+  (SDK v0.6.2 reads the repository and ref only for an external file's blob link); `content.json`
+  stays `{ "trees": [] }`; the Markdown can't link relatively to the hand pages.
+- sqlate (build): the compile scenario embeds its patterns as
+  `internal/sqlate/patterns/<ns>/<name>.sql`, held byte for byte to the program's by a unit test,
+  and panics at startup if they don't build a catalog, as a composition root should.
 
 ## Notes
 
@@ -830,9 +836,9 @@ fence-naming rules from the components tier for the page to reuse, rather than d
   read the phases with that in mind.
 - A cold playground build, locally, takes ~0.5–0.7 s to fetch, 1.1–1.5 s to Go compile, and
   0.6–0.95 s to link; after an edit, ~0.12–0.24 s to Go compile and ~0.35–0.5 s to link.
-- Whether sqlate, go-core, and go-web-sdk build archives for js/wasm is unknown. The sqlate and
-  scenarios tasks settle it. The newest versions so far come from local tags only, so check
-  them against the remotes when those tasks plan.
+- sqlate v0.7.0 and its dependencies build archives for js/wasm. Whether go-core and go-web-sdk
+  do is unknown; the scenarios task settles it. Their newest versions so far come from local tags
+  only, so check them against the remotes when it plans.
 
 - The playground's floor is counted in lines, so it follows the space and type profiles. On a
   short screen, such as 390x600, the demo holds its floor and the page scrolls down, never
@@ -859,7 +865,9 @@ fence-naming rules from the components tier for the page to reuse, rather than d
   0.65–1.3 s; warm, after an edit to main.go, 0.32–0.66 s. For the measure task.
 - The SDK's crawl fails on a fragment link that names no element on the page, so a deep link to
   a page's state needs an element carrying that id.
-- Pasting into an empty file in the editor stores an extra trailing newline.
+- Pasting into an empty file in the editor stores an extra trailing newline, and pasting a whole
+  file that ends in a newline over the editor's content doubles it; likely an editor bug. Tests
+  paste without a final newline.
 - In browser tests, retyping a whole main.go through CDP may not finish building; appending
   through a paste event works.
 
@@ -873,6 +881,17 @@ fence-naming rules from the components tier for the page to reuse, rather than d
   group shrink and wrap.
 - Intake candidate: the coordinator's architecture or the SDK could offer a browser-test helper
   that runs a suite in a pinned font set.
+
+- The sqlate page's program closure is 219 archives, 96.1 MB raw and 19.8 MB gzip, on top of the
+  toolchain's ~13.8 MB gzip, so a cold Run fetches ~34 MB gzip. Locally, its cold Run takes
+  ~6.8 s and a warm one ~2.0 s in the check, ~2.5 s and ~0.9 s run alone. The prebuilt compile
+  scenario, `go/sqlate.wasm`, is 7.8 MB raw and 2.19 MB gzip. For the measure and answer tasks.
+- `sqltest.Open` requires a `testing.TB`; a constructor that takes no test is a candidate for
+  sqlate's next goal.
+- Intake candidates for the SDK: markdownPages has no notion of a tree the site writes itself; its
+  Shiki markup drops a fence's language; a Markdown fence can't name its file.
+- golang.org/x/text and golang.org/x/sync arrive indirectly through pgx and trail their latest;
+  `mise run currency` reports direct requirements only.
 
 ## Pending edits
 
@@ -895,8 +914,12 @@ fence-naming rules from the components tier for the page to reuse, rather than d
   concurrency, and standard-library programs of the spike's own, edited and run from source in the
   playground, chosen by a Program select and a URL fragment, each keeping its edits within the tab,
   with a report of each one's cold and warm timings and closure. Evidence 12."
-- coordinator · roadmap.toml: the sqlate and scenarios tasks' summaries add "with the module's
-  js/wasm archives added to the playground's manifest".
+- coordinator · roadmap.toml: the sqlate task's summary becomes "sqlate's compile demo: a program
+  the reader composes from sqlate's PostgreSQL patterns and their own, compiled in the page over
+  the pinned modules' archives, with a guarded run over sqltest's scripted driver; and a prebuilt
+  compile handler on a rendered Markdown page. Evidence 2, 3, 11."
+- coordinator · roadmap.toml: the scenarios task's summary adds "with the module's js/wasm
+  archives added to the playground's manifest".
 - coordinator · roadmap.toml: in the measure task's summary, "cold, cached, and in-place timings"
   becomes "cold, cached, and in-place timings, a playground build's Go compile and link among
   them".

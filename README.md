@@ -1,16 +1,19 @@
 <!-- Adapted from spike-html-hosting-sdk (v0.6.2): template/README.md, its site a hand index with
-     no copied tree. -->
+     no copied tree and the spike's own Markdown tree. -->
 
 # spike-html-go-wasm
 
 The GitHub Pages site of spike-html-go-wasm, made from the template of
 [spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.2. Its index,
-`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside two more hand pages:
+`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside three more hand pages:
 `components.html`, the components page, which shows each component in `web/components/` in each
-of its states, its Go demos running Go through the runtime in `web/runtime/`; and
-`playground.html`, the playground, where the reader edits Go and builds and runs it in the page
-(see "Playground"). The site copies no Markdown tree: `content.json` records none, and `content/`
-holds nothing. The spike's question, evidence, and path are in `context/README.md`.
+of its states, its Go demos running Go through the runtime in `web/runtime/`; `playground.html`,
+the playground, where the reader edits Go and builds and runs it in the page (see "Playground");
+and `sqlate.html`, the sqlate page, where the reader composes SQL statements with sqlate and runs
+them, built in the page (see "sqlate"). One more page is rendered from Markdown:
+`sqlate-compile.html`, from the spike's own `markdown/` directory, whose demo calls a prebuilt Go
+handler (see "The Markdown page"). The site copies no Markdown tree: `content.json` records none,
+and `content/` holds nothing. The spike's question, evidence, and path are in `context/README.md`.
 
 ## Tasks
 
@@ -26,24 +29,32 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   lines, and hold its output and its exit code. Each of the four programs' tests holds its exact
   output and exit 0; `playground/concurrency`'s hold it over six runs and hold `GOMAXPROCS` at 1,
   and `playground/stdlib`'s hold the one stderr line and exit 1 of a malformed and of a missing
-  `input.json`. It type-checks the configs, the web tiers, and the suite with tsc and runs
+  `input.json`. `playground/sqlate`'s hold its statements compiled from its shipped `.sql` files,
+  a namespace of the reader's included, each catalog or compile error's one stderr line with exit
+  1, and each outcome of its guarded run; `internal/sqlate`'s hold the compile handler's answers,
+  lines, and refusals. It type-checks the configs, the web tiers, and the suite with tsc and runs
   `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
     checks the playground's toolchain: each file its manifest names exists under its content's
-    hash, and the manifest's import closure equals Go's own `go list -deps`. It runs Go's
-    compiler and linker over that toolchain on the in-memory fs: hello built and run, a compile
-    error and a package clause other than main reported as the compiler writes them, an import
-    the manifest lacks refused before the compiler runs, and a non-Go file read from the run's
-    working directory. It tests the components' six models (`Arrangement`, `EditorSettings`,
-    `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`): their operations, refusals, and change
-    events. It holds each program demo's go fence on the components page to its scenario's source,
-    byte for byte, the playground's demo to the starter's files in `playground/calc/`, its four
-    `.go` files and its `input.txt`, and each program template's fences to its files in
-    `playground/<program>/`. It fails if a module under `web/components` or `web/pages`
-    registers a page shortcut through the foundation's `keys.js`.
-  - The browser tier, in the pinned chrome-headless-shell, runs the SDK's checks on every hand page
-    and the crawl, reads each hand page's cascade layers (the foundation's, then `site`, then
+    hash, and the manifest's import closure equals Go's own `go list -deps`, for
+    `playground/sqlate` through the site's pinned modules, whose packages are exactly those the
+    repository's own packages depend on. It runs Go's compiler and linker over that toolchain on
+    the in-memory fs: hello built and run, a compile error and a package clause other than main
+    reported as the compiler writes them, an import the manifest lacks refused before the compiler
+    runs, and a non-Go file read from the run's working directory. It tests the components' six
+    models (`Arrangement`, `EditorSettings`, `FileSet`, `ConsoleLog`, `RunTimings`, and `RunState`):
+    their operations, refusals, and change events. It holds each program demo's go fence on the
+    components page to its scenario's source, byte for byte, the playground's demo to the starter's
+    files in `playground/calc/`, its four `.go` files and its `input.txt`, each program template's
+    fences to its files in `playground/<program>/`, and the sqlate page's fences to
+    `playground/sqlate/`'s files. It holds the sqlate scenario's embedded patterns to the program's
+    pattern files, byte for byte (`test/unit/sqlate-patterns.test.ts`), and tests a Go demo's fence
+    naming rules (`web/components/file-names.ts`). It fails if a module under `web/components` or
+    `web/pages` registers a page shortcut through the foundation's `keys.js`.
+  - The browser tier, in the pinned chrome-headless-shell, runs the SDK's shell checks on every
+    hand page and on the rendered Markdown page, the crawl, and the SDK's palette check on the
+    rendered page's fences, reads each page's cascade layers (the foundation's, then `site`, then
     `page`) and finds no inline `<style>` in its source, and proves each component on the
     components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
@@ -107,7 +118,22 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       writing it as a new history entry, and Back, Forward, and an edited fragment showing the
       program it names, with its edits, the select following;
     - the programs' report, never a gate (`test/browser/playground-report.test.ts`, which
-      `mise run report:programs` runs alone);
+      `mise run report:programs` runs alone), the sqlate page's program among them;
+    - the sqlate page: its source demo on `playground/sqlate`'s files, `main.go` active, and no Go
+      before a Run; the first Run fetching the manifest, the compiler, the linker, and only the
+      program's closure of archives, the site's pinned modules' among them, and printing every
+      statement and the guarded edit exactly, with exit 0; an edit to a `.sql` file or to
+      `input.json` alone rerunning it with no Go compile or link, each of the run's outcomes, a
+      statement with no tier printing sqlate's one stderr line with exit 1, and a pattern file in
+      a new namespace, added by New file, included by a new statement; each `.sql` file shown in
+      SQL's grammar;
+    - the Markdown page (`test/browser/sqlate-compile.test.ts`): its one handler demo named
+      `statement.sql` by its `file` attribute, in SQL's grammar, and no Go before a Run; the first
+      Run fetching the worker and `go/sqlate.wasm` alone and answering the statement's `$n` SQL
+      with its tier and parameters' line; an edit recompiling on the instance held, fetching
+      nothing; and a statement sqlate refuses answering sqlate's message, the instance outliving
+      it; then a report, never a gate, of `go/sqlate.wasm`'s bytes, raw and gzip, and the cold
+      Run's phase timings;
     - the playground's prose and About: the prose is the heading and the lede alone, and the page
       holds no disclosure; About leads the header's group, a glyph button showing A; A, a click, or
       Enter opens the About dialog on its title, Tab reaches its Close, and Close or Escape closes
@@ -149,12 +175,16 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
       the spike's key, and a reload and another page open in it; the page follows another tab's
       choice and a cleared store; an empty store, text that isn't JSON, a refused value, and
       blocked storage each open with the editor left and write nothing.
-- `mise run build`: build the site with Vite into `dist/`, the runtime's worker with
+- `mise run build`: build the site with Vite into `dist/`, the hand pages and the Markdown page
+  the SDK's `markdownPages` renders from `markdown/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
-  (`scripts/syntax-themes.ts`), then the Go entrypoints into `dist/go/`, and the playground's
-  toolchain into `dist/go/toolchain/` (`scripts/build-toolchain.ts`): Go's compiler and linker
-  built for `GOOS=js`, an archive for each standard-library package, and `manifest.json`, the one
-  file that names them, each by its content's hash. A bare `vite build` omits the wasm.
+  (`scripts/syntax-themes.ts`), then the Go entrypoints, `cmd/hello`, `cmd/probe`, and
+  `cmd/sqlate`, into `dist/go/`, and the playground's toolchain into `dist/go/toolchain/`
+  (`scripts/build-toolchain.ts`): Go's compiler and linker built for `GOOS=js`, an archive for
+  each standard-library package, under `std/`, and for each package of the site's pinned modules
+  the repository's own packages depend on, sqlate's and its dependencies', under `mod/`, and
+  `manifest.json`, the one file that names them, each by its content's hash. A bare `vite build`
+  omits the wasm.
 - `mise run screenshots`: capture the pages, light and dark. The index and each component on the
   components page, alone, are captured at the SDK's widths, 390px, 1120px, and 1376px; a
   component's capture is `--page components/<component>`, as `--page components/console`. The
@@ -163,18 +193,21 @@ holds nothing. The spike's question, evidence, and path are in `context/README.m
   Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
   each chosen through the Layout menu, and with the menu open; 1376px with the About dialog
   open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and Standard
-  library chosen in the Program select.
+  library chosen in the Program select. The sqlate page, `--page sqlate`, is captured as its
+  viewport alone at the SDK's widths, and the Markdown page, `--page sqlate-compile`, whole at
+  each.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as
   `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
   is taken only when no width is given. Any other width is a usage error naming the three.
   `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't know, and hands it to the
   capture file.
 - `mise run report:programs`: report, never as a gate, what each of the playground's programs
-  costs. For each, in a browser of its own, so its worker is fresh and its cache empty, opened by
-  its fragment, it prints the phase timings of the first Run, cold, and of a Run after an edit to
-  `main.go`, warm, as the demo's timings show them, and its closure: the count of standard-library
-  archives the cold Run fetched, their bytes as `dist/` holds them and Vite's preview serves them,
-  and their bytes gzipped by node's zlib at its default level, since the preview doesn't gzip.
+  costs, and the sqlate page's program. For each, in a browser of its own, so its worker is fresh
+  and its cache empty, opened by its fragment, it prints the phase timings of the first Run, cold,
+  and of a Run after an edit to `main.go`, warm, as the demo's timings show them, and its closure:
+  the count of archives the cold Run fetched, the standard library's and, for sqlate, the pinned
+  modules', their bytes as `dist/` holds them and Vite's preview serves them, and their bytes
+  gzipped by node's zlib at its default level, since the preview doesn't gzip.
   The timings table has a column only for a phase some Run recorded, so it has no Start column: a
   source build records no Start phase. The tables are the test's diagnostics, written nowhere
   else; only a Run that doesn't finish fails it. The browser tier runs the same file among its
@@ -210,8 +243,9 @@ are `protocol.ts`'s.
     2`), and the build rejects naming it; an import the manifest doesn't hold rejects before the
     compiler runs (`package example.com/x is not in the manifest`). A failed build holds nothing.
   - The program's limits: one package main from every `.go` file, importing the standard library
-    alone, as `GOOS=js GOARCH=wasm` builds it; no `go.mod`, local subpackages, cgo, assembly, or
-    `go:embed`; no argv and no stdin. Its files are one flat directory.
+    and the site's pinned modules, the packages the manifest holds, as `GOOS=js GOARCH=wasm` builds
+    it; no `go.mod`, local subpackages, cgo, assembly, or `go:embed`; no argv and no stdin. Its
+    files are one flat directory.
   - The working directory: each run of a built program gets a fresh in-memory fs whose working
     directory, `/work`, holds every file of the build that isn't Go, so `os.ReadFile("input.txt")`
     reads that file's text. Nothing a run writes outlives the run.
@@ -226,19 +260,20 @@ are `protocol.ts`'s.
 
 ## Pages
 
-Each hand page links the foundation's `page-full.css`, the components' `glyph-button.css`, the
-SDK's `site.css`, and the pages' shared sheet, `web/pages/page.css`, in that order; the build
-bundles the four into the one stylesheet every page links. The cascade layers are the
-foundation's (`foundation.tokens.*` through `foundation.theme-menu`), then `site`, then `page`,
-and the browser tier reads that order on each page. Every rule a page adds is in
-`web/pages/page.css`, inside `@layer page`, so it wins over the shell's by layer order, at any
-specificity: the header-actions group at the header's inline end, shrinking and wrapping its
-buttons where the row can't hold them on one line, as the playground's three at a phone's width
-and twice the text size; the space between `main > section`s on every page; the components page's
+Each hand page, and the Markdown shell, `markdown-shell.html`, links the foundation's
+`page-full.css`, the components' `glyph-button.css`, the SDK's `site.css`, and the pages' shared
+sheet, `web/pages/page.css`, in that order; the build bundles the four into the one stylesheet every
+page links. The cascade layers are the foundation's (`foundation.tokens.*` through
+`foundation.theme-menu`), then `site`, then `page`, and the browser tier reads that order on each
+page. Every rule a page adds is in `web/pages/page.css`, inside `@layer page`, so it wins over the
+shell's by layer order, at any specificity: the header-actions group at the header's inline end,
+shrinking and wrapping its buttons where the row can't hold them on one line, as the playground's
+three at a phone's width and twice the text size; the space between `main > section`s on every page;
+the space around a rendered Markdown page's Go demo, as around a fence; the components page's
 specimens; and the app page, the playground's one screen, which only a body of class `app` takes.
 Its spaces are the foundation's `--space-*` steps.
 
-A hand page holds no inline `<style>`. The build writes a page's inline sheet into its head
+A page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
 foundation's and reorders every layer on the page, and an unlayered rule there sits above every
 layer. A page rule goes in `web/pages/page.css`.
@@ -363,6 +398,107 @@ choice is the only write: nothing is stored until the reader chooses, and choosi
 placement already held stores nothing. Another tab's choice moves this page's demo too, and a
 cleared store moves it back to left.
 
+## sqlate
+
+The spike's first workspace module: go.mod requires `github.com/standards-lab/sqlate` and
+`github.com/standards-lab/sqlate/postgres` at v0.7.0, by tag, with no replace directive. Two
+pages use it: the sqlate page builds a whole program in the page, and the Markdown page calls a
+prebuilt handler.
+
+### The program
+
+`playground/sqlate` is a package main beside the playground's programs, vetted and tested under
+`GOOS=js` on both filesystems and never built into the site, nor offered in the playground's
+Program select. `main.go` reads the `.sql` files in its working directory, whose names say what
+each one is:
+
+- `<ns>.<name>.sql` is a pattern, published in namespace `ns`: `app.identity.sql` is the pattern
+  a statement includes as `{{> app.identity}}`. A file such as `audit.stamp.sql` adds the
+  namespace `audit`.
+- Any other `.sql` file is a statement, named by its file: `create.sql` is the statement
+  `create`.
+
+It compiles the statements against PostgreSQL's patterns, the library's `sql` namespace with
+`{{> sql.guard_set}}` and `{{> sql.guard_where}}` among them, plus one namespace for each `ns` the
+pattern files name, for PostgreSQL's dialect, and prints each statement in name order: its name,
+its tier, its parameters in the order they bind, and its SQL with `$n` placeholders. The sample
+files are in go-web-service's style: `app.identity.sql`, a native `RETURNING` with its port note,
+and the statements `create.sql`, which includes it, `edit.sql`, a guarded edit over the `sql`
+guard patterns, and `version.sql`, the guard's check. A catalog or compile error, a missing tier,
+an include nothing publishes, a native pattern in a standard statement, or a pattern in the
+library's own `sql` namespace, prints sqlate's own message on one stderr line and exits 1.
+
+`guard.go` then runs `edit`, guarded by `version`, over sqlate's `sqltest` driver, which answers
+each call from a script and records it, with no socket and no database. `input.json` sets the
+script: `id`, `code`, and `name` are the edit's arguments, `version` the version the caller read,
+and `stored` the version the row holds, or `null` for no row. Equal to `version`, the edit
+affects one row and the run prints the new version; another number, it prints the version
+mismatch; `null`, `sql.ErrNoRows`' message. The run prints each driver call, its op, its bound
+values, and its `$n` SQL, then the result. A missing `edit.sql` or `version.sql`, or an
+`input.json` that is missing or isn't the JSON the run reads, prints why on stderr and exits 1.
+`sqltest.Open` takes a `testing.TB`, which a program has none of, so the run passes it a
+commented stand-in that does what `Open` asks of one, `Helper` and `Cleanup`.
+
+### The sqlate page
+
+`sqlate.html` is an app page, one screen as the playground is, holding one `sl-go-demo` in the
+source mode, with `editable-files` and `fixed`, on `playground/sqlate`'s files: `main.go`, active,
+`guard.go`, the `.sql` files, and `input.json`, each fence equal byte for byte to its file (the
+unit tier holds it). Its script, `web/pages/sqlate.ts`, gives the demo the page's one runner and
+the reader's arrangement. Run builds the program in the page against the standard library and
+the site's pinned modules, whose archives the playground's manifest names under `mod/`; the
+first Run fetches sqlate's, `sqltest`'s, and PostgreSQL's driver's archives among the
+standard library's. An edit to a `.sql` file or to `input.json` alone builds nothing, rerunning
+the program held over the new files. The reader adds a namespace by adding a pattern file with
+New file. Each `.sql` file shows in SQL's grammar.
+
+### The scenario
+
+The sqlate scenario, `internal/sqlate` with its entrypoint `cmd/sqlate`, is prebuilt into
+`dist/go/sqlate.wasm` and served through the bridge's `Serve` on one long-lived instance, as the
+probe is. It imports only the standard library, the bridge, and sqlate, and serves one handler,
+`compile`: it takes one statement's text, compiles it as `statement.sql` against PostgreSQL's
+patterns plus the program's sample app patterns, for PostgreSQL's dialect, and answers its `$n`
+SQL, printing one line naming its tier and its parameters (`compile: native, parameters $1 code,
+$2 name`), or rejects with sqlate's message (`query: statement.sql: no tier declaration`). The
+patterns are embedded under `internal/sqlate/patterns/<ns>/<name>.sql`, the layout
+`query.Publish` reads, each byte for byte the program's `playground/sqlate/<ns>.<name>.sql`,
+which the unit tier holds. The check tests the handler under `GOOS=js` on both filesystems.
+
+### The Markdown page
+
+`markdown/sqlate-compile.md` is the spike's own writing, in its own directory, never copied into
+`content/` at a commit. The SDK's `markdownPages` renders it as the spike's own tree
+(`vite.config.ts`): the plugin takes one tree's source, `dir: "markdown"`, a repository URL, and a
+ref, which it reads only to write a blob URL for a link to a file listed external; the tree lists
+none, and the build fails on any relative link that leaves it, so neither is read, and the ref
+names the branch the site publishes from. The page builds to `sqlate-compile.html`, filled into
+the Markdown shell, `markdown-shell.html`, which no build input names: the index's head and
+header, with the Pages and Contents buttons and their drawers, which the plugin writes into each
+page, and no site nav. The shell's script, `web/pages/markdown.ts`, defines `sl-go-demo`, gives
+every demo on the page the page's one runner, and wires each drawer to its opener. Go loads only
+on a Run.
+
+The page writes its demo as raw HTML around an ordinary `sql` fence, which the plugin highlights
+at build into Shiki's markup:
+
+````md
+<sl-go-demo scenario="sqlate" handler="compile" file="statement.sql" label="compile demo">
+
+```sql
+--| tier: native
+…
+```
+
+</sl-go-demo>
+````
+
+The blank lines end the HTML block, so the fence between them renders as Markdown. Shiki's markup
+carries no name, so the demo's `file` attribute names the fence. The page passes the SDK's shell
+checks, the palette check, and the crawl, which counts it a hand page, as `content.json` names no
+tree. The bridge and the runtime serve it, as they serve the sqlate page, with no code of
+sqlate's.
+
 ## Components
 
 The components are Lit elements with shadow roots, prefixed `sl-`, in `web/components/`. Each
@@ -371,9 +507,9 @@ element's shadow root adopts the foundation's reset and elements sheets, then it
 module script beside it. A page imports a component's module, and the build bundles it.
 `components.html` shows each component's states once, labelled, its layout following the
 viewport, and focused by the keyboard. The directory's other modules are the components'
-internals, each documented in its own comments: `aria.ts`, `highlights.ts`, `reasons.ts`,
-`subscription.ts`, `syntax-themes.ts`, and `tokenizer.ts`, and one shared sheet, `tabs.css`, the
-tablist's look, which the file tabs and a fixed demo's output tabs adopt.
+internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `highlights.ts`,
+`reasons.ts`, `subscription.ts`, `syntax-themes.ts`, and `tokenizer.ts`, and one shared sheet,
+`tabs.css`, the tablist's look, which the file tabs and a fixed demo's output tabs adopt.
 
 - `./arrangement.js`: `Arrangement`, where a fixed Go demo places its editor from 64rem, the
   reader's preference. It is a model with no document, element, or storage, an `EventTarget` its
@@ -387,14 +523,14 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   placement held sends none. The unit tier tests it under node.
 
 - `./code-editor.js`: `sl-code-editor`, a plain-text source editor: a `contenteditable` element
-  in plaintext-only mode, exposed as a multiline textbox, beside a gutter of line numbers. Its Go
-  and JSON are highlighted by Shiki 4.6.0, through CSS Custom Highlight ranges, so no element
+  in plaintext-only mode, exposed as a multiline textbox, beside a gutter of line numbers. Its Go,
+  JSON, and SQL are highlighted by Shiki 4.6.0, through CSS Custom Highlight ranges, so no element
   ever enters the text and highlighting never moves the caret or the selection. The colors are
   each palette's syntax theme, the SDK's built-in ones, merged per palette at build into
   `light-dark()` colors, so each token takes the color the SDK's own fence of the same code gives
   it in every palette and scheme; a palette with no syntax theme shows the text plain. The
   `::highlight()` rules paint color only, so the italics of Catppuccin's and Everforest's comments
-  don't show. The tokenizer, Shiki's core, its JavaScript regex engine, and the Go and JSON
+  don't show. The tokenizer, Shiki's core, its JavaScript regex engine, and the Go, JSON, and SQL
   grammars, loads lazily as the first editor upgrades; until then, and for any other language,
   the text is plain. After an edit it re-highlights once typing pauses. Every editor on a page
   paints into the document's one set of highlights, and one removed leaves the others painted.
@@ -406,7 +542,7 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   editing keys make each edit through `document.execCommand`, a line break as `insertLineBreak`
   and the rest as `insertText`, so each is one step of the browser's own undo history. A paste
   takes the clipboard's plain text through the same path, and a drop is refused.
-  - Attributes: `language` (`go` or `json`; any other shows plain; reflected), `label` (the
+  - Attributes: `language` (`go`, `json`, or `sql`; any other shows plain; reflected), `label` (the
     textbox's accessible name, "Code" by default), `readonly` (reflected), and `aria-labelledby`
     (ids in the host's tree whose elements name the textbox, taking precedence over `label`).
   - Properties: `value`, the whole text, which reading gives as edited and setting replaces,
@@ -590,12 +726,14 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   `tabSizeProblem(value)` and `wrapProblem(value)` give that reason, or `null`, without setting
   anything, and `defaults` holds the defaults, frozen. Each set that changes a value sends one
   `change` `Event`; a set to the value held sends none. The unit tier tests it under node.
-- `./fences.js`: `readFences(parent, program)`, a Go demo's fences read as files, `{ name, text }`
-  each, in order: the rules `sl-go-demo` builds its files by (its "Fences", below), stated once so
-  that a page building a `FileSet` for a demo, from a template's content, reads them alike.
-  `parent` is the demo's host or a template's content; `program` picks the default name of a
-  fence that names no language, `main.go` when true, else `input.json`. It reads the markup and
-  changes nothing.
+- `./fences.js`: `readFences(parent, program, file?)`, a Go demo's fences read as files,
+  `{ name, text }` each, in order: the rules `sl-go-demo` builds its files by (its "Fences",
+  below), stated once so that a page building a `FileSet` for a demo, from a template's content,
+  reads them alike. `parent` is the demo's host or a template's content; `program` picks the
+  default name of a fence that names no language, `main.go` when true, else `input.json`; `file`,
+  the demo's `file` attribute, names every fence that names none. It reads the markup and changes
+  nothing. The naming rules themselves, and a file's grammar by its name (`languageOf`), are
+  `file-names.ts`'s, which holds no DOM, so the unit tier tests them under node.
 - `./file-set.js`: `FileSet`, a set of source files, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the tabs and the editor, is the only
   writer of. It holds at least one file, in the order given or added, and one active file.
@@ -679,11 +817,13 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
     no handler), `editable-files` (a boolean: New file, Rename, and Delete on a program or source
     demo; a handler demo, holding its one input, ignores it), `wrap` (a boolean: long lines
     wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), `fixed` (a boolean: the
-    fixed layout, below), and `label` (the demo's accessible name, "<scenario> <handler> demo" by
-    default, "Go source demo" on a source demo).
-    A change to `handler` or `source` rebuilds the files from the fences; `wrap` and `tab-size`
-    change the settings in place; while an authoring error shows, a change to `scenario`,
-    `wrap`, or `tab-size` builds the demo again, so a mended attribute mends it.
+    fixed layout, below), `file` (the name of every fence that names none, as the SDK's
+    highlighted Markdown fences can't; absent or empty, the defaults below), and `label` (the
+    demo's accessible name, "<scenario> <handler> demo" by default, "Go source demo" on a source
+    demo).
+    A change to `handler`, `source`, or `file` rebuilds the files from the fences; `wrap` and
+    `tab-size` change the settings in place; while an authoring error shows, a change to
+    `scenario`, `wrap`, or `tab-size` builds the demo again, so a mended attribute mends it.
   - Properties: `runner`, a `DemoRunner`, the page's one runner, `null` by default, which runs
     nothing; `files`, a `FileSet` the page owns, `null` by default: given one, a program or source
     demo reads no fence and holds no set of its own, and editing, the file actions, Reset, and Run
@@ -698,14 +838,15 @@ tablist's look, which the file tabs and a fixed demo's output tabs adopt.
   - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
     the pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
     Shiki-rendered `<pre class="shiki">` read alike. A file's name is the pre's or its code's
-    `data-file`, else the pre's `title`, else a default from the fence's language, a
-    `data-language` or a `language-<name>` class on either: `main.go` for go, `input.json` for
-    json, `input.txt` for any other; with no language, as Shiki's markup carries none, `main.go`
-    on a program or source demo and `input.json` on a handler demo. Each file's grammar follows
-    its name's extension. The fences are read once the document has parsed them, and stay in
-    the light DOM unchanged: before the element upgrades, and without script, they render as the
-    page's code; once upgraded they are no part of the flat tree, neither rendered nor in the
-    accessibility tree, and the editor alone shows their text.
+    `data-file`, else the pre's `title`, else the demo's `file`, unless empty, else a default
+    from the fence's language, a `data-language` or a `language-<name>` class on either: `main.go`
+    for go, `input.json` for json, `query.sql` for sql, `input.txt` for any other; with no
+    language, as Shiki's markup carries none, `main.go` on a program or source demo and
+    `input.json` on a handler demo. Each file's grammar follows its name's extension: `.go`,
+    `.json`, or `.sql`, any other plain. The fences are read once the document has parsed them,
+    and stay in the light DOM unchanged: before the element upgrades, and without script, they
+    render as the page's code; once upgraded they are no part of the flat tree, neither rendered
+    nor in the accessibility tree, and the editor alone shows their text.
   - Authoring errors: no scenario, a source demo naming a scenario or a handler, no fence, more
     than one fence on a handler demo, a name the file set refuses (two fences both defaulting to
     `main.go` among them), or a tab size the settings refuse. The demo shows "Authoring error:"

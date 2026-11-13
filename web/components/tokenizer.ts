@@ -1,14 +1,16 @@
 // The editor's tokenizer, which sl-code-editor imports lazily, on the first editor's upgrade, so a
 // page loads it only when it holds an editor, and after its own first paint: Shiki 4.6.0's core,
-// its JavaScript regex engine, which needs no wasm, the Go and JSON grammars, and the palettes'
-// merged syntax themes (syntax-themes.ts). The build emits no other grammar; Shiki's core bundles
-// none of its own. The SDK's fences use Shiki's Oniguruma engine at build time; the JavaScript
-// engine runs the same grammars, and the browser tier holds every token's color to the fence's.
+// its JavaScript regex engine, which needs no wasm, the Go, JSON, and SQL grammars, and the
+// palettes' merged syntax themes (syntax-themes.ts). The build emits no other grammar; Shiki's
+// core bundles none of its own. The SDK's fences use Shiki's Oniguruma engine at build time; the
+// JavaScript engine runs the same grammars, and the browser tier holds every token's color to the
+// fence's.
 
 import { createHighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import go from "shiki/langs/go.mjs";
 import json from "shiki/langs/json.mjs";
+import sql from "shiki/langs/sql.mjs";
 
 import type { Palettes } from "./highlights.ts";
 import { defaultPalette, syntaxThemes } from "./syntax-themes.ts";
@@ -22,7 +24,7 @@ export interface Token {
 }
 
 /** The languages the tokenizer highlights, by the name a fence or an editor gives them. */
-const languages = new Set(["go", "json"]);
+const languages = new Set(["go", "json", "sql"]);
 
 /** The palettes the themes color, in the themes' order, and the foundation's default. */
 export const palettes: Palettes = {
@@ -32,7 +34,7 @@ export const palettes: Palettes = {
 
 const highlighter = await createHighlighterCore({
   themes: [...syntaxThemes],
-  langs: [go, json],
+  langs: [go, json, sql],
   engine: createJavaScriptRegexEngine(),
 });
 

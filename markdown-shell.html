@@ -1,0 +1,152 @@
+<!doctype html>
+<!-- The Markdown shell: the page the SDK's markdownPages fills with each Markdown file of the
+     spike's own tree, markdown/ (vite.config.ts), its title the page's name and its empty main the
+     page's body, written between its pagers, with its section tree in the Contents drawer and the
+     site index in the Pages drawer after main. It is no page of its own: no build input names it,
+     so it builds only as the pages it fills.
+     The head is the index's: the foundation's full page entry and its registrations, every
+     built-in profile, its preferences module, and its keys module, render-blocking; then the
+     components' glyph-button.css, the SDK's site.css, and the pages' shared sheet,
+     web/pages/page.css, which places the header-actions group at the header's inline end with no
+     site nav; see index.html for each. Then the components' modules the rendered page uses, each
+     defining its element, render-blocking too: the site index, the section tree, and the drawers
+     that hold them, which markdownPages writes into each page with their light-DOM content, and
+     the shortcuts list and the settings, which the two shortcut dialogs hold. Last the page's
+     script, web/pages/markdown.ts, which defines sl-go-demo, gives every demo on the page its one
+     runner, and wires each drawer to its opener; nothing loads Go, or starts the worker, until a
+     demo's Run.
+     The header is the template's without its site nav, which this site has none of: one group,
+     header-actions, of Pages, Contents, Help, and Settings, in that order. Pages opens the Pages
+     drawer, keys.js clicking it on P, and Contents the Contents drawer, on C; site.css shows each
+     only below its drawer's dock, and Contents only on a page with a section tree. Help, on ?, and
+     Settings, on S, open the components' shortcut dialogs by the invoker command, each with its
+     header row, its heading, and its Close, as the index's do. Each header button, and each
+     dialog's Close, is a glyph button, its glyph a marker markdownPages fills at build:
+     list-unordered-16 for Pages, list-ordered-16 for Contents, question-16 for Help, gear-16 for
+     Settings, and x-16 for Close.
+     Adapted from spike-html-hosting-sdk (v0.6.2): template/index.html, without its site nav, its
+     drawer script moved to the page's script, with the pages' shared sheet and the page's script
+     that gives its Go demos their runner. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>spike-html-go-wasm</title>
+    <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
+    <link rel="stylesheet" href="./web/pages/page.css" />
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/site-index.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/section-tree.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/drawer.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/shortcuts.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/settings.js"></script>
+    <script type="module" blocking="render" src="./web/pages/markdown.ts"></script>
+  </head>
+  <body>
+    <header>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="glyph-button pages-opener"
+          aria-controls="pages"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-label="Pages"
+          data-keys="p"
+          interestfor="pages-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/list-unordered-16"></svg>
+          <span aria-hidden="true"><kbd>P</kbd></span>
+        </button>
+        <div id="pages-hint" class="glyph-hint" popover="hint" aria-hidden="true">Pages</div>
+        <button
+          type="button"
+          class="glyph-button contents-opener"
+          aria-controls="contents"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-label="Contents"
+          data-keys="c"
+          interestfor="contents-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/list-ordered-16"></svg>
+          <span aria-hidden="true"><kbd>C</kbd></span>
+        </button>
+        <div id="contents-hint" class="glyph-hint" popover="hint" aria-hidden="true">Contents</div>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="show-modal"
+          aria-label="Help"
+          data-keys="?"
+          interestfor="help-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/question-16"></svg>
+          <span aria-hidden="true"><kbd>?</kbd></span>
+        </button>
+        <div id="help-hint" class="glyph-hint" popover="hint" aria-hidden="true">Help</div>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="show-modal"
+          aria-label="Settings"
+          data-keys="s"
+          interestfor="settings-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/gear-16"></svg>
+          <span aria-hidden="true"><kbd>S</kbd></span>
+        </button>
+        <div id="settings-hint" class="glyph-hint" popover="hint" aria-hidden="true">Settings</div>
+      </div>
+    </header>
+    <main></main>
+    <dialog id="help" aria-labelledby="help-title">
+      <header class="dialog-header">
+        <h2 id="help-title" tabindex="-1" autofocus>Keyboard shortcuts</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="close"
+          aria-label="Close"
+          interestfor="help-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="help-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-shortcuts></sl-shortcuts>
+    </dialog>
+    <dialog id="settings" aria-labelledby="settings-title">
+      <header class="dialog-header">
+        <h2 id="settings-title">Settings</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="close"
+          aria-label="Close"
+          interestfor="settings-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="settings-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-settings></sl-settings>
+    </dialog>
+  </body>
+</html>

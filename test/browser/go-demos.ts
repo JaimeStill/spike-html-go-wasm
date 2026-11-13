@@ -1,8 +1,10 @@
-// The browser tier's hold on the Go demos, the components page's and the playground's, shared by
-// go-demo.test.ts, which proves sl-go-demo, go-runs.test.ts and go-build.test.ts, which prove the
-// runtime through it, and playground.test.ts, which proves the playground: a page opened with
-// every request it and its workers send watched, every worker it starts counted, live until it
-// detaches, and helpers installed on the page that read what a demo shows, again after a reload.
+// The browser tier's hold on the Go demos, the components page's, the playground's, the sqlate
+// page's, and the rendered Markdown page's, shared by go-demo.test.ts, which proves sl-go-demo,
+// go-runs.test.ts and go-build.test.ts, which prove the runtime through it, playground.test.ts,
+// which proves the playground, and sqlate-compile.test.ts, which proves the Markdown page's demo: a
+// page opened with every request it and its workers send watched, every worker it starts counted,
+// live until it detaches, and helpers installed on the page that read what a demo shows, again
+// after a reload.
 //
 // The worker fetches the modules itself, and the page's own Network domain never sees a worker's
 // requests, so each page auto-attaches to its workers through the page's session, in the
@@ -100,13 +102,19 @@ export interface Watched {
   live: Set<string>;
 }
 
-/** The pages that hold Go demos: the components page and the playground. */
-const DEMO_PAGES = new Set(["components.html", "playground.html"]);
+/** The pages that hold Go demos: the components page, the playground, the sqlate page, and the
+ * rendered Markdown page. */
+const DEMO_PAGES = new Set([
+  "components.html",
+  "playground.html",
+  "sqlate.html",
+  "sqlate-compile.html",
+]);
 
-/** Opens the path under the origin with its and its workers' requests watched from before it
- * loads. A page that holds Go demos, the components page (the default) or the playground, with a
- * fragment or without, also gets focus emulated, every element rendered, and the helpers
- * installed. */
+/** Opens the path under the origin with its and its workers' requests watched from before it loads.
+ * A page that holds Go demos, the components page (the default), the playground, the sqlate page,
+ * or the rendered Markdown page, with a fragment or without, also gets focus emulated, every
+ * element rendered, and the helpers installed. */
 export async function open(
   browser: Browser,
   origin: string,

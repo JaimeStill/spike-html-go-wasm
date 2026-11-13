@@ -1,10 +1,10 @@
 // sl-code-editor on the components page, the build as Pages serves it: dist/ under the base by the
 // SDK's served(), Vite's preview, in the pinned chrome-headless-shell.
 //
-// The build: the tokenizer's chunk holds Shiki's Go and JSON grammars and no other, and no Shiki
-// wasm is emitted. Loading: the index never requests the tokenizer, the components page does, and
-// until it arrives every editor shows its text with no range painted. Colors: in every palette
-// the foundation registers, in light and in dark, every character of the Go and JSON editors
+// The build: the tokenizer's chunk holds Shiki's Go, JSON, and SQL grammars and no other, and no
+// Shiki wasm is emitted. Loading: the index never requests the tokenizer, the components page does,
+// and until it arrives every editor shows its text with no range painted. Colors: in every palette
+// the foundation registers, in light and in dark, every character of the Go, JSON, and SQL editors
 // paints, through its highlight, the color the SDK's own fence of the same code gives it, built
 // here at test time by the SDK's createSyntax and rendered on the page beside them; a palette with
 // no syntax theme paints the text plain; and no element enters the editor's text. Sharing: two
@@ -193,10 +193,10 @@ async function open(path = "components.html"): Promise<Page> {
   return page;
 }
 
-/** Waits until every Go and JSON editor in the states lists has painted its text. */
+/** Waits until every Go, JSON, and SQL editor in the states lists has painted its text. */
 const settleAll = (page: Page) =>
   page.evaluate(`Promise.all([...document.querySelectorAll("#code-editor sl-code-editor")]
-    .filter((editor) => ["go", "json"].includes(editor.language) && editor.value.trim() !== "")
+    .filter((editor) => ["go", "json", "sql"].includes(editor.language) && editor.value.trim() !== "")
     .map((editor) => window.editors.settled(editor)))`);
 
 /** A key pressed and released on the focused element, with the text it types, if any. */
@@ -230,7 +230,7 @@ interface AXNode {
 }
 
 describe("the editor's build", () => {
-  test("the tokenizer's grammars are Go's and JSON's alone, and no Shiki wasm is emitted", () => {
+  test("the tokenizer's grammars are Go's, JSON's, and SQL's alone, and no Shiki wasm is emitted", () => {
     const scopes = new Set<string>();
     for (const file of readdirSync(assets).filter((name) => name.endsWith(".js"))) {
       const source = readFileSync(join(assets, file), "utf8");
@@ -238,7 +238,7 @@ describe("the editor's build", () => {
         scopes.add(scope);
       }
     }
-    assert.deepEqual([...scopes].sort(), ["source.go", "source.json"]);
+    assert.deepEqual([...scopes].sort(), ["source.go", "source.json", "source.sql"]);
     assert.deepEqual(
       readdirSync(assets).filter((name) => name.endsWith(".wasm")),
       [],
@@ -318,11 +318,12 @@ describe("the editor's colors", () => {
     );
     // The SDK's fence of each editor's code, built as markdownPages builds one, rendered on the
     // page with its stylesheet, each fence after its editor.
-    const syntax = await createSyntax(builtinSyntax, ["go", "json"]);
+    const syntax = await createSyntax(builtinSyntax, ["go", "json", "sql"]);
     const fences: { state: string; html: string }[] = [];
     for (const [state, lang] of [
       ["go", "go"],
       ["json", "json"],
+      ["sql", "sql"],
     ]) {
       const value: string = await page.evaluate(`window.editors.at("${state}").value`);
       const html = syntax.highlight(value, lang);
@@ -374,7 +375,7 @@ describe("the editor's colors", () => {
   });
 
   for (const scheme of ["light", "dark"]) {
-    for (const state of ["go", "json"]) {
+    for (const state of ["go", "json", "sql"]) {
       test(`in ${scheme}, every character of the ${state} editor paints the SDK fence's color, in each palette`, async () => {
         // The default palette applies with no attribute too, as a root with none has it.
         for (const palette of [null, ...palettes]) {
@@ -426,7 +427,7 @@ describe("the editor's colors", () => {
 
   test("another language shows plain, with no range", async () => {
     const shown = await page.evaluate(`window.editors.painted(window.editors.at("plain"))`);
-    assert.ok(shown.value.includes("SELECT"));
+    assert.ok(shown.value.includes("[run]"));
     assert.equal(shown.ranges, 0);
   });
 });
@@ -506,6 +507,7 @@ describe("the editor in the accessibility tree", () => {
         { name: "shapes.go", multiline: true, readonly: false },
         { name: "input.json", multiline: true, readonly: false },
         { name: "query.sql", multiline: true, readonly: false },
+        { name: "probe.toml", multiline: true, readonly: false },
         { name: "shapes.go", multiline: true, readonly: true },
         { name: "long.go", multiline: true, readonly: false },
         { name: "wrapped.go", multiline: true, readonly: false },

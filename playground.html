@@ -1299,9 +1299,10 @@ Issues referenced: {{range $i, $n := .Issues}}{{if $i}}, {{end}}#{{$n}}{{else}}n
         <div id="about-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
       </header>
       <p>
-        Your <code>.go</code> files build together as one <code>main</code> package, using only
-        the standard library. There's no <code>go.mod</code>, no other packages of your own, no
-        cgo or assembly, and nothing passed in as arguments or standard input.
+        Your <code>.go</code> files build together as one <code>main</code> package, using the
+        standard library and the modules this site pins, such as sqlate. There's no
+        <code>go.mod</code>, no other packages of your own, no cgo or assembly, and nothing passed
+        in as arguments or standard input.
       </p>
       <p>
         Any other file you add sits next to your program, so
@@ -1317,8 +1318,8 @@ Issues referenced: {{range $i, $n := .Issues}}{{if $i}}, {{end}}#{{$n}}{{else}}n
         can switch away and come back to them: reload, and you're back to where you started.
       </p>
       <p>
-        The first Run downloads the compiler, the linker, and the standard-library packages your
-        program imports; later Runs download only what a new import adds.
+        The first Run downloads the compiler, the linker, and the packages your program imports;
+        later Runs download only what a new import adds.
       </p>
       <p><a href="./">The spike's question and evidence</a></p>
     </dialog>

@@ -17,11 +17,13 @@
 // The demo fetches nothing: Go loads only as the runner loads it, on a Run.
 //
 // The fences: each `pre` that is a child of the host is one file, in order, read and named by
-// fences.ts's rules, which a page building a file set for the demo reads by too. Each file's
-// grammar follows its name's extension, .go or .json, any other plain. The fences are read once
-// the document has parsed the demo's children, and again when `handler` or `source` changes, which
-// rebuilds the files, or, while an authoring error shows, when an attribute it validates changes,
-// which may mend it.
+// fences.ts's rules, which a page building a file set for the demo reads by too. `file` names
+// every fence that names none, as a fence the SDK highlights in Markdown can't: a fence's own name
+// still wins, and without it the defaults hold. Each file's grammar follows its name's extension,
+// .go, .json, or .sql, any other plain. The fences are read once the document has parsed the
+// demo's children, and again when `handler`, `source`, or `file` changes, which rebuilds the
+// files, or, while an authoring error shows, when an attribute it validates changes, which may
+// mend it.
 //
 // The page's files: given a FileSet as its `files` property, the demo reads no fence and holds no
 // file set of its own; the set given is the one its parts render from and the one it writes,
@@ -112,6 +114,7 @@ import { ConsoleLog, type Stream } from "./console-log.ts";
 import type { ArrangeDetail, DeleteDetail, NewDetail, RenameDetail } from "./controls.ts";
 import { defaults, EditorSettings } from "./editor-settings.ts";
 import { readFences } from "./fences.ts";
+import { languageOf } from "./file-names.ts";
 import { FileSet, type GivenFile } from "./file-set.ts";
 import type { FileTabs, SelectDetail } from "./file-tabs.ts";
 import styles from "./go-demo.css" with { type: "css" };
@@ -193,9 +196,6 @@ const ARRANGED_BAND: Band = "wide";
 /** What a source demo's run runs, as its status names it: the built program's main package. */
 const SOURCE_PROGRAM = "main";
 
-/** The grammar of a file's name: go or json by its extension, any other plain. */
-export const languageOf = (name: string): string => /\.(go|json)$/.exec(name)?.[1] ?? "";
-
 /** The tab size the attribute gives: a number as written, which the settings validate; the
  * default when absent. */
 const tabSizeOf = (value: string | null): number | undefined =>
@@ -230,19 +230,20 @@ interface Owned {
  * A live Go demo. `runner`, the page's runner, a DemoRunner, runs it; with none, Run does nothing.
  * `scenario` names the scenario Run loads; `handler`, when given, the handler Run calls with the
  * one file's text, else Run runs the program's main. `source` builds the program from the files
- * instead, every .go file as package main, and runs its main, naming no scenario. The files are
- * the light DOM's fences (see the module's note), unless `files`, a FileSet the page owns, gives
- * them; giving another set, or none, switches the demo to it in place, stopping its pending run
- * and clearing its console and timings. `editable-files` adds New file, Rename, and
- * Delete on a program or source demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1
- * to 8 columns, 4 by default. `fixed` makes the demo as tall as the box its parent's layout gives
- * it, never below its floor in lines of its parts (go-demo.css); each part keeps its share of that
- * height, scrolling inside it, in a layout that follows the demo's width (see the module's note).
- * `arrangement`, an Arrangement the page writes, places a fixed demo's parts from 64rem and shows
- * its toolbar's Layout menu there; with none, the editor is left and the menu isn't shown.
- * `label` names the demo, a region; by default it names the scenario and the handler, "probe
- * format demo", or, on a source demo, "Go source demo".
- *
+ * instead, every .go file as package main, and runs its main, naming no scenario. The files are the
+ * light DOM's fences (see the module's note), unless `files`, a FileSet the page owns, gives them;
+ * giving another set, or none, switches the demo to it in place, stopping its pending run and
+ * clearing its console and timings. `file` names each fence that names none, in place of the
+ * default from its language or the mode (file-names.ts); a fence's own name wins over it, and a
+ * page's set ignores it. `editable-files` adds New file, Rename, and Delete on a program or source
+ * demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1 to 8 columns, 4 by default.
+ * `fixed` makes the demo as tall as the box its parent's layout gives it, never below its floor in
+ * lines of its parts (go-demo.css); each part keeps its share of that height, scrolling inside it,
+ * in a layout that follows the demo's width (see the module's note). `arrangement`, an Arrangement
+ * the page writes, places a fixed demo's parts from 64rem and shows its toolbar's Layout menu
+ * there; with none, the editor is left and the menu isn't shown. `label` names the demo, a region;
+ * by default it names the scenario and the handler, "probe format demo", or, on a source demo, "Go
+ * source demo".
  * An authoring error, a missing scenario, a source demo naming a scenario or a handler, no fence,
  * more than one fence on a handler demo, a fence's name the file set refuses, or a tab size the
  * settings refuse, shows in place of the demo, naming the reason, as the region's description too,
@@ -267,6 +268,7 @@ export class GoDemo extends LitElement {
     scenario: { type: String },
     handler: { type: String },
     source: { type: Boolean },
+    file: { type: String },
     editableFiles: { type: Boolean, attribute: "editable-files" },
     wrap: { type: Boolean },
     tabSize: { type: String, attribute: "tab-size" },
@@ -290,6 +292,8 @@ export class GoDemo extends LitElement {
   declare handler: string | null;
   /** Whether Run builds the program from the files, then runs its main. */
   declare source: boolean;
+  /** The name of each fence that names none; null, or empty, leaves the defaults. */
+  declare file: string | null;
   /** Whether a program or source demo's files group shows. */
   declare editableFiles: boolean;
   /** Whether long lines wrap. */
@@ -339,6 +343,7 @@ export class GoDemo extends LitElement {
     this.scenario = null;
     this.handler = null;
     this.source = false;
+    this.file = null;
     this.editableFiles = false;
     this.wrap = false;
     this.tabSize = null;
@@ -487,7 +492,7 @@ export class GoDemo extends LitElement {
   /** A set of the fences' files, for the mode, program or not; throws the reason when they can't
    * make one. */
   #fenceSet(program: boolean): FileSet {
-    const fences = readFences(this, program);
+    const fences = readFences(this, program, this.file);
     if (fences.length === 0) {
       throw new Error("a demo holds its code in at least one fence, a pre among its children");
     }
@@ -659,11 +664,11 @@ export class GoDemo extends LitElement {
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     if (changed.has("runner")) this.#listen();
-    // The handler and source set the mode, so a change to either rebuilds the files from the
-    // fences; so does a change to anything the demo validates while it shows an authoring error,
-    // which may mend it.
+    // The handler and source set the mode, and file the fences' names, so a change to any rebuilds
+    // the files from the fences; so does a change to anything the demo validates while it shows an
+    // authoring error, which may mend it.
     const validated = changed.has("scenario") || changed.has("wrap") || changed.has("tabSize");
-    const mode = changed.has("handler") || changed.has("source");
+    const mode = changed.has("handler") || changed.has("source") || changed.has("file");
     if (this.hasUpdated && (mode || (this.problem !== null && validated))) {
       this.#build();
     } else if (changed.has("files") && this.owned?.files !== this.files) {

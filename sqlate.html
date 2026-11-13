@@ -1,0 +1,450 @@
+<!doctype html>
+<!-- The sqlate page, a hand page: one sl-go-demo in the source mode, its files editable and
+     editable-files on, which opens on playground/sqlate, a program that compiles the .sql files
+     beside it with sqlate for PostgreSQL, prints each statement, and runs the edit, guarded by the
+     version check, over sqltest's scripted driver, as input.json sets it: its main.go, active, and
+     guard.go, the run, then the sample pattern app.identity.sql, the statements create.sql,
+     edit.sql, and version.sql, and the run's input.json, each fence equal byte for byte to its file
+     in playground/sqlate/ (the unit tier holds it). A file <ns>.<name>.sql is a pattern in
+     namespace ns, any other .sql a statement, so a reader adds a namespace by adding a file. Run
+     compiles and links the program with Go's own compiler and linker in the page's worker, against
+     the standard library and the site's pinned modules, sqlate's among them, whose archives the
+     playground's toolchain manifest names; nothing loads Go, or starts the worker, until a Run, and
+     a Run after an edit to a .sql file alone builds nothing, rerunning the program held over the
+     new files, as does an edit to input.json alone. Its script, web/pages/sqlate.ts, gives the demo
+     the page's one runner and the reader's arrangement. The page is an app page, one screen, laid
+     out as the playground is, by the shared sheet's rules for a body of class app
+     (web/pages/page.css): the header, then main, its prose, the title row, the heading alone, and a
+     short lede, on its 80ch content column, then the fixed demo on its full column, in the row the
+     prose leaves, a gutter above the viewport's bottom. The shell is the index's, the same header,
+     Help and Settings, dialogs, and shared sheet; see index.html for each. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>sqlate · spike-html-go-wasm</title>
+    <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-components/glyph-button.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
+    <link rel="stylesheet" href="./web/pages/page.css" />
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/shortcuts.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/settings.js"></script>
+    <script type="module" blocking="render" src="./web/pages/sqlate.ts"></script>
+  </head>
+  <body class="app">
+    <header>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="show-modal"
+          aria-label="Help"
+          data-keys="?"
+          interestfor="help-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/question-16"></svg>
+          <span aria-hidden="true"><kbd>?</kbd></span>
+        </button>
+        <div id="help-hint" class="glyph-hint" popover="hint" aria-hidden="true">Help</div>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="show-modal"
+          aria-label="Settings"
+          data-keys="s"
+          interestfor="settings-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/gear-16"></svg>
+          <span aria-hidden="true"><kbd>S</kbd></span>
+        </button>
+        <div id="settings-hint" class="glyph-hint" popover="hint" aria-hidden="true">Settings</div>
+      </div>
+    </header>
+    <main>
+      <div class="prose">
+        <div class="title">
+          <h1>sqlate</h1>
+        </div>
+        <p>
+          Edit the SQL patterns and statements below, or input.json, and press Run
+          (<kbd>Ctrl+Enter</kbd>). sqlate compiles each statement for PostgreSQL and runs the
+          guarded edit over a scripted driver, as Go built and run right here in your browser.
+        </p>
+      </div>
+      <sl-go-demo source editable-files fixed label="sqlate">
+<pre data-file="main.go"><code class="language-go">// Command sqlate compiles the SQL files in its working directory with sqlate, for PostgreSQL,
+// and prints each statement as the engine receives it: its name, its tier, its parameters in
+// the order they bind, and its SQL with PostgreSQL's $n placeholders.
+//
+// The files' names say what each one is:
+//
+//   - &lt;ns&gt;.&lt;name&gt;.sql is a pattern, published in namespace ns. app.identity.sql is the pattern
+//     a statement includes as {{&gt; app.identity}}.
+//   - Any other .sql file is a statement, named by its file: create.sql is the statement create.
+//
+// The statements compile against PostgreSQL's patterns, the library's sql namespace with
+// {{&gt; sql.guard_set}} and {{&gt; sql.guard_where}} among them, plus one namespace for each ns the
+// pattern files name. Add a file such as audit.stamp.sql and a statement can include
+// {{&gt; audit.stamp}}.
+//
+// Then it runs the statement edit, guarded by the statement version, over a scripted driver that
+// input.json sets up; guard.go says how.
+//
+// If a pattern or a statement is wrong, a missing tier, an include nothing publishes, a native
+// pattern in a standard statement, or a pattern in the library's own sql namespace, the program
+// prints sqlate's message on stderr and exits 1.
+package main
+
+import (
+	"fmt"
+	"maps"
+	"os"
+	"slices"
+	"strings"
+	"testing/fstest"
+
+	"github.com/standards-lab/sqlate/postgres"
+	"github.com/standards-lab/sqlate/query"
+)
+
+func main() {
+	os.Exit(run())
+}
+
+// run compiles the working directory's files and prints the statements to stdout, then runs the
+// guarded edit, or prints why it can't to stderr, and answers the exit code.
+func run() int {
+	files, namespaces, err := read(".")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	// The catalog every statement compiles against: PostgreSQL's spelling of the library's
+	// patterns first, then each of the reader's namespaces, in name order.
+	sources := []query.Source{postgres.Patterns()}
+	for _, ns := range namespaces {
+		sources = append(sources, query.Publish(ns, files, ns))
+	}
+	catalog, err := query.NewCatalog(sources...)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	statements, err := catalog.Compile(files, ".", postgres.Dialect{})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	// Statements answers them in name order.
+	for i, st := range statements.Statements() {
+		if i &gt; 0 {
+			fmt.Println()
+		}
+		fmt.Printf("-- %s: %s, %s\n%s\n", st.Name(), st.Tier(), parameters(st.Params()), st.Text())
+	}
+	return guarded(statements)
+}
+
+// read loads the .sql files in dir into one in-memory file system, laid out the way sqlate
+// reads them: each statement stays at the top, where Compile reads a directory's .sql files,
+// and each pattern moves into a directory named for its namespace, which Publish reads. It
+// answers the namespaces the patterns name, sorted.
+func read(dir string) (fstest.MapFS, []string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, nil, err
+	}
+	files := fstest.MapFS{}
+	namespaces := map[string]bool{}
+	for _, e := range entries {
+		base, isSQL := strings.CutSuffix(e.Name(), ".sql")
+		if e.IsDir() || !isSQL {
+			continue
+		}
+		text, err := os.ReadFile(dir + "/" + e.Name())
+		if err != nil {
+			return nil, nil, err
+		}
+		file := &amp;fstest.MapFile{Data: text}
+		// app.identity.sql is the pattern identity in namespace app; create.sql is a statement.
+		if ns, name, isPattern := strings.Cut(base, "."); isPattern {
+			files[ns+"/"+name+".sql"] = file
+			namespaces[ns] = true
+		} else {
+			files[e.Name()] = file
+		}
+	}
+	return files, slices.Sorted(maps.Keys(namespaces)), nil
+}
+
+// parameters lists a statement's parameters by their placeholders: $1 code, $2 name.
+func parameters(names []string) string {
+	if len(names) == 0 {
+		return "no parameters"
+	}
+	listed := make([]string, len(names))
+	for i, name := range names {
+		listed[i] = fmt.Sprintf("$%d %s", i+1, name)
+	}
+	return "parameters " + strings.Join(listed, ", ")
+}
+</code></pre>
+<pre data-file="guard.go"><code class="language-go">package main
+
+// The run: after the statements print, sqlate runs edit, guarded by version, the way a service
+// edits a row it read earlier: the edit changes the row only at the version the caller read, and
+// when it changes nothing, version tells a row someone else changed from no row at all.
+//
+// No database runs in the page. The statements run over sqlate's sqltest driver, which answers
+// each call from a script and records it, with no socket. input.json says what the caller sends
+// and what the row holds:
+//
+//   - id, code, and name are the edit's arguments.
+//   - version is the version the caller read.
+//   - stored is the version the row holds now, or null when there is no row.
+//
+// The script follows from stored. Equal to version, the edit affects one row and the run prints
+// the new version. Another number, the edit affects no row, version reads stored back, and the
+// run prints the version mismatch. null, the edit affects no row, version reads no row, and the
+// run prints sql.ErrNoRows. Edit input.json and run again to see each.
+//
+// If edit.sql or version.sql is missing, or input.json is missing or isn't the JSON the run
+// expects, the program prints why on stderr and exits 1.
+
+import (
+	"bytes"
+	"context"
+	"database/sql"
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/standards-lab/sqlate"
+	"github.com/standards-lab/sqlate/postgres"
+	"github.com/standards-lab/sqlate/query"
+	"github.com/standards-lab/sqlate/sqltest"
+)
+
+// input is the file the run reads, from the working directory.
+const input = "input.json"
+
+// Input is input.json's shape. A field the JSON leaves out is its zero value, stored's null; a
+// key no field names is an error, so a misspelled key fails rather than run with a zero.
+type Input struct {
+	ID      int64  `json:"id"`
+	Code    string `json:"code"`
+	Name    string `json:"name"`
+	Version int64  `json:"version"`
+	Stored  *int64 `json:"stored"`
+}
+
+// guarded runs edit, guarded by version, over a script input.json sets, and prints each call
+// the driver received and the result, or prints why it can't on stderr, and answers the exit
+// code.
+func guarded(statements *query.Statements) int {
+	in, err := readInput()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	for _, name := range []string{"edit", "version"} {
+		// Statement panics on a name the files don't hold, so look first.
+		if !slices.ContainsFunc(statements.Statements(), func(st query.Statement) bool {
+			return st.Name() == name
+		}) {
+			fmt.Fprintf(os.Stderr, "the run needs %s.sql, and there is none\n", name)
+			return 1
+		}
+	}
+	guard := statements.Statement("edit").Guarded(statements.Statement("version"), "version")
+
+	// sqltest.Open is written for tests, so it takes a testing.TB, and a program has none: the
+	// run passes it a stand-in that does what Open asks of one, and closes the pool at the end.
+	stand := &amp;standIn{}
+	defer stand.cleanUp()
+	pool, recorder := sqltest.Open(stand, script(in)...)
+	db := sqlate.Wrap(pool, postgres.Dialect{})
+
+	stored := "no row stored"
+	if in.Stored != nil {
+		stored = fmt.Sprintf("the row stored at version %d", *in.Stored)
+	}
+	fmt.Printf("\n-- run: edit guarded by version, version %d read; %s\n", in.Version, stored)
+
+	args := query.Args{"id": in.ID, "code": in.Code, "name": in.Name}
+	next, err := guard.Run(context.Background(), db, in.Version, args)
+
+	for _, call := range recorder.Calls() {
+		fmt.Printf("\n-- %s%s\n%s\n", call.Op, bound(call.Args), call.SQL)
+	}
+	switch {
+	case err == nil:
+		fmt.Printf("\n-- result: version %d\n", next)
+	case errors.Is(err, query.ErrVersionMismatch), errors.Is(err, sql.ErrNoRows):
+		fmt.Printf("\n-- result: %v\n", err)
+	default:
+		// The reader's statements bind or read what the script doesn't answer.
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if n := recorder.Pending(); n &gt; 0 {
+		fmt.Fprintf(os.Stderr, "the run left %d scripted responses unused\n", n)
+		return 1
+	}
+	return 0
+}
+
+// readInput reads and decodes input.json: one JSON object, and nothing after it.
+func readInput() (Input, error) {
+	var in Input
+	text, err := os.ReadFile(input)
+	if errors.Is(err, fs.ErrNotExist) {
+		return in, fmt.Errorf("%s: no such file in the working directory", input)
+	}
+	if err != nil {
+		return in, err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&amp;in); err != nil {
+		return in, fmt.Errorf("%s: %w", input, err)
+	}
+	if _, err := decoder.Token(); !errors.Is(err, io.EOF) {
+		return in, fmt.Errorf("%s: more than one JSON value", input)
+	}
+	return in, nil
+}
+
+// script is what the driver answers, in call order: the edit's rows affected, and when it
+// affects none, the row version reads, or no row.
+func script(in Input) []sqltest.Response {
+	switch {
+	case in.Stored == nil:
+		return []sqltest.Response{{}, {Columns: []string{"version"}}}
+	case *in.Stored == in.Version:
+		return []sqltest.Response{{Affected: 1}}
+	default:
+		return []sqltest.Response{{}, {Columns: []string{"version"}, Rows: [][]driver.Value{{*in.Stored}}}}
+	}
+}
+
+// bound lists a call's values by their placeholders: , $1 = "LAB", $2 = 3.
+func bound(values []any) string {
+	var listed strings.Builder
+	for i, v := range values {
+		fmt.Fprintf(&amp;listed, ", $%d = %#v", i+1, v)
+	}
+	return listed.String()
+}
+
+// standIn is a testing.TB for sqltest.Open, which a program has no test to pass. Open calls only
+// Helper and Cleanup, which standIn defines; the embedded testing.TB is nil and provides the
+// rest of the interface, its private method included, so any other call would panic.
+type standIn struct {
+	testing.TB
+	cleanups []func()
+}
+
+// Helper does nothing: a program has no test log to report a caller's line in.
+func (*standIn) Helper() {}
+
+// Cleanup keeps f to run when the run ends, closing the pool Open made.
+func (s *standIn) Cleanup(f func()) { s.cleanups = append(s.cleanups, f) }
+
+// cleanUp runs the cleanups, last kept first, as testing does.
+func (s *standIn) cleanUp() {
+	for _, f := range slices.Backward(s.cleanups) {
+		f()
+	}
+}
+</code></pre>
+<pre data-file="app.identity.sql"><code class="language-sql">--| tier: native
+--| native: postgres — RETURNING. Ports: OUTPUT INSERTED (SQL Server), RETURNING INTO (Oracle), LAST_INSERT_ID + a read (MySQL).
+-- The identity a command returns, the row's key and its version, so every
+-- create ends with {{&gt; app.identity}} and reads the same columns.
+RETURNING id, version
+</code></pre>
+<pre data-file="create.sql"><code class="language-sql">--| tier: native
+--| native: postgres — RETURNING. Ports: OUTPUT INSERTED (SQL Server), RETURNING INTO (Oracle), LAST_INSERT_ID + a read (MySQL).
+INSERT INTO project (code, name)
+VALUES ({{code}}, {{name}})
+{{&gt; app.identity}}
+</code></pre>
+<pre data-file="edit.sql"><code class="language-sql">--| tier: standard
+-- A guarded edit: it changes the row only at the version the caller read,
+-- and advances that version.
+UPDATE project
+SET code = {{code}}, name = {{name}}, {{&gt; sql.guard_set}}
+WHERE {{&gt; sql.guard_where}}
+</code></pre>
+<pre data-file="version.sql"><code class="language-sql">--| tier: standard
+-- The guard's check: the row's current version, or no row.
+SELECT version FROM project WHERE id = {{id}}
+</code></pre>
+<pre data-file="input.json"><code class="language-json">{
+  "id": 42,
+  "code": "LAB",
+  "name": "Standards Lab",
+  "version": 3,
+  "stored": 3
+}
+</code></pre>
+      </sl-go-demo>
+    </main>
+    <dialog id="help" aria-labelledby="help-title">
+      <header class="dialog-header">
+        <h2 id="help-title" tabindex="-1" autofocus>Keyboard shortcuts</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="help"
+          command="close"
+          aria-label="Close"
+          interestfor="help-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="help-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-shortcuts></sl-shortcuts>
+    </dialog>
+    <dialog id="settings" aria-labelledby="settings-title">
+      <header class="dialog-header">
+        <h2 id="settings-title">Settings</h2>
+        <button
+          type="button"
+          class="glyph-button"
+          commandfor="settings"
+          command="close"
+          aria-label="Close"
+          interestfor="settings-close-hint"
+          aria-description=""
+        >
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>Esc</kbd></span>
+        </button>
+        <div id="settings-close-hint" class="glyph-hint" popover="hint" aria-hidden="true">Close</div>
+      </header>
+      <sl-settings></sl-settings>
+    </dialog>
+  </body>
+</html>

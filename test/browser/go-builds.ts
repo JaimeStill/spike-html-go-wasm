@@ -18,6 +18,11 @@ const root = join(import.meta.dirname, "../..");
  * compiler. */
 export const BUILD = 120_000;
 
+/** How long a build of the sqlate program may take to settle: a cold one fetches and compiles the
+ * compiler too, and fetches, reads, and links a closure of about 220 archives, PostgreSQL's
+ * driver's pgtype the largest. */
+export const SQLATE_BUILD = 2 * BUILD;
+
 /** The phases a build and its run show, in phase order. */
 export const BUILT_PHASES = ["Fetch", "Wasm compile", "Go compile", "Link", "Instantiate", "Run"];
 
@@ -57,10 +62,15 @@ export async function retype(page: Page, target: string, text: string) {
 }
 
 /** Presses the demo's Run and answers what it shows once its status says the text, within a
- * build's bound. */
-export async function build(page: Page, target: string, finished: string): Promise<Shown> {
+ * build's bound, BUILD unless another is given. */
+export async function build(
+  page: Page,
+  target: string,
+  finished: string,
+  bound = BUILD,
+): Promise<Shown> {
   await pressControl(page, target, "run");
-  await says(page, target, finished, BUILD);
+  await says(page, target, finished, bound);
   return shown(page, target);
 }
 

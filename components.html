@@ -1,36 +1,36 @@
 <!doctype html>
 <!-- The components page, a hand page: each of the spike's components in every state, each state
-     labelled in its figure's caption, once, the layout following the viewport, and, for a
-     component that takes focus, one instance reached by the keyboard, its focus shown. Its script,
+     labelled in its figure's caption, once, the layout following the viewport, and, for a component
+     that takes focus, one instance reached by the keyboard, its focus shown. Its script,
      web/pages/components.ts, defines the components and builds the states into each list; nothing
-     runs Go, or loads it, until a Go demo's Run. sl-code-editor: Go and JSON highlighted, another
-     language plain, read-only, long lines scrolled sideways (the default) and wrapped, a tab two
-     columns wide, empty and named by its caption through aria-labelledby, two editors sharing the
-     document's highlights, an editable editor for the keyboard model, and an editor whose events a
-     readout counts, a specimen aid. The script creates each editor's settings and owns them. sl-
-     file-tabs: several files, one modified, one read-only, sixteen overflowing the row, and one
-     alone, each over an editor showing the active file, the script owning each file set and
-     applying the tabs' requests and the editor's edits to it. sl-console: interleaved streams,
-     exits of 0 and 2, a handler's answer and error, ANSI escapes, long lines, a log past its limit,
-     empty, and one streaming on a button's press, each log the script's own, written from scripted
-     events, its clear requests applied by the script. sl-timings: a cold load, a held instance's
-     call, a program's run, a program built from source, the call after Stop, and no run yet, each
-     run's timings the script's own, recorded from scripted events, and one whose specimen aid
-     begins a new run in place of the last on a button's press. sl-controls: idle with nothing modified, a file modified, a run
-     pending, a run that fails, the files group, New file's form refusing a name on a specimen aid's
-     press, and the last file, each over the file tabs and an editor, the script owning each file
-     set and run state and applying the toolbar's requests, a run ending on its own after a moment.
-     sl-go-demo: written here, not by the script, each demo's files the fences inside it, which read
-     as the page's code before the element upgrades and without script: a handler demo, format's
-     JSON input; a program demo, hello's main.go as cmd/hello/main.go holds it; a program demo with
-     editable files; handler demos for files, its text input, and for crash, which panics; a
-     handler demo whose fence is the SDK's Shiki markup, as a Markdown page renders it; a handler
-     demo with two fences, an authoring error; two demos, spin and format, sharing the runner; and
-     a source demo, editable files built from source in the page, a main.go reading its input.txt
-     from the working directory. The
-     script gives every demo the page's one runner, which loads Go only on a Run. The shell is the index's, the same header, dialogs,
-     and shared sheet, web/pages/page.css, which also holds the states' layout and sets each
-     section apart; see index.html for each. -->
+     runs Go, or loads it, until a Go demo's Run. sl-code-editor: Go, JSON, and SQL highlighted,
+     another language plain, read-only, long lines scrolled sideways (the default) and wrapped, a
+     tab two columns wide, empty and named by its caption through aria-labelledby, two editors
+     sharing the document's highlights, an editable editor for the keyboard model, and an editor
+     whose events a readout counts, a specimen aid. The script creates each editor's settings and
+     owns them. sl-file-tabs: several files, one modified, one read-only, sixteen overflowing the
+     row, and one alone, each over an editor showing the active file, the script owning each file
+     set and applying the tabs' requests and the editor's edits to it. sl-console: interleaved
+     streams, exits of 0 and 2, a handler's answer and error, ANSI escapes, long lines, a log past
+     its limit, empty, and one streaming on a button's press, each log the script's own, written
+     from scripted events, its clear requests applied by the script. sl-timings: a cold load, a held
+     instance's call, a program's run, a program built from source, the call after Stop, and no run
+     yet, each run's timings the script's own, recorded from scripted events, and one whose specimen
+     aid begins a new run in place of the last on a button's press. sl-controls: idle with nothing
+     modified, a file modified, a run pending, a run that fails, the files group, New file's form
+     refusing a name on a specimen aid's press, and the last file, each over the file tabs and an
+     editor, the script owning each file set and run state and applying the toolbar's requests, a
+     run ending on its own after a moment. sl-go-demo: written here, not by the script, each demo's
+     files the fences inside it, which read as the page's code before the element upgrades and
+     without script: a handler demo, format's JSON input; a program demo, hello's main.go as
+     cmd/hello/main.go holds it; a program demo with editable files; handler demos for files, its
+     text input, and for crash, which panics; a handler demo whose fence is the SDK's Shiki markup,
+     as a Markdown page renders it; a handler demo with two fences, an authoring error; two demos,
+     spin and format, sharing the runner; and a source demo, editable files built from source in the
+     page, a main.go reading its input.txt from the working directory. The script gives every demo
+     the page's one runner, which loads Go only on a Run. The shell is the index's, the same header,
+     dialogs, and shared sheet, web/pages/page.css, which also holds the states' layout and sets
+     each section apart; see index.html for each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -88,8 +88,8 @@
       <section id="code-editor" aria-labelledby="code-editor-heading">
         <h2 id="code-editor-heading">Code editor</h2>
         <p>
-          <code>sl-code-editor</code>, a plain-text editor whose Go and JSON are highlighted in the
-          page's palette and scheme, beside a gutter of line numbers.
+          <code>sl-code-editor</code>, a plain-text editor whose Go, JSON, and SQL are highlighted in
+          the page's palette and scheme, beside a gutter of line numbers.
         </p>
         <h3 id="code-editor-states">States</h3>
         <div class="states"></div>

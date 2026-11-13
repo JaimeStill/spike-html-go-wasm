@@ -1,14 +1,15 @@
 // The playground's programs' report, never a gate: for each program the Program select offers,
-// opened by its fragment in a browser of its own, so its worker is fresh and its cache empty, the
-// phase timings of its first Run, cold, and of a Run after an edit to main.go, warm, each phase as
-// the demo's timings show it, and its closure, the standard-library archives its cold Run fetched:
-// their count, their bytes as fetched, and their bytes gzipped here, by node's zlib at its default
-// level, as Vite's preview serves them raw. The report is the test's diagnostics, written nowhere
-// else; nothing here asserts a number, only that each Run finishes, exit 0, so the report has
-// numbers to give. mise run report:programs runs it alone, on a quiet machine; the browser tier
-// runs it beside its other files, so its timings there are a busier machine's. The build as Pages
-// serves it, dist/ under the base by the SDK's served(), Vite's preview, in the pinned
-// chrome-headless-shell. The helpers are go-demos.ts's, go-builds.ts's, and
+// opened by its fragment, and for the sqlate page's source demo, playground/sqlate, each in a
+// browser of its own, so its worker is fresh and its cache empty, the phase timings of its first
+// Run, cold, and of a Run after an edit to main.go, warm, each phase as the demo's timings show it,
+// and its closure, the archives its cold Run fetched, the standard library's and, for sqlate, the
+// site's pinned modules': their count, their bytes as fetched, and their bytes gzipped here, by
+// node's zlib at its default level, as Vite's preview serves them raw. The report is the test's
+// diagnostics, written nowhere else; nothing here asserts a number, only that each Run finishes,
+// exit 0, so the report has numbers to give. mise run report:programs runs it alone, on a quiet
+// machine; the browser tier runs it beside its other files, so its timings there are a busier
+// machine's. The build as Pages serves it, dist/ under the base by the SDK's served(), Vite's
+// preview, in the pinned chrome-headless-shell. The helpers are go-demos.ts's, go-builds.ts's, and
 // playground-layouts.ts's. Every wait is bounded.
 
 import { readFileSync } from "node:fs";
@@ -20,20 +21,22 @@ import { launch } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
-import { build, DONE, manifest, toolchainRequests } from "./go-builds.ts";
+import { BUILD, build, DONE, manifest, SQLATE_BUILD, toolchainRequests } from "./go-builds.ts";
 import type { Shown } from "./go-demos.ts";
 import { open } from "./go-demos.ts";
 import { paste, PLAYGROUND } from "./playground-layouts.ts";
 
 const root = join(import.meta.dirname, "../..");
 
-/** The programs, each its fragment and its option's text, in the select's order. */
+/** The programs, each the page that opens it, its label, and its build's bound: the playground's,
+ * by its fragment, in the select's order, each its option's text; then the sqlate page's. */
 const PROGRAMS = [
-  ["calc", "Calculator"],
-  ["basics", "Basics"],
-  ["generics", "Generics"],
-  ["concurrency", "Concurrency"],
-  ["stdlib", "Standard library"],
+  ["playground.html#calc", "Calculator", BUILD],
+  ["playground.html#basics", "Basics", BUILD],
+  ["playground.html#generics", "Generics", BUILD],
+  ["playground.html#concurrency", "Concurrency", BUILD],
+  ["playground.html#stdlib", "Standard library", BUILD],
+  ["sqlate.html", "sqlate", SQLATE_BUILD],
 ] as const;
 
 /** The phases a build and its run can show, as the timings name them, in phase order. */
@@ -56,19 +59,19 @@ after(async () => {
   await server?.stop();
 });
 
-/** Opens the program by its fragment in a browser of its own, runs it cold, appends a comment to
- * main.go, which the demo opens on, and runs it warm. */
-async function measure(program: string, label: string): Promise<Measured> {
+/** Opens the program's page in a browser of its own, runs it cold, appends a comment to main.go,
+ * which the demo opens on, and runs it warm, each Run within the bound. */
+async function measure(path: string, label: string, bound: number): Promise<Measured> {
   const browser = await launch();
   try {
-    const watched = await open(browser, server.origin, `playground.html#${program}`);
+    const watched = await open(browser, server.origin, path);
     const { page } = watched;
-    const cold = await build(page, PLAYGROUND, DONE);
+    const cold = await build(page, PLAYGROUND, DONE, bound);
     const fetched = toolchainRequests(watched);
     const tools = new Set(["manifest.json", manifest.compile, manifest.link]);
     const archives = fetched.filter((path) => !tools.has(path));
     await paste(page, "\n// Edited for the report.\n");
-    const warm = await build(page, PLAYGROUND, DONE);
+    const warm = await build(page, PLAYGROUND, DONE, bound);
     return { label, cold, warm, archives };
   } finally {
     await browser.close();
@@ -104,7 +107,7 @@ function table(rows: string[][], left: number): string[] {
 describe("the playground's programs' report", () => {
   test("each program's cold and warm phase timings, in ms, and its closure's archives, count, bytes as fetched, and gzip bytes", async (t) => {
     const measured: Measured[] = [];
-    for (const [program, label] of PROGRAMS) measured.push(await measure(program, label));
+    for (const [path, label, bound] of PROGRAMS) measured.push(await measure(path, label, bound));
 
     const phases = PHASES.filter((phase) =>
       measured.some(({ cold, warm }) => cold.phases.includes(phase) || warm.phases.includes(phase)),
@@ -147,7 +150,7 @@ describe("the playground's programs' report", () => {
       "Phase timings, ms: cold from a fresh worker and an empty cache, warm after an edit to main.go",
       ...timings,
       "",
-      "Closure: the standard-library archives the cold Run fetched, gzip by node's zlib",
+      "Closure: the archives the cold Run fetched, the standard library's and the pinned modules', gzip by node's zlib",
       ...closures,
     ]) {
       t.diagnostic(line);

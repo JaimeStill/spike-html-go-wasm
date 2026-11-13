@@ -8,7 +8,7 @@
 // Nothing here loads Go on load: the page's one runner starts its worker and fetches a module only
 // on a demo's Run.
 //
-// The code editor's states (sl-code-editor): Go and JSON highlighted, another language plain,
+// The code editor's states (sl-code-editor): Go, JSON, and SQL highlighted, another language plain,
 // read-only, long lines scrolled sideways (the default) and wrapped, a tab two columns wide, empty
 // and named by its caption through aria-labelledby, two editors whose highlights share the
 // document's registry, an editable editor for its keyboard model, and an editor whose input and
@@ -68,6 +68,7 @@ import "../components/console.ts";
 import "../components/controls.ts";
 import { ConsoleLog, LIMIT } from "../components/console-log.ts";
 import { EditorSettings } from "../components/editor-settings.ts";
+import { languageOf } from "../components/file-names.ts";
 import { FileSet, type GivenFile } from "../components/file-set.ts";
 import "../components/file-tabs.ts";
 import type { SelectDetail } from "../components/file-tabs.ts";
@@ -160,8 +161,18 @@ const json = `{
 }
 `;
 
-const sql = `-- Another language shows plain.
-SELECT name, count(*) FROM runs WHERE status = 'done' GROUP BY name;
+const sql = `-- The runs done, by name.
+SELECT name, count(*) AS done
+FROM runs
+WHERE status = 'done' AND started > $1
+GROUP BY name
+ORDER BY done DESC;
+`;
+
+const toml = `# Another language shows plain.
+[run]
+name = "probe"
+steps = 1000000
 `;
 
 const long = `package main
@@ -219,9 +230,14 @@ specimens(
       build: () => [editor({ language: "json", label: "input.json", value: json })],
     },
     {
-      key: "plain",
-      label: "Another language, SQL: plain",
+      key: "sql",
+      label: "SQL, highlighted",
       build: () => [editor({ language: "sql", label: "query.sql", value: sql })],
+    },
+    {
+      key: "plain",
+      label: "Another language, TOML: plain",
+      build: () => [editor({ language: "toml", label: "probe.toml", value: toml })],
     },
     {
       key: "readonly",
@@ -289,9 +305,6 @@ specimens(
     build: () => [editor({ language: "go", label: "shapes.go", value: go })],
   },
 );
-
-/** The grammar of a file's name: go or json by its extension, any other plain. */
-const languageOf = (name: string) => /\.(go|json)$/.exec(name)?.[1] ?? "";
 
 /** The controlled loop over the set: tabs, and below them the tabpanel they control, holding an
  * editor that shows the active file. The page applies each select request and each edit to the set,

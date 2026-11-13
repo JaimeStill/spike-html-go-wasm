@@ -112,10 +112,13 @@
           and the Pages workflow; no committed .wasm.
         </li>
         <li>
-          A live sqlate page under <code>/&lt;repo&gt;/</code>: edit a statement, see its compiled
-          SQL with <code>$n</code> placeholders and its compile errors.
+          A live <a href="sqlate.html">sqlate page</a> under <code>/&lt;repo&gt;/</code>: edit a
+          statement, see its compiled SQL with <code>$n</code> placeholders and its compile errors.
         </li>
-        <li>A statement run in-process over sqltest's scripted driver, with no socket.</li>
+        <li>
+          A statement run in-process over sqltest's scripted driver, with no socket: the
+          <a href="sqlate.html">sqlate page</a>'s guarded edit, its outcome set by input.json.
+        </li>
         <li>
           Each module's raw, gzip-as-Pages-serves, and brotli-11 bytes, with a TinyGo comparison
           build.
@@ -140,7 +143,8 @@
         <li>The go-core graph and go-web-sdk demos live, their sizes reported.</li>
         <li>
           The bridge, the runtime, and sl-go-demo used unchanged by every scenario, embedded in a
-          rendered Markdown page and in a hand page.
+          <a href="sqlate-compile.html">rendered Markdown page</a>, sqlate's compile handler
+          prebuilt, and in a hand page, the <a href="sqlate.html">sqlate page</a>.
         </li>
         <li>
           The four programs (<a href="playground.html#basics">basics</a>,

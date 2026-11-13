@@ -12,7 +12,9 @@
 // band of its fixed demo, the phone's also with its Timings tab, and the wide band's in each
 // arrangement and with the Layout menu open, each chosen by the menu, the widest with the About
 // dialog open, and each of the SDK's widths with each of Basics, Generics, Concurrency, and
-// Standard library chosen in the Program select.
+// Standard library chosen in the Program select. The sqlate page's, --page sqlate, is the viewport
+// alone at each of the SDK's widths, and the rendered Markdown page's, --page sqlate-compile, the
+// page whole at each.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -220,6 +222,22 @@ describe("a component's capture", () => {
         await page.close();
       }
     }
+  });
+
+  test("the capture file captures the sqlate page's viewport at each of the SDK's widths", () => {
+    const described = description.pages.find(({ name }) => name === "sqlate");
+    assert.deepEqual(
+      described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
+      WIDTHS.map(({ width }) => [`sqlate-${width}`, width, false]),
+    );
+  });
+
+  test("the capture file captures the rendered Markdown page whole at each of the SDK's widths", () => {
+    const described = description.pages.find(({ name }) => name === "sqlate-compile");
+    assert.deepEqual(
+      described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
+      WIDTHS.map(({ width }) => [`sqlate-compile-${width}`, width, true]),
+    );
   });
 
   test("a --width not among the SDK's is a usage error naming them, and captures nothing", () => {

@@ -7,12 +7,15 @@
 // name, whose fences are playground/<program>'s files byte for byte, as the page's script builds
 // the program's file set from them by the demo's rules: basics, its main.go and shapes.go;
 // generics, its main.go and stack.go; concurrency, its main.go and pipeline.go; and stdlib, its
-// main.go and the input.json it reads. Each program's fences are every file in its directory but
-// its tests, so a file added there and not to the page fails. A fence is a direct-child pre of the demo or the template,
-// its text the pre's text content, as sl-go-demo reads it (web/components/fences.ts); its file is
-// the fence's name, its data-file, on the pre or its code, else the pre's title, else main.go,
-// under cmd/<scenario>/, so a one-fence demo's is its entrypoint, cmd/<scenario>/main.go. The
-// written demos and templates are every program's source: the pages' scripts add none.
+// main.go and the input.json it reads. The sqlate page's one demo, a source demo, is
+// playground/sqlate's files byte for byte: main.go and guard.go, the pattern app.identity.sql, the
+// statements create.sql, edit.sql, and version.sql, and the run's input.json. Each program's fences
+// are every file in its directory but its tests, so a file added there and not to the page fails. A
+// fence is a direct-child pre of the demo or the template, its text the pre's text content, as
+// sl-go-demo reads it (web/components/fences.ts); its file is the fence's name, its data-file, on
+// the pre or its code, else the pre's title, else main.go, under cmd/<scenario>/, so a one-fence
+// demo's is its entrypoint, cmd/<scenario>/main.go. The written demos and templates are every
+// program's source: the pages' scripts add none.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the
 // page's hand-written markup, so a small reader suffices, held to the HTML parser's rules where
@@ -222,6 +225,47 @@ describe("the playground's demo", () => {
   });
 });
 
+describe("the sqlate page's demo", () => {
+  const html = readFileSync(join(root, "sqlate.html"), "utf8");
+
+  test("is one source demo with editable files, its fences playground/sqlate's files byte for byte, main.go first and input.json last", () => {
+    const demos = writtenDemos(html);
+    assert.deepEqual(
+      demos.map(({ attrs, fences }) => [
+        attrs.has("source"),
+        attrs.has("editable-files"),
+        attrs.has("scenario") || attrs.has("handler"),
+        fences.map(({ name }) => name),
+      ]),
+      [
+        [
+          true,
+          true,
+          false,
+          [
+            "main.go",
+            "guard.go",
+            "app.identity.sql",
+            "create.sql",
+            "edit.sql",
+            "version.sql",
+            "input.json",
+          ],
+        ],
+      ],
+    );
+    const [{ fences }] = demos;
+    assert.deepEqual(fences.map(({ name }) => name).sort(), shipped("sqlate"), "every file");
+    for (const { name, text } of fences) {
+      assert.equal(
+        text,
+        readFileSync(join(root, "playground/sqlate", name), "utf8"),
+        `sqlate's ${name}`,
+      );
+    }
+  });
+});
+
 describe("the playground's program templates", () => {
   const html = readFileSync(join(root, "playground.html"), "utf8");
   const templates = writtenTemplates(html);
@@ -238,11 +282,13 @@ describe("the playground's program templates", () => {
     );
   });
 
-  test("are every program in playground/ but the calculator, each with a fence for every file of its directory but its tests", () => {
+  // The calculator is the source demo's starter, and sqlate is in no Program select: its demo
+  // is a hand page's of its own.
+  test("are every program in playground/ but the calculator and sqlate, each with a fence for every file of its directory but its tests", () => {
     assert.deepEqual(
       templates.map(({ program }) => program).sort(),
       readdirSync(join(root, "playground"))
-        .filter((program) => program !== "calc")
+        .filter((program) => program !== "calc" && program !== "sqlate")
         .sort(),
     );
     for (const { program, fences } of templates) {

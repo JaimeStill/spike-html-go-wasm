@@ -1,13 +1,15 @@
 // The playground's toolchain manifest, which the site build writes (scripts/build-toolchain.ts) to
 // <base>go/toolchain/manifest.json: the Go version, Go's compiler and linker built for GOOS=js
-// GOARCH=wasm, and each standard-library package that builds for js/wasm, its archive and its
-// direct imports. Every file it names has a content-hashed name, given nowhere but here, so a
+// GOARCH=wasm, and each package a program can import, its archive and its direct imports: every
+// standard-library package that builds for js/wasm, and every package of the site's pinned modules
+// that the repository's own Go depends on. A module's package resolves as a standard one does, by
+// its import path. Every file it names has a content-hashed name, given nowhere but here, so a
 // cached old compiler can never pair with new archives: a new build names new files.
 
-/** One standard-library package: its archive, the .a file whose export data the compiler reads
- * and whose object the linker reads, at a path relative to the manifest, absent for unsafe
- * alone, which the compiler provides itself; and its direct imports, as Go resolves them for
- * js/wasm (a vendored package by its vendor/ path), in Go's sorted order. */
+/** One package, the standard library's or a pinned module's: its archive, the .a file whose export
+ * data the compiler reads and whose object the linker reads, at a path relative to the manifest,
+ * absent for unsafe alone, which the compiler provides itself; and its direct imports, as Go
+ * resolves them for js/wasm (a vendored package by its vendor/ path), in Go's sorted order. */
 export interface ManifestPackage {
   archive?: string;
   imports: string[];
