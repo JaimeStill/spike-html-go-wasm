@@ -8,6 +8,7 @@ ignore ./dist
 
 require (
 	github.com/standards-lab/go-core v0.12.0
+	github.com/standards-lab/go-web-sdk v0.17.0
 	github.com/standards-lab/sqlate v0.7.0
 	github.com/standards-lab/sqlate/postgres v0.7.0
 )

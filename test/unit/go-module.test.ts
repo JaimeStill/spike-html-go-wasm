@@ -1,7 +1,10 @@
-// The Go module's checks, go-module.ts: the module passes both, and fixture modules with planted
+// The Go module's checks, go-module.ts: the module passes them, and fixture modules with planted
 // problems draw exactly the problems they plant, each named: forbidden imports among the layers,
 // beside the allowed ones, which draw none; and go.mod's replace directives and local-path
-// requirement.
+// requirement. And the go-web-sdk scenario's import listing: internal/websdk and cmd/websdk,
+// tests included, depend on the standard library, the bridge, and go-web-sdk's and go-core's
+// packages alone, go-web-sdk's root and middleware packages among them; a planted listing draws
+// each package outside those, named.
 
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -9,7 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { after, before, describe, test } from "node:test";
 
-import { goLayerProblems, goModProblems } from "./go-module.ts";
+import { goLayerProblems, goModProblems, scenarioDepProblems, scenarioDeps } from "./go-module.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -119,6 +122,44 @@ describe("go.mod", () => {
       "go.mod: replace example.com/y v1.0.0 => example.com/z v1.2.0: no replace directive; " +
         "require each module at a published version",
       "go.mod: require ./local v0.0.0: a local-path requirement; require a module path",
+    ]);
+  });
+});
+
+describe("the go-web-sdk scenario's import listing", () => {
+  const module = "github.com/JaimeStill/spike-html-go-wasm";
+  const allowed = ["github.com/standards-lab/go-web-sdk", "github.com/standards-lab/go-core"];
+
+  test("internal/websdk and cmd/websdk depend on the standard library, the bridge, and go-web-sdk's and go-core's packages alone", () => {
+    const deps = scenarioDeps(root, "websdk");
+    assert.ok(deps.includes("github.com/standards-lab/go-web-sdk"), "go-web-sdk's");
+    assert.ok(deps.includes("github.com/standards-lab/go-web-sdk/middleware"), "its middleware's");
+    assert.ok(deps.includes(`${module}/bridge`), "the bridge");
+    assert.deepEqual(scenarioDepProblems(module, "websdk", deps, allowed), []);
+  });
+
+  test("each package outside them is named", () => {
+    const deps = [
+      `${module}/bridge`,
+      `${module}/bridge/js`,
+      `${module}/cmd/websdk`,
+      `${module}/internal/websdk`,
+      `${module}/internal/websdk/store`,
+      `${module}/internal/websdk_test`,
+      "github.com/standards-lab/go-core/graph",
+      "github.com/standards-lab/go-web-sdk",
+      "github.com/standards-lab/go-web-sdk-template",
+      "github.com/standards-lab/sqlate/query",
+      `${module}/internal/sqlate`,
+      module,
+    ];
+    const why =
+      "only the standard library, the bridge, and the packages of " + allowed.join(" and ");
+    assert.deepEqual(scenarioDepProblems(module, "websdk", deps, allowed), [
+      `websdk depends on github.com/standards-lab/go-web-sdk-template: ${why}`,
+      `websdk depends on github.com/standards-lab/sqlate/query: ${why}`,
+      `websdk depends on ${module}/internal/sqlate: ${why}`,
+      `websdk depends on ${module}: ${why}`,
     ]);
   });
 });

@@ -124,3 +124,50 @@ export function goLayerProblems(dir: string): string[] {
   }
   return [...problems].sort();
 }
+
+/** The packages a scenario's composition root, internal/<scenario> and below, and its entrypoint,
+ * cmd/<scenario>, depend on under GOOS=js GOARCH=wasm, directly or not, their tests' included,
+ * outside the standard library: each by its import path, a test's variant under its package's
+ * path, without the generated test mains, sorted. */
+export function scenarioDeps(dir: string, scenario: string): string[] {
+  const listing = go(dir, [
+    "list",
+    "-deps",
+    "-test",
+    "-f",
+    "{{if not .Standard}}{{.ImportPath}}{{end}}",
+    `./internal/${scenario}/...`,
+    `./cmd/${scenario}`,
+  ]);
+  const paths = listing
+    .split("\n")
+    .filter(Boolean)
+    // "p [q.test]" is p as q's test builds it.
+    .map((path) => path.replace(/ \[.*\]$/, ""))
+    .filter((path) => !path.endsWith(".test"));
+  return [...new Set(paths)].sort();
+}
+
+/** The problems in a scenario's dependencies, `deps` as scenarioDeps lists them in `module`: each
+ * that is neither the module's bridge/, the scenario's own internal/<scenario> or cmd/<scenario>
+ * (its external test package among them), nor a package of one of the modules `allowed` names. */
+export function scenarioDepProblems(
+  module: string,
+  scenario: string,
+  deps: string[],
+  allowed: string[],
+): string[] {
+  const own = new RegExp(`^(bridge|(internal|cmd)/${scenario}(_test)?)(/|$)`);
+  const within = (path: string, root: string) => path === root || path.startsWith(`${root}/`);
+  return deps
+    .filter((path) =>
+      within(path, module)
+        ? !own.test(path.slice(module.length + 1))
+        : !allowed.some((root) => within(path, root)),
+    )
+    .map(
+      (path) =>
+        `${scenario} depends on ${path}: only the standard library, the bridge, and the ` +
+        `packages of ${allowed.join(" and ")}`,
+    );
+}

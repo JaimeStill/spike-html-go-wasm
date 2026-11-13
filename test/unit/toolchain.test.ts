@@ -5,8 +5,9 @@
 // an import-free main, which still closes over runtime's packages, and for playground/sqlate and
 // playground/graph, whose closures reach the site's pinned modules, sqlate's and go-core's; and
 // the modules' packages are exactly the ones the repository's own packages depend on, go-core's
-// graph and lifecycle among them, each archive under mod/. Writes nothing outside TMPDIR and Go's
-// caches.
+// graph and lifecycle and go-web-sdk's root and middleware packages among them, which the
+// go-web-sdk scenario's closure reaches, each archive under mod/. Writes nothing outside TMPDIR
+// and Go's caches.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -133,6 +134,11 @@ func main() {}
     assert.ok(wanted.includes("github.com/standards-lab/sqlate/postgres"), "sqlate's");
     assert.ok(wanted.includes("github.com/standards-lab/go-core/graph"), "graph's");
     assert.ok(wanted.includes("github.com/standards-lab/go-core/lifecycle"), "lifecycle's");
+    assert.ok(wanted.includes("github.com/standards-lab/go-web-sdk"), "go-web-sdk's");
+    assert.ok(
+      wanted.includes("github.com/standards-lab/go-web-sdk/middleware"),
+      "its middleware's",
+    );
     const held = Object.keys(manifest.packages).filter((path) => !std.has(path));
     assert.deepEqual(held.sort(), wanted);
     for (const path of held) {
