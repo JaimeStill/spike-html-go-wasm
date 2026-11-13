@@ -1,15 +1,15 @@
 # mise run never installs a missing tool first (task.run_auto_install, on by default): the check
 # reads no network, and fails naming mise run install, the one task that installs tools.
-# Adapted from spike-html-hosting (690e5e4): mise.toml, its init toolchain and tasks, with Go and
-# TinyGo added.
+# Adapted from spike-html-hosting (690e5e4): mise.toml, its init toolchain and tasks, with Go
+# added.
 # Adapted from spike-html-hosting-sdk (v0.6.2): template/mise.toml, its toolchain merged with the
-# repository's Go, TinyGo, and pnpm pins, its build the hand index alone, and its unit tier the
+# repository's Go and pnpm pins, its build the hand index alone, and its unit tier the
 # empty content.json.
 [settings]
 task.run_auto_install = false
 
-# The SDK's toolchain at its latest pins, with Go for the GOOS=js builds, golangci-lint for their
-# lint, and TinyGo for the comparison build.
+# The SDK's toolchain at its latest pins, with Go for the GOOS=js builds and golangci-lint for their
+# lint.
 [tools]
 actionlint = "1.7.12"
 go = "1.27.4"
@@ -17,7 +17,6 @@ golangci-lint = "2.15.0"
 node = "26.13.1"
 pnpm = "12.19.0"
 shellcheck = "0.11.0"
-tinygo = "0.44.0"
 "github:microsoft/typescript-go" = { version = "7.0.2", version_prefix = "typescript/v", bin_path = "package/lib" }
 
 # The browser tier's browser. Chrome for Testing publishes no checksums: take the sha256 and size

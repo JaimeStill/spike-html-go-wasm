@@ -126,7 +126,7 @@ Door          two-way: the task adds a command, a README section, and a goal
 
 ## Progress
 
-slices 0/4 committed · standards — · spec — · editor —
+slices 1/4 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -137,6 +137,7 @@ slices 0/4 committed · standards — · spec — · editor —
   direction by a `go list` test. Rejected: layer repositories; this spike settles Go WASM
   conventions, and the intake decides what moves to the SDK and documentation components layer.
 - setup: standard Go 1.27.4 ships; TinyGo 0.44.0 builds the same demos as a comparison.
+  Superseded by measure: no TinyGo.
 - setup: sizes are measured and reported, never gated; the spike focuses on capability and
   performance. Measured at setup (Go 1.27.4, `-s -w`): hello 706 KB gzip, the sqlate compile demo
   1.20 MB gzip, a bare net/http handler 1.61 MB gzip; Pages serves gzip, not brotli.
@@ -183,7 +184,7 @@ slices 0/4 committed · standards — · spec — · editor —
   waits for the push run, the Pages deploy, as spike-html-hosting.
 - setup: toolchain at init: go 1.27.4, node 26.13.0, pnpm 12.19.0, shellcheck 0.11.0, tinygo
   0.44.0; the site task adds the SDK's toolchain (Vite, typescript-go, ESLint, Prettier,
-  actionlint, chrome-headless-shell).
+  actionlint, chrome-headless-shell). Superseded by measure: no TinyGo.
 - setup: references: sqlate, go-core, and go-web-sdk at their latest release when each task
   plans (graph-ergonomics is updating the Go stack; the architect flags a critical release);
   spike-html-hosting-sdk v0.6.1, -components v0.5.0, -icons v0.1.0, spike-html-apps-foundation
@@ -862,6 +863,9 @@ slices 0/4 committed · standards — · spec — · editor —
   cause goes to final-review.
 - measure: sizes cover the four prebuilt modules, the compiler, the linker, and the seven program
   closures; no measured number fails the command.
+- measure: TinyGo comparison rejected; the spike's question is native Go. TinyGo can't build the
+  sqlate module (pgx's crypto/tls) or the playground's toolchain, and its modules need TinyGo's own
+  wasm_exec.js, not the runtime's. The pin is removed.
 
 ## Notes
 
@@ -1027,3 +1031,6 @@ slices 0/4 committed · standards — · spec — · editor —
   from source in the page, and go-web-sdk handlers called in-process, live on two rendered Markdown
   pages, with the modules'
   js/wasm archives added to the playground's manifest. Evidence 10."
+- coordinator · roadmap.toml: in the measure task's summary, "the TinyGo comparison, " goes, so
+  it reads "Each module's raw, gzip, and brotli sizes, and cold, cached, and in-place timings on
+  the live site, ...".

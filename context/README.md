@@ -25,7 +25,7 @@ budget.
 2. A live sqlate page under `/<repo>/`: edit a statement, see its compiled SQL with `$n`
    placeholders and its compile errors.
 3. A statement run in-process over sqltest's scripted driver, with no socket.
-4. Each module's raw, gzip-as-Pages-serves, and brotli-11 bytes, with a TinyGo comparison build.
+4. Each module's raw, gzip-as-Pages-serves, and brotli-11 bytes.
 5. Cold-load cost on the live site: the page readable before the module, time to first result
    after the click, and cold, cached, and in-place-switch timings.
 6. `wasm_exec.js` copied from the pinned toolchain with provenance; .wasm served as
@@ -189,8 +189,7 @@ The tasks, in the order they run; each cites the evidence it proves.
 6. `sqlate`: the compile demo and the in-process sqltest run, on a hand page and a Markdown page
    (evidence 2, 3, 11).
 7. `scenarios`: the go-core graph and go-web-sdk demos (evidence 10).
-8. `measure`: sizes, the TinyGo comparison, and timings on the live site, on desktop and on an
-   iPhone (evidence 4, 5).
+8. `measure`: sizes and timings on the live site, on desktop and on an iPhone (evidence 4, 5).
 9. `review`: the screenshot review (evidence 7).
 10. `final-review`: the performance, optimization, and ergonomics reviews, landing what's within
     reach (evidence 13).
