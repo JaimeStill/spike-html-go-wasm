@@ -1001,8 +1001,6 @@ Door          two-way: the task adds a command, a README section, and a goal
   final-review.
 - The review task owns the WebKit and desktop Safari checks; measure considered Playwright's
   WebKit and left it to review.
-- tinygo 0.44.0 is still installed on the machine though nothing pins it;
-  `mise uninstall tinygo@0.44.0` removes it.
 
 - For the answer: Go's js port has an in-memory fake network (`net_fake.go`), so go-web-sdk's
   Service.Run binds and serves inside the wasm under node. In a browser, net/http's client uses
