@@ -52,11 +52,11 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
     pattern files, byte for byte (`test/unit/sqlate-patterns.test.ts`), and tests a Go demo's fence
     naming rules (`web/components/file-names.ts`). It fails if a module under `web/components` or
     `web/pages` registers a page shortcut through the foundation's `keys.js`.
-  - The browser tier, in the pinned chrome-headless-shell, runs the SDK's shell checks on every
-    hand page and on the rendered Markdown page, the crawl, and the SDK's palette check on the
-    rendered page's fences, reads each page's cascade layers (the foundation's, then `site`, then
-    `page`) and finds no inline `<style>` in its source, and proves each component on the
-    components page:
+  - The browser tier, in the pinned chrome-headless-shell, each test bounded at 5 minutes so a
+    stalled one fails by its name, runs the SDK's shell checks on every hand page and on the
+    rendered Markdown page, the crawl, and the SDK's palette check on the rendered page's fences,
+    reads each page's cascade layers (the foundation's, then `site`, then `page`) and finds no
+    inline `<style>` in its source, and proves each component on the components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
       accessibility tree, its gutter, its loading, its editing keys and events, its settings,
       paste, and read-only;
@@ -95,8 +95,9 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
       module; a build started while spin is pending stopping spin first, each console holding only
       its own output; a program's Run, or the runner's load or run, while a build is pending
       stopping the build, which rejects as stopped, the source demo's console holding none of the
-      other request's events; and Ctrl+Enter and Cmd+Enter building and running the edited
-      program, and Reset restoring the source as given;
+      other request's events; a built program exiting with a goroutine's timer still pending,
+      each of two runs answering its exit code; and Ctrl+Enter and Cmd+Enter building and running
+      the edited program, and Reset restoring the source as given;
     - the playground: the starter's five files, `main.go` active, and no Go before a Run; the
       first Run fetching the manifest, the compiler, the linker, and only the starter's closure of
       archives, and printing its results with exit 0 and every phase of a build; an edit to
@@ -257,6 +258,14 @@ are `protocol.ts`'s.
 - `listen(listener)`: every output, exit, and timing event. The runner runs one load, build, or
   run at a time; one started while another is pending stops it first, which rejects with
   `"stopped"`, so every event between a request's start and its settling is that request's.
+
+The worker clears an instance's scheduled timeouts when it exits, in the `exit` hook
+`wasm_exec.js`'s `wasmExit` calls. `wasm_exec.js`, held to the pinned Go's copy, leaves them
+scheduled, and a program can exit with one pending, as when a goroutine's sleep outlasts main:
+its callback would then resume the exited program, which throws "Go program has already exited"
+from the worker's timer task, an uncaught error that fails whatever request is pending. The guard
+catches no error, so any other one still surfaces, and the run answers the program's own exit
+code.
 
 ## Pages
 

@@ -53,8 +53,7 @@ import {
 } from "./protocol.ts";
 
 /** wasm_exec.js's Go, the members this worker uses: _scheduledTimeouts is the shim's own, the
- * timers that resume Go after a sleep, which a drop clears so a dropped instance never runs
- * again. */
+ * timers that resume Go after a sleep, which a drop and an exit clear (clearTimers). */
 interface Go {
   argv: string[];
   env: Record<string, string>;
@@ -131,6 +130,12 @@ function outputOf(muted: () => boolean = () => false): OutputSink {
   };
 }
 
+/** Clears the instance's scheduled timeout events, so none resumes it again. */
+function clearTimers(go: Go) {
+  for (const timer of go._scheduledTimeouts.values()) clearTimeout(timer);
+  go._scheduledTimeouts.clear();
+}
+
 /** Drops the live instance: its running calls fail, its output is muted, its timers are
  * cleared, and its exit, which can no longer come, posts nothing. */
 function drop(reason: string) {
@@ -138,8 +143,7 @@ function drop(reason: string) {
   const instance = live;
   live = undefined;
   instance.dropped = true;
-  for (const timer of instance.go._scheduledTimeouts.values()) clearTimeout(timer);
-  instance.go._scheduledTimeouts.clear();
+  clearTimers(instance.go);
   for (const fail of instance.calls.values()) fail(reason);
   instance.calls.clear();
 }
@@ -309,6 +313,16 @@ async function start(): Promise<{ instance: Instance; ready: boolean }> {
   };
   go.exit = (code) => {
     instance.code = code;
+    // The exit race: wasm_exec.js's wasmExit, which calls this, sets exited but leaves the
+    // instance's timeout events scheduled, and Go's runtime can exit with one pending, as when a
+    // goroutine's sleep outlasts main. Its callback then resumes the exited program, and
+    // _resume throws "Go program has already exited" from the worker's timer task: an uncaught
+    // error, which the runner fails every pending request with, the next run's among them. The
+    // callback's retry loop throws the same way when a timer-driven resume ends in the exit and
+    // leaves its own id scheduled. Cleared here, inside wasmExit, no timer of an exited instance
+    // fires or loops again. No error is caught, so every other one still surfaces, and the run
+    // answers the exit code the program gave.
+    clearTimers(go);
     if (instance.dropped) return;
     emit({ type: "exit", scenario, code });
     end(`${scenario} exited with code ${code}`);
