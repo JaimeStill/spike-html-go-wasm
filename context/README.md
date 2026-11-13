@@ -40,6 +40,7 @@ budget.
     rendered Markdown page and in a hand page.
 12. The four programs (basics, generics, concurrency, standard library) edited and run in the
     page.
+13. The performance, optimization, and ergonomics review, with what it changed.
 
 ## Capabilities
 
@@ -168,9 +169,12 @@ The tasks, in the order they run; each cites the evidence it proves.
 6. `sqlate`: the compile demo and the in-process sqltest run, on a hand page and a Markdown page
    (evidence 2, 3, 11).
 7. `scenarios`: the go-core graph and go-web-sdk demos (evidence 10).
-8. `measure`: sizes, the TinyGo comparison, and timings on the live site (evidence 4, 5).
+8. `measure`: sizes, the TinyGo comparison, and timings on the live site, on desktop and on an
+   iPhone (evidence 4, 5).
 9. `review`: the screenshot review (evidence 7).
-10. `answer`: the verdict (evidence 8).
+10. `final-review`: the performance, optimization, and ergonomics reviews, landing what's within
+    reach (evidence 13).
+11. `answer`: the verdict (evidence 8).
 
 ## References
 
