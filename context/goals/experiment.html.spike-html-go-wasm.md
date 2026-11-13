@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** measure
+- **Branch:** measure
 
 ## Tasks
 
@@ -18,125 +18,115 @@
 10. [ ] final-review
 11. [ ] answer
 
-## Task brief · scenarios
+## Task brief · measure
 
 ```
-Problem       Evidence 10 is unproven. No page runs go-core's graph or go-web-sdk's handlers.
-              Whether either module builds for GOOS=js was an open note until this plan, and
-              their costs to a page are unmeasured. No Markdown page yet holds a source demo
-              built in the page, and no scenario calls an HTTP handler in-process. Both are the
-              cases v1.repository-docs would embed, so the answer needs them before measure
-              times the site.
-Behaviors     1. go.mod requires go-core v0.12.0 and go-web-sdk v0.17.0 by tag, with no replace.
-                 The check and the Pages build read no network beyond install's download.
-              2. A graph program, a package main beside the playground's programs, one main.go,
-                 never built into the site, wires a small service on go-core's graph: nodes made
-                 by Define, a Value, and a Fresh, with dependencies reached through Use, one
-                 After, and one Group. Built from its roots, it prints the System's layer table.
-                 It then runs the System under lifecycle's Coordinator with a finalized Config:
-                 each participant prints its start in layer order and its stop in reverse, and
-                 the program exits 0.
-              3. A constructor that returns an error fails the Build. The program prints graph's
-                 message, which names the node, on one stderr line and exits 1. A wiring mistake
-                 graph panics on, such as a dependency cycle, panics as Go prints it, with
-                 graph's message naming the cycle's path, and exits 2.
-              4. The program is vetted and tested under GOOS=js on node's fs and on the
-                 in-memory fs, covering behaviors 2 and 3 exactly: the output, a failing
-                 constructor, and a cycle.
-              5. The playground's manifest names an archive for every module package the graph
-                 program's and the go-web-sdk scenario's closures need, and the build gains no
-                 new code to do it. The unit tier's toolchain test asserts that graph's,
-                 lifecycle's, go-web-sdk's, and its middleware's archives are present.
-              6. A rendered Markdown page on go-core's graph, in the spike's own Markdown tree,
-                 embeds the program as a source demo around one ordinary go fence, byte for byte
-                 the program's main.go (unit tier). The browser tier proves: no Go requested on
-                 load; the first Run fetches the toolchain and only the program's closure, and
-                 prints behavior 2's exact output with exit 0; an edit to main.go rebuilds and
-                 runs the edit; an edit that makes a constructor fail shows behavior 3's line and
-                 exit 1; an edit that adds a cycle shows graph's panic and exit 2.
-              7. A prebuilt go-web-sdk scenario, one long-lived instance on the bridge, imports
-                 only the standard library, the bridge, and go-web-sdk's and go-core's packages
-                 (unit tier, by its import listing). It serves one handler, request. The handler
-                 takes a raw HTTP/1.1 request's text, with LF or CRLF line endings, whose body is
-                 everything after the blank line, so the reader counts no bytes. It calls the
-                 scenario's Router through net/http's ServeHTTP into an in-memory recorder, with
-                 no socket, and answers the response as HTTP/1.1 text: the status line, headers
-                 in name order, a blank line, and the body.
-              8. Text that isn't an HTTP/1.1 request (no request line, a malformed header, a
-                 version other than 1.x) is rejected with a message naming why, and the instance
-                 serves the next call.
-              9. The Router serves a sample projects resource (id, code, name, version) through a
-                 Group compiled into a Module, under RequestID and Recoverer. Every response
-                 carries X-Request-Id, and every problem is application/problem+json with
-                 request_id.
-                 - GET /projects pages the projects by ParseQuery's page and size, answered as
-                   NewPage's envelope.
-                 - GET /projects/{id} answers one project. An id that isn't a UUID gets 400, and
-                   an unknown id gets 404.
-                 - POST /projects decodes {code, name} with DecodeJSON and answers 201 with the
-                   new project at version 1. An unknown field or an empty body gets 400.
-                 - PUT /projects/{id} with If-Match: "<version>" updates code and name and
-                   answers the next version. A stale version gets 412, a missing If-Match gets
-                   428, and a malformed one gets 400.
-                 - An unknown path gets 404, and a known path with another method gets 405 with
-                   Allow.
-              10. The projects are seeded at startup with fixed rows and fixed ids, and kept for
-                  the instance's life: a create is listed and readable by later calls, and an
-                  update raises the version that a later stale PUT is refused against. A Stop or
-                  a reload starts from the seed again.
-              11. The scenario is tested under GOOS=js on both filesystems for behaviors 7-10:
-                  each route's status, headers, and body. The request id and new ids are matched
-                  by shape, and the seeded responses are exact.
-              12. A rendered Markdown page on go-web-sdk's handlers embeds the request handler
-                  demo around an ordinary request fence named request.http by `file`, shown as
-                  plain text. Its prose shows the other requests to try as fences. The browser
-                  tier proves: no Go requested on load; the first Run fetches the worker and the
-                  scenario's module alone and answers the seeded list; a POST then a GET run on
-                  the instance already loaded, with no further fetch; a stale PUT gets 412;
-                  malformed text is rejected, and the instance outlives it.
-              13. The bridge, sl-go-demo, and sl-code-editor serve both pages unchanged, and the
-                  runtime changes only by the exit-race guard, landed first (escalation 1). The tokenizer's grammars stay Go's, JSON's, and SQL's alone.
-              14. Reports, never a gate: the programs report adds the graph page's source demo
-                  (cold and warm phase timings, and its closure's archive count, raw bytes, and
-                  gzip bytes), and the browser tier reports the go-web-sdk scenario's module raw
-                  and gzip bytes and its cold Run's phase timings.
-              15. The index's evidence 10 links both pages, and the site's crawl reaches them
-                  beside the existing pages and nothing else. Both pages pass the SDK's shell
-                  checks, palette check, and crawl. The README documents the graph program, the
-                  scenario, its request format and routes, and both pages. The context's
-                  capabilities list them, and "Planned: go-core graph and go-web-sdk handlers
-                  in-process" becomes what shipped.
-Test seams    mise run check: Go tests under GOOS=js on both filesystems for 2-4 and 7-11; the
-              unit tier's fence reader for 6, its toolchain test for 5, and its import listing
-              for 7; the browser tier through sl-go-demo over each Markdown page's runner for 6,
-              12, 13, and 14, with the site tests for 15.
-Slices        1. The graph program: the two requirements; the program's wiring, layer table, and
-                 lifecycle trace; its error and panic exits; tests on both filesystems; the
-                 manifest's new archives in the toolchain test.
-              2a. The exit-race guard (escalation 1): the runtime's worker treats wasm_exec.js's
-                 "Go program has already exited", thrown after the program's own exit, as that
-                 exit with its code, wasm_exec.js untouched; a runtime test forces a timer-driven
-                 exit; the browser tier gains a per-test timeout, so a stall fails by name.
-              2. The graph page: the Markdown page with its one-file source demo and the fence
-                 check; browser tests for exact output, an edit, a failing constructor, and a
-                 cycle; the programs report entry; the index's evidence 10 link and the crawl
-                 list.
-              3. The go-web-sdk scenario: the request handler, its parsing and printing, the
-                 seeded projects router with its problems, the import listing, tests on both
-                 filesystems, and the Go build's prebuilt list.
-              4. The go-web-sdk page: the Markdown page with its request.http handler demo;
-                 browser tests for the list, a POST then a GET on one instance, a stale PUT, and
-                 malformed text; the size and timing report; the index's evidence 10 link and
-                 the crawl list; the README and the context's capabilities.
-Out of scope  web.Service.Run or a Server over Go's in-memory fake network (recorded as a note
-              for the answer); the health probes; an http grammar or any change to the editor,
-              sl-go-demo, the bridge, or the runtime; the graph program in the playground's
-              Program select; a hand page for either demo; multi-file demos in Markdown; a route
-              that panics to show Recoverer; live-site timings and the TinyGo comparison (the
-              measure task); any write to go-core, go-web-sdk, or the SDK.
-Door          two-way: nothing is released. go.mod gains two requirements, and the program, the
-              scenario, both pages, and the manifest's new entries can each be removed.
+Problem       The spike's sizes and timings are local, partial, and taken by
+              hand. Evidence 4 and 5 need what the live site actually serves
+              and how fast it runs, on desktop and on an iPhone over Wi-Fi.
+              The answer task and final-review read them; sqlate's 36 s cold
+              Run on a phone is the one phone reading so far. The architect
+              rejected the TinyGo comparison, because the spike's question is
+              native Go. The unused TinyGo pin goes, and evidence 4 is restated
+              without it.
+Behaviors     1. TinyGo leaves the spike. No tool pin, comment, evidence item,
+                 index text, or Path line names it. The goal record gains the
+                 Decision "measure: TinyGo comparison rejected; the spike's
+                 question is native Go. TinyGo can't build the sqlate module
+                 (pgx's crypto/tls) or the playground's toolchain, and its
+                 modules need TinyGo's own wasm_exec.js, not the runtime's."
+                 The setup Decision naming TinyGo is marked superseded. The
+                 roadmap's measure summary, minus "the TinyGo comparison",
+                 joins the Pending edits. The check passes.
+              2. `mise run measure` reads the live site, or a base URL given.
+                 It is never part of the check and writes nothing outside
+                 TMPDIR.
+              3. Sizes: one row per shipped module (hello, probe, sqlate,
+                 websdk, the compiler, and the linker), and one per closure,
+                 one for each of the seven programs the site builds in the
+                 page. Each row gives raw bytes, gzip bytes as Pages serves
+                 them to the browser's Accept-Encoding, and brotli-11 bytes.
+                 A closure row also gives its file count, which is the number
+                 of requests a revalidation makes once max-age has expired.
+              4. Reproducibility: the command reports whether two local builds
+                 of each prebuilt module match byte for byte, and whether the
+                 live module matches the local one. Where they differ, it
+                 gives the byte counts. It reports the drift and never fails
+                 on it.
+              5. Desktop timings: the pinned chrome-headless-shell, launched
+                 with the network allowed (the tooling's launch() resolves
+                 loopback only), loads each demo page on the live site:
+                 - "Page readable before the module": the page's first
+                   contentful paint, and no .wasm requested before Run.
+                 - "First result": the time from Run's click to the first
+                   output.
+                 - The run's phases as the timings table shows them (Fetch,
+                   Wasm compile, Go compile, Link, Instantiate, Start, Run,
+                   and the total).
+                 Each is read in three states:
+                 - cold: a fresh profile with an empty cache
+                 - cached: a fresh page and worker within max-age, the
+                   module from the HTTP cache with no bytes transferred
+                 - in-place: a second request on the held worker. That is a
+                   components-page scenario switch, a Markdown demo's rerun
+                   on its held instance, a playground program switch, and an
+                   edit to main.go rebuilt.
+              6. Every desktop timing is the median and the max of five
+                 readings. The command prints one table for sizes and one per
+                 page for timings, and states the deployed commit it read and
+                 the date.
+              7. iPhone: the architect reads each demo's timings table on an
+                 iPhone over Wi-Fi in the same three states, one reading each.
+                 Cold is a fresh Private tab. Cached is a reload within 10
+                 minutes. In-place is as in behavior 5. The architect records
+                 phases and total, and whether the page was readable before
+                 Run. BUILD collects these at a named point (see Slices).
+              8. The spike's README gains a "Measurements" section. It is
+                 dated, names the deployed commit and each device (machine
+                 and network, iPhone model and Wi-Fi), and holds the size,
+                 reproducibility, desktop, and iPhone tables. Evidence 4 and 5
+                 point to it.
+Test seams    The command's pure report layer, run in the unit tier on
+              fixtures: weighing a response (raw, gzip as served, brotli-11),
+              median and max over readings, a closure's revalidation count,
+              the drift comparison, and the tables' formatting. The live run
+              itself is evidence, never a test.
+Slices        No upgrade slice: currency is current.
+              1. TinyGo out (behavior 1): the check passes with no TinyGo pin,
+                 and the Decision and the Pending edit are recorded.
+                 Demo: mise lists no tinygo; the check passes.
+              2. Sizes and drift (behaviors 2-4, sizes half of 6): mise run
+                 measure prints the size table and the drift report from the
+                 live site. Sizing adapts spike-html-hosting 421254d's cost
+                 weighing.
+                 Demo: the size table against the live site.
+              3. Desktop timings (behaviors 5-6): the command adds the
+                 per-page timing tables from five readings each. It reuses
+                 the browser tier's demo helpers, in a browser launched with
+                 the network allowed.
+                 Demo: a full mise run measure.
+              4. iPhone and the record (behaviors 7-8): at the start of this
+                 slice the session stops and prints the architect a checklist,
+                 one line per page and state, for the iPhone readings. The
+                 architect replies with the numbers or screenshots. BUILD then
+                 writes the Measurements section from slice 3's output and
+                 the architect's readings.
+                 Demo: the README section; evidence 4 and 5 point to it.
+Out of scope  TinyGo in any form; finding the cause of the build drift
+              (final-review); optimizations (final-review); expired-cache
+              (304) timings beyond the revalidation count; Firefox and Safari
+              on desktop (review); gating any number; changes to the runtime,
+              the components, or the pages beyond the index's evidence text;
+              any write to the coordinator outside the Pending edits.
+Door          two-way: the task adds a command, a README section, and a goal
+              record Decision; removes an unused pin, which can be pinned
+              again; and releases nothing. The coordinator's roadmap edit
+              waits in the Pending edits for the sync.
 ```
+
+## Progress
+
+slices 0/4 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -860,6 +850,18 @@ Door          two-way: nothing is released. go.mod gains two requirements, and t
   Markdown page's prose holds fences outside its demo, so the palette check reads highlighted code.
 - scenarios (build): a unit import-listing check holds websdk's dependencies (`scenarioDeps`,
   `test/unit/go-module.ts`); sqlate's scenario has none.
+- measure: a committed `mise run measure` reads the live site from the desktop; the architect
+  reads the iPhone by hand from each demo's timings table. Rejected: a measure page on the site.
+- measure: the numbers land in a dated "Measurements" section of the README, which evidence 4 and
+  5 point to.
+- measure: each desktop timing is the median and max of five readings; the iPhone gets one
+  reading per state, taken by hand.
+- measure: "cached" means within Pages' 10-minute max-age; an expired cache is reported only as
+  the number of files its revalidation requests.
+- measure: build drift (builds that aren't byte-reproducible) is reported, never failed on; its
+  cause goes to final-review.
+- measure: sizes cover the four prebuilt modules, the compiler, the linker, and the seven program
+  closures; no measured number fails the command.
 
 ## Notes
 
