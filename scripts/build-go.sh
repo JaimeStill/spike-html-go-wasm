@@ -3,8 +3,8 @@
 # under cmd/, hello, probe, and sqlate, the compile handler the Markdown page calls, built for
 # GOOS=js GOARCH=wasm by the pinned Go, into dist/go/<name>.wasm, which the preview and Pages serve
 # at <base>go/ and the runtime's worker fetches; never playground/'s programs, the starter, calc,
-# the others the Program select offers, and sqlate, which a page builds from source, no page loads
-# prebuilt, and the check vets and tests alone (scripts/check-go.sh). wasm_exec.js isn't copied
+# the others the Program select offers, sqlate, which a page builds from source, and graph, which
+# no page loads prebuilt and the check vets and tests alone (scripts/check-go.sh). wasm_exec.js isn't copied
 # there: Vite bundles the committed web/runtime/wasm_exec.js into the worker. -trimpath and -s -w
 # keep the build free of local paths and of the symbol and DWARF tables. Then the playground's
 # toolchain, Go's compiler and linker, the standard library's archives and the site's pinned

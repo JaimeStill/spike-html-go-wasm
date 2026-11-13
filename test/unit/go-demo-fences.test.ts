@@ -282,13 +282,13 @@ describe("the playground's program templates", () => {
     );
   });
 
-  // The calculator is the source demo's starter, and sqlate is in no Program select: its demo
-  // is a hand page's of its own.
-  test("are every program in playground/ but the calculator and sqlate, each with a fence for every file of its directory but its tests", () => {
+  // The calculator is the source demo's starter, and sqlate and graph are in no Program select:
+  // sqlate's demo is a hand page's of its own, and graph's a Markdown page's.
+  test("are every program in playground/ but the calculator, sqlate, and graph, each with a fence for every file of its directory but its tests", () => {
     assert.deepEqual(
       templates.map(({ program }) => program).sort(),
       readdirSync(join(root, "playground"))
-        .filter((program) => program !== "calc" && program !== "sqlate")
+        .filter((program) => !["calc", "sqlate", "graph"].includes(program))
         .sort(),
     );
     for (const { program, fences } of templates) {

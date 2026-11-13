@@ -2,10 +2,11 @@
 // the site build empties dist/ beside this tier: every file the manifest names exists under its
 // content's hash, and nothing else is written; and the import closure the manifest gives
 // (web/runtime/manifest.ts) equals the pinned Go's own `go list -deps` for a fixture program, for
-// an import-free main, which still closes over runtime's packages, and for playground/sqlate, whose
-// closure reaches the site's pinned modules; and the modules' packages are exactly the ones the
-// repository's own packages depend on, each archive under mod/. Writes nothing outside TMPDIR and
-// Go's caches.
+// an import-free main, which still closes over runtime's packages, and for playground/sqlate and
+// playground/graph, whose closures reach the site's pinned modules, sqlate's and go-core's; and
+// the modules' packages are exactly the ones the repository's own packages depend on, go-core's
+// graph and lifecycle among them, each archive under mod/. Writes nothing outside TMPDIR and Go's
+// caches.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -130,6 +131,8 @@ func main() {}
       (path) => !std.has(path) && !mine.has(path),
     );
     assert.ok(wanted.includes("github.com/standards-lab/sqlate/postgres"), "sqlate's");
+    assert.ok(wanted.includes("github.com/standards-lab/go-core/graph"), "graph's");
+    assert.ok(wanted.includes("github.com/standards-lab/go-core/lifecycle"), "lifecycle's");
     const held = Object.keys(manifest.packages).filter((path) => !std.has(path));
     assert.deepEqual(held.sort(), wanted);
     for (const path of held) {
@@ -142,17 +145,24 @@ func main() {}
     }
   });
 
-  test("playground/sqlate's closure, through the site's pinned modules, is Go's own dependency list for it", () => {
-    const dir = join(root, "playground/sqlate");
-    const files = readdirSync(dir)
-      .filter((name) => name.endsWith(".go") && !name.endsWith("_test.go"))
-      .map((name) => ({ name, text: readFileSync(join(dir, name), "utf8") }));
-    const imports = programImports(files);
-    assert.ok(imports.some((path) => path.startsWith("github.com/standards-lab/sqlate")));
-    const mine = own();
-    const deps = goList(root, ["-deps", "./playground/sqlate"]).filter((path) => !mine.has(path));
-    assert.deepEqual(closure(manifest, imports), deps);
-  });
+  for (const [program, module] of [
+    ["sqlate", "github.com/standards-lab/sqlate"],
+    ["graph", "github.com/standards-lab/go-core"],
+  ]) {
+    test(`playground/${program}'s closure, through the site's pinned modules, is Go's own dependency list for it`, () => {
+      const dir = join(root, "playground", program);
+      const files = readdirSync(dir)
+        .filter((name) => name.endsWith(".go") && !name.endsWith("_test.go"))
+        .map((name) => ({ name, text: readFileSync(join(dir, name), "utf8") }));
+      const imports = programImports(files);
+      assert.ok(imports.some((path) => path.startsWith(module)));
+      const mine = own();
+      const deps = goList(root, ["-deps", `./playground/${program}`]).filter(
+        (path) => !mine.has(path),
+      );
+      assert.deepEqual(closure(manifest, imports), deps);
+    });
+  }
 
   test("an import the manifest doesn't hold is named", () => {
     assert.throws(() => closure(manifest, ["fmt", "example.com/nope"]), {
