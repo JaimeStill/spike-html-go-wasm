@@ -1,7 +1,9 @@
-// The Go module's two checks, each a list of problems, empty when the module holds: its go.mod
-// names no replace directive and no local-path requirement, so the module builds from the module
-// cache alone, as the Pages build does; and its packages' direct imports flow downward through
-// the Go layers. go-module.test.ts runs both on the module and on fixture modules.
+// The Go module's checks, each a list of problems, empty when the module holds: its go.mod names
+// no replace directive and no local-path requirement, so the module builds from the module cache
+// alone, as the Pages build does; its packages' direct imports flow downward through the Go
+// layers; and a scenario's import listing, every package its composition root and entrypoint
+// depend on, reaches only the standard library, the bridge, and the modules it is allowed.
+// go-module.test.ts runs each on the module, and on fixture modules or a planted listing.
 //
 // The layers, by a package's path within the module: cmd/<s>, a scenario's entrypoint, imports
 // of the module's packages only its own composition root, internal/<s> and below; internal/<s>

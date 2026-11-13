@@ -13,10 +13,10 @@
 // compiler, the linker, and only the program's closure of archives, go-core's graph and lifecycle
 // among them, and prints the program's layer table and its lifecycle trace exactly, as its own go
 // test holds them, with exit 0 and every phase of a build. An edit to main.go rebuilds and runs the
-// edit, fetching the manifest alone; an edit making the store's constructor fail prints graph's message naming the node on one
-// stderr line, with exit 1; and an edit adding a route that uses the server, which is ordered after
-// every route, closes a cycle, which Build panics on: Go prints graph's message naming the cycle's
-// path as the program's panic, on stderr, with exit 2.
+// edit, fetching the manifest alone; an edit making the store's constructor fail prints graph's
+// message naming the node on one stderr line, with exit 1; and an edit adding a route that uses
+// the server, which is ordered after every route, closes a cycle, which Build panics on: Go prints
+// graph's message naming the cycle's path as the program's panic, on stderr, with exit 2.
 //
 // The cases run in order on one page, each pasting its main.go over the last. The program's cost,
 // its cold and warm timings and its closure, is reported with the playground's programs'

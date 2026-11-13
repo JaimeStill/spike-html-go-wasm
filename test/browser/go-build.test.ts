@@ -21,8 +21,8 @@
 // goroutine's timer still scheduled answers its exit code, and so does the next run, which the
 // exited program's timer would otherwise fail (the worker's exit guard). Ctrl+Enter and
 // Cmd+Enter, Meta, from the source demo's editor build and run the edited program, and Reset
-// restores the source as given. The build's helpers are go-builds.ts's. Every wait is bounded. Nothing here names the
-// site: its base is package.json's name.
+// restores the source as given. The build's helpers are go-builds.ts's. Every wait is bounded.
+// Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
