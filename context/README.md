@@ -25,9 +25,9 @@ budget.
 2. A live sqlate page under `/<repo>/`: edit a statement, see its compiled SQL with `$n`
    placeholders and its compile errors.
 3. A statement run in-process over sqltest's scripted driver, with no socket.
-4. Each module's raw, gzip-as-Pages-serves, and brotli-11 bytes.
+4. Each module's raw, gzip-as-Pages-serves, and brotli-11 bytes: README.md, "Measurements".
 5. Cold-load cost on the live site: the page readable before the module, time to first result
-   after the click, and cold, cached, and in-place-switch timings.
+   after the click, and cold, cached, and in-place-switch timings: README.md, "Measurements".
 6. `wasm_exec.js` copied from the pinned toolchain with provenance; .wasm served as
    application/wasm.
 7. The screenshot review, every palette's editor included, leaving no capture file; Firefox and
