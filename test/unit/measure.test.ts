@@ -33,16 +33,25 @@ import {
   type Weight,
 } from "../../scripts/measure-report.ts";
 
-/** A body that compresses: a phrase repeated. */
-const body = Buffer.from('package main\n\nfunc main() { println("hello") }\n'.repeat(200));
+/** A body that compresses, varied enough that each brotli quality from 9 to 11 gives it a
+ * different size, so a weighing at any quality but 11 fails the tests. */
+const body = Buffer.from(
+  Array.from({ length: 400 }, (_, i) => `func f${i}() int { return ${(i * 7919) % 1009} }\n`).join(
+    "",
+  ),
+);
 
-/** The body at brotli 11, as node's zlib gives it with the size hint. */
-const brotli11 = brotliCompressSync(body, {
-  params: {
-    [constants.BROTLI_PARAM_QUALITY]: 11,
-    [constants.BROTLI_PARAM_SIZE_HINT]: body.length,
-  },
-}).length;
+/** The body at a brotli quality, as node's zlib gives it with the size hint. */
+const brotliAt = (quality: number) =>
+  brotliCompressSync(body, {
+    params: {
+      [constants.BROTLI_PARAM_QUALITY]: quality,
+      [constants.BROTLI_PARAM_SIZE_HINT]: body.length,
+    },
+  }).length;
+
+/** The body at brotli 11. */
+const brotli11 = brotliAt(11);
 
 /** A module's bytes with Go's build settings in its build info, as -s -w leaves them. */
 const stamped = (revision: string, modified: string, filler = "") =>
@@ -107,7 +116,9 @@ describe("weighing a body", () => {
     assert.throws(() => decode(body, "zstd"), /an encoding measure can't decode: zstd/);
   });
 
-  test("brotli is quality 11's size", async () => {
+  test("brotli is quality 11's size, not a lower quality's", async () => {
+    assert.notEqual(brotliAt(10), brotli11, "the fixture tells the qualities apart");
+    assert.notEqual(brotliAt(9), brotli11, "the fixture tells the qualities apart");
     assert.equal(await brotli(body), brotli11);
   });
 });
@@ -349,10 +360,11 @@ describe("the desktop timings", () => {
             readable: 256,
             wasmBeforeRun: false,
             first: 273,
+            // Out of the runtime's order, which the table's columns follow whatever the arrival.
             phases: [
+              { phase: "call", label: "Call", ms: 7.4 },
               { phase: "fetch", label: "Fetch", ms: 190 },
               { phase: "compile", label: "Wasm compile", ms: 6.4 },
-              { phase: "call", label: "Call", ms: 7.4 },
             ],
             transferred: 2237978,
           },
