@@ -160,8 +160,12 @@ run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) node scripts/scree
 dir = "{{config_root}}"
 
 [tasks.install]
-description = "Install every mise.toml pin, node_modules from pnpm-lock.yaml, and go.mod's requirements into the Go module cache; reads the network, writes node_modules/ and the module cache"
-run = ["mise install", "pnpm install --frozen-lockfile", "go mod download"]
+description = "Install every mise.toml pin, node_modules from pnpm-lock.yaml, and go.mod's requirements into the Go module cache, with the modules the check's go mod tidy -diff reads besides, the ones only the requirements' own tests import; reads the network, writes node_modules/ and the module cache"
+# go mod download fetches only what the main module's packages build and test with; go mod tidy
+# also reads the modules the requirements' own tests import (pgx's testify and puddle), so its
+# -diff run here fetches them while the network is allowed, writing nothing, and the check's
+# GOPROXY=off tidy finds them cached.
+run = ["mise install", "pnpm install --frozen-lockfile", "go mod download", "go mod tidy -diff"]
 dir = "{{config_root}}"
 
 # The SDK's currency bin, which a pnpm install links into node_modules/.bin; it replaces
