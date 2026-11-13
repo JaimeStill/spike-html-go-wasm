@@ -866,6 +866,10 @@ slices 3/4 committed · standards — · spec — · editor —
 - measure: TinyGo comparison rejected; the spike's question is native Go. TinyGo can't build the
   sqlate module (pgx's crypto/tls) or the playground's toolchain, and its modules need TinyGo's own
   wasm_exec.js, not the runtime's. The pin is removed.
+- measure (build): the iPhone reads a subset, cold and cached for sqlate, go-core graph,
+  components, and the calc playground (8 readings); the README names the rows measured. Rejected:
+  all 37 by hand; Chrome emulation of an iPhone (V8, not WebKit's engine) as a substitute or a
+  supplement; WebKit through Playwright, left for the Safari checks the review task owns.
 
 ## Notes
 
