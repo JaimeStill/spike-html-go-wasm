@@ -133,6 +133,7 @@ Out of scope  web.Service.Run or a Server over Go's in-memory fake network (reco
 Door          two-way: nothing is released. go.mod gains two requirements, and the program, the
               scenario, both pages, and the manifest's new entries can each be removed.
 ```
+
 ## Progress
 
 slices 0/4 committed · standards — · spec — · editor —
