@@ -1,10 +1,10 @@
 // The browser tier's hold on the Go demos, the components page's, the playground's, the sqlate
 // page's, and the rendered Markdown pages', shared by go-demo.test.ts, which proves sl-go-demo,
 // go-runs.test.ts and go-build.test.ts, which prove the runtime through it, playground.test.ts,
-// which proves the playground, and sqlate-compile.test.ts and go-core-graph.test.ts, which prove
-// the Markdown pages' demos: a page opened with every request it and its workers send watched, every worker it starts counted,
-// live until it detaches, and helpers installed on the page that read what a demo shows, again
-// after a reload.
+// which proves the playground, and sqlate-compile.test.ts, go-core-graph.test.ts, and
+// go-web-sdk-handlers.test.ts, which prove the Markdown pages' demos: a page opened with every
+// request it and its workers send watched, every worker it starts counted, live until it detaches,
+// and helpers installed on the page that read what a demo shows, again after a reload.
 //
 // The worker fetches the modules itself, and the page's own Network domain never sees a worker's
 // requests, so each page auto-attaches to its workers through the page's session, in the
@@ -110,6 +110,7 @@ const DEMO_PAGES = new Set([
   "sqlate.html",
   "sqlate-compile.html",
   "go-core-graph.html",
+  "go-web-sdk-handlers.html",
 ]);
 
 /** Opens the path under the origin with its and its workers' requests watched from before it loads.

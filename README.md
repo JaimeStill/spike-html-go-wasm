@@ -10,9 +10,12 @@ The GitHub Pages site of spike-html-go-wasm, made from the template of
 of its states, its Go demos running Go through the runtime in `web/runtime/`; `playground.html`,
 the playground, where the reader edits Go and builds and runs it in the page (see "Playground");
 and `sqlate.html`, the sqlate page, where the reader composes SQL statements with sqlate and runs
-them, built in the page (see "sqlate"). One more page is rendered from Markdown:
-`sqlate-compile.html`, from the spike's own `markdown/` directory, whose demo calls a prebuilt Go
-handler (see "The Markdown page"). The site copies no Markdown tree: `content.json` records none,
+them, built in the page (see "sqlate"). Three more pages are rendered from Markdown, from the
+spike's own `markdown/` directory: `sqlate-compile.html`, whose demo calls sqlate's prebuilt
+compile handler (see "The Markdown page"); `go-core-graph.html`, whose demo builds a service wired
+on go-core's graph in the page (see "go-core graph"); and `go-web-sdk-handlers.html`, whose demo
+sends HTTP/1.1 requests to go-web-sdk's handlers, called in-process (see "go-web-sdk"). The site
+copies no Markdown tree: `content.json` records none,
 and `content/` holds nothing. The spike's question, evidence, and path are in `context/README.md`.
 
 ## Tasks
@@ -32,14 +35,19 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
   `input.json`. `playground/sqlate`'s hold its statements compiled from its shipped `.sql` files,
   a namespace of the reader's included, each catalog or compile error's one stderr line with exit
   1, and each outcome of its guarded run; `internal/sqlate`'s hold the compile handler's answers,
-  lines, and refusals. It type-checks the configs, the web tiers, and the suite with tsc and runs
+  lines, and refusals. `playground/graph`'s hold its layer table and lifecycle trace with exit 0, a
+  failing constructor's one stderr line with exit 1, and a cycle's panic with exit 2;
+  `internal/websdk`'s hold each route's status, headers, and body, each rejection with the next
+  call served, and writes chained on one instance. It type-checks the configs, the web tiers, and the suite with tsc and runs
   `mise run build`.
   - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
     by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
     checks the playground's toolchain: each file its manifest names exists under its content's
     hash, and the manifest's import closure equals Go's own `go list -deps`, for
-    `playground/sqlate` through the site's pinned modules, whose packages are exactly those the
-    repository's own packages depend on. It runs Go's compiler and linker over that toolchain on
+    `playground/sqlate` and `playground/graph` through the site's pinned modules, whose packages
+    are exactly those the repository's own packages depend on, go-core's `graph` and `lifecycle`
+    and go-web-sdk's root and `middleware` among them. It holds the go-web-sdk scenario's imports
+    to the standard library, the bridge, and go-web-sdk's and go-core's packages. It runs Go's compiler and linker over that toolchain on
     the in-memory fs: hello built and run, a compile error and a package clause other than main
     reported as the compiler writes them, an import the manifest lacks refused before the compiler
     runs, and a non-Go file read from the run's working directory. It tests the components' six
@@ -47,14 +55,16 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
     their operations, refusals, and change events. It holds each program demo's go fence on the
     components page to its scenario's source, byte for byte, the playground's demo to the starter's
     files in `playground/calc/`, its four `.go` files and its `input.txt`, each program template's
-    fences to its files in `playground/<program>/`, and the sqlate page's fences to
-    `playground/sqlate/`'s files. It holds the sqlate scenario's embedded patterns to the program's
+    fences to its files in `playground/<program>/`, the sqlate page's fences to
+    `playground/sqlate/`'s files, the graph page's one source demo to `playground/graph/main.go`,
+    and the go-web-sdk page's demo to one handler demo, websdk's `request`, its file
+    `request.http`, around one http fence. It holds the sqlate scenario's embedded patterns to the program's
     pattern files, byte for byte (`test/unit/sqlate-patterns.test.ts`), and tests a Go demo's fence
     naming rules (`web/components/file-names.ts`). It fails if a module under `web/components` or
     `web/pages` registers a page shortcut through the foundation's `keys.js`.
   - The browser tier, in the pinned chrome-headless-shell, each test bounded at 5 minutes so a
-    stalled one fails by its name, runs the SDK's shell checks on every hand page and on the
-    rendered Markdown page, the crawl, and the SDK's palette check on the rendered page's fences,
+    stalled one fails by its name, runs the SDK's shell checks on every hand page and on each
+    rendered Markdown page, the crawl, and the SDK's palette check on each rendered page's fences,
     reads each page's cascade layers (the foundation's, then `site`, then `page`) and finds no
     inline `<style>` in its source, and proves each component on the components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
@@ -135,6 +145,18 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
       nothing; and a statement sqlate refuses answering sqlate's message, the instance outliving
       it; then a report, never a gate, of `go/sqlate.wasm`'s bytes, raw and gzip, and the cold
       Run's phase timings;
+    - the graph page (`test/browser/go-core-graph.test.ts`): no Go before a Run; the first Run
+      fetching the manifest, the compiler, the linker, and only the program's closure of archives,
+      and printing its layer table and lifecycle trace exactly, with exit 0; an edit rebuilding and
+      running the edit; a failing constructor's one stderr line with exit 1; and a cycle's panic
+      with exit 2;
+    - the go-web-sdk page (`test/browser/go-web-sdk-handlers.test.ts`): its one handler demo named
+      `request.http` by its `file` attribute, shown plain, and no Go before a Run; the first Run
+      fetching the worker and `go/websdk.wasm` alone and answering the seeded list; a POST, then a
+      GET of the new id, on the instance held, fetching nothing; an update, then the same update
+      again answering 412; and text that isn't an HTTP/1.1 request rejected naming why, the
+      instance outliving it with every write kept; then a report, never a gate, of
+      `go/websdk.wasm`'s bytes, raw and gzip, and the cold Run's phase timings;
     - the playground's prose and About: the prose is the heading and the lede alone, and the page
       holds no disclosure; About leads the header's group, a glyph button showing A; A, a click, or
       Enter opens the About dialog on its title, Tab reaches its Close, and Close or Escape closes
@@ -176,14 +198,15 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
       the spike's key, and a reload and another page open in it; the page follows another tab's
       choice and a cleared store; an empty store, text that isn't JSON, a refused value, and
       blocked storage each open with the editor left and write nothing.
-- `mise run build`: build the site with Vite into `dist/`, the hand pages and the Markdown page
+- `mise run build`: build the site with Vite into `dist/`, the hand pages and the Markdown pages
   the SDK's `markdownPages` renders from `markdown/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
-  (`scripts/syntax-themes.ts`), then the Go entrypoints, `cmd/hello`, `cmd/probe`, and
-  `cmd/sqlate`, into `dist/go/`, and the playground's toolchain into `dist/go/toolchain/`
+  (`scripts/syntax-themes.ts`), then the Go entrypoints, `cmd/hello`, `cmd/probe`, `cmd/sqlate`,
+  and `cmd/websdk`, into `dist/go/`, and the playground's toolchain into `dist/go/toolchain/`
   (`scripts/build-toolchain.ts`): Go's compiler and linker built for `GOOS=js`, an archive for
   each standard-library package, under `std/`, and for each package of the site's pinned modules
-  the repository's own packages depend on, sqlate's and its dependencies', under `mod/`, and
+  the repository's own packages depend on, sqlate's, go-core's, and go-web-sdk's and their
+  dependencies', under `mod/`, and
   `manifest.json`, the one file that names them, each by its content's hash. A bare `vite build`
   omits the wasm.
 - `mise run screenshots`: capture the pages, light and dark. The index and each component on the
@@ -195,19 +218,19 @@ and `content/` holds nothing. The spike's question, evidence, and path are in `c
   each chosen through the Layout menu, and with the menu open; 1376px with the About dialog
   open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and Standard
   library chosen in the Program select. The sqlate page, `--page sqlate`, is captured as its
-  viewport alone at the SDK's widths, and the Markdown page, `--page sqlate-compile`, whole at
-  each.
+  viewport alone at the SDK's widths, and each Markdown page, `--page sqlate-compile`,
+  `--page go-core-graph`, and `--page go-web-sdk-handlers`, whole at each.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as
   `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
   is taken only when no width is given. Any other width is a usage error naming the three.
   `scripts/screenshots.ts` takes `--width`, which the capture bin doesn't know, and hands it to the
   capture file.
 - `mise run report:programs`: report, never as a gate, what each of the playground's programs
-  costs, and the sqlate page's program. For each, in a browser of its own, so its worker is fresh
+  costs, the sqlate page's program, and the graph page's. For each, in a browser of its own, so its worker is fresh
   and its cache empty, opened by its fragment, it prints the phase timings of the first Run, cold,
   and of a Run after an edit to `main.go`, warm, as the demo's timings show them, and its closure:
-  the count of archives the cold Run fetched, the standard library's and, for sqlate, the pinned
-  modules', their bytes as `dist/` holds them and Vite's preview serves them, and their bytes
+  the count of archives the cold Run fetched, the standard library's and, for sqlate and graph,
+  the pinned modules', their bytes as `dist/` holds them and Vite's preview serves them, and their bytes
   gzipped by node's zlib at its default level, since the preview doesn't gzip.
   The timings table has a column only for a phase some Run recorded, so it has no Start column: a
   source build records no Start phase. The tables are the test's diagnostics, written nowhere
@@ -504,9 +527,129 @@ at build into Shiki's markup:
 
 The blank lines end the HTML block, so the fence between them renders as Markdown. Shiki's markup
 carries no name, so the demo's `file` attribute names the fence. The page passes the SDK's shell
-checks, the palette check, and the crawl, which counts it a hand page, as `content.json` names no
-tree. The bridge and the runtime serve it, as they serve the sqlate page, with no code of
-sqlate's.
+checks, the palette check, and the crawl. The bridge and the runtime serve it, as they serve the
+sqlate page, with no code of sqlate's.
+
+Every Markdown page is crawled as a copied page. `content.json` records no tree, since the site
+copies none, so the crawl would count the rendered pages hand pages, which have no pager; but
+`markdownPages` gives them a site index and pagers, as it gives a copied tree's. The site test
+(`test/browser/site.test.ts`) crawls from a scratch root under TMPDIR whose `content.json` records
+`markdown/` as one copied tree, a record the SDK's content check accepts, so each rendered page
+gets every check the crawl makes of a copied page. The palette check runs on each rendered page;
+a demo's fence isn't shown once the demo upgrades, so each page also holds highlighted fences in
+its prose.
+
+## go-core graph
+
+go.mod requires `github.com/standards-lab/go-core` at v0.12.0, by tag, with no replace directive.
+The graph page builds a program on its `graph` and `lifecycle` packages in the page.
+
+### The program
+
+`playground/graph` is a package main beside the playground's programs, one `main.go`, vetted and
+tested under `GOOS=js` on both filesystems and never built into the site, nor offered in the
+playground's Program select. `wire` describes a small service on a new `graph.Graph`: the
+settings, a `Value`; the router, a `Fresh`, new and empty in each Build; the store, which uses the
+settings; two routes, `health` and `projects`, in the `routes` `Group`, each using the store and
+the router; and the server, which uses the settings and the router and is ordered `After` the
+routes. Each constructor reaches its dependencies through its `Scope`'s `Use`. `run` builds the
+System from its roots, the routes group and the server, prints its layer table, and runs it under
+lifecycle's `Coordinator` with a finalized `Config`: the store and the server, each with `Start`
+and `Shutdown`, print their start in layer order and their stop in reverse, and the program exits
+0:
+
+```text
+0: settings, router
+1: store
+2: health, projects
+3: server
+
+start store: postgres://db/app
+start server: :8080 GET /healthz, GET /projects
+ready
+stop server
+stop store
+```
+
+A constructor that returns an error fails the Build before anything starts: the program prints
+graph's message, which names the node (`store: connection refused`), on one stderr line and exits
+1. A wiring mistake graph panics on, such as a route that uses the server, which is ordered after
+every route, panics as Go prints it, graph's message naming the cycle's path (`graph: dependency
+cycle: server -> routes -> status -> server`), and exits 2.
+
+### The graph page
+
+`markdown/go-core-graph.md` renders to `go-core-graph.html`, a Markdown page as
+`sqlate-compile.html` is (see "The Markdown page"). It holds one `sl-go-demo` in the source mode,
+naming no scenario or handler and its file `main.go`, around one ordinary `go` fence, byte for
+byte the program's `main.go` (the unit tier holds it). Its prose explains what graph's `Define`,
+`Value`, `Fresh`, `Use`, `After`, `In`, and `Group` describe, the layer table, and how lifecycle
+runs it, and shows the failing constructor's and the cycle's edits as fences to paste in. A Run
+builds the program in the page as the playground does: the first fetches the manifest, the
+compiler, the linker, and only the program's closure of archives, go-core's among them, and an
+edit rebuilds and runs the edit.
+
+## go-web-sdk
+
+go.mod requires `github.com/standards-lab/go-web-sdk` at v0.17.0, by tag, with no replace
+directive. Its page calls a prebuilt scenario's handler, which serves HTTP requests through
+go-web-sdk's Router in-process, with no socket.
+
+### The scenario
+
+The go-web-sdk scenario, `internal/websdk` with its entrypoint `cmd/websdk`, is prebuilt into
+`dist/go/websdk.wasm` and served through the bridge's `Serve` on one long-lived instance, as the
+sqlate scenario is. It imports only the standard library, the bridge, and go-web-sdk's and
+go-core's packages, which the unit tier holds by its import listing, and serves one handler,
+`request`.
+
+`request` takes one HTTP/1.1 request's text: a request line, headers, a blank line, and a body,
+with LF or CRLF line endings. The body is every byte after the first blank line, and the scenario
+sets `Content-Length` from it, replacing any the text gives and dropping `Transfer-Encoding`, so
+the reader counts no bytes; with no blank line there is no body. The head goes to net/http's own
+`ReadRequest`, and the request to the Router's `ServeHTTP` with an `httptest` recorder. The
+answer is the response as HTTP/1.1 text, LF-ended: the status line, each header the handler set,
+one line a value, in name order, a blank line, and the body. No `Content-Length` or `Date` is
+added. Text that isn't an HTTP/1.1 request is rejected as `request: <why>`: `no request line`,
+`net/http`'s own message for a malformed request line or header, or `HTTP/2.0 isn't HTTP/1.x`.
+The instance serves the next call.
+
+The Router mounts a `/projects` `Group` compiled into a `Module`, under `RequestID` and
+`Recoverer` on the Router itself, so every response, a miss included, carries `X-Request-Id`, and
+every problem is RFC 9457's `application/problem+json` with `request_id`. A project is an `id`, a
+UUID, a `code`, a `name`, and a `version`:
+
+- `GET /projects` pages the projects by `ParseQuery`'s `page` and `size`, 10 a page by default and
+  at most 50, answered as `NewPage`'s envelope, `{"items":[…],"page":1,"size":10,"total":3,
+  "more":false}`. A size it refuses is 400.
+- `GET /projects/{id}` answers one project, its version as its `ETag`. An id that isn't a UUID is
+  400, and an unknown id 404.
+- `POST /projects` decodes `{code, name}` with `DecodeJSON` and answers 201 with the new project,
+  under a new UUIDv7, at version 1, with its `ETag` and its `Location`. An unknown field, an empty
+  body, or a second JSON value is 400.
+- `PUT /projects/{id}` with `If-Match: "<version>"` replaces the code and the name and answers the
+  project at the next version. A stale version is 412, a missing `If-Match` 428, and a malformed
+  one, unquoted, 400.
+- An unknown path is 404, and a known path with another method 405 with `Allow`.
+
+Three projects are seeded at startup, ATLAS, BOREAL, and CINDER, at
+`01933b5e-8a00-7000-8000-00000000000{1,2,3}`, version 1, and kept in memory for the instance's
+life: a create is listed and readable by later calls, and an update raises the version a later
+stale update is refused against. A Stop or a reload starts a new instance from the seed. The check
+tests the handler under `GOOS=js` on both filesystems.
+
+### The go-web-sdk page
+
+`markdown/go-web-sdk-handlers.md` renders to `go-web-sdk-handlers.html`, a Markdown page as
+`sqlate-compile.html` is (see "The Markdown page"). It holds one `sl-go-demo` naming the scenario,
+`websdk`, its handler, `request`, and its file, `request.http`, around one ordinary `http` fence,
+a `GET /projects` request. The editor has no grammar for `.http`, so the request shows as plain
+text; Shiki highlights the page's other `http` fences at build. Its prose explains what runs, the
+Router, the Group and the Module, the middleware, the problems, the seeded instance, and the
+in-process call, and shows the other requests to try as fences: a create, a read by id, an
+update with `If-Match`, the same update again, stale, and an id that isn't a UUID. The first Run
+fetches the worker and `go/websdk.wasm` alone; each Run after it calls the instance already held,
+fetching nothing.
 
 ## Components
 

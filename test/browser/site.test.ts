@@ -1,9 +1,9 @@
 // The site's build, as Pages serves it: dist/ under the base, by the SDK's served(), Vite's
 // preview, loaded in the pinned chrome-headless-shell. Each of the SDK's shell checks is a test on
 // a fresh page of each hand page, the index, the components page, the playground, and the sqlate
-// page, and of each rendered Markdown page, sqlate-compile.html and go-core-graph.html, which the
-// SDK's markdownPages renders from the spike's own markdown/ tree into markdown-shell.html, by its
-// URL, its reading width among them; each page's header has no site nav, which the checks allow,
+// page, and of each rendered Markdown page, sqlate-compile.html, go-core-graph.html, and
+// go-web-sdk-handlers.html, which the SDK's markdownPages renders from the spike's own markdown/
+// tree into markdown-shell.html, by its URL, its reading width among them; each page's header has no site nav, which the checks allow,
 // and which a test of its own holds on each: no sl-site-nav in the header, and no site-nav.js
 // loaded, which defines it; the build bundles the module, so the registry rather than a request
 // names it. The playground and the sqlate page are app pages, each main across the body's content
@@ -112,7 +112,7 @@ const hand = ["", "components.html", "playground.html", "sqlate.html"];
 
 /** The rendered Markdown pages, the spike's own markdown/ tree's, each by its path under the base:
  * the crawl checks each as a copied page, by the scratch root's record of the tree. */
-const rendered = ["sqlate-compile.html", "go-core-graph.html"];
+const rendered = ["sqlate-compile.html", "go-core-graph.html", "go-web-sdk-handlers.html"];
 
 /** Every page the site builds. */
 const pages = [...hand, ...rendered];

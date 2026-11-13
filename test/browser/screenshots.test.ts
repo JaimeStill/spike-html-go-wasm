@@ -13,8 +13,8 @@
 // arrangement and with the Layout menu open, each chosen by the menu, the widest with the About
 // dialog open, and each of the SDK's widths with each of Basics, Generics, Concurrency, and
 // Standard library chosen in the Program select. The sqlate page's, --page sqlate, is the viewport
-// alone at each of the SDK's widths, and the rendered Markdown page's, --page sqlate-compile, the
-// page whole at each.
+// alone at each of the SDK's widths, and each rendered Markdown page's, --page sqlate-compile,
+// --page go-core-graph, and --page go-web-sdk-handlers, the page whole at each.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.2): template/test/browser/screenshots.test.ts.
@@ -232,13 +232,15 @@ describe("a component's capture", () => {
     );
   });
 
-  test("the capture file captures the rendered Markdown page whole at each of the SDK's widths", () => {
-    const described = description.pages.find(({ name }) => name === "sqlate-compile");
-    assert.deepEqual(
-      described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
-      WIDTHS.map(({ width }) => [`sqlate-compile-${width}`, width, true]),
-    );
-  });
+  for (const rendered of ["sqlate-compile", "go-core-graph", "go-web-sdk-handlers"]) {
+    test(`the capture file captures the rendered Markdown page ${rendered} whole at each of the SDK's widths`, () => {
+      const described = description.pages.find(({ name }) => name === rendered);
+      assert.deepEqual(
+        described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
+        WIDTHS.map(({ width }) => [`${rendered}-${width}`, width, true]),
+      );
+    });
+  }
 
   test("a --width not among the SDK's is a usage error naming them, and captures nothing", () => {
     for (const flags of [["--width", "500"], ["--width=1280"], ["--width"]]) {

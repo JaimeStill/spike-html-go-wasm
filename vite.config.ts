@@ -1,7 +1,7 @@
 // The site's build (mise run build): the hand pages, index.html, components.html,
-// playground.html, and sqlate.html, and the rendered Markdown pages, sqlate-compile.html and
-// go-core-graph.html, the foundation modules they load, the pages' scripts, the components and the tokenizer they load
-// lazily, and the runtime's worker, into dist/:
+// playground.html, and sqlate.html, and the rendered Markdown pages, sqlate-compile.html,
+// go-core-graph.html, and go-web-sdk-handlers.html, the foundation modules they load, the pages'
+// scripts, the components and the tokenizer they load lazily, and the runtime's worker, into dist/:
 // static files GitHub Pages serves as the repository's project site, under
 // /<repository>/. The base is that path, and the repository's name is package.json's name, the one
 // place it is written; the SDK's served(), which the browser tier and the captures serve the build
@@ -12,10 +12,10 @@
 // leaves out, as it parses only the packages under node_modules/@jaimestill/; syntaxThemes, the
 // build step that merges each palette's syntax theme into the module the editor's tokenizer
 // imports (scripts/syntax-themes.ts); the SDK's markdownPages, here with no copied tree, which
-// renders the spike's own Markdown, markdown/'s pages, sqlate-compile.md and go-core-graph.md, into
-// markdown-shell.html, its fences highlighted at build, and fills every page's glyph markers, the
-// header's and the dialogs', with the icons layer's svg; and the SDK's renderBlocking, which
-// keeps each page's one entry script render-blocking.
+// renders the spike's own Markdown, markdown/'s pages, sqlate-compile.md, go-core-graph.md, and
+// go-web-sdk-handlers.md, into markdown-shell.html, its fences highlighted at build, and fills
+// every page's glyph markers, the header's and the dialogs', with the icons layer's svg; and the
+// SDK's renderBlocking, which keeps each page's one entry script render-blocking.
 // Adapted from spike-html-apps (529ec52): vite.external.config.ts, its plugins, with the base the
 // Pages path and no preview host.
 // Adapted from spike-html-hosting (cb0511c): vite.config.ts, its one page a page for each copied
@@ -67,8 +67,8 @@ export default defineConfig({
     outDir: "dist",
     target: "es2024",
     // The hand pages: Vite builds index.html by default only with no input given, and the plugin
-    // gives its pages, the rendered sqlate-compile.html and go-core-graph.html, as an input list, with which these
-    // concatenate. components.html is the components page, playground.html the playground, and
+    // gives its pages, the rendered sqlate-compile.html, go-core-graph.html, and
+    // go-web-sdk-handlers.html, as an input list, with which these concatenate. components.html is the components page, playground.html the playground, and
     // sqlate.html the sqlate page.
     rolldownOptions: {
       input: [
