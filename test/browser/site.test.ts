@@ -3,25 +3,26 @@
 // a fresh page of each hand page, the index, the components page, the playground, and the sqlate
 // page, and of each rendered Markdown page, sqlate-compile.html, go-core-graph.html, and
 // go-web-sdk-handlers.html, which the SDK's markdownPages renders from the spike's own markdown/
-// tree into markdown-shell.html, by its URL, its reading width among them; each page's header has no site nav, which the checks allow,
-// and which a test of its own holds on each: no sl-site-nav in the header, and no site-nav.js
-// loaded, which defines it; the build bundles the module, so the registry rather than a request
-// names it. The playground and the sqlate page are app pages, each main across the body's content
-// width, so they run every check but main's reading width, holdsReadingWidth; a check of the
-// spike's own holds each one's prose, the heading and the lede, to 80ch, centered, instead. The
-// crawl, from the index, reaches exactly the index and, by the index's links, the components page,
-// the playground, the sqlate page, and the rendered pages, loading each hand page it reaches and
-// checking every copied page. content.json records no tree, since the site copies none, so given
-// the repository's root the crawl would count the rendered pages hand pages, which have no pager;
-// but markdownPages gives the tree's pages a site index and pagers, as it does a copied tree's. So
-// the crawl gets a scratch root under TMPDIR whose content.json records markdown/ as one copied
-// tree, each file at the path its page is served at, with a byte copy under its content/, a record
-// the SDK's content check accepts: the crawl then checks each rendered page as a copied page, its
-// pagers, its site index, its title, and every other check the crawl makes of one, and the four
-// hand pages alone as hand pages. The rendered pages are the ones holding SDK fences, highlighted
-// at build, so the SDK's palette check runs on each; the components page's editors are held to its
-// colors by code-editor.test.ts. Each page's cascade layers, read from its sheets in the order the
-// document names them, are the foundation's, then the SDK's site, then page, the shared sheet's
+// tree into markdown-shell.html, by its URL, its reading width among them. Each page's header has
+// no site nav, which the checks allow, and which a test of its own holds on each: no sl-site-nav in
+// the header, and no site-nav.js loaded, which defines it; the build bundles the module, so the
+// registry rather than a request names it. The playground and the sqlate page are app pages, each
+// main across the body's content width, so they run every check but main's reading width,
+// holdsReadingWidth; a check of the spike's own holds each one's prose, the heading and the lede,
+// to 80ch, centered, instead. The crawl, from the index, reaches exactly the index and, by the
+// index's links, the components page, the playground, the sqlate page, and the rendered pages,
+// loading each hand page it reaches and checking every copied page. content.json records no tree,
+// since the site copies none, so given the repository's root the crawl would count the rendered
+// pages hand pages, which have no pager; but markdownPages gives the tree's pages a site index and
+// pagers, as it does a copied tree's. So the crawl gets a scratch root under TMPDIR whose
+// content.json records markdown/ as one copied tree, each file at its name in markdown/, which
+// names the page it's served at, with a byte copy under its content/, a record the SDK's content
+// check accepts: the crawl then checks each rendered page as a copied page, its pagers, its site
+// index, its title, and every other check the crawl makes of one, and the four hand pages alone as
+// hand pages. The rendered pages are the ones holding SDK fences, highlighted at build, so the
+// SDK's palette check runs on each; the components page's editors are held to its colors by
+// code-editor.test.ts. Each page's cascade layers, read from its sheets in the order the document
+// names them, are the foundation's, then the SDK's site, then page, the shared sheet's
 // (web/pages/page.css), last, and its source holds no inline <style>, which the build would write
 // ahead of the linked sheets. The components page sets every section apart, its heading --space-xl
 // below what came before; the playground has no section, its one screen proved by
@@ -66,15 +67,14 @@ const root = join(import.meta.dirname, "../..");
 
 let server: Server;
 let browser: Browser;
-/** The crawl's root, a scratch directory under TMPDIR recording markdown/ as a copied tree. */
-let crawlRoot: string;
 
 /** Writes a scratch root under TMPDIR whose content.json records the spike's own Markdown tree,
- * markdown/, as one copied tree at content/'s root, each file by the path its page is served at,
- * with its git blob hash, and a byte copy of each under its content/; answers the root. The
- * repository is package.json's name, its URL the checkout's origin, and the commit the working
- * tree's HEAD, so the record is one the SDK's content check accepts. Nothing of it is the site's: content.json at the repository's root
- * stays a record of no tree. */
+ * markdown/, as one copied tree at content/'s root, each file by its name in markdown/, which
+ * names the page it's served at, with its git blob hash, and a byte copy of each under its
+ * content/; answers the root. The repository is package.json's name, its URL the checkout's
+ * origin as https, an SSH remote's included, and the commit the working tree's HEAD, so the record
+ * is one the SDK's content check accepts. Nothing of it is the site's: content.json at the
+ * repository's root stays a record of no tree. */
 function markdownTreeRoot(): string {
   const dir = mkdtempSync(join(tmpdir(), "site-crawl-"));
   mkdirSync(join(dir, "content"));
@@ -88,7 +88,9 @@ function markdownTreeRoot(): string {
     execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
   const record = {
     repository: JSON.parse(readFileSync(join(root, "package.json"), "utf8")).name as string,
-    url: git("remote", "get-url", "origin").replace(/\.git$/, ""),
+    url: git("remote", "get-url", "origin")
+      .replace(/^git@github\.com:/, "https://github.com/")
+      .replace(/\.git$/, ""),
     commit: git("rev-parse", "HEAD"),
     files,
   };
@@ -99,12 +101,10 @@ function markdownTreeRoot(): string {
 before(async () => {
   server = await served(root);
   browser = await launch();
-  crawlRoot = markdownTreeRoot();
 });
 after(async () => {
   await browser?.close();
   await server?.stop();
-  if (crawlRoot) rmSync(crawlRoot, { recursive: true, force: true });
 });
 
 /** The hand pages, each by its path under the base. */
@@ -298,9 +298,14 @@ describe("the site under its base", () => {
   }
 
   test("the crawl reaches the hand pages and the rendered pages, and nothing else, checking each rendered page as a copied one", async (t) => {
-    assert.deepEqual(checkContent(crawlRoot), [], "the crawl root's record is the SDK's to accept");
+    const crawlRoot = markdownTreeRoot();
     const page = await browser.open("about:blank");
     try {
+      assert.deepEqual(
+        checkContent(crawlRoot),
+        [],
+        "the crawl root's record is the SDK's to accept",
+      );
       const crawled = await crawl(page, server.origin, crawlRoot);
       t.diagnostic(`${crawled.pages} pages, ${crawled.links} in-site links`);
       assert.deepEqual(
@@ -309,6 +314,7 @@ describe("the site under its base", () => {
       );
     } finally {
       await page.close();
+      rmSync(crawlRoot, { recursive: true, force: true });
     }
   });
 });
