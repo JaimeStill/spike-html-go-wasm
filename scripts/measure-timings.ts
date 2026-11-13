@@ -148,6 +148,10 @@ export function pagesFor(keys: readonly string[] | undefined): DemoPage[] {
 /** The message an error gives, or the value as text. */
 const reason = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
+/** `text` as one sh word, single-quoted, so the shell expands nothing in it: JSON's double quotes
+ * would leave $, `, and \ to the shell. */
+const quoted = (text: string) => `'${text.replaceAll("'", `'\\''`)}'`;
+
 /** Writes into `scratch` a wrapper for the browser at `executable` that runs it with every
  * argument but --host-resolver-rules, so the browser resolves every name, and returns its path. */
 function networked(scratch: string, executable: string): string {
@@ -164,7 +168,7 @@ for argument do
     *) set -- "$@" "$argument" ;;
   esac
 done
-exec ${JSON.stringify(executable)} "$@"
+exec ${quoted(executable)} "$@"
 `,
   );
   chmodSync(wrapper, 0o755);
