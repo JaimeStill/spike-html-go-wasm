@@ -1,6 +1,6 @@
 // The site's build (mise run build): the hand pages, index.html, components.html,
-// playground.html, and sqlate.html, and the rendered Markdown page, sqlate-compile.html, the
-// foundation modules they load, the pages' scripts, the components and the tokenizer they load
+// playground.html, and sqlate.html, and the rendered Markdown pages, sqlate-compile.html and
+// go-core-graph.html, the foundation modules they load, the pages' scripts, the components and the tokenizer they load
 // lazily, and the runtime's worker, into dist/:
 // static files GitHub Pages serves as the repository's project site, under
 // /<repository>/. The base is that path, and the repository's name is package.json's name, the one
@@ -12,7 +12,7 @@
 // leaves out, as it parses only the packages under node_modules/@jaimestill/; syntaxThemes, the
 // build step that merges each palette's syntax theme into the module the editor's tokenizer
 // imports (scripts/syntax-themes.ts); the SDK's markdownPages, here with no copied tree, which
-// renders the spike's own Markdown, markdown/'s one page, sqlate-compile.md, into
+// renders the spike's own Markdown, markdown/'s pages, sqlate-compile.md and go-core-graph.md, into
 // markdown-shell.html, its fences highlighted at build, and fills every page's glyph markers, the
 // header's and the dialogs', with the icons layer's svg; and the SDK's renderBlocking, which
 // keeps each page's one entry script render-blocking.
@@ -67,7 +67,7 @@ export default defineConfig({
     outDir: "dist",
     target: "es2024",
     // The hand pages: Vite builds index.html by default only with no input given, and the plugin
-    // gives its pages, the rendered sqlate-compile.html, as an input list, with which these
+    // gives its pages, the rendered sqlate-compile.html and go-core-graph.html, as an input list, with which these
     // concatenate. components.html is the components page, playground.html the playground, and
     // sqlate.html the sqlate page.
     rolldownOptions: {
