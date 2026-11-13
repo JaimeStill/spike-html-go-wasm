@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** sqlate
-- **Branch:** sqlate
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -11,7 +11,7 @@
 3. [x] components
 4. [x] playground
 5. [x] programs
-6. [ ] sqlate
+6. [x] sqlate
 7. [ ] scenarios
 8. [ ] measure
 9. [ ] review
@@ -112,10 +112,6 @@ Door          two-way: nothing is released; go.mod gains two requirements, and t
               scenario, pages, `file`, the grammar, and the manifest's module entries can each
               be removed.
 ```
-
-## Progress
-
-slices 5/5 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
