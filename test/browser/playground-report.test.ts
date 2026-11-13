@@ -1,15 +1,16 @@
 // The playground's programs' report, never a gate: for each program the Program select offers,
-// opened by its fragment, and for the sqlate page's source demo, playground/sqlate, each in a
-// browser of its own, so its worker is fresh and its cache empty, the phase timings of its first
-// Run, cold, and of a Run after an edit to main.go, warm, each phase as the demo's timings show it,
-// and its closure, the archives its cold Run fetched, the standard library's and, for sqlate, the
-// site's pinned modules': their count, their bytes as fetched, and their bytes gzipped here, by
-// node's zlib at its default level, as Vite's preview serves them raw. The report is the test's
-// diagnostics, written nowhere else; nothing here asserts a number, only that each Run finishes,
-// exit 0, so the report has numbers to give. mise run report:programs runs it alone, on a quiet
-// machine; the browser tier runs it beside its other files, so its timings there are a busier
-// machine's. The build as Pages serves it, dist/ under the base by the SDK's served(), Vite's
-// preview, in the pinned chrome-headless-shell. The helpers are go-demos.ts's, go-builds.ts's, and
+// opened by its fragment, for the sqlate page's source demo, playground/sqlate, and for the
+// rendered graph page's source demo, playground/graph, each in a browser of its own, so its worker
+// is fresh and its cache empty, the phase timings of its first Run, cold, and of a Run after an
+// edit to main.go, warm, each phase as the demo's timings show it, and its closure, the archives
+// its cold Run fetched, the standard library's and, for sqlate and graph, the site's pinned
+// modules': their count, their bytes as fetched, and their bytes gzipped here, by node's zlib at
+// its default level, as Vite's preview serves them raw. The report is the test's diagnostics,
+// written nowhere else; nothing here asserts a number, only that each Run finishes, exit 0, so the
+// report has numbers to give. mise run report:programs runs it alone, on a quiet machine; the
+// browser tier runs it beside its other files, so its timings there are a busier machine's. The
+// build as Pages serves it, dist/ under the base by the SDK's served(), Vite's preview, in the
+// pinned chrome-headless-shell. The helpers are go-demos.ts's, go-builds.ts's, and
 // playground-layouts.ts's. Every wait is bounded.
 
 import { readFileSync } from "node:fs";
@@ -29,7 +30,8 @@ import { paste, PLAYGROUND } from "./playground-layouts.ts";
 const root = join(import.meta.dirname, "../..");
 
 /** The programs, each the page that opens it, its label, and its build's bound: the playground's,
- * by its fragment, in the select's order, each its option's text; then the sqlate page's. */
+ * by its fragment, in the select's order, each its option's text; then the sqlate page's; then the
+ * rendered graph page's, its demo the page's one, which the helpers name as the playground's. */
 const PROGRAMS = [
   ["playground.html#calc", "Calculator", BUILD],
   ["playground.html#basics", "Basics", BUILD],
@@ -37,6 +39,7 @@ const PROGRAMS = [
   ["playground.html#concurrency", "Concurrency", BUILD],
   ["playground.html#stdlib", "Standard library", BUILD],
   ["sqlate.html", "sqlate", SQLATE_BUILD],
+  ["go-core-graph.html", "go-core graph", BUILD],
 ] as const;
 
 /** The phases a build and its run can show, as the timings name them, in phase order. */

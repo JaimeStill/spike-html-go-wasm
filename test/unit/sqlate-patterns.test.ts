@@ -1,10 +1,10 @@
 // The sqlate scenario's sample patterns are the program's, byte for byte: internal/sqlate embeds
 // each pattern at patterns/<ns>/<name>.sql, the layout query.Publish reads, and playground/sqlate
 // ships it as <ns>.<name>.sql, the name its own reader turns into the same namespace and pattern
-// (playground/sqlate/main.go). So a statement the Markdown page's compile demo compiles sees the
+// (playground/sqlate/main.go). So a statement sqlate-compile.html's compile demo compiles sees the
 // catalog the sqlate page's program builds from its shipped files. Every pattern file of either
 // has its counterpart in the other, so a pattern added to one and not the other fails; the
-// program's statements, any other .sql file, have none. And the Markdown page, which shows the
+// program's statements, any other .sql file, have none. And sqlate-compile.html, which shows the
 // app pattern its demo compiles against, shows it byte for byte, so the page can't drift from it.
 
 import assert from "node:assert/strict";

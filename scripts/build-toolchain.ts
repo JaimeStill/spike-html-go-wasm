@@ -4,9 +4,9 @@
 // GOOS=js GOARCH=wasm, -trimpath and -ldflags "-s -w" as the entrypoints are; the archive of every
 // standard-library package that builds for js/wasm, as `go list -export` names it in Go's build
 // cache under the same -trimpath; the archive of every package of the site's pinned modules, the
-// go.mod requirements, that the repository's own packages depend on, sqlate's and its
-// dependencies' today, as `go list -deps -export ./...` names them, the repository's own packages
-// left out; and manifest.json (web/runtime/manifest.ts), which names them.
+// go.mod requirements, that the repository's own packages depend on, sqlate's, go-core's, and
+// their dependencies' today, as `go list -deps -export ./...` names them, the repository's own
+// packages left out; and manifest.json (web/runtime/manifest.ts), which names them.
 // Every file but the manifest is named for its content's hash, so a new build never reuses a name
 // for other bytes, and a page caching the old compiler can never pair it with new archives. The
 // six test-only packages under std build no archive and are left out; unsafe, which the compiler

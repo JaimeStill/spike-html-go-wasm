@@ -16,10 +16,11 @@
 // SDK's widths with each of Basics, Generics, Concurrency, and Standard library chosen in the
 // Program select, as a reader chooses it; and the sqlate page, --page sqlate, an app page as the
 // playground is, its demo as before a Run, the viewport alone at each of the SDK's widths; and the
-// rendered Markdown page, --page sqlate-compile, its demo as before a Run, whole at each of the
-// SDK's widths, the SDK's own states for a page. The components page shows each state once and its
-// layout follows the viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH
-// set, by --width, every page, the index's, each component's, the playground's, and the sqlate
+// rendered Markdown pages, --page sqlate-compile, --page go-core-graph, and --page
+// go-web-sdk-handlers, each its demo as before a Run, whole at each of the SDK's widths, the SDK's
+// own states for a page. The components page shows each state once and its layout follows the
+// viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width,
+// every page, the index's, each component's, the playground's, and the sqlate and rendered
 // pages', takes only that width's states, so the 900px capture, at no SDK width, is taken only when
 // every width is. The SDK's widths over the whole components page grew with every component, so
 // each component is captured alone. The description's facets, --all's profiles, the registry's
@@ -231,7 +232,15 @@ const sqlateStates = ({ path }: DescribedPage): DescribedState[] =>
 
 const described = description({
   root,
-  pages: ["index.html", "components.html", "playground.html", "sqlate.html", "sqlate-compile.html"],
+  pages: [
+    "index.html",
+    "components.html",
+    "playground.html",
+    "sqlate.html",
+    "sqlate-compile.html",
+    "go-core-graph.html",
+    "go-web-sdk-handlers.html",
+  ],
 });
 
 /** The components page as a page per component: its path, and a state whole at each of the SDK's

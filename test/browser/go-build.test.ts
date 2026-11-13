@@ -17,10 +17,12 @@
 // toolchain module, one worker live. A build runs alone: started while spin is pending, it stops
 // spin first, each console holding only its own output; a program's Run, or the runner's load or
 // run, started while a build is pending stops the build, which rejects with "stopped", the source
-// demo's console holding none of the other request's events. Ctrl+Enter and Cmd+Enter, Meta, from
-// the source demo's editor build and run the edited program, and Reset restores the source as
-// given. The build's helpers are go-builds.ts's. Every wait is bounded. Nothing here names the
-// site: its base is package.json's name.
+// demo's console holding none of the other request's events. A built program that exits with a
+// goroutine's timer still scheduled answers its exit code, and so does the next run, which the
+// exited program's timer would otherwise fail (the worker's exit guard). Ctrl+Enter and
+// Cmd+Enter, Meta, from the source demo's editor build and run the edited program, and Reset
+// restores the source as given. The build's helpers are go-builds.ts's. Every wait is bounded.
+// Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -383,6 +385,43 @@ describe("a build runs alone", () => {
       }
     });
   }
+});
+
+describe("a built program's exit with a timer pending", () => {
+  // wasm_exec.js's timeout events outlive the program's exit: a timer the program started is
+  // still scheduled when it exits, and its callback resumes the exited program, which throws from
+  // the worker's timer task. Here a goroutine's sleep outlasts main, which exits from a timer's
+  // resume after writing stderr; its timeout fires while the next run is pending.
+  const PROGRAM = `package main
+
+import (
+	"fmt"
+	"os"
+	"time"
+)
+
+func main() {
+	go time.Sleep(1500 * time.Millisecond)
+	time.Sleep(time.Second)
+	fmt.Fprintln(os.Stderr, "leaving")
+	os.Exit(3)
+}
+`;
+
+  test("each run answers the program's exit code, not the exited program's timer", async () => {
+    const { page } = await open();
+    try {
+      const runs: unknown[] = await page.evaluate(`(async () => {
+        const runner = ${SOURCE}.runner;
+        await runner.build([{ name: "main.go", text: ${JSON.stringify(PROGRAM)} }]);
+        const answer = () => runner.run().then((code) => code, (error) => error.message);
+        return [await answer(), await answer()];
+      })()`);
+      assert.deepEqual(runs, [3, 3]);
+    } finally {
+      await page.close();
+    }
+  });
 });
 
 describe("a source demo's keys and Reset", () => {

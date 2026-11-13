@@ -15,7 +15,12 @@
 // sl-go-demo reads it (web/components/fences.ts); its file is the fence's name, its data-file, on
 // the pre or its code, else the pre's title, else main.go, under cmd/<scenario>/, so a one-fence
 // demo's is its entrypoint, cmd/<scenario>/main.go. The written demos and templates are every
-// program's source: the pages' scripts add none.
+// program's source: the pages' scripts add none. The graph page, markdown/go-core-graph.md, holds
+// one source demo, a raw sl-go-demo around one ordinary go fence, read from the Markdown before
+// the SDK renders it: the fence is playground/graph's one file, main.go, byte for byte. The
+// go-web-sdk page, markdown/go-web-sdk-handlers.md, holds one handler demo, read the same way:
+// the websdk scenario's request handler, its file request.http, around one fence naming no
+// language, which the build leaves plain, a request.
 //
 // The page is read as text, with no browser and no HTML parser dependency: the demos are the
 // page's hand-written markup, so a small reader suffices, held to the HTML parser's rules where
@@ -266,6 +271,78 @@ describe("the sqlate page's demo", () => {
   });
 });
 
+/** A demo as a Markdown page writes it: its attributes and its fences, each its info string and
+ * its text, every line between the fence's opening and closing lines, each line's break kept. */
+interface MarkdownDemo {
+  attrs: Map<string, string>;
+  fences: { info: string; text: string }[];
+}
+
+/** The page's demos, every raw sl-go-demo outside an HTML comment, in order, with the backtick
+ * fences between its start and end tags. */
+function markdownDemos(markdown: string): MarkdownDemo[] {
+  const page = markdown.replace(/<!--[\s\S]*?-->/g, "");
+  const demos: MarkdownDemo[] = [];
+  for (const start of page.matchAll(/<sl-go-demo\b[^>]*>/gi)) {
+    const from = start.index + start[0].length;
+    const end = page.indexOf("</sl-go-demo>", from);
+    if (end < 0) throw new Error(`a demo the reader can't close: ${start[0]}`);
+    const fences = [...page.slice(from, end).matchAll(/^```(.*)\n([\s\S]*?)^```$/gm)].map(
+      ([, info, text]) => ({ info, text }),
+    );
+    demos.push({ attrs: attributes(start[0]), fences });
+  }
+  return demos;
+}
+
+describe("the graph page's demo", () => {
+  const markdown = readFileSync(join(root, "markdown/go-core-graph.md"), "utf8");
+
+  test("is one source demo, naming no scenario or handler, its file main.go, around one go fence", () => {
+    assert.deepEqual(
+      markdownDemos(markdown).map(({ attrs, fences }) => [
+        attrs.has("source"),
+        attrs.has("scenario") || attrs.has("handler"),
+        attrs.get("file"),
+        fences.map(({ info }) => info),
+      ]),
+      [[true, false, "main.go", ["go"]]],
+    );
+  });
+
+  test("its fence is playground/graph's one file, main.go, byte for byte", () => {
+    assert.deepEqual(shipped("graph"), ["main.go"], "every file");
+    const [{ fences }] = markdownDemos(markdown);
+    assert.equal(
+      fences[0].text,
+      readFileSync(join(root, "playground/graph/main.go"), "utf8"),
+      "graph's main.go",
+    );
+  });
+});
+
+describe("the go-web-sdk page's demo", () => {
+  const markdown = readFileSync(join(root, "markdown/go-web-sdk-handlers.md"), "utf8");
+
+  test("is one handler demo, websdk's request, its file request.http, around one fence naming no language", () => {
+    assert.deepEqual(
+      markdownDemos(markdown).map(({ attrs, fences }) => [
+        attrs.has("source"),
+        attrs.get("scenario"),
+        attrs.get("handler"),
+        attrs.get("file"),
+        fences.map(({ info }) => info),
+      ]),
+      [[false, "websdk", "request", "request.http", [""]]],
+    );
+  });
+
+  test("its fence is a request, its first line a request line", () => {
+    const [{ fences }] = markdownDemos(markdown);
+    assert.match(fences[0].text, /^GET \/projects HTTP\/1\.1\n/);
+  });
+});
+
 describe("the playground's program templates", () => {
   const html = readFileSync(join(root, "playground.html"), "utf8");
   const templates = writtenTemplates(html);
@@ -282,13 +359,13 @@ describe("the playground's program templates", () => {
     );
   });
 
-  // The calculator is the source demo's starter, and sqlate is in no Program select: its demo
-  // is a hand page's of its own.
-  test("are every program in playground/ but the calculator and sqlate, each with a fence for every file of its directory but its tests", () => {
+  // The calculator is the source demo's starter, and sqlate and graph are in no Program select:
+  // sqlate's demo is a hand page's of its own, and graph's a Markdown page's.
+  test("are every program in playground/ but the calculator, sqlate, and graph, each with a fence for every file of its directory but its tests", () => {
     assert.deepEqual(
       templates.map(({ program }) => program).sort(),
       readdirSync(join(root, "playground"))
-        .filter((program) => program !== "calc" && program !== "sqlate")
+        .filter((program) => !["calc", "sqlate", "graph"].includes(program))
         .sort(),
     );
     for (const { program, fences } of templates) {
