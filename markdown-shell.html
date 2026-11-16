@@ -15,7 +15,10 @@
      runner, and wires each drawer to its opener; nothing loads Go, or starts the worker, until a
      demo's Run.
      The header is the template's without its site nav, which this site has none of: one group,
-     header-actions, of Pages, Contents, Help, and Settings, in that order. Pages opens the Pages
+     header-actions, of Pages, Contents, Help, and Settings, in that order. The build writes the
+     site's own nav into each page as into the index (see index.html): its row first in the header,
+     its drawer's opener first in the group, its drawer last in the body, and its script last in
+     the head. Pages opens the Pages
      drawer, keys.js clicking it on P, and Contents the Contents drawer, on C; site.css shows each
      only below its drawer's dock, and Contents only on a page with a section tree. Help, on ?, and
      Settings, on S, open the components' shortcut dialogs by the invoker command, each with its

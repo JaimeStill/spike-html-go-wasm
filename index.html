@@ -11,7 +11,11 @@
      their modules render-blocking too, which the two shortcut dialogs hold. The header is one group
      of buttons, header-actions: Help and Settings, in that order, which site.css holds at the
      header's inline end at every width, as it does a header with no site nav; the site has no
-     other site to list, so the header has none. Help and Settings are the
+     other site to list, so the header has no sl-site-nav. The build writes the site's own nav into
+     the page, as into every page, from its one list (scripts/site-nav.ts): the Site nav's row, the
+     header's first child, the Site drawer after everything else in the body, its opener first in
+     the group, and the drawer's script, web/pages/site-nav.ts, last in the head; page.css shows the
+     row where it fits beside the group and the opener, on N, below that. Help and Settings are the
      openers of the components' shortcut dialogs, each sending show-modal to its dialog by the
      invoker command, keys.js clicking it on its key: Help, on ?, opens dialog#help, headed
      "Keyboard shortcuts", whose sl-shortcuts lists every binding the page has outside it; Settings,
@@ -27,7 +31,7 @@
      binds no key. Each glyph is a marker, <svg data-icon="octicon/<name>">, which the SDK's
      markdownPages fills at build with the icons layer's svg: question-16 for Help, gear-16 for
      Settings, and x-16 for Close. Then its own main content. No Markdown fills it, so the index
-     loads none of the components' other modules and has no Pages or Contents button and no drawer.
+     loads none of the components' other modules and has no Pages or Contents button or drawer.
      Adapted from spike-html-hosting (421254d): index.html, its title and text this spike's, and
      its header without the site nav.
      Adapted from spike-html-hosting-sdk (v0.6.3): template/index.html, its main element the

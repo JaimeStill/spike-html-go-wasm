@@ -11,7 +11,9 @@
 // modules, first; the same rewrite of the components' own, web/components/'s, which the SDK's
 // leaves out, as it parses only the packages under node_modules/@jaimestill/; syntaxThemes, the
 // build step that merges each palette's syntax theme into the module the editor's tokenizer
-// imports (scripts/syntax-themes.ts); the SDK's markdownPages, here with no copied tree, which
+// imports (scripts/syntax-themes.ts); siteNav, which writes the site's own nav, its row, its
+// drawer, and the drawer's opener and script, into every page from one list (scripts/site-nav.ts);
+// the SDK's markdownPages, here with no copied tree, which
 // renders the spike's own Markdown, markdown/'s pages, sqlate-compile.md, go-core-graph.md, and
 // go-web-sdk-handlers.md, into markdown-shell.html, its fences highlighted at build, and fills
 // every page's glyph markers, the header's and the dialogs', with the icons layer's svg; and the
@@ -34,6 +36,7 @@ import { base } from "@jaimestill/spike-html-hosting-sdk/served.js";
 import { defineConfig } from "vite";
 import { standardCssModules } from "vite-plugin-standard-css-modules";
 
+import { siteNav } from "./scripts/site-nav.ts";
 import { syntaxThemes } from "./scripts/syntax-themes.ts";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
@@ -45,6 +48,10 @@ export default defineConfig({
     // The components' sheets, each one constructed CSSStyleSheet, as the SDK's rewrite pins them.
     standardCssModules({ include: ["**/web/components/**/*.ts"], outputMode: "CSSStyleSheet" }),
     syntaxThemes(),
+    // The site's own nav, written into every page, the hand pages and the rendered ones, from its
+    // one list (scripts/site-nav.ts), before Vite's transform bundles the script it adds and before
+    // markdownPages fills the glyph marker it adds.
+    siteNav(),
     // The spike's own tree, markdown/, rendered into markdown-shell.html, and no copied tree: the
     // site has no content.json and no content/. The plugin takes one tree's source
     // as a copied tree's, and reads its repository and ref only to write a blob URL for a link

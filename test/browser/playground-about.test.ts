@@ -3,8 +3,9 @@
 //
 // The prose is the title row, the heading and the Program select's label beside it, and the lede
 // alone, the lede's text as approved, Ctrl+Enter in a kbd, and the page holds no disclosure; the
-// select itself is playground-programs.test.ts's. The header's group is About, Help, and Settings,
-// in that order: About a glyph button in the shell's pattern, its glyph the icons layer's info-16,
+// select itself is playground-programs.test.ts's. The header's group, as it renders at the page's
+// own width, where the site nav's row shows and its drawer's opener doesn't (site-nav.test.ts), is
+// About, Help, and Settings, in that order: About a glyph button in the shell's pattern, its glyph the icons layer's info-16,
 // its key A shown in a kbd, its hint "About". A, a click, or Enter on About opens the dialog, its
 // title heading focused and its Close's hint closed past the interest delay; Tab moves focus to
 // Close; Escape, or Close, closes it, focus back where it was before it opened. A typed into the
@@ -161,6 +162,7 @@ describe("the playground's prose and About", () => {
           glyph.removeAttribute("class");
           return {
             names: [...document.querySelectorAll("body > header .header-actions > button")]
+              .filter((button) => button.checkVisibility())
               .map((button) => button.getAttribute("aria-label")),
             glyph: glyph.outerHTML,
             kbd: [...about.querySelectorAll("kbd")].map((kbd) => kbd.textContent).join(" "),

@@ -1,18 +1,20 @@
 /*
  * The hand pages' own rules, index.html's, components.html's, playground.html's, and sqlate.html's,
  * and the rendered Markdown pages', in one sheet each page links after the SDK's site.css. Every
- * rule is in the page cascade layer, which this sheet declares last, after the foundation's layers
- * and the SDK's site, so a page rule wins over the shell's by layer order alone, at any
- * specificity, and an unlayered sheet (the components' glyph-button.css) stays above it. The layer
- * order is the page's, as the browser tier reads it: foundation's, then site, then page.
+ * rule but one is in the page cascade layer, which this sheet declares last, after the foundation's
+ * layers and the SDK's site, so a page rule wins over the shell's by layer order alone, at any
+ * specificity, and an unlayered sheet (the components' glyph-button.css) stays above it; the one,
+ * the Site drawer's opener's display, sits unlayered at the end, as site.css's openers' does. The
+ * layer order is the page's, as the browser tier reads it: foundation's, then site, then page.
  *
  * A linked sheet, never an inline <style>: the build writes a page's inline sheet before the
  * bundled linked ones, so an @layer there would declare page ahead of the foundation's layers and
  * reorder every layer on the page, and an unlayered one would sit above every layer.
  *
- * Every space is a foundation --space-* step. The rules each page shares come first, then the
- * components page's specimens, then the playground's app page, its one screen, which only a body
- * of class app takes, so the index and the components page keep the site's reading layout.
+ * Every space is a foundation --space-* step. The rules each page shares come first, the site's own
+ * nav among them, then the components page's specimens, then the playground's app page, its one
+ * screen, which only a body of class app takes, so the index and the components page keep the
+ * site's reading layout.
  * Adapted from spike-html-apps-components (19d4f59): demo/demo.css, its page layout the consumer's,
  * in a layer of its own after the foundation's.
  */
@@ -24,6 +26,75 @@
      demo/demo.css, its main > section rule. */
   main > section {
     margin-block-start: var(--space-xl);
+  }
+
+  /* The site's own nav (scripts/site-nav.ts), its row the header's first child, where site.css
+     places sl-site-nav, whose rules name that element alone: the row takes the room the
+     header-actions group leaves, the group keeping its inline end by its own auto margin, and its
+     links wrap within it rather than widen the page. Below 40rem, where site.css wraps the header,
+     the row, as it shows with no script, takes a line of its own over the group, as sl-site-nav
+     does. Its links never break inside a word, as sl-site-nav's don't: the host's breaking stops at
+     the nav. The current page's link is the strongest text, in the terms' weight, as the site
+     nav's mark is. */
+  body > header > .site-nav {
+    flex: 1;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+  .site-nav > ul,
+  #site > ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .site-nav > ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-s);
+  }
+  .site-nav > ul > li,
+  #site > ul > li {
+    margin: 0;
+  }
+  :is(.site-nav, #site) a[aria-current="page"] {
+    color: var(--fg);
+    font-weight: 600;
+  }
+  @media (width < 40rem) {
+    body > header > .site-nav {
+      flex-basis: 100%;
+    }
+  }
+
+  /* The switch: below 58rem, with script, the row is hidden and the drawer's opener shows in its
+     place (below, unlayered). 58rem is the widest header's content at the default type, rounded
+     up to the rem: a rendered Markdown page's, under both drawers' docks, the row's links on one
+     line beside Pages, Contents, Help, and Settings, with the gap between them and the body's two
+     gutters. Measured in the browser tier's chrome-headless-shell as the row's list at its
+     max-content width plus those: 863px in the machine's fonts (Liberation Sans) and 925px in
+     the pinned DejaVu set (test/browser/fonts.ts), whose wider Sans sets the switch, so the row
+     fits in either; site-nav.test.ts holds every page's row and buttons to one line from it. With
+     no script the drawer stays undefined and the row shows at every width, wrapping its links. */
+  @media (width < 58rem) {
+    body:has(> #site:defined) > header > .site-nav {
+      display: none;
+    }
+  }
+
+  /* The drawer, a modal at every width, by its dock: its links a column, each with the
+     --space-3xs a pager link takes above and below, to the 24px target size. Undefined, with no
+     script, its links would render as the page's own after main, a second copy of the row's, so
+     it renders nothing. */
+  #site > ul {
+    display: grid;
+    gap: var(--space-2xs);
+  }
+  #site a {
+    display: inline-block;
+    padding-block: var(--space-3xs);
+  }
+  sl-drawer#site:not(:defined) {
+    display: none;
   }
 
   /* The components page: a component's states, one figure each, stacked. */
@@ -153,5 +224,19 @@
      focus as it opens and draws no focus outline, by site.css's rule for any dialog's. */
   dialog#about {
     inline-size: min(100% - 2 * var(--space-s), 80ch);
+  }
+}
+
+/* The Site drawer's opener, shown only below the switch and once the drawer is defined, so with no
+   script it is never shown and the row stands in its place. Unlayered, after the components'
+   glyph-button.css, whose unlayered display: inline-flex would otherwise win over any layered
+   rule, as site.css's own openers' rules are. */
+.site-opener {
+  display: none;
+}
+
+@media (width < 58rem) {
+  body:has(> #site:defined) .site-opener {
+    display: inline-flex;
   }
 }

@@ -4,8 +4,9 @@
 // page, and of each rendered Markdown page, sqlate-compile.html, go-core-graph.html, and
 // go-web-sdk-handlers.html, which the SDK's markdownPages renders from the spike's own markdown/
 // tree into markdown-shell.html, by its URL, its reading width among them. Each page's header has
-// no site nav, which the checks allow, and which a test of its own holds on each: no sl-site-nav in
-// the header, and no site-nav.js loaded, which defines it; the build bundles the module, so the
+// no SDK site nav, which the checks allow, the site's own nav standing in its place
+// (site-nav.test.ts), and a test of its own holds that on each: no sl-site-nav in the header, and
+// no site-nav.js loaded, which defines it; the build bundles the module, so the
 // registry rather than a request names it. The playground and the sqlate page are app pages, each
 // main across the body's content width, so they run every check but main's reading width,
 // holdsReadingWidth; a check of the spike's own holds each one's prose, the heading and the lede,
@@ -310,7 +311,13 @@ describe("the site under its base", () => {
       t.diagnostic(`${crawled.pages} pages, ${crawled.links} in-site links`);
       assert.deepEqual(
         { pages: crawled.pages, unreachable: crawled.unreachable, hand: crawled.hand },
-        { pages: pages.length, unreachable: [], hand },
+        // The crawl lists the hand pages in the order it first finds them: the index, then each by
+        // the site nav's row, the first links on every page, in its order.
+        {
+          pages: pages.length,
+          unreachable: [],
+          hand: ["", "playground.html", "sqlate.html", "components.html"],
+        },
       );
     } finally {
       await page.close();
