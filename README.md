@@ -1,10 +1,10 @@
-<!-- Adapted from spike-html-hosting-sdk (v0.6.2): template/README.md, its site a hand index with
+<!-- Adapted from spike-html-hosting-sdk (v0.6.3): template/README.md, its site a hand index with
      no copied tree and the spike's own Markdown tree. -->
 
 # spike-html-go-wasm
 
 The GitHub Pages site of spike-html-go-wasm, made from the template of
-[spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.2. Its index,
+[spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.3. Its index,
 `index.html`, is a hand page served under `/spike-html-go-wasm/`, beside three more hand pages:
 `components.html`, the components page, which shows each component in `web/components/` in each
 of its states, its Go demos running Go through the runtime in `web/runtime/`; `playground.html`,

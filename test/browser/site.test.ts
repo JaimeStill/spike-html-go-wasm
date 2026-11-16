@@ -29,7 +29,7 @@
 // playground-layout.test.ts. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.2): template/test/browser/site.test.ts, its checks
+// Adapted from spike-html-hosting-sdk (v0.6.3): template/test/browser/site.test.ts, its checks
 // run on each hand page, as the SDK's README gives a root-style site, its crawl reaching the hand
 // pages and the spike's own rendered pages, crawled as a copied tree, the palette check on the
 // rendered pages alone.

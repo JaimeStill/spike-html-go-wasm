@@ -12,7 +12,7 @@
 // rules, each color light-dark() of light's and dark's, and the editor's foreground and background
 // paired the same way. Every token of a fence therefore takes, in each palette and scheme, the
 // color the SDK's fence of the same code gives it; the browser tier holds the two equal.
-// Adapted from spike-html-hosting-sdk (v0.6.2): src/syntax.ts, its theme resolution, rule list,
+// Adapted from spike-html-hosting-sdk (v0.6.3): src/syntax.ts, its theme resolution, rule list,
 // foreground and background, pair, and merge, without the highlighter and stylesheet, which the
 // editor does in the browser.
 
