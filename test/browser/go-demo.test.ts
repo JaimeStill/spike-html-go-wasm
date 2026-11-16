@@ -18,7 +18,9 @@
 // given a FileSet as its files property renders that set, and its fences again when given none; a
 // handler demo refuses a set as an authoring error. A demo's accessibility tree: a region named by
 // its label, the toolbar, the tabs and the panel on a program demo, the editor, the log, and the
-// timings, its fences no part of it. The fences: the SDK's Shiki markup read as plain text and run,
+// timings, its fences no part of it. The fences: the SDK's Shiki markup, which the build writes
+// with the SDK's own highlighter (scripts/rendered-fence.ts), one line and no empty line after it,
+// read as plain text and run,
 // named by its code's language class, and by the demo's file attribute while it is set, and
 // without script, every fence shows as the page's code. At a phone's width each demo fits its
 // column, and at 1280px and 1120px, either side of the 44rem at which the console and timings
@@ -37,6 +39,7 @@ import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
+import { renderFence } from "../../scripts/rendered-fence.ts";
 import { PHONE, viewport, WIDE } from "./viewport.ts";
 
 import {
@@ -705,6 +708,19 @@ describe("the fences", () => {
     }
   });
 
+  test("the rendered fence is the SDK's Shiki markup of its Markdown fence, one line", async () => {
+    const { page } = await open();
+    try {
+      const fence = `${demo("markdown")}.querySelector(":scope > pre")`;
+      assert.deepEqual(
+        await page.evaluate(`[${fence}.outerHTML, ${fence}.querySelectorAll(".line").length]`),
+        [await renderFence(), 1],
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
   test("the SDK's Shiki markup reads as its text, input.json by its code's language-json class, and runs", async () => {
     const { page } = await open();
     try {
@@ -768,7 +784,8 @@ describe("the fences", () => {
         for (const [visible, tall] of demoFences) assert.ok(visible && tall);
       }
       assert.equal(fences[1][0][2], helloSource);
-      assert.equal(fences[5][0][2], '{ "shiki": true, "list": [3, 1, 2] }\n');
+      // The rendered fence, the SDK's Shiki markup: its one line, no newline after it.
+      assert.equal(fences[5][0][2], '{ "shiki": true, "list": [3, 1, 2] }');
     } finally {
       await page.close();
     }

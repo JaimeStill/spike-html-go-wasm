@@ -13,6 +13,8 @@
 // build step that merges each palette's syntax theme into the module the editor's tokenizer
 // imports (scripts/syntax-themes.ts); siteNav, which writes the site's own nav, its row, its
 // drawer, and the drawer's opener and script, into every page from one list (scripts/site-nav.ts);
+// renderedFence, which writes the components page's rendered fence sample, a fixed Markdown fence
+// rendered by the SDK's own render and Shiki highlighter (scripts/rendered-fence.ts);
 // the SDK's markdownPages, here with no copied tree, which
 // renders the spike's own Markdown, markdown/'s pages, sqlate-compile.md, go-core-graph.md, and
 // go-web-sdk-handlers.md, into markdown-shell.html, its fences highlighted at build, and fills
@@ -36,6 +38,7 @@ import { base } from "@jaimestill/spike-html-hosting-sdk/served.js";
 import { defineConfig } from "vite";
 import { standardCssModules } from "vite-plugin-standard-css-modules";
 
+import { renderedFence } from "./scripts/rendered-fence.ts";
 import { siteNav } from "./scripts/site-nav.ts";
 import { syntaxThemes } from "./scripts/syntax-themes.ts";
 
@@ -52,6 +55,9 @@ export default defineConfig({
     // one list (scripts/site-nav.ts), before Vite's transform bundles the script it adds and before
     // markdownPages fills the glyph marker it adds.
     siteNav(),
+    // The components page's rendered fence, the SDK's own output, written in place of its marker
+    // (scripts/rendered-fence.ts); the build fails when the page lacks the marker.
+    renderedFence(),
     // The spike's own tree, markdown/, rendered into markdown-shell.html, and no copied tree: the
     // site has no content.json and no content/. The plugin takes one tree's source
     // as a copied tree's, and reads its repository and ref only to write a blob URL for a link
