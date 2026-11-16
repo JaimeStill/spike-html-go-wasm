@@ -25,8 +25,15 @@
 // --page sqlate, an app page as the playground is, its demo as before a Run, the viewport alone at
 // each of the SDK's widths; and the rendered Markdown pages, --page sqlate-compile, --page
 // go-core-graph, and --page go-web-sdk-handlers, each its demo as before a Run, whole at each of
-// the SDK's widths, the SDK's own states for a page. The components page shows each state once and
-// its layout follows the viewport, so the narrow layout is the 390px capture's. With
+// the SDK's widths, the SDK's own states for a page. Every page the site nav writes into is also
+// captured once with its Site drawer open, at 390px alone, where its opener shows (the nav's
+// switch, 58rem, is page.css's), the viewport alone, as the SDK's Help and Settings states are,
+// named <page>-site-390: the index, the playground before its Run states, the sqlate page, each
+// rendered Markdown page, and the components page once, on its first component, code-editor,
+// with that section alone. Its open step clicks the opener, as a reader does, and waits on the
+// drawer's own open state, its open property and its dialog a modal, then on its slide in's end,
+// no timer. The components page shows each state once and its layout follows the viewport, so
+// the narrow layout is the 390px capture's. With
 // SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, the playground's,
 // and the sqlate and rendered pages', takes only that width's states, so the 900px capture, at no
 // SDK width, is taken only when every width is. The SDK's widths over the whole components page
@@ -182,6 +189,45 @@ const aboutOpen: Step = async (page: Page) => {
   await until(page, `document.getElementById("about").matches(":modal")`, 5000);
 };
 
+/** The Site drawer, sl-drawer#site, and its opener, the header's button that names it, as the
+ * site nav writes them (scripts/site-nav.ts). */
+export const SITE_DRAWER = `document.querySelector("sl-drawer#site")`;
+const SITE_OPENER = `document.querySelector('body > header button[aria-controls="site"]')`;
+
+/** Opens the Site drawer by a click on its opener, as a reader does, resolving once the drawer is
+ * open, its open property and its dialog a modal, and its slide in has ended, a transition in the
+ * drawer's shadow root, which the document's own animations leave out. The opener shows only below
+ * the nav's switch, 58rem (page.css), so the state is the phone's alone. */
+export const siteOpen: Step = async (page: Page) => {
+  await page.evaluate(`${SITE_OPENER}.click()`);
+  await until(
+    page,
+    `${SITE_DRAWER}.open && !!${SITE_DRAWER}.shadowRoot?.querySelector("dialog")?.matches(":modal")`,
+    5000,
+  );
+  await page.evaluate(`Promise.all(${SITE_DRAWER}.shadowRoot.querySelector("dialog")
+    .getAnimations({ subtree: true }).map((animation) => animation.finished))`);
+};
+
+/** The phone's width, the one the Site drawer's opener shows at. */
+const [PHONE] = WIDTHS;
+
+/** A page's Site drawer state: the viewport alone at the phone's width, as the SDK's Help and
+ * Settings states are, the drawer opened by its opener first, after any step the page's capture
+ * takes; named as the SDK names its open states, the width last. */
+const siteState = (file: string, caption: string, before?: Step): DescribedState => ({
+  name: `${file}-site-${PHONE.width}`,
+  caption: `${caption}, Site open, ${PHONE.width}px`,
+  viewport: PHONE,
+  full: false,
+  open: before
+    ? async (page: Page) => {
+        await before(page);
+        await siteOpen(page);
+      }
+    : siteOpen,
+});
+
 /** The programs captured chosen in the playground's Program select, each its option's value, its
  * label, and a file of its own, which no other program has, whose tab says the demo shows it. */
 const CHOSEN = [
@@ -281,7 +327,8 @@ const leftRan: Step = async (page: Page) => {
 
 /** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
  * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
- * Layout menu open; the widest with the About dialog open; each of the SDK's widths with each
+ * Layout menu open; the widest with the About dialog open; the phone's with the Site drawer open;
+ * each of the SDK's widths with each
  * program but the calculator chosen in the Program select, Basics, Generics, Concurrency, and
  * Standard library; and each of the SDK's widths after a Run of the starter, the wide band's in
  * editor left, and the phone's again with its Timings tab; each named as the SDK names a page's,
@@ -312,6 +359,7 @@ const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
       state(viewport, menuOpen, "menu-", "Layout menu, "),
     ]),
     state(wide.at(-1) ?? phone, aboutOpen, "about-", "About open, "),
+    siteState("playground", path),
     ...CHOSEN.flatMap(([program, label, file]) =>
       WIDTHS.map((viewport) =>
         state(viewport, chosen(program, file), `${program}-`, `${label} chosen, `),
@@ -324,7 +372,7 @@ const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
 };
 
 /** The sqlate page's states: the viewport alone, its one screen, as the playground's are, at each
- * of the SDK's widths. */
+ * of the SDK's widths; withSite adds its Site drawer state. */
 const sqlateStates = ({ path }: DescribedPage): DescribedState[] =>
   WIDTHS.map((viewport) => ({
     name: `sqlate-${viewport.width}`,
@@ -332,6 +380,14 @@ const sqlateStates = ({ path }: DescribedPage): DescribedState[] =>
     viewport,
     full: false,
   }));
+
+/** The page's states with its Site drawer state after them: every page the site nav writes into
+ * but the playground, whose states hold it before their Run states, and the components page, whose
+ * first component's states hold it, its open step that component's first. */
+const withSite = (page: DescribedPage): DescribedPage => ({
+  ...page,
+  states: [...(page.states ?? []), siteState(page.name.replaceAll("/", "-"), page.caption)],
+});
 
 const described = description({
   root,
@@ -348,7 +404,8 @@ const described = description({
 
 /** The components page as a page per component: its path, and a state whole at each of the SDK's
  * widths with the component's section alone, the state's name its files', with no slash, the
- * width last, as the index's are; the Go demo's also whole at each width after its runs. */
+ * width last, as the index's are; the first component's also with the Site drawer open at the
+ * phone's width; the Go demo's also whole at each width after its runs. */
 const perComponent = ({ path }: DescribedPage): DescribedPage[] =>
   COMPONENTS.map((component) => ({
     name: `components/${component}`,
@@ -362,6 +419,10 @@ const perComponent = ({ path }: DescribedPage): DescribedPage[] =>
         full: true,
         open: opened(component),
       })),
+      // The page's one Site drawer state, on its first component's section.
+      ...(component === COMPONENTS[0]
+        ? [siteState(`components-${component}`, `${path}, ${component}`, opened(component))]
+        : []),
       ...(component === "go-demo"
         ? WIDTHS.map((viewport) => ({
             name: `components-go-demo-run-${viewport.width}`,
@@ -382,5 +443,8 @@ export default {
       page.name === "playground" ? { ...page, states: playgroundStates(page) } : page,
     )
     .map((page) => (page.name === "sqlate" ? { ...page, states: sqlateStates(page) } : page))
+    .map((page) =>
+      page.name === "playground" || page.name.startsWith("components/") ? page : withSite(page),
+    )
     .map((page) => ({ ...page, states: page.states?.filter(kept) })),
 };

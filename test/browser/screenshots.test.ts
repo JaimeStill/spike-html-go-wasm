@@ -19,7 +19,10 @@
 // built in the page and run to exit 0, every phase of a build timed, in editor left at 1376px and
 // on the Timings tab at 390px. The sqlate page's, --page sqlate, is the viewport alone at each of
 // the SDK's widths, and each rendered Markdown page's, --page sqlate-compile, --page go-core-graph,
-// and --page go-web-sdk-handlers, the page whole at each.
+// and --page go-web-sdk-handlers, the page whole at each. Every page, the components page once on
+// its first component, is also captured at 390px with the Site drawer open, the viewport alone,
+// and each such state's open step, run on a served page at 390px, no capture taken, leaves the
+// drawer open, a modal, with SITE_NAV's links, the page's own marked current.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.3): template/test/browser/screenshots.test.ts.
@@ -41,7 +44,8 @@ import {
 } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
-import description, { COMPONENTS, MIDDLE } from "../../scripts/screenshots.config.ts";
+import { SITE_NAV } from "../../scripts/site-nav.ts";
+import description, { COMPONENTS, MIDDLE, SITE_DRAWER } from "../../scripts/screenshots.config.ts";
 import { BUILT_PHASES, DONE } from "./go-builds.ts";
 import { demo, open as openPage, shown, wasmRequests } from "./go-demos.ts";
 
@@ -163,6 +167,10 @@ describe("a component's capture", () => {
         described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
         [
           ...widths.map((width) => [`components-${component}-${width}`, width, true]),
+          // The page's one Site drawer state, on its first component.
+          ...(component === COMPONENTS[0]
+            ? [[`components-${component}-site-390`, 390, false]]
+            : []),
           // The Go demo's again after its runs.
           ...(component === "go-demo"
             ? widths.map((width) => [`components-go-demo-run-${width}`, width, true])
@@ -215,7 +223,7 @@ describe("a component's capture", () => {
     assert.deepEqual(run.left, [], "TMPDIR is left empty");
   });
 
-  test("the capture file captures the playground's viewport in each band of its fixed demo, the phone's Timings tab, the wide band in each arrangement and with the Layout menu open, the About dialog open, and Basics, Generics, Concurrency, and Standard library each chosen at each of the SDK's widths", () => {
+  test("the capture file captures the playground's viewport in each band of its fixed demo, the phone's Timings tab, the wide band in each arrangement and with the Layout menu open, the About dialog open, the Site drawer open, and Basics, Generics, Concurrency, and Standard library each chosen at each of the SDK's widths", () => {
     const described = description.pages.find(({ name }) => name === "playground");
     const [phone, ...wide] = WIDTHS.map(({ width }) => width);
     assert.deepEqual(
@@ -231,6 +239,7 @@ describe("a component's capture", () => {
           [`playground-menu-${width}`, width, false],
         ]),
         [`playground-about-${wide.at(-1)}`, wide.at(-1), false],
+        [`playground-site-${phone}`, phone, false],
         ...["basics", "generics", "concurrency", "stdlib"].flatMap((program) =>
           [phone, ...wide].map((width) => [`playground-${program}-${width}`, width, false]),
         ),
@@ -314,23 +323,100 @@ describe("a component's capture", () => {
     }
   });
 
-  test("the capture file captures the sqlate page's viewport at each of the SDK's widths", () => {
+  test("the capture file captures the sqlate page's viewport at each of the SDK's widths, and at 390px with the Site drawer open", () => {
     const described = description.pages.find(({ name }) => name === "sqlate");
     assert.deepEqual(
       described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
-      WIDTHS.map(({ width }) => [`sqlate-${width}`, width, false]),
+      [
+        ...WIDTHS.map(({ width }) => [`sqlate-${width}`, width, false]),
+        ["sqlate-site-390", 390, false],
+      ],
     );
   });
 
   for (const rendered of ["sqlate-compile", "go-core-graph", "go-web-sdk-handlers"]) {
-    test(`the capture file captures the rendered Markdown page ${rendered} whole at each of the SDK's widths`, () => {
+    test(`the capture file captures the rendered Markdown page ${rendered} whole at each of the SDK's widths, and its viewport at 390px with the Site drawer open`, () => {
       const described = description.pages.find(({ name }) => name === rendered);
       assert.deepEqual(
         described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
-        WIDTHS.map(({ width }) => [`${rendered}-${width}`, width, true]),
+        [
+          ...WIDTHS.map(({ width }) => [`${rendered}-${width}`, width, true]),
+          [`${rendered}-site-390`, 390, false],
+        ],
       );
     });
   }
+
+  test("the capture file captures every page once at 390px with the Site drawer open, the viewport alone: the index, the components page on its first component, the playground, the sqlate page, and each rendered Markdown page", () => {
+    const site = description.pages.flatMap(({ name, path, states }) =>
+      (states ?? [])
+        .filter((state) => state.name?.includes("-site-"))
+        .map((state) => [name, path, state.name, state.viewport?.width, state.full]),
+    );
+    const base = description.pages.find(({ name }) => name === "index")?.path ?? "";
+    assert.deepEqual(site, [
+      ["index", base, "index-site-390", 390, false],
+      [
+        `components/${COMPONENTS[0]}`,
+        `${base}components.html`,
+        `components-${COMPONENTS[0]}-site-390`,
+        390,
+        false,
+      ],
+      ...["playground", "sqlate", "sqlate-compile", "go-core-graph", "go-web-sdk-handlers"].map(
+        (name) => [name, `${base}${name}.html`, `${name}-site-390`, 390, false],
+      ),
+    ]);
+  });
+
+  test("each Site drawer state's open step, at 390px, leaves the Site drawer open, a modal, with SITE_NAV's links, the page's own current, and the components page's first section alone", async () => {
+    const states = description.pages.flatMap(({ path, states }) =>
+      (states ?? [])
+        .filter((state) => state.name?.includes("-site-"))
+        .map((state) => ({ path, state })),
+    );
+    assert.equal(states.length, 7, "a state for each of the seven pages");
+    const base = description.pages.find(({ name }) => name === "index")?.path ?? "";
+    for (const { path, state } of states) {
+      assert.ok(state.open, `${state.name} has an open step`);
+      const file = path.slice(base.length) || "index.html";
+      const page = await browser.open(`${server.origin}${path.slice(base.length)}`);
+      try {
+        await sized(page, 390);
+        await state.open(page);
+        const read = await page.evaluate(`(() => {
+          const drawer = ${SITE_DRAWER};
+          return {
+            open: drawer.open,
+            modal: drawer.shadowRoot.querySelector("dialog").matches(":modal"),
+            links: [...drawer.querySelectorAll("a")].filter((a) => a.checkVisibility())
+              .map((a) => [a.textContent.trim(), a.href, a.getAttribute("aria-current")]),
+            sections: [...document.querySelectorAll("main > section")]
+              .filter((section) => section.checkVisibility()).map((section) => section.id),
+          };
+        })()`);
+        const { open, modal, links, sections } = read;
+        assert.deepEqual(
+          { open, modal, links },
+          {
+            open: true,
+            modal: true,
+            links: SITE_NAV.map(({ label, href, pages }) => [
+              label,
+              new URL(href, server.origin).href,
+              pages.includes(file) ? "page" : null,
+            ]),
+          },
+          state.name ?? "",
+        );
+        if (file === "components.html") {
+          assert.deepEqual(sections, [COMPONENTS[0]], `${state.name ?? ""}: its section alone`);
+        }
+      } finally {
+        await page.close();
+      }
+    }
+  });
 
   test("a --width not among the SDK's is a usage error naming them, and captures nothing", () => {
     for (const flags of [["--width", "500"], ["--width=1280"], ["--width"]]) {

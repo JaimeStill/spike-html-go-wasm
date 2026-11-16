@@ -232,7 +232,11 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
   390px after it with the Timings tab. Each state after a Run waits on the run's end, its status
   and console, and the Timings tab on its table's phases, never on a timer. The sqlate page, `--page sqlate`, is captured as its
   viewport alone at the SDK's widths, and each Markdown page, `--page sqlate-compile`,
-  `--page go-core-graph`, and `--page go-web-sdk-handlers`, whole at each.
+  `--page go-core-graph`, and `--page go-web-sdk-handlers`, whole at each. Every page is also
+  captured once at 390px with the Site drawer open, its viewport alone, named `<page>-site-390`,
+  the drawer opened by its opener, which shows only below 58rem, and waited on until it is open,
+  a modal, and its slide in has ended; the components page's is on its first component,
+  `--page components/code-editor`, and the playground's comes before its Run states.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as
   `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
   is taken only when no width is given. Any other width is a usage error naming the three.
