@@ -219,13 +219,18 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
   omits the wasm.
 - `mise run screenshots`: capture the pages, light and dark. The index and each component on the
   components page, alone, are captured at the SDK's widths, 390px, 1120px, and 1376px; a
-  component's capture is `--page components/<component>`, as `--page components/console`. The
-  playground, `--page playground`, is captured as its viewport alone, the page's one screen, in
+  component's capture is `--page components/<component>`, as `--page components/console`. The Go
+  demo's, `--page components/go-demo`, is captured again at each width after the prebuilt runs a
+  reader starts by Run: the format demo's result, hello's output and exit 0, and the crash demo's
+  stderr and exit 2. The playground, `--page playground`, is captured as its viewport alone, the page's one screen, in
   each band of its fixed demo: 390px with the output panel's Output tab and again with its
   Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
   each chosen through the Layout menu, and with the menu open; 1376px with the About dialog
   open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and Standard
-  library chosen in the Program select. The sqlate page, `--page sqlate`, is captured as its
+  library chosen in the Program select; and 390px, 1120px (editor left), and 1376px (editor left)
+  after a Run of the starter, the calculator, built in the page against the build's archives, and
+  390px after it with the Timings tab. Each state after a Run waits on the run's end, its status
+  and console, and the Timings tab on its table's phases, never on a timer. The sqlate page, `--page sqlate`, is captured as its
   viewport alone at the SDK's widths, and each Markdown page, `--page sqlate-compile`,
   `--page go-core-graph`, and `--page go-web-sdk-handlers`, whole at each.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as

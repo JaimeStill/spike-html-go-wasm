@@ -7,14 +7,19 @@
 // at each of the SDK's widths, its open step hides every other section and leaves the component's
 // focus-start mark the page's first, or none for a component with no focus state, and a run of one
 // at one --width prints that component's few tiles at that width alone and leaves nothing under
-// its TMPDIR. A --width not among the SDK's, or with no value, is a usage error naming the widths,
+// its TMPDIR; the Go demo's is captured again at each width after its runs. A --width not among the SDK's, or with no value, is a usage error naming the widths,
 // capturing nothing. The playground's capture, --page playground, is the viewport alone in each
 // band of its fixed demo, the phone's also with its Timings tab, and the wide band's in each
 // arrangement and with the Layout menu open, each chosen by the menu, the widest with the About
 // dialog open, and each of the SDK's widths with each of Basics, Generics, Concurrency, and
-// Standard library chosen in the Program select. The sqlate page's, --page sqlate, is the viewport
-// alone at each of the SDK's widths, and each rendered Markdown page's, --page sqlate-compile,
-// --page go-core-graph, and --page go-web-sdk-handlers, the page whole at each.
+// Standard library chosen in the Program select, and again after a Run of the starter, the phone's
+// also with its Timings tab. The states after a Run reach their endings when their open steps run
+// on a served page, no capture taken: the Go demo's format result, hello's line and exit 0, and
+// crash's panic on stderr and exit 2, from their prebuilt modules; and the playground's starter
+// built in the page and run to exit 0, every phase of a build timed, in editor left at 1376px and
+// on the Timings tab at 390px. The sqlate page's, --page sqlate, is the viewport alone at each of
+// the SDK's widths, and each rendered Markdown page's, --page sqlate-compile, --page go-core-graph,
+// and --page go-web-sdk-handlers, the page whole at each.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.3): template/test/browser/screenshots.test.ts.
@@ -27,7 +32,7 @@ import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 
 import { launch } from "@jaimestill/spike-html-apps-tooling/browser.js";
-import type { Browser } from "@jaimestill/spike-html-apps-tooling/browser.js";
+import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import {
   keepsCaptures,
@@ -37,6 +42,8 @@ import {
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
 import description, { COMPONENTS, MIDDLE } from "../../scripts/screenshots.config.ts";
+import { BUILT_PHASES, DONE } from "./go-builds.ts";
+import { demo, open as openPage, shown, wasmRequests } from "./go-demos.ts";
 
 const root = join(import.meta.dirname, "../..");
 const config = join(root, "scripts/screenshots.config.ts");
@@ -44,6 +51,18 @@ const script = join(root, "scripts/screenshots.ts");
 
 /** A run's bound: the build is served and one page captured in a few seconds. */
 const RUN = 120_000;
+
+/** The playground's one demo. */
+const PLAYGROUND = `document.querySelector("sl-go-demo")`;
+
+/** Lays the page out at the width, at the capture's height for it, as the capture does. */
+const sized = (page: Page, width: number) =>
+  page.cdp("Emulation.setDeviceMetricsOverride", {
+    width,
+    height: WIDTHS.find((viewport) => viewport.width === width)?.height ?? 900,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
 
 /** A run of the task's script, as mise run screenshots runs it, light, to the terminal, with the
  * flags after, under a fresh scratch TMPDIR, removed once the run's leftovers are read: its exit
@@ -142,9 +161,45 @@ describe("a component's capture", () => {
       const described = description.pages.find(({ name }) => name === `components/${component}`);
       assert.deepEqual(
         described?.states?.map(({ name, viewport, full }) => [name, viewport?.width, full]),
-        widths.map((width) => [`components-${component}-${width}`, width, true]),
+        [
+          ...widths.map((width) => [`components-${component}-${width}`, width, true]),
+          // The Go demo's again after its runs.
+          ...(component === "go-demo"
+            ? widths.map((width) => [`components-go-demo-run-${width}`, width, true])
+            : []),
+        ],
         component,
       );
+    }
+  });
+
+  test("the Go demo's run state runs format, hello, and crash to their endings: format's result, hello's line and exit 0, crash's stderr and exit 2", async () => {
+    const described = description.pages.find(({ name }) => name === "components/go-demo");
+    const state = described?.states?.find(({ name }) => name === "components-go-demo-run-390");
+    assert.ok(state?.open, "the run state has an open step");
+    const watched = await openPage(browser, server.origin);
+    const { page } = watched;
+    try {
+      await sized(page, 390);
+      await state.open(page);
+      const [format, hello, crash] = await Promise.all(
+        ["handler", "program", "crash"].map((figure) => shown(page, demo(figure))),
+      );
+      assert.equal(format.status, "Finished format");
+      assert.equal(format.result?.ok, true, JSON.stringify(format.rows));
+      assert.equal(hello.status, "Finished hello, exit code 0");
+      assert.match(hello.lines.map(({ text }) => text).join(""), /^hello from Go go1\.\d+/);
+      assert.ok(hello.rows.some(({ kind, text }) => kind === "exit" && text.endsWith("code 0")));
+      assert.equal(crash.status, "Failed crash: probe exited with code 2");
+      assert.ok(
+        crash.lines.some(({ stream, text }) => stream === "stderr" && text.startsWith("panic: ")),
+        JSON.stringify(crash.lines),
+      );
+      assert.ok(crash.rows.some(({ kind, text }) => kind === "exit" && text.endsWith("code 2")));
+      // Each ran its prebuilt module, and nothing was built.
+      assert.deepEqual(wasmRequests(watched), ["go/probe.wasm", "go/hello.wasm", "go/probe.wasm"]);
+    } finally {
+      await page.close();
     }
   });
 
@@ -179,8 +234,43 @@ describe("a component's capture", () => {
         ...["basics", "generics", "concurrency", "stdlib"].flatMap((program) =>
           [phone, ...wide].map((width) => [`playground-${program}-${width}`, width, false]),
         ),
+        ...[phone, ...wide].map((width) => [`playground-run-${width}`, width, false]),
+        [`playground-run-timings-${phone}`, phone, false],
       ],
     );
+  });
+
+  test("the playground's run states build and run the starter to exit 0, the wide one in editor left, and the Timings one shows the build's phases", async () => {
+    const described = description.pages.find(({ name }) => name === "playground");
+    for (const [name, width, tab] of [
+      ["playground-run-timings-390", 390, "timings"],
+      ["playground-run-1376", 1376, null],
+    ] as const) {
+      const state = described?.states?.find((each) => each.name === name);
+      assert.ok(state?.open, `${name} has an open step`);
+      const { page } = await openPage(browser, server.origin, "playground.html");
+      try {
+        await sized(page, width);
+        await state.open(page);
+        const run = await shown(page, PLAYGROUND);
+        assert.equal(run.status, DONE, name);
+        assert.ok(run.rows.some(({ kind, text }) => kind === "exit" && text.endsWith("code 0")));
+        // A build in the page: the compiler and linker ran in the worker.
+        assert.deepEqual(run.phases, BUILT_PHASES, name);
+        const root = `${PLAYGROUND}.shadowRoot`;
+        if (tab === "timings") {
+          const selected = await page.evaluate(
+            `${root}.querySelector('.output-tabs [aria-selected="true"]').dataset.part`,
+          );
+          assert.equal(selected, "timings", name);
+        } else {
+          const placement = await page.evaluate(`${root}.querySelector(".demo").dataset.placement`);
+          assert.equal(placement, "left", name);
+        }
+      } finally {
+        await page.close();
+      }
+    }
   });
 
   test("the playground's wide states choose their arrangement by the Layout menu, and the menu's state leaves it open", async () => {
@@ -188,7 +278,7 @@ describe("a component's capture", () => {
     const wide = (described?.states ?? []).filter(
       ({ name, viewport }) =>
         viewport?.width === 1376 &&
-        !["about", "basics", "generics", "concurrency", "stdlib"].some((variant) =>
+        !["about", "basics", "generics", "concurrency", "stdlib", "run"].some((variant) =>
           name?.includes(variant),
         ),
     );

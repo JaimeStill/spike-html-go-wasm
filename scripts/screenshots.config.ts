@@ -4,28 +4,36 @@
 // Help open and with Settings open at each; and the components page as one capture name per
 // component, --page components/<component>, each the page whole at each of the same widths, one
 // state per width, with every other component's section hidden, and the controls' with New file's
-// form open on its refusal; the Go demo's presses nothing, so every demo shows as before a Run, and
-// no Go loads; and the playground, --page playground, its demo as before a Run, on the starter: the
-// viewport alone, the page's one screen, not the page whole, since the page fits its viewport by
-// its demo's row, and a viewport grown to the page would grow the demo with it. It is captured in
-// each of the fixed demo's bands: at 390px, the phone's, with its output panel's Output tab and
-// again with its Timings tab; at 900px, the demo between 44rem and 64rem; and at 1120px and 1376px,
-// the wide band in each arrangement, editor left, top, and right, and with the Layout menu open,
-// each chosen by the menu as a reader chooses, so no state depends on what an earlier one stored;
-// and at 1376px with the About dialog open, opened by its button in the header; and at each of the
-// SDK's widths with each of Basics, Generics, Concurrency, and Standard library chosen in the
-// Program select, as a reader chooses it; and the sqlate page, --page sqlate, an app page as the
-// playground is, its demo as before a Run, the viewport alone at each of the SDK's widths; and the
-// rendered Markdown pages, --page sqlate-compile, --page go-core-graph, and --page
-// go-web-sdk-handlers, each its demo as before a Run, whole at each of the SDK's widths, the SDK's
-// own states for a page. The components page shows each state once and its layout follows the
-// viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width,
-// every page, the index's, each component's, the playground's, and the sqlate and rendered
-// pages', takes only that width's states, so the 900px capture, at no SDK width, is taken only when
-// every width is. The SDK's widths over the whole components page grew with every component, so
-// each component is captured alone. The description's facets, --all's profiles, the registry's
-// profiles, and its server, which serves the site as the browser tier serves it, by the SDK's
-// served(), under the base, are the SDK's.
+// form open on its refusal; the Go demo's, as before a Run, no Go loaded, and again at each width
+// after the prebuilt runs a reader starts by Run: the format demo's result, hello's output and its
+// exit 0, and the crash demo's stderr and its exit 2; and the playground, --page playground, its
+// demo as before a Run, on the starter: the viewport alone, the page's one screen, not the page
+// whole, since the page fits its viewport by its demo's row, and a viewport grown to the page
+// would grow the demo with it. It is captured in each of the fixed demo's bands: at 390px, the
+// phone's, with its output panel's Output tab and again with its Timings tab; at 900px, the demo
+// between 44rem and 64rem; and at 1120px and 1376px, the wide band in each arrangement, editor
+// left, top, and right, and with the Layout menu open, each chosen by the menu as a reader
+// chooses, so no state depends on what an earlier one stored; and at 1376px with the About dialog
+// open, opened by its button in the header; and at each of the SDK's widths with each of Basics,
+// Generics, Concurrency, and Standard library chosen in the Program select, as a reader chooses
+// it; and at each of the SDK's widths after a Run of the starter, the calculator, built in the
+// page, its compiler and linker in the worker, against the served build's archives, and at 390px
+// after that Run with its Timings tab. Each state after a Run waits on the run's own completion,
+// as the browser tier's tests and mise run measure do: the timings' runs counted past the last,
+// the status's end, the one the run should end with, and the console's row or block it shows, and
+// a Timings tab also waits on its table's phases; no state waits on a timer. And the sqlate page,
+// --page sqlate, an app page as the playground is, its demo as before a Run, the viewport alone at
+// each of the SDK's widths; and the rendered Markdown pages, --page sqlate-compile, --page
+// go-core-graph, and --page go-web-sdk-handlers, each its demo as before a Run, whole at each of
+// the SDK's widths, the SDK's own states for a page. The components page shows each state once and
+// its layout follows the viewport, so the narrow layout is the 390px capture's. With
+// SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, the playground's,
+// and the sqlate and rendered pages', takes only that width's states, so the 900px capture, at no
+// SDK width, is taken only when every width is. The SDK's widths over the whole components page
+// grew with every component, so each component is captured alone. The description's facets,
+// --all's profiles, the registry's profiles, and its server, which serves the site as the browser
+// tier serves it, by the SDK's served(), under the base, are the SDK's: dist/, which the task's
+// build dependency writes, its go/ modules and toolchain the runs fetch included.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's. Adapted from spike-html-hosting-sdk (v0.6.3):
 // template/scripts/screenshots.config.ts, its pages the hand pages, as the site copies no tree for
@@ -105,6 +113,65 @@ const opened =
     if (step) await page.evaluate(step);
   };
 
+/** How long a prebuilt run may take to settle, a cold fetch and compile of its module included,
+ * as the browser tier bounds it (test/browser/go-demos.ts's RUN). */
+const RUN = 20_000;
+
+/** How long a build in the page and its run may take to settle, a cold fetch and compile of the
+ * compiler and linker included, as the browser tier bounds it (test/browser/go-builds.ts's BUILD). */
+const BUILD = 120_000;
+
+/** A Run's ending in the demo, what it should show once it has: its status's text, and a selector
+ * for the console's row or block the run writes, matched in the console's shadow root. */
+interface Ending {
+  status: string;
+  shows: string;
+}
+
+/** Presses Run on the demo, an expression for its sl-go-demo, as a reader does, resolving once the
+ * run has ended as it should: its timings count a run past the last, its status says an end, the
+ * ending's, and its console shows the ending's row or block. A run that ends any other way, or
+ * not within the bound, rejects naming it, so the capture fails rather than show it. */
+async function ran(page: Page, demo: string, ending: Ending, bound: number): Promise<void> {
+  const part = (selector: string) =>
+    `${demo}.shadowRoot.querySelector(${JSON.stringify(selector)})`;
+  const status = `${part("sl-controls")}.shadowRoot.querySelector('[role="status"]').textContent`;
+  const runs = `(${part("sl-timings")}.timings?.runs ?? 0)`;
+  const before: number = await page.evaluate(runs);
+  await page.evaluate(
+    `${part("sl-controls")}.shadowRoot.querySelector('[data-control="run"]').click()`,
+  );
+  await until(page, `${runs} > ${before} && /^(Finished|Stopped|Failed) /.test(${status})`, bound);
+  const said: string = await page.evaluate(status);
+  if (said !== ending.status) {
+    throw new Error(`${demo}'s Run ended "${said}", not "${ending.status}"`);
+  }
+  await until(
+    page,
+    `${part("sl-console")}.shadowRoot.querySelector(${JSON.stringify(ending.shows)}) !== null`,
+    5000,
+  );
+}
+
+/** The components page's Go demos the run state runs, each by its figure's state and how its
+ * prebuilt run ends: probe's format answering with its result, hello's main printing its line and
+ * exiting 0, and probe's crash panicking, its stderr and its exit 2. They share the page's one
+ * runner, so they run one after another, in the page's order. */
+const RUNS = [
+  ["handler", { status: "Finished format", shows: '.result[data-ok="true"]' }],
+  ["program", { status: "Finished hello, exit code 0", shows: '.exit[data-ok="true"]' }],
+  ["crash", { status: "Failed crash: probe exited with code 2", shows: '.exit[data-ok="false"]' }],
+] as const;
+
+/** The Go demo's section alone, then each of RUNS' demos run to its ending. */
+const goDemoRan: Step = async (page: Page) => {
+  await alone("go-demo")(page);
+  for (const [state, ending] of RUNS) {
+    const demo = `document.querySelector('#go-demo .states figure[data-state="${state}"] sl-go-demo')`;
+    await ran(page, demo, ending, RUN);
+  }
+};
+
 /** The width that puts the playground's fixed demo between its 44rem and 64rem bands, at the 1120px
  * capture's height. */
 export const MIDDLE = { width: 900, height: 700 };
@@ -149,6 +216,31 @@ const timingsTab: Step = async (page: Page) => {
   );
 };
 
+/** The playground's one demo, as an expression. */
+const PLAYGROUND = `document.querySelector("sl-go-demo")`;
+
+/** The starter's Run, built in the page and run: main exits 0. */
+const STARTER_RUN: Ending = {
+  status: "Finished main, exit code 0",
+  shows: '.exit[data-ok="true"]',
+};
+
+/** Runs the playground's starter, the calculator, to its exit 0. */
+const starterRan: Step = (page: Page) => ran(page, PLAYGROUND, STARTER_RUN, BUILD);
+
+/** Runs the starter, then selects the Timings tab, resolving once its table shows the run's
+ * phases. */
+const starterRanTimings: Step = async (page: Page) => {
+  await starterRan(page);
+  await timingsTab(page);
+  await until(
+    page,
+    `${PLAYGROUND}.shadowRoot.querySelector("sl-timings").shadowRoot
+      .querySelectorAll("tbody th").length > 0`,
+    5000,
+  );
+};
+
 /** The playground demo's toolbar's shadow root, as an expression. */
 const CONTROLS = `document.querySelector("sl-go-demo").shadowRoot.querySelector("sl-controls").shadowRoot`;
 
@@ -181,11 +273,19 @@ const menuOpen: Step = async (page: Page) => {
   await openMenu(page);
 };
 
+/** Editor left, chosen by the menu, then the starter run. */
+const leftRan: Step = async (page: Page) => {
+  await arranged("left")(page);
+  await starterRan(page);
+};
+
 /** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
  * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
- * Layout menu open; the widest with the About dialog open; and each of the SDK's widths with each
+ * Layout menu open; the widest with the About dialog open; each of the SDK's widths with each
  * program but the calculator chosen in the Program select, Basics, Generics, Concurrency, and
- * Standard library, each named as the SDK names a page's, the width last. */
+ * Standard library; and each of the SDK's widths after a Run of the starter, the wide band's in
+ * editor left, and the phone's again with its Timings tab; each named as the SDK names a page's,
+ * the width last. The Run states come last, after every state that runs nothing. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
   const state = (
@@ -217,6 +317,9 @@ const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
         state(viewport, chosen(program, file), `${program}-`, `${label} chosen, `),
       ),
     ),
+    state(phone, starterRan, "run-", "after a Run, "),
+    ...wide.map((viewport) => state(viewport, leftRan, "run-", "after a Run, ")),
+    state(phone, starterRanTimings, "run-timings-", "after a Run, Timings tab, "),
   ];
 };
 
@@ -245,19 +348,30 @@ const described = description({
 
 /** The components page as a page per component: its path, and a state whole at each of the SDK's
  * widths with the component's section alone, the state's name its files', with no slash, the
- * width last, as the index's are. */
+ * width last, as the index's are; the Go demo's also whole at each width after its runs. */
 const perComponent = ({ path }: DescribedPage): DescribedPage[] =>
   COMPONENTS.map((component) => ({
     name: `components/${component}`,
     caption: `${path}, ${component}`,
     path,
-    states: WIDTHS.map((viewport) => ({
-      name: `components-${component}-${viewport.width}`,
-      caption: `${path}, ${component}, ${viewport.width}px`,
-      viewport,
-      full: true,
-      open: opened(component),
-    })),
+    states: [
+      ...WIDTHS.map((viewport) => ({
+        name: `components-${component}-${viewport.width}`,
+        caption: `${path}, ${component}, ${viewport.width}px`,
+        viewport,
+        full: true,
+        open: opened(component),
+      })),
+      ...(component === "go-demo"
+        ? WIDTHS.map((viewport) => ({
+            name: `components-go-demo-run-${viewport.width}`,
+            caption: `${path}, go-demo, after its runs, ${viewport.width}px`,
+            viewport,
+            full: true,
+            open: goDemoRan,
+          }))
+        : []),
+    ],
   }));
 
 export default {
