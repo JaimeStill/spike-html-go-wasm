@@ -195,7 +195,7 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
       layout that holds in one font set and not the other fails on any machine;
     - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
       absent below; the menu opens `--space-3xs` below Layout, at its inline start, as wide as its
-      items and inside the viewport, and has the expected accessibility tree and the APG keys;
+      items and inside the viewport, veiling nothing behind it, and has the expected accessibility tree and the APG keys;
       choosing an arrangement applies it in place, with no reload or request, leaving the run's
       status, output, and timings as they were; the choice is the only write to storage, under
       the spike's key, and a reload and another page open in it; the page follows another tab's

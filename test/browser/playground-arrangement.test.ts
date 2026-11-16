@@ -5,8 +5,8 @@
 // From 64rem the toolbar shows Layout, a menu button in its own group after Files, and below 64rem
 // the group isn't there. Its menu is the APG menu button's: its accessibility tree, a menu of three
 // radio items, the placement checked, and its keyboard, each key in turn. It opens --space-3xs
-// below Layout, at its inline start, as wide as its items, inside the viewport, at the band's edge
-// and at 1376px. Choosing an item places the parts again in place, with no reload and no change to
+// below Layout, at its inline start, as wide as its items, inside the viewport, veiling nothing
+// behind it, at the band's edge and at 1376px. Choosing an item places the parts again in place, with no reload and no change to
 // the run state. The choice is kept in localStorage under the spike's key and nothing else is
 // written: a reload, and another page on the origin, open in it; another tab's choice moves this
 // one; and blocked storage, an empty store, a value that isn't JSON, and one the model refuses all
@@ -178,7 +178,7 @@ describe("the Layout menu button", () => {
     }
   });
 
-  test("its menu opens below Layout at its inline start, as wide as its items, inside the viewport, at the wide band's edge and at 1376px", async () => {
+  test("its menu opens below Layout at its inline start, as wide as its items, inside the viewport, veiling nothing, at the wide band's edge and at 1376px", async () => {
     await store(null);
     const { page } = await open();
     try {
@@ -195,6 +195,7 @@ describe("the Layout menu button", () => {
           viewport: number;
           items: number;
           width: number;
+          veil: string;
         } = await page.evaluate(`(() => {
           const root = ${CONTROLS};
           const button = root.querySelector('[data-control="layout"]').getBoundingClientRect();
@@ -216,6 +217,7 @@ describe("the Layout menu button", () => {
             viewport: document.documentElement.clientWidth,
             items: Math.max(...[...menu.querySelectorAll("[data-placement]")].map((item) => item.scrollWidth)),
             width: inner,
+            veil: getComputedStyle(menu, "::backdrop").backgroundColor,
           };
         })()`);
         const at = `at ${width}px`;
@@ -230,6 +232,7 @@ describe("the Layout menu button", () => {
           Math.abs(placed.width - placed.items) <= 1,
           `${at}: as wide as its widest item, ${placed.width} for ${placed.items}`,
         );
+        assert.equal(placed.veil, "rgba(0, 0, 0, 0)", `${at}: a non-modal menu veils nothing`);
         await press(page, "Escape");
         await menu(page, false);
       }
