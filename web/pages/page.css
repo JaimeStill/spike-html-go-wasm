@@ -149,13 +149,9 @@
 
   /* The playground's About dialog, a shortcut dialog as Help is, holding prose: as wide as the
      prose's reading width, 80ch, where the viewport has it, and otherwise the viewport less
-     --space-s on each side, as the SDK's shortcut dialogs are. Its title takes focus as it opens,
-     by its tabindex="-1" and autofocus, so that Close's hint doesn't show; the heading isn't a
-     control, and Tab never reaches it, so it draws no focus outline, as site.css holds Help's. */
+     --space-s on each side, as the SDK's shortcut dialogs are. Its title, in its header row, takes
+     focus as it opens and draws no focus outline, by site.css's rule for any dialog's. */
   dialog#about {
     inline-size: min(100% - 2 * var(--space-s), 80ch);
-  }
-  dialog#about h2#about-title[tabindex="-1"]:focus {
-    outline: none;
   }
 }
