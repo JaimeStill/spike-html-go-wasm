@@ -509,9 +509,7 @@ sheet, `web/pages/page.css`, in that order; the build bundles the four into the 
 page links. The cascade layers are the foundation's (`foundation.tokens.*` through
 `foundation.theme-menu`), then `site`, then `page`, and the browser tier reads that order on each
 page. Every rule a page adds is in `web/pages/page.css`, inside `@layer page`, so it wins over the
-shell's by layer order, at any specificity: the header-actions group at the header's inline end,
-shrinking and wrapping its buttons where the row can't hold them on one line, as the playground's
-three at a phone's width and twice the text size; the space between `main > section`s on every page;
+shell's by layer order, at any specificity: the space between `main > section`s on every page;
 the space around a rendered Markdown page's Go demo, as around a fence; the components page's
 specimens; and the app page, the playground's one screen, which only a body of class `app` takes.
 Its spaces are the foundation's `--space-*` steps.

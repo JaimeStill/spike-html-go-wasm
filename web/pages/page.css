@@ -18,20 +18,6 @@
  */
 
 @layer page {
-  /* With no site nav to take the header's row, site.css leaves the header-actions group at the
-     row's inline start; the group goes to the inline end at every width, where the SDK's header
-     check holds the buttons when the header has no nav. Where the row can't hold the group on one
-     line, as the playground's three buttons at a phone's width and twice the text size, the group
-     shrinks to the row and wraps its buttons, still at the inline end, where site.css's flex: none
-     would hold it whole and scroll the page sideways; at every width the captures read, at the
-     default type, the group is one line. */
-  body > header > .header-actions {
-    flex: 0 1 auto;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-inline-start: auto;
-  }
-
   /* A section opens on its heading, which the foundation's elements layer gives no top margin as
      its container's first child, and the foundation leaves the space between sections to the
      page: on every page, the section takes it. From spike-html-apps-components (19d4f59):
