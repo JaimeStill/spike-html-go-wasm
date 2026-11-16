@@ -196,12 +196,12 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
       layout that holds in one font set and not the other fails on any machine;
     - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
       absent below; the menu opens `--space-3xs` below Layout, at its inline start, as wide as its
-      items and inside the viewport, veiling nothing behind it, and has the expected accessibility tree and the APG keys;
-      choosing an arrangement applies it in place, with no reload or request, leaving the run's
-      status, output, and timings as they were; the choice is the only write to storage, under
-      the spike's key, and a reload and another page open in it; the page follows another tab's
-      choice and a cleared store; an empty store, text that isn't JSON, a refused value, and
-      blocked storage each open with the editor left and write nothing.
+      items and inside the viewport, veiling nothing behind it, and has the expected
+      accessibility tree and the APG keys; choosing an arrangement applies it in place, with no
+      reload or request, leaving the run's status, output, and timings as they were; the choice is
+      the only write to storage, under the spike's key, and a reload and another page open in it;
+      the page follows another tab's choice and a cleared store; an empty store, text that isn't
+      JSON, a refused value, and blocked storage each open with the editor left and write nothing.
 - `mise run build`: build the site with Vite into `dist/`, the hand pages and the Markdown pages
   the SDK's `markdownPages` renders from `markdown/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
@@ -1205,11 +1205,12 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     the pre's or its code's `data-file`, else the pre's `title`, else the demo's `file`, unless
     empty, else a default from the fence's language, a `data-language` or a `language-<name>`
     class on either: `main.go` for go, `input.json` for json, `query.sql` for sql, and
-    `input.txt` for any other or for none, as a fence with no info string has. Each file's grammar follows its name's extension: `.go`,
-    `.json`, or `.sql`, any other plain. The fences are read once the document has parsed them,
-    and stay in the light DOM unchanged: before the element upgrades, and without script, they
-    render as the page's code; once upgraded they are no part of the flat tree, neither rendered
-    nor in the accessibility tree, and the editor alone shows their text.
+    `input.txt` for any other or for none, as a fence with no info string has. Each file's
+    grammar follows its name's extension: `.go`, `.json`, or `.sql`, any other plain. The fences
+    are read once the document has parsed them, and stay in the light DOM unchanged: before the
+    element upgrades, and without script, they render as the page's code; once upgraded they are
+    no part of the flat tree, neither rendered nor in the accessibility tree, and the editor alone
+    shows their text.
   - Authoring errors: no scenario, a source demo naming a scenario or a handler, no fence, more
     than one fence on a handler demo, a name the file set refuses (two fences both defaulting to
     `main.go` among them), or a tab size the settings refuse. The demo shows "Authoring error:"
