@@ -18,7 +18,7 @@
 // Generics, Concurrency, and Standard library chosen in the Program select, as a reader chooses
 // it; and at each of the SDK's widths after a Run of the starter, the calculator, built in the
 // page, its compiler and linker in the worker, against the served build's archives, and at 390px
-// after that Run with its Timings tab. Each state after a Run waits on the run's own completion,
+// and at 1376px, editor left, after that Run with its Timings tab. Each state after a Run waits on the run's own completion,
 // as the browser tier's tests and mise run measure do: the timings' runs counted past the last,
 // the status's end, the one the run should end with, and the console's row or block it shows, and
 // a Timings tab also waits on its table's phases; no state waits on a timer. And the sqlate page,
@@ -255,7 +255,8 @@ const chosen =
     );
   };
 
-/** Selects the playground demo's Timings tab, its phone band's output panel. */
+/** Selects the playground demo's Timings tab, its output panel's below 44rem and from 64rem with
+ * the editor left or right. */
 const timingsTab: Step = async (page: Page) => {
   await page.evaluate(
     `document.querySelector("sl-go-demo").shadowRoot.querySelector('.output-tabs [data-part="timings"]').click()`,
@@ -274,10 +275,8 @@ const STARTER_RUN: Ending = {
 /** Runs the playground's starter, the calculator, to its exit 0. */
 const starterRan: Step = (page: Page) => ran(page, PLAYGROUND, STARTER_RUN, BUILD);
 
-/** Runs the starter, then selects the Timings tab, resolving once its table shows the run's
- * phases. */
-const starterRanTimings: Step = async (page: Page) => {
-  await starterRan(page);
+/** Selects the Timings tab after a Run, resolving once its table shows the run's phases. */
+const timingsRan: Step = async (page: Page) => {
   await timingsTab(page);
   await until(
     page,
@@ -285,6 +284,13 @@ const starterRanTimings: Step = async (page: Page) => {
       .querySelectorAll("tbody th").length > 0`,
     5000,
   );
+};
+
+/** Runs the starter, then selects the Timings tab, resolving once its table shows the run's
+ * phases. */
+const starterRanTimings: Step = async (page: Page) => {
+  await starterRan(page);
+  await timingsRan(page);
 };
 
 /** The playground demo's toolbar's shadow root, as an expression. */
@@ -325,13 +331,19 @@ const leftRan: Step = async (page: Page) => {
   await starterRan(page);
 };
 
+/** Editor left, chosen by the menu, the starter run, then its Timings tab. */
+const leftRanTimings: Step = async (page: Page) => {
+  await leftRan(page);
+  await timingsRan(page);
+};
+
 /** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
  * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
  * Layout menu open; the widest with the About dialog open; the phone's with the Site drawer open;
  * each of the SDK's widths with each
  * program but the calculator chosen in the Program select, Basics, Generics, Concurrency, and
  * Standard library; and each of the SDK's widths after a Run of the starter, the wide band's in
- * editor left, and the phone's again with its Timings tab; each named as the SDK names a page's,
+ * editor left, and the phone's and the widest's again with its Timings tab; each named as the SDK names a page's,
  * the width last. The Run states come last, after every state that runs nothing. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
@@ -368,6 +380,7 @@ const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
     state(phone, starterRan, "run-", "after a Run, "),
     ...wide.map((viewport) => state(viewport, leftRan, "run-", "after a Run, ")),
     state(phone, starterRanTimings, "run-timings-", "after a Run, Timings tab, "),
+    state(wide.at(-1) ?? phone, leftRanTimings, "run-timings-", "after a Run, Timings tab, "),
   ];
 };
 

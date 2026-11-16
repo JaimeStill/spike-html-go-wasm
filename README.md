@@ -186,8 +186,11 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
       full timings table change no part's box; the page never scrolls sideways and every part
       stays inside the demo; a Run, a Stop, a failed build, a band change, and an arrangement
       change keep the editor's and the console's content and scroll position and the chosen
-      output tab; the phone's output tablist has the expected accessibility tree and keys, and
-      no tablist or tabpanel shows from 44rem; a demo without `fixed` keeps its flowing layout;
+      output tab; the output tablist, below 44rem and from 64rem with the editor left or right,
+      has the expected accessibility tree and keys, and at 1120px and 1376px after a Run its
+      Timings tab shows the whole table, the Total in view with the page unscrolled; no tablist
+      or tabpanel shows from 44rem to 64rem or with the editor top, where the console and the
+      timings share a row; a demo without `fixed` keeps its flowing layout;
       the timings' track is `sl-timings`' least width, 28ch of its table, and the steady status
       asks for 24ch of its own text, sharing the toolbar's line at 50rem and taking its own at a
       phone's width, each one property that moves every reader when set on its element;
@@ -229,7 +232,7 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
   open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and Standard
   library chosen in the Program select; and 390px, 1120px (editor left), and 1376px (editor left)
   after a Run of the starter, the calculator, built in the page against the build's archives, and
-  390px after it with the Timings tab. Each state after a Run waits on the run's end, its status
+  390px and 1376px (editor left) after it with the Timings tab. Each state after a Run waits on the run's end, its status
   and console, and the Timings tab on its table's phases, never on a timer. The sqlate page, `--page sqlate`, is captured as its
   viewport alone at the SDK's widths, and each Markdown page, `--page sqlate-compile`,
   `--page go-core-graph`, and `--page go-web-sdk-handlers`, whole at each. Every page is also
@@ -1267,10 +1270,11 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     changes. Its parts' other requests stop at it. Slots: none, but the fences above.
   - Accessibility: a region named by `label`, holding the toolbar, the tabs and their tabpanel on
     a program demo, the editor, named by the active file's name, the log, and the timings. A fixed
-    demo below 44rem also holds the output tablist, "Output panel", its tabs "Output" and
-    "Timings", each controlling its part, a tabpanel named by its tab while the tablist shows.
+    demo below 44rem, or from 64rem with the editor left or right, also holds the output tablist,
+    "Output panel", its tabs "Output" and "Timings", each controlling its part, a tabpanel named by
+    its tab while the tablist shows.
   - Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a
-    program demo, the editor, a fixed demo's output tablist below 44rem, and the console. The output
+    program demo, the editor, a fixed demo's output tablist where it shows, and the console. The output
     tablist's are the file tabs': Tab reaches the selected tab alone, Left and Right select the
     previous and the next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter,
     from anywhere inside the demo, the editor included, runs it, as Run's `aria-keyshortcuts`
@@ -1302,22 +1306,27 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     - From 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' track,
       their least width, 2fr.
     - From 64rem: the placement the page's `Arrangement` holds, editor left without one. Editor
-      left puts the editor, under the toolbar, in 3fr of the width, beside a 2fr column of the
-      console, 3fr of the height, over the timings, 2fr; editor right mirrors it, the column
-      first; editor top is the layout from 44rem. In this band alone, and only given an
-      arrangement, the toolbar shows Layout, and the demo sends its choice on as `arrange`.
+      left puts the editor, under the toolbar, in 3fr of the width, beside a 2fr column holding
+      the output panel and its tablist, as below 44rem, since that column is too short to hold
+      the console over the timings' whole table; editor right mirrors it, the column first;
+      editor top is the layout from 44rem. In this band alone, and only given an arrangement, the
+      toolbar shows Layout, and the demo sends its choice on as `arrange`.
+
+    The output shows both its parts only where it spans the demo's width, side by side: from 44rem
+    to 64rem, and from 64rem with the editor top. Everywhere else it is the one tabbed panel.
 
     Every band and arrangement places the same parts, so a run, a Stop, a failed build, a band
     change, or an arrangement change keeps each part's content and scroll position and the chosen
-    output tab. Below 44rem the part not shown is hidden by `visibility`, so it keeps its own
-    scroll position. A demo without `fixed` lays out as "Layout" describes.
+    output tab. Where the output is tabbed the part not shown is hidden by `visibility`, so it
+    keeps its own scroll position. A demo without `fixed` lays out as "Layout" describes.
 
-    The bands are CSS's: each container query places the parts and names its band in `--band`,
-    and the demo's script reads that name, through a `ResizeObserver` on a fixed demo alone, for
-    two things only. Below 44rem the console and the timings are tabpanels of the output tablist,
-    and from 44rem they aren't: a change to the accessibility tree, and CSS can't set a role. From
-    64rem the toolbar shows its Layout group, which `sl-controls` renders only given an
-    arrangement. The read exists because no shipped API reports a container query's state to
+    The bands are CSS's: each container query places the parts, names its band in `--band`, and
+    names its output, `tabs` or `row`, in `--output`, and the demo's script reads those names,
+    through a `ResizeObserver` on a fixed demo alone and again as its placement changes, for two
+    things only. Where `--output` is `tabs` the console and the timings are tabpanels of the
+    output tablist, and where it is `row` they aren't: a change to the accessibility tree, and CSS
+    can't set a role. Where `--band` is `wide`, from 64rem, the toolbar shows its Layout group,
+    which `sl-controls` renders only given an arrangement. The read exists because no shipped API reports a container query's state to
     script; every placement and size stays in the stylesheet.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the

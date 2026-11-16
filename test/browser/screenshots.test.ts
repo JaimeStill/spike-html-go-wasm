@@ -13,13 +13,14 @@
 // arrangement and with the Layout menu open, each chosen by the menu, the widest with the About
 // dialog open, and each of the SDK's widths with each of Basics, Generics, Concurrency, and
 // Standard library chosen in the Program select, and again after a Run of the starter, the phone's
-// also with its Timings tab. The states after a Run reach their endings when their open steps run
-// on a served page, no capture taken: the Go demo's format result, hello's line and exit 0, and
-// crash's panic on stderr and exit 2, from their prebuilt modules; and the playground's starter
-// built in the page and run to exit 0, every phase of a build timed, in editor left at 1376px and
-// on the Timings tab at 390px. The sqlate page's, --page sqlate, is the viewport alone at each of
-// the SDK's widths, and each rendered Markdown page's, --page sqlate-compile, --page go-core-graph,
-// and --page go-web-sdk-handlers, the page whole at each. Every page, the components page once on
+// and the widest's, editor left, also with its Timings tab. The states after a Run reach their
+// endings when their open steps run on a served page, no capture taken: the Go demo's format
+// result, hello's line and exit 0, and crash's panic on stderr and exit 2, from their prebuilt
+// modules; and the playground's starter built in the page and run to exit 0, every phase of a
+// build timed, in editor left at 1376px, and on the Timings tab at 390px and at 1376px in editor
+// left. The sqlate page's, --page sqlate, is the viewport alone at each of the SDK's widths, and
+// each rendered Markdown page's, --page sqlate-compile, --page go-core-graph, and --page
+// go-web-sdk-handlers, the page whole at each. Every page, the components page once on
 // its first component, is also captured at 390px with the Site drawer open, the viewport alone,
 // and each such state's open step, run on a served page at 390px, no capture taken, leaves the
 // drawer open, a modal, with SITE_NAV's links, the page's own marked current.
@@ -245,15 +246,17 @@ describe("a component's capture", () => {
         ),
         ...[phone, ...wide].map((width) => [`playground-run-${width}`, width, false]),
         [`playground-run-timings-${phone}`, phone, false],
+        [`playground-run-timings-${wide.at(-1)}`, wide.at(-1), false],
       ],
     );
   });
 
-  test("the playground's run states build and run the starter to exit 0, the wide one in editor left, and the Timings one shows the build's phases", async () => {
+  test("the playground's run states build and run the starter to exit 0, the wide ones in editor left, and the Timings ones on the Timings tab", async () => {
     const described = description.pages.find(({ name }) => name === "playground");
     for (const [name, width, tab] of [
       ["playground-run-timings-390", 390, "timings"],
       ["playground-run-1376", 1376, null],
+      ["playground-run-timings-1376", 1376, "timings"],
     ] as const) {
       const state = described?.states?.find((each) => each.name === name);
       assert.ok(state?.open, `${name} has an open step`);
@@ -272,7 +275,8 @@ describe("a component's capture", () => {
             `${root}.querySelector('.output-tabs [aria-selected="true"]').dataset.part`,
           );
           assert.equal(selected, "timings", name);
-        } else {
+        }
+        if (width > 390) {
           const placement = await page.evaluate(`${root}.querySelector(".demo").dataset.placement`);
           assert.equal(placement, "left", name);
         }

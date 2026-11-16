@@ -28,6 +28,12 @@ export type Placement = "left" | "top" | "right";
 /** Every placement, in the Layout menu's order. */
 export const PLACEMENTS: Placement[] = ["left", "top", "right"];
 
+/** Whether the demo's output is one panel under its tablist in the band and placement, as
+ * go-demo.css names it in --output: below 44rem, and from 64rem with the editor left or right;
+ * elsewhere the console and the timings share a row. */
+export const tabbed = (band: Band, placement: Placement): boolean =>
+  band === "phone" || (band === "wide" && placement !== "top");
+
 /** A part's box, [x, y, width, height], each to a hundredth of a px, on the page, so the page's
  * own scroll moves none, and whether it shows. */
 export interface Part {
@@ -155,16 +161,17 @@ export function contained({ parts, sideways }: Layout, width: number | string) {
 }
 
 /** Asserts that the parts sit as the placement places them from 64rem: the editor left of the
- * output, right of it, or above it, with the console over the timings beside the editor, or beside
- * them under it. */
+ * output, or right of it, the console and the timings sharing the output's one panel, or above
+ * it, the console and the timings side by side under it. */
 export function placedAs({ parts }: Layout, placement: Placement, name: string): void {
   const [fx, fy, fw, fh] = parts.panel.box;
   const [ox, oy, ow] = parts.output.box;
   const [cx, cy] = parts.console.box;
   const [tx, ty] = parts.timings.box;
+  const panel = parts.console.box.join() === parts.timings.box.join();
   const where = {
-    left: fx + fw <= ox + 0.5 && cx === tx && cy < ty,
-    right: ox + ow <= fx + 0.5 && cx === tx && cy < ty,
+    left: fx + fw <= ox + 0.5 && panel,
+    right: ox + ow <= fx + 0.5 && panel,
     top: fy + fh <= oy + 0.5 && cy === ty && cx < tx,
   };
   assert.ok(where[placement], `the parts at ${name} sit as editor ${placement} places them`);

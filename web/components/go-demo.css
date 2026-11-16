@@ -27,12 +27,19 @@
  * inline-size container is not its own query container, so the bands follow the demo's own width.
  * Its parts share its height in fractions, never in lengths, each part's share a frame it scrolls
  * inside, so nothing a part holds changes its box: the toolbar its own line, then the files 3fr,
- * about 60% of what is left, and the output 2fr. Each band places the same parts again, by grid
- * areas, so a band change keeps every part's content and scroll position, and names itself in
- * --band, which the script reads only where CSS can't follow it: for the output panels' tabpanel
- * roles, which change the accessibility tree, and for whether the toolbar's Layout group shows. The
- * editor fills its frame, the console fills its own (sl-console's fill), and the timings scroll in
- * theirs.
+ * about 60% of what is left, and the output 2fr.
+ *
+ * The output shows both its parts only where it spans the demo's whole width, the console and the
+ * timings side by side: from 44rem, and from 64rem with the editor top. Everywhere else, below
+ * 44rem and from 64rem with the editor left or right, where the output is a column too narrow or
+ * too short to hold the timings' table under the console, it is one panel under a tablist, Output
+ * and Timings, the selected part shown and the other hidden by visibility in the same cell. Each
+ * band places the same parts again, by grid areas, so a band change keeps every part's content and
+ * scroll position. Each names itself in --band, and names its output, tabs or row, in --output;
+ * the script reads the two only where CSS can't follow them: --output for the output panels'
+ * tabpanel roles, which change the accessibility tree, and --band for whether the toolbar's Layout
+ * group shows. The editor fills its frame, the console fills its own (sl-console's fill), and the
+ * timings scroll in theirs.
  *
  * An authoring error is a block on the page's red mixed into its surface, a red rule at its start,
  * its words in the page's own text color, above the fences as authored.
@@ -78,6 +85,7 @@
 
 :host([fixed]) .demo {
   --band: phone;
+  --output: tabs;
   block-size: 100%;
   grid-template-rows: auto minmax(0, 3fr) minmax(0, 2fr);
   grid-template-areas: "controls" "files" "output";
@@ -137,12 +145,12 @@
 }
 
 /* From 44rem, side by side: the timings take a track of their table's least width, and the console
-   the rest; a fixed demo shows no tablist, and both parts. The timings contain their inline size,
-   so their content would size an auto track as nothing and the table would run past the demo's
-   end; the track is sized instead by the timings' least width, read on the element, where
-   sl-timings states it, as its min-inline-size: an auto track takes that and no more, the 1fr
-   track taking the rest. One query for every demo, after the fixed layout's phone band, which it
-   changes. */
+   the rest; a fixed demo's output is a row, with no tablist, and both parts shown. The timings
+   contain their inline size, so their content would size an auto track as nothing and the table
+   would run past the demo's end; the track is sized instead by the timings' least width, read on
+   the element, where sl-timings states it, as its min-inline-size: an auto track takes that and no
+   more, the 1fr track taking the rest. One query for every demo, after the fixed layout's phone
+   band, which it changes. */
 @container (min-inline-size: 44rem) {
   .output {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -154,6 +162,7 @@
 
   :host([fixed]) .demo {
     --band: middle;
+    --output: row;
   }
 
   :host([fixed]) .output {
@@ -178,14 +187,18 @@
   }
 }
 
-/* From 64rem, editor left or right: the files beside a column of the console over the timings,
-   right its mirror. Editor top keeps the middle band's layout. */
+/* From 64rem, editor left or right: the files beside the output, right its mirror, and the output
+   the phone band's one panel under its tablist, the column being too short to hold the console
+   over the timings' whole table. The middle band's query applies here too, so these rules undo its
+   row for these placements alone: the tablist shows again, as tabs.css lays it out, and the
+   unselected part is hidden again. Editor top keeps the middle band's row. */
 @container (min-inline-size: 64rem) {
   :host([fixed]) .demo {
     --band: wide;
   }
 
   :host([fixed]) .demo:not([data-placement="top"]) {
+    --output: tabs;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
@@ -202,8 +215,20 @@
 
   :host([fixed]) .demo:not([data-placement="top"]) .output {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
-    grid-template-areas: "console" "timings";
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "tabs" "part";
+  }
+
+  :host([fixed]) .demo:not([data-placement="top"]) .output-tabs {
+    display: flex;
+  }
+
+  :host([fixed]) .demo:not([data-placement="top"]) .output > :is(sl-console, sl-timings) {
+    grid-area: part;
+  }
+
+  :host([fixed]) .demo:not([data-placement="top"]) .output > .unselected {
+    visibility: hidden;
   }
 }
 
