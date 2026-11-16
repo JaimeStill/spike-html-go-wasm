@@ -16,9 +16,9 @@
 //   of the body; and
 // - the drawer's script, web/pages/site-nav.ts, which loads the drawer's module and wires the
 //   opener, the last script of the head.
-// Into the index alone it writes, from SITE_NAV too, the where-to-go list: a section headed
-// "Where to go", its id where-to-go, holding a list of every page SITE_NAV links but home, in its
-// order, each item the page's link and its line, Library demos' item listing its Markdown pages
+// Into the index alone it writes, from SITE_NAV too, the where-to-go list in main's own flow, as
+// the index's other headings and lists stand: a heading "Where to go", its id where-to-go, then a
+// list of class where-to-go of every page SITE_NAV links but home, in its order, each item the page's link and its line, Library demos' item listing its Markdown pages
 // under it, each by its title, as markdownPages titles it, in markdownPages' order. The index marks
 // its place with the comment WHERE_TO_GO names, and the list replaces the marker.
 // Each is written once per page and failed on when the page lacks its place, so a page whose
@@ -151,8 +151,11 @@ const script = `\n    <script type="module" blocking="render" src="./web/pages/s
 /** The index's where-to-go list's place, the marker the list replaces. */
 export const WHERE_TO_GO = "<!-- site-nav: where-to-go -->";
 
-/** The where-to-go list: a section headed "Where to go", an item for each page SITE_NAV links but
- * home, its link and its line, Library demos' listing its Markdown pages, each by its title. */
+/** The where-to-go list: a heading "Where to go", then the list, an item for each page SITE_NAV
+ * links but home, its link and its line, Library demos' listing its Markdown pages, each by its
+ * title. Both are main's children, no section around them, so the foundation's rules space them
+ * as they space the index's other headings and lists: the heading by its own margins, and the
+ * paragraph after the list by the flow rule, which names no section. */
 function whereToGo(indent: string): string {
   const pageList = (pad: string) =>
     [
@@ -164,18 +167,16 @@ function whereToGo(indent: string): string {
     ].join("\n");
   const items = SITE_NAV.filter(({ description }) => description !== undefined).map(
     ({ label, href, pages, description }) => {
-      const head = `${indent}    <li>\n${indent}      <a href="${href}">${label}</a>: ${description}`;
-      const nested = pages === markdownPages ? `\n${pageList(`${indent}      `)}` : "";
-      return `${head}${nested}\n${indent}    </li>`;
+      const head = `${indent}  <li>\n${indent}    <a href="${href}">${label}</a>: ${description}`;
+      const nested = pages === markdownPages ? `\n${pageList(`${indent}    `)}` : "";
+      return `${head}${nested}\n${indent}  </li>`;
     },
   );
   return [
-    `<section class="where-to-go" aria-labelledby="where-to-go">`,
-    `${indent}  <h2 id="where-to-go">Where to go</h2>`,
-    `${indent}  <ul>`,
+    `<h2 id="where-to-go">Where to go</h2>`,
+    `${indent}<ul class="where-to-go">`,
     ...items,
-    `${indent}  </ul>`,
-    `${indent}</section>`,
+    `${indent}</ul>`,
   ].join("\n");
 }
 

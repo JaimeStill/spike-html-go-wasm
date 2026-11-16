@@ -543,8 +543,10 @@ Escape, the drawer's Close, or a followed link closes it, focus back on the open
 the drawer is undefined and hidden and the row shows at every width, wrapping its links.
 
 The index opens its main, after its heading and lede and before the question and the evidence, on
-a where-to-go list: a section headed "Where to go" with an item for each page the Site nav links
-but home, in its order, each the page's link and one line on what the reader finds there, and
+a where-to-go list: a heading, "Where to go", then a list, both main's own children with no
+section around them, so the foundation's heading and flow rules space them as they space the
+index's other headings and lists, and the list has an item for each page the Site nav links but
+home, in its order, each the page's link and one line on what the reader finds there, and
 Library demos' item listing the three Markdown pages under it by their titles. The list is written
 from the same `SITE_NAV`, each entry but home's carrying its line, and `siteNav()` writes it into
 the index at the marker the index holds, the comment `site-nav: where-to-go`, failing the build

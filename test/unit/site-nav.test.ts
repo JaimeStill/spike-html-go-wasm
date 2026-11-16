@@ -1,7 +1,8 @@
 // The site nav's build step (scripts/site-nav.ts) on the index's markup, read from index.html
-// without a browser: writeNav replaces the where-to-go marker with the list, and fails the build,
-// naming the index and the marker, when the index lacks it or holds it twice. Another page is
-// written without the marker and takes no list.
+// without a browser: writeNav replaces the where-to-go marker with the list, its heading then the
+// list as main's own children, no section around them, and fails the build, naming the index and
+// the marker, when the index lacks it or holds it twice. Another page is written without the
+// marker and takes no list.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -17,7 +18,13 @@ describe("the index's where-to-go list", () => {
     assert.equal(index.split(WHERE_TO_GO).length, 2, "index.html holds the marker once");
     const out = writeNav(index, "index.html");
     assert.ok(!out.includes(WHERE_TO_GO), "the marker is replaced");
-    assert.equal(out.match(/<section class="where-to-go"/g)?.length, 1, "one list");
+    assert.equal(out.match(/<ul class="where-to-go">/g)?.length, 1, "one list");
+    assert.match(
+      out,
+      /<main>[\s\S]*<h2 id="where-to-go">Where to go<\/h2>\s*<ul class="where-to-go">/,
+      "the list follows its heading in main's own flow",
+    );
+    assert.ok(!out.includes("<section"), "no section wraps the list");
   });
 
   test("an index without the marker, or with it twice, fails the build, naming the index", () => {
@@ -36,5 +43,6 @@ describe("the index's where-to-go list", () => {
   test("another page needs no marker and takes no list", () => {
     const out = writeNav(index.replace(WHERE_TO_GO, ""), "components.html");
     assert.ok(!out.includes('class="where-to-go"'));
+    assert.ok(!out.includes('id="where-to-go"'));
   });
 });

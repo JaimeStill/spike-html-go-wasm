@@ -20,10 +20,12 @@
 // and every glyph button to its target size. Every wait is bounded.
 //
 // The index opens its main on the where-to-go list after its heading and lede and before the
-// question and the evidence: a section named by its heading, Where to go, whose list has an item
-// for each page SITE_NAV links but home, in its order, each its link, by its text and the URL it
-// resolves to, then its description, Library demos' item listing the three Markdown pages under it
-// by their titles, as markdownPages titles them.
+// question and the evidence: its heading, Where to go, then its list, both main's own children as
+// the index's other headings and lists are, the list an item for each page SITE_NAV links but
+// home, in its order, each its link, by its text and the URL it resolves to, then its description,
+// Library demos' item listing the three Markdown pages under it by their titles, as markdownPages
+// titles them. The paragraph after the list stands at least the foundation's --space-s below it,
+// the flow rule's space, at 390px and at 1376px, so a list the flow rule misses fails.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -302,9 +304,9 @@ describe("the site's own nav", () => {
     const page = await browser.open(server.origin);
     try {
       const read = await page.evaluate(`(() => {
-        const section = document.querySelector("main > section.where-to-go");
-        const heading = document.getElementById(section.getAttribute("aria-labelledby"));
-        const items = [...section.querySelectorAll(":scope > ul > li")].map((li) => {
+        const heading = document.getElementById("where-to-go");
+        const list = heading.nextElementSibling;
+        const items = [...list.querySelectorAll(":scope > li")].map((li) => {
           const a = li.querySelector(":scope > a");
           const text = [...li.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE)
             .map((node) => node.textContent).join("").replace(/\\s+/g, " ").trim();
@@ -322,12 +324,13 @@ describe("the site's own nav", () => {
         const at = (element) => main.indexOf(element);
         return {
           name: heading?.textContent.trim(),
-          inSection: section.contains(heading),
+          heading: heading.parentElement.localName + " > " + heading.localName,
+          list: list.parentElement.localName + " > " + list.localName + "." + list.className,
           items,
-          afterLede: at(section) > at(document.querySelector("main > h1")) &&
-            at(section) > at(document.querySelector("main > h1 + p")),
-          beforeQuestion: at(section) < at(document.getElementById("the-question")) &&
-            at(section) < at(document.getElementById("the-evidence")),
+          afterLede: at(heading) > at(document.querySelector("main > h1")) &&
+            at(heading) > at(document.querySelector("main > h1 + p")),
+          beforeQuestion: at(list) < at(document.getElementById("the-question")) &&
+            at(list) < at(document.getElementById("the-evidence")),
         };
       })()`);
       const expected = SITE_NAV.filter(({ pages }) => !pages.includes("index.html")).map(
@@ -352,11 +355,33 @@ describe("the site's own nav", () => {
       assert.equal(expected.find(({ text }) => text === "Library demos")?.pages.length, 3);
       assert.deepEqual(read, {
         name: "Where to go",
-        inSection: true,
+        heading: "main > h2",
+        list: "main > ul.where-to-go",
         items: expected,
         afterLede: true,
         beforeQuestion: true,
       });
+      for (const width of [PHONE, 1376]) {
+        await viewport(page, width);
+        const { gap, step } = (await page.evaluate(`(() => {
+          const list = document.querySelector("main > #where-to-go + ul");
+          const next = list.nextElementSibling;
+          const probe = document.createElement("div");
+          probe.style.marginBlockStart = "var(--space-s)";
+          document.querySelector("main").append(probe);
+          const step = parseFloat(getComputedStyle(probe).marginBlockStart);
+          probe.remove();
+          return {
+            gap: next.getBoundingClientRect().top - list.getBoundingClientRect().bottom,
+            step,
+          };
+        })()`)) as { gap: number; step: number };
+        assert.ok(step > 0, `--space-s resolves at ${width}px`);
+        assert.ok(
+          gap >= step - 0.5,
+          `the element after the list stands ${gap}px below it at ${width}px, want --space-s, ${step}px`,
+        );
+      }
     } finally {
       await page.close();
     }
