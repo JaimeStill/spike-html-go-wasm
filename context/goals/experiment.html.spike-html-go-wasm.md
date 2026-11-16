@@ -153,7 +153,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 2/15 committed (1: 17ba124; 2: foundation v0.3.1 released, PR #11, merge 07ba39a, tag 0037b08) · slice 3 part 1 committed in spike-html-hosting-sdk review (2aa7e6b upgrade, rolldown held in CHANGELOG; fixes eab80ae, 863521a, 7c03abc, 4a049ef rewrap, a8e469f, 2bc897b; check green) · next: SDK release commit (0.6.3, foundation v0.3.1 in peer, dev, and template pins; README, STANDARDS, and syntax.ts mentions of v0.3.0; README prose for 200% text, the dialog outline check, no content.json, the language class), its standards review, the architect's release brief, merge, then the template README re-copy commit · standards — · spec — · editor —
+slices 2/15 committed (1: 17ba124; 2: foundation v0.3.1 released, PR #11, merge 07ba39a, tag 0037b08) · slice 3 committed in spike-html-hosting-sdk review (2aa7e6b upgrade; fixes eab80ae, 863521a, 7c03abc, 4a049ef, a8e469f, 2bc897b; release 6217e1b v0.6.3; 3f5e043 template README) — next its standards review, release brief, merge · slice 4 committed (components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12; unpublished) · slice 6 committed (spike-html-apps 1f6f81c, c9f60ff; unpublished) · editor notes: stale foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record · standards — · spec — · editor —
 
 ## Decisions
 
