@@ -15,9 +15,8 @@
 // drawer's Close each close it, aria-expanded following, focus back on the opener; a link followed
 // in it closes it, its navigation held by the test so the page stays to be read. With script disabled, at 390px, the row shows, the opener and the drawer don't, and
 // nothing scrolls sideways, with the text at its own size and at 200%, nothing in the header
-// passing the viewport on any page; the components page's main, its Go demos unupgraded, is wider
-// than a phone's without script, apart from the nav, so there the header alone is held. The SDK's
-// shell checks, which run on every page in site.test.ts, hold the header's group, the opener among
+// passing the viewport, on every page, the components page's Go demos unupgraded among them. The
+// SDK's shell checks, which run on every page in site.test.ts, hold the header's group, the opener among
 // its buttons, to one line, Help's list to the page's bindings, N's among them below the switch,
 // and every glyph button to its target size. Every wait is bounded.
 //
@@ -75,11 +74,6 @@ const ROW_WIDTHS = [SWITCH, 1120, 1376];
 
 /** Widths below the switch: a px below it, and a phone's. */
 const DRAWER_WIDTHS = [SWITCH - 1, PHONE];
-
-/** The pages whose main, without script, is wider than a phone's viewport, before and apart from
- * the nav: the components page, whose Go demos' unupgraded figures pass it. On these the check
- * holds the header alone inside the viewport. */
-const UNSCRIPTED_WIDE = ["components.html"];
 
 /** The row, the drawer, and the opener. */
 const ROW = `document.querySelector('body > header > nav[aria-label="Site"]')`;
@@ -367,7 +361,7 @@ describe("the site's own nav", () => {
               header: [...document.querySelectorAll("body > header *")].filter(
                 (element) => element.getBoundingClientRect().right > root.clientWidth + 0.5,
               ).length,
-              sideways: ${UNSCRIPTED_WIDE.includes(file)} ? false : root.scrollWidth > root.clientWidth,
+              sideways: root.scrollWidth > root.clientWidth,
             };
           })()`);
           assert.deepEqual(

@@ -111,9 +111,16 @@
     margin-block-start: var(--space-3xs);
   }
 
-  /* The components page: a component's states, one figure each, stacked. */
+  /* The components page: a component's states, one figure each, stacked, in one column as wide
+     as the section and no wider. An auto column would be at least its figures' min-content, and a
+     figure, no scroll container, takes its content's: before script, a Go demo's fences, a pre
+     the foundation scrolls in itself, would widen the column to their longest line and the page
+     would scroll sideways. Its least size zero, the column holds each fence to the section, where
+     it scrolls inline as a code block does anywhere; upgraded, the demo contains its own inline
+     size and the column is the same. */
   .states {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-m);
     margin-block-start: var(--space-s);
   }
