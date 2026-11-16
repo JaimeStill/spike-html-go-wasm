@@ -153,7 +153,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 0/15 committed · standards — · spec — · editor —
+slices 1/15 committed (1: 17ba124) · standards — · spec — · editor —
 
 ## Decisions
 
@@ -964,6 +964,11 @@ slices 0/15 committed · standards — · spec — · editor —
   porting its emulator to the converted APIs is the intake's.
 - review: held rolldown at 1.2.18 in the SDK and spike-html-apps: vite 8.3.8, the latest, pins
   `~1.2.18`.
+- review (escalation 1): foundation v0.3.1 and SDK v0.6.3 release mid-BUILD, each once its slice
+  passes its check and a standards review and the architect reads a short release brief, merged
+  through its own pull request so its Release workflow tags it; every consumer then builds against
+  the published tags. Rejected: releasing at SHIP with consumers linked to local checkouts until
+  then.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
