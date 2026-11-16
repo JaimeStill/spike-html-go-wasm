@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** review
+- **Branch:** review
 
 ## Tasks
 
@@ -18,111 +18,142 @@
 10. [ ] final-review
 11. [ ] answer
 
-## Task brief · measure
+## Task brief · review
 
 ```
-Problem       The spike's sizes and timings are local, partial, and taken by
-              hand. Evidence 4 and 5 need what the live site actually serves
-              and how fast it runs, on desktop and on an iPhone over Wi-Fi.
-              The answer task and final-review read them; sqlate's 36 s cold
-              Run on a phone is the one phone reading so far. The architect
-              rejected the TinyGo comparison, because the spike's question is
-              native Go. The unused TinyGo pin goes, and evidence 4 is restated
-              without it.
-Behaviors     1. TinyGo leaves the spike. No tool pin, comment, evidence item,
-                 index text, or Path line names it. The goal record gains the
-                 Decision "measure: TinyGo comparison rejected; the spike's
-                 question is native Go. TinyGo can't build the sqlate module
-                 (pgx's crypto/tls) or the playground's toolchain, and its
-                 modules need TinyGo's own wasm_exec.js, not the runtime's."
-                 The setup Decision naming TinyGo is marked superseded. The
-                 roadmap's measure summary, minus "the TinyGo comparison",
-                 joins the Pending edits. The check passes.
-              2. `mise run measure` reads the live site, or a base URL given.
-                 It is never part of the check and writes nothing outside
-                 TMPDIR.
-              3. Sizes: one row per shipped module (hello, probe, sqlate,
-                 websdk, the compiler, and the linker), and one per closure,
-                 one for each of the seven programs the site builds in the
-                 page. Each row gives raw bytes, gzip bytes as Pages serves
-                 them to the browser's Accept-Encoding, and brotli-11 bytes.
-                 A closure row also gives its file count, which is the number
-                 of requests a revalidation makes once max-age has expired.
-              4. Reproducibility: the command reports whether two local builds
-                 of each prebuilt module match byte for byte, and whether the
-                 live module matches the local one. Where they differ, it
-                 gives the byte counts. It reports the drift and never fails
-                 on it.
-              5. Desktop timings: the pinned chrome-headless-shell, launched
-                 with the network allowed (the tooling's launch() resolves
-                 loopback only), loads each demo page on the live site:
-                 - "Page readable before the module": the page's first
-                   contentful paint, and no .wasm requested before Run.
-                 - "First result": the time from Run's click to the first
-                   output.
-                 - The run's phases as the timings table shows them (Fetch,
-                   Wasm compile, Go compile, Link, Instantiate, Start, Run,
-                   and the total).
-                 Each is read in three states:
-                 - cold: a fresh profile with an empty cache
-                 - cached: a fresh page and worker within max-age, the
-                   module from the HTTP cache with no bytes transferred
-                 - in-place: a second request on the held worker. That is a
-                   components-page scenario switch, a Markdown demo's rerun
-                   on its held instance, a playground program switch, and an
-                   edit to main.go rebuilt.
-              6. Every desktop timing is the median and the max of five
-                 readings. The command prints one table for sizes and one per
-                 page for timings, and states the deployed commit it read and
-                 the date.
-              7. iPhone: the architect reads each demo's timings table on an
-                 iPhone over Wi-Fi in the same three states, one reading each.
-                 Cold is a fresh Private tab. Cached is a reload within 10
-                 minutes. In-place is as in behavior 5. The architect records
-                 phases and total, and whether the page was readable before
-                 Run. BUILD collects these at a named point (see Slices).
-              8. The spike's README gains a "Measurements" section. It is
-                 dated, names the deployed commit and each device (machine
-                 and network, iPhone model and Wi-Fi), and holds the size,
-                 reproducibility, desktop, and iPhone tables. Evidence 4 and 5
-                 point to it.
-Test seams    The command's pure report layer, run in the unit tier on
-              fixtures: weighing a response (raw, gzip as served, brotli-11),
-              median and max over readings, a closure's revalidation count,
-              the drift comparison, and the tables' formatting. The live run
-              itself is evidence, never a test.
-Slices        No upgrade slice: currency is current.
-              1. TinyGo out (behavior 1): the check passes with no TinyGo pin,
-                 and the Decision and the Pending edit are recorded.
-                 Demo: mise lists no tinygo; the check passes.
-              2. Sizes and drift (behaviors 2-4, sizes half of 6): mise run
-                 measure prints the size table and the drift report from the
-                 live site. Sizing adapts spike-html-hosting 421254d's cost
-                 weighing.
-                 Demo: the size table against the live site.
-              3. Desktop timings (behaviors 5-6): the command adds the
-                 per-page timing tables from five readings each. It reuses
-                 the browser tier's demo helpers, in a browser launched with
-                 the network allowed.
-                 Demo: a full mise run measure.
-              4. iPhone and the record (behaviors 7-8): at the start of this
-                 slice the session stops and prints the architect a checklist,
-                 one line per page and state, for the iPhone readings. The
-                 architect replies with the numbers or screenshots. BUILD then
-                 writes the Measurements section from slice 3's output and
-                 the architect's readings.
-                 Demo: the README section; evidence 4 and 5 point to it.
-Out of scope  TinyGo in any form; finding the cause of the build drift
-              (final-review); optimizations (final-review); expired-cache
-              (304) timings beyond the revalidation count; Firefox and Safari
-              on desktop (review); gating any number; changes to the runtime,
-              the components, or the pages beyond the index's evidence text;
-              any write to the coordinator outside the Pending edits.
-Door          two-way: the task adds a command, a README section, and a goal
-              record Decision; removes an unused pin, which can be pinned
-              again; and releases nothing. The coordinator's roadmap edit
-              waits in the Pending edits for the sync.
+Problem       Evidence 7 is unwritten: no review covers every page, palette, and
+              engine. A reader reaches the site's pages only through links buried
+              in the index's evidence prose, and only components and the
+              playground's About link back home. Every glyph-button hint veils the
+              page, and inside a dialog it washes the dialog out: the foundation
+              gives every top-layer ::backdrop a modal dialog's veil. The spike
+              carries workarounds for that and four SDK defects (the header group's
+              placement and reflow, a heading outline rule written for Help alone,
+              a crash on a missing content.json, highlighted fences losing their
+              language) instead of fixes at the root.
+Behaviors     1. Every touched repository's currency prints nothing but the items
+                 this goal holds: rolldown at 1.2.18 where vite 8.3.8 pins ~1.2.18
+                 (the SDK, spike-html-apps), and spike-html-apps' go-core 0.10.0,
+                 go-messaging 0.2.0, go-web-sdk 0.15.2 (the emulator's port is the
+                 intake's); each recorded as a Decision; each check passes.
+              2. Foundation v0.3.1: only a modal dialog's backdrop is veiled. A
+                 hint, auto, or manual popover's backdrop is transparent, in every
+                 palette and scheme; CHANGELOG [0.3.1].
+              3. SDK v0.6.3:
+                 - with no site nav, the header's button group sits at the inline
+                   end at every width;
+                 - the group shrinks and wraps, so at 390px and 200% text nothing
+                   scrolls sideways, with or without a nav;
+                 - every shortcut dialog's script-focused heading, not only
+                   Help's, draws no outline;
+                 - a site with no content.json is read as one with no tree, by the
+                   crawl and by the content check alike;
+                 - a highlighted fence names its language in its markup, as
+                   marked's plain fence does.
+                 Its peer and its template pin foundation v0.3.1; CHANGELOG
+                 [0.6.3].
+              4. Hosting components, icons, apps-components, and noctis pin
+                 foundation v0.3.1 and release nothing. The three hosting sites
+                 pin SDK v0.6.3 and foundation v0.3.1, and each Pages deploy is
+                 green. spike-html-apps pins foundation v0.3.1.
+              5. The spike pins SDK v0.6.3 and foundation v0.3.1 and carries no
+                 rule that compensated for behaviors 2-3: the header-group rules,
+                 the editor's and the controls' backdrop cancellations, the About
+                 heading's outline rule, the absence-guard content.json, and the
+                 fence reader's "no language" fallback for highlighted fences. Its
+                 checks pass unchanged in what they assert.
+              6. Every page, the Markdown shell's included, has a Site nav: the
+                 spike's name linking home, then Playground, sqlate, Library demos
+                 (the first Markdown page; the three Markdown pages are its
+                 current), and Components. The current page carries
+                 aria-current="page".
+              7. The nav comes from one list the spike owns, in each page's markup
+                 as built. Where the nav and the header's buttons share one line
+                 at the default type, it is a row. Below that width, a header
+                 glyph button (N, which no binding takes) opens an sl-drawer,
+                 modal at every width, holding the same links; a link closes it.
+                 With no script the row shows at every width. At every capture
+                 size the playground still holds its one screen above its floor.
+              8. The index opens with a where-to-go list, one line per page,
+                 ahead of the question and the evidence.
+              9. The captures add the components page's Go demos after their
+                 runs (hello's output, crash's stderr and exit 2, format's result)
+                 and the playground after a calc Run at each of the SDK's widths,
+                 with the Timings tab also at 390px. The no-capture test still
+                 holds.
+              10. The architect reviews every page, every state, all six profiles,
+                 light and dark, in Chromium, at three checkpoints. Each batch is
+                 a browser gallery under TMPDIR that the session deletes as the
+                 checkpoint closes. Every finding is traced to its root and fixed
+                 in the layer that owns it, and any workaround it replaces is
+                 deleted. Opinionated changes become intake findings.
+              11. The architect checks by hand, on the live site, in Firefox
+                 158.0.1 and in the iPhone's Safari app, from a checklist: every
+                 page light and dark at flexoki; each palette once on the
+                 playground's editor; a Run on each demo page; typing, Enter,
+                 Tab, and undo in the editor; the nav row and drawer, the Layout
+                 menu, About, Help, and Settings. Desktop Safari and WebKitGTK are
+                 recorded as gaps.
+              12. The README's "Review" section, which evidence 7 points to,
+                 names what was reviewed (pages, profiles, schemes, widths,
+                 engines and versions, dates) and each finding: its root, its
+                 owner, and its fix or its intake note. The spike's "reads its
+                 references and never writes to them" rule records this task's
+                 root fixes as its exception.
+Test seams    The spike's browser tier: one list's rendering of the nav row and
+              drawer (landmark, current marking, the width switch, the opener's
+              keys and focus return, no script). The foundation's and the SDK's
+              own browser tiers for behaviors 2-3: a popover's computed backdrop,
+              the header row with no nav at 390px and 200% text, any dialog
+              heading's focus outline, a nav-less site's crawl, and a fence's
+              language in the markup.
+Slices        1. Spike upgrade: pnpm 12.21.0, eslint 10.15.0, eslint-plugin-
+                 boundaries 7.4.4. Demo: currency empty, check green.
+              2. Foundation: upgrade, then the backdrop fix, then v0.3.1
+                 released. Demo: a hint over Help's dialog leaves it unveiled.
+              3. SDK: upgrade (rolldown held), then behavior 3's five fixes, then
+                 v0.6.3 released on foundation v0.3.1. Demo: its fixture site
+                 with no nav at 390px and 200% text.
+              4. Pin moves with no release: hosting components, icons, apps-
+                 components, noctis (each upgraded first). Demo: each check green.
+              5. The three hosting sites, upgraded and on v0.6.3. Demo: live
+                 pages, a hint unveiled.
+              6. spike-html-apps: web upgrades and foundation v0.3.1; its Go
+                 requirements held. Demo: its check green.
+              7. The spike on v0.6.3 and v0.3.1, every workaround deleted
+                 (behavior 5). Demo: check green; no header, backdrop, or outline
+                 override left.
+              8. The Site nav and its drawer (behaviors 6-7). Demo: 390, 1120,
+                 and 1376px, and with no script.
+              9. The index's where-to-go list (behavior 8).
+              10. Post-Run captures (behavior 9).
+              11. Checkpoint 1: index and the three Markdown pages; fix slices
+                  follow. Confirms the foundation fix in captures.
+              12. Checkpoint 2: the six components; fix slices.
+              13. Checkpoint 3: playground and sqlate; fix slices.
+              14. By-hand pass (behavior 11): the session stops and prints the
+                  checklist; the architect replies with findings, each traced
+                  and fixed as in slices 11-13.
+              15. The record (behavior 12): README section, findings as goal-
+                  record Notes, Pending edits for the coordinator.
+Out of scope  Performance, optimization, and ergonomics (final-review); the
+              answer; navigation for a site's own pages and Markdown file names
+              as SDK features (findings); the crawl's scratch-root workaround (a
+              finding); desktop Safari; Playwright in any form; new captures
+              beyond behavior 9; any reference defect needing a release not
+              named below, which escalates.
+Door          One-way: the foundation v0.3.1 and SDK v0.6.3 tags, once
+              published and consumed by tag. Two-way: everything else. Pin moves
+              and Pages deploys revert by commit, the nav and captures are the
+              spike's own, and the review deletes its galleries.
+Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
+              v0.6.3 (pinning it), each cut by its Release workflow from a version
+              bump on main. No other repository releases.
 ```
+
+## Progress
+
+slices 0/15 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -889,6 +920,52 @@ Door          two-way: the task adds a command, a README section, and a goal
 - measure (build): the iPhone readings were taken in Chrome for iOS, which runs WebKit, and
   recorded as first runs and in-place reruns; sqlate's cold run was confirmed in an Incognito tab.
   No cached reloads were taken on the phone.
+- review: the screenshot review covers all six profiles (the four palettes at the defaults, then
+  compact and sans at flexoki), light and dark, on every page. Rejected: the palettes alone;
+  flexoki everywhere with palettes only on editor and fence pages.
+- review: the architect views each batch as a browser gallery under TMPDIR, which the session
+  deletes as each checkpoint closes. Rejected: the terminal's kitten icat, for hundreds of images.
+- review: findings in the spike's own layers are fixed in this task, after each checkpoint;
+  final-review keeps performance, optimization, and ergonomics.
+- review: findings in the reference repositories that are genuine defects are fixed in those
+  repositories; opinionated changes become intake findings. This task is the exception to "the
+  spike reads its references and never writes to them".
+- review (architect's direction): every problem is fixed at its root, in the layer that owns it,
+  never patched to one problem's parameters; a workaround the spike carries for a root it fixes
+  is deleted. A candidate standard for `retro`.
+- review: the captures add the Go demos after their prebuilt runs and the playground after a calc
+  Run at each width, with Timings at 390px. Rejected: no post-Run states.
+- review: captures use the machine's fonts alone; the check already proves layout in DejaVu.
+- review: Firefox is checked by hand in the installed stock Firefox 158.0.1 on the live site.
+  Rejected: scripted Firefox over WebDriver BiDi, Playwright's cached 146.0.1, recording a gap.
+- review: Safari is checked by hand in the iPhone's Safari app only; desktop Safari and WebKitGTK
+  are recorded as gaps. Rejected: WebKitGTK's MiniBrowser; Playwright's WebKit in Docker.
+- review: SDK v0.6.3 fixes the header group's placement without a site nav and its reflow
+  (`flex: none`, WCAG 1.4.10), widens the script-focused heading's no-outline rule from Help to
+  every shortcut dialog, reads a missing content.json as no tree, and keeps a highlighted fence's
+  language. The spike's workarounds for each are deleted.
+- review: the shading over an open dialog is a hint popover's `::backdrop`: the foundation veils
+  every top-layer backdrop, not only a modal dialog's (reproduced in chrome-headless-shell 157 on
+  SDK v0.6.2). Foundation v0.3.1 veils modal dialogs alone, and SDK v0.6.3 pins it. Heading focus
+  on open stays, as the WAI-ARIA dialog pattern; no rule is added for Close's hint.
+- review: the SDK v0.6.3 and foundation v0.3.1 moves reach the three hosting sites and the
+  spike-html-apps family (spike-html-apps, -apps-components, -apps-noctis), so no known consumer
+  keeps the defect. Hosting components, icons, apps-components, and noctis move their pins
+  without releasing.
+- review: navigation within the site is the spike's own: a Site nav in every header (the spike's
+  name home, Playground, sqlate, Library demos, Components; current page marked), rendered from
+  one list the spike owns. Below the width where it fits beside the header's buttons, it collapses
+  into an sl-drawer, modal at every width, opened from a header button. The index opens with a
+  where-to-go list. Rejected: an SDK nav feature now (a finding); adding the spike to
+  sl-site-nav's site list; a home link alone; breadcrumbs; a components release for an inline
+  drawer mode.
+- review: the nav lands before the first checkpoint, so the review sees the site as it ships.
+- review: held go-core v0.10.0, go-messaging v0.2.0, and go-web-sdk v0.15.2 in spike-html-apps:
+  porting its emulator to the converted APIs is the intake's.
+- review: held rolldown at 1.2.18 in the SDK and spike-html-apps: vite 8.3.8, the latest, pins
+  `~1.2.18`.
+- review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
+  branches the planner saw were stale tracking refs, already gone from the remotes.
 
 ## Notes
 
