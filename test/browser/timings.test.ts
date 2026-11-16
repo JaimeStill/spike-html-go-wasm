@@ -6,9 +6,11 @@
 // had, in the runtime's phase order whatever order they arrived in, and a total row; the times
 // formatted to a tenth under 10 ms and whole from there, grouped, right-aligned in tabular
 // numerals; no run yet said, with no total, and a run begun with no phase timed said apart from
-// it; at a phone's width the table fits its column. A new run replaces the last, on the owner's begin and on
-// the specimen aid's press. The table listens only to the timings it holds, only while in the
-// document, and nothing moves. Nothing here names the site: its base is package.json's name.
+// it; at a phone's width the table fits its column, and with the text at 200% there, wider than
+// its column, it keeps its two columns and scrolls inside the element, the page never sideways. A
+// new run replaces the last, on the owner's begin and on the specimen aid's press. The table
+// listens only to the timings it holds, only while in the document, and nothing moves. Nothing
+// here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -327,6 +329,47 @@ describe("the timings' rendering", () => {
         assert.ok(fit.table <= fit.figure, `${state}: ${fit.table}px in ${fit.figure}px`);
         assert.equal(fit.sideways, false, state);
         assert.equal(fit.page, false, state);
+      }
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("at a phone's width with the text at 200%, a table wider than its column scrolls inside the element, and the page never sideways", async () => {
+    const page = await open();
+    try {
+      await viewport(page, PHONE);
+      await page.evaluate(`document.documentElement.style.fontSize = "200%"`);
+      await page.evaluate(SETTLED);
+      for (const state of ["cold", "program"]) {
+        const fit: {
+          table: number;
+          host: number;
+          columns: number[];
+          scrolls: boolean;
+          page: boolean;
+        } = await page.evaluate(`(() => {
+          const host = window.timings.at("${state}");
+          const table = host.shadowRoot.querySelector("table");
+          const before = host.scrollLeft;
+          host.scrollLeft = host.scrollWidth;
+          const scrolls = host.scrollLeft > before;
+          host.scrollLeft = before;
+          return {
+            table: table.getBoundingClientRect().width,
+            host: host.getBoundingClientRect().width,
+            columns: [...table.rows].map((row) => row.cells.length),
+            scrolls,
+            page: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+          };
+        })()`);
+        assert.ok(fit.table > fit.host, `${state}: ${fit.table}px, wider than ${fit.host}px`);
+        assert.ok(
+          fit.columns.every((cells) => cells === 2),
+          `${state}: two columns, ${fit.columns.join(", ")}`,
+        );
+        assert.equal(fit.scrolls, true, `${state}: the element scrolls sideways`);
+        assert.equal(fit.page, false, `${state}: the page doesn't`);
       }
     } finally {
       await page.close();

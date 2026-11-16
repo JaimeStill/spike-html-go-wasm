@@ -79,8 +79,9 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
       the dropped count, tail following, Copy and Clear, throughput, focus, motion, and
       subscription;
     - the timings: their table in the accessibility tree, only the run's phases in order with
-      their total, the times' format and alignment, the empty state, a new run replacing the
-      last, and subscription;
+      their total, the times' format and alignment, the empty state, fitting a phone's width and
+      scrolling inside itself with the text at 200% there, a new run replacing the last, and
+      subscription;
     - the controls: their toolbar in the accessibility tree, keyboard, availability following the
       models, requests that change nothing, the New file and Rename forms' validation and focus
       return, each form inside the viewport at 280px, a phone's width, and wide, the status's
@@ -1324,7 +1325,9 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
   right-aligned in tabular numerals; the total row is set apart by a heavier rule and weight.
   With no run yet the table says "No run yet.", and with a run begun and no phase timed, "No
   phase timed yet.", with no total. The table is as wide as its content, at least its least width
-  or its container's width, and never wider than its container. Nothing moves.
+  or its container's width, and never wider than its container; where it can't get that narrow,
+  as with the text at 200% at a phone's width, it keeps its two columns and scrolls sideways inside
+  the element, and the page never does. Nothing moves.
   - Attributes: `label` (the table's caption and accessible name, "Timings" by default).
   - Custom properties: `--sl-timings-min-inline-size`, the table's least width, a length, `28ch`
     by default, in the ch of the table's text: room for a build's full table, "Wasm compile"

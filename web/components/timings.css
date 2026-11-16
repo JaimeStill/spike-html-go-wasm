@@ -14,16 +14,22 @@
  * for their track (go-demo.css), so no length is kept in step across sheets. The phases' names
  * lead each row; the times keep to the end of their column in tabular numerals, so the digits of
  * each place line up, and never break between a number and its unit. The total row stands apart
- * from the phases above it by a heavier rule and weight, not by color. Nothing moves.
+ * from the phases above it by a heavier rule and weight, not by color. Where the container is
+ * narrower than the table can get, its longest phase name and widest time each unbroken, as with
+ * the text at 200% at a phone's width, the table keeps its two columns and scrolls sideways inside
+ * the element, a data table's two dimensions being reflow's exception (WCAG 1.4.10), and the page
+ * never scrolls sideways. Nothing moves.
  */
 
 /* The table takes the width its container gives and asks for no more. The least width is a length
    in ch, which resolves where it is read: on the table, or on the host where an owner reads it,
-   both in the table's text. A page may set it on the host. */
+   both in the table's text. A page may set it on the host. A table that can't fit the container
+   scrolls in the host, which takes no more of the page's width than the container gives it. */
 :host {
   --sl-timings-min-inline-size: 28ch;
   display: block;
   contain: inline-size;
+  overflow-x: auto;
 }
 
 table {
