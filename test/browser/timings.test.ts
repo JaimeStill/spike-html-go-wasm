@@ -2,7 +2,8 @@
 // SDK's served(), Vite's preview, in the pinned chrome-headless-shell.
 //
 // The accessibility tree, read through CDP: a table named by its caption, its column headers, a
-// row header for each phase and the total, each time its cell. Rendering: only the phases the run
+// row header for each phase and the total, each time its cell; the caption visually hidden, a
+// clipped pixel the header row isn't laid out below, and the element not scrolling down for it. Rendering: only the phases the run
 // had, in the runtime's phase order whatever order they arrived in, and a total row; the times
 // formatted to a tenth under 10 ms and whole from there, grouped, right-aligned in tabular
 // numerals; no run yet said, with no total, and a run begun with no phase timed said apart from
@@ -107,6 +108,34 @@ interface Rows {
 const rows = (page: Page, table: string): Promise<Rows> =>
   page.evaluate(`window.timings.rows(${table})`);
 
+/** A timings' caption as laid out: its text, its box and clip, the table's top and its header
+ * row's, and whether the element scrolls down. */
+interface Caption {
+  text: string;
+  width: number;
+  height: number;
+  clip: string;
+  top: number;
+  head: number;
+  scrolls: boolean;
+}
+
+/** The function giving the Caption of the sl-timings it is called with. */
+const CAPTION = `(host) => {
+  const table = host.shadowRoot.querySelector("table");
+  const caption = table.querySelector("caption");
+  const box = caption.getBoundingClientRect();
+  return {
+    text: caption.textContent.trim(),
+    width: box.width,
+    height: box.height,
+    clip: getComputedStyle(caption).clipPath,
+    top: table.getBoundingClientRect().top,
+    head: table.querySelector("thead").getBoundingClientRect().top,
+    scrolls: host.scrollHeight > host.clientHeight,
+  };
+}`;
+
 /** A node of the accessibility tree, as CDP gives it. */
 interface AXNode {
   ignored: boolean;
@@ -148,6 +177,28 @@ describe("the timings in the accessibility tree", () => {
       await page.evaluate(`window.timings.at("program").label = "hello's timings"`);
       await page.evaluate(`window.timings.at("program").updateComplete`);
       assert.deepEqual(names(await axQuery(page, figure, "table")), ["hello's timings"]);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the caption names the table but takes no visible box, nothing laid out below it", async () => {
+    const page = await open();
+    try {
+      for (const state of ["cold", "program", "empty"]) {
+        const figure = `window.timings.figure("${state}")`;
+        assert.deepEqual(names(await axQuery(page, figure, "table")), ["Timings"], state);
+        const box: Caption = await page.evaluate(`(${CAPTION})(window.timings.at("${state}"))`);
+        assert.equal(box.text, "Timings", state);
+        assert.ok(box.width <= 1 && box.height <= 1, `${state}: ${box.width}x${box.height}px`);
+        assert.equal(box.clip, "inset(50%)", state);
+        // Within a pixel: the collapsed border's outer half lies above the header row.
+        assert.ok(
+          box.head - box.top <= 1,
+          `${state}: the header row ${box.head - box.top}px below the table's top`,
+        );
+        assert.equal(box.scrolls, false, `${state}: the element doesn't scroll down`);
+      }
     } finally {
       await page.close();
     }

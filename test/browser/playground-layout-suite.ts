@@ -26,7 +26,8 @@
 // with the editor left or right, the output is one panel under its tablist, the tabs pattern, its
 // keyboard and accessibility tree the file tabs', and there, at 1120px and 1376px after a Run, the
 // Timings tab shows the build's whole table inside its panel, the Total in view with the page
-// unscrolled; from 44rem to 64rem, and from 64rem with the editor top, the tablist isn't there,
+// unscrolled, the table still named Timings by its caption, which takes no visible box, as the
+// tab names it; from 44rem to 64rem, and from 64rem with the editor top, the tablist isn't there,
 // the console and the timings share a row, and neither is a tabpanel. A demo without `fixed`,
 // the components page's, has no output tablist and a console that grows. The reservations are
 // one property each, read where they apply: the timings' track is sl-timings' least width, 28ch of
@@ -538,17 +539,26 @@ async function tablisted(page: Page, where: string): Promise<void> {
 }
 
 /** The timings' table as laid out in the timings' box: its row headers, in order, the timings'
- * bottom edge and whether they scroll, and the Total row's bottom edge, each in the viewport. */
+ * bottom edge and whether they scroll, the Total row's bottom edge, each in the viewport, and its
+ * caption's text and box, and how far below the table's top its header row starts. */
 const timingsTable = (page: Page) =>
   page.evaluate(`(() => {
     const timings = ${PLAYGROUND}.shadowRoot.querySelector("sl-timings");
     const table = timings.shadowRoot.querySelector("table");
+    const caption = table.querySelector("caption").getBoundingClientRect();
     return {
       rows: [...table.querySelectorAll("tbody th, tfoot th")].map((th) => th.textContent.trim()),
       bottom: timings.getBoundingClientRect().bottom,
       scrolls: timings.scrollHeight > timings.clientHeight,
       total: table.querySelector("tfoot tr").getBoundingClientRect().bottom,
       viewport: innerHeight,
+      caption: {
+        text: table.querySelector("caption").textContent.trim(),
+        width: caption.width,
+        height: caption.height,
+      },
+      head:
+        table.querySelector("thead").getBoundingClientRect().top - table.getBoundingClientRect().top,
     };
   })()`) as Promise<{
     rows: string[];
@@ -556,6 +566,8 @@ const timingsTable = (page: Page) =>
     scrolls: boolean;
     total: number;
     viewport: number;
+    caption: { text: string; width: number; height: number };
+    head: number;
   }>;
 
 describe(`the output tablist, in ${fonts().name}`, () => {
@@ -602,6 +614,19 @@ describe(`the output tablist, in ${fonts().name}`, () => {
             `${where}: the Total, ending at ${table.total}, in the panel and the viewport`,
           );
           assert.equal((await screen(page)).down, 0, `${where}: the page unscrolled`);
+          // The table keeps its name, its caption, which the Timings tab says, so no visible box.
+          const timings = `${PLAYGROUND}.shadowRoot.querySelector("sl-timings")`;
+          assert.deepEqual(
+            (await axQuery(page, timings, "table")).map((node) => node.name?.value),
+            ["Timings"],
+            `${where}: the table's name`,
+          );
+          assert.equal(table.caption.text, "Timings", where);
+          assert.ok(
+            table.caption.width <= 1 && table.caption.height <= 1,
+            `${where}: the caption's box, ${table.caption.width}x${table.caption.height}px`,
+          );
+          assert.ok(table.head <= 1, `${where}: the header row ${table.head}px below the top`);
         }
         const where = `${width}x${height}, editor top`;
         await arrange(page, "top");

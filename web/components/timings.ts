@@ -7,7 +7,8 @@
 // compile phase, WebAssembly's, is "Wasm compile", apart from a build's "Go compile".
 //
 // The table is a table to assistive technology: named by its caption, the phases' names its row
-// headers, under a column header for each. The times are right-aligned in tabular numerals, so
+// headers, under a column header for each. The caption is visually hidden: its owner names the
+// timings where it shows them, as the playground's Timings tab does, so it isn't said twice. The times are right-aligned in tabular numerals, so
 // their digits line up, formatted by Intl.NumberFormat as ms: a tenth of a ms under 10 ms, where a
 // tenth is a tenth of the time, and whole ms from there. Nothing moves.
 
@@ -62,7 +63,7 @@ export function formatMs(ms: number): string {
  * reads, gives a row for each phase the current run has, in the runtime's phase order, its name
  * and its time, and a total row; with no run yet, or a run with no phase timed yet, the table says
  * so in a row of its own and has no total. The table is named by its caption, `label`, "Timings"
- * by default.
+ * by default, visually hidden, as its owner names the timings where it shows them.
  *
  * Events: none; Slots: none; Keyboard: none, as the table holds nothing to operate.
  */
@@ -77,7 +78,7 @@ export class TimingsTable extends LitElement {
   /** The timings the table renders from, which their owner writes and the table never does; null
    * shows no run yet. */
   declare timings: RunTimings | null;
-  /** The table's accessible name, its caption. */
+  /** The table's accessible name, its caption, which is visually hidden. */
   declare label: string;
 
   constructor() {

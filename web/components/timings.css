@@ -1,9 +1,10 @@
 /*
  * The timings' layout in a shadow root: timings.ts adopts this sheet after the foundation's reset
- * and elements sheets (baseline/reset.css and elements.css), which draw the table's grid, its
- * caption, and its header cells on the element surface. It reads only the foundation's tokens,
- * which a shadow root takes by inheritance from the page's entry. Unlayered, it sits above the
- * adopted layers in the root.
+ * and elements sheets (baseline/reset.css and elements.css), which draw the table's grid and its
+ * header cells on the element surface. The caption, the table's name, is visually hidden: the
+ * owner names the timings where it shows them, as the playground's Timings tab does. It reads only
+ * the foundation's tokens, which a shadow root takes by inheritance from the page's entry.
+ * Unlayered, it sits above the adopted layers in the root.
  *
  * The table is as wide as its content, at least its least width or the container's width when that
  * is narrower, and never wider than the container. The least width, --sl-timings-min-inline-size,
@@ -32,11 +33,28 @@
   overflow-x: auto;
 }
 
+/* The containing block of the visually hidden caption, which is absolutely placed: so it lies in
+   the table, inside the host that scrolls, rather than on the page's own block, growing the page. */
 table {
+  position: relative;
   inline-size: max-content;
   min-inline-size: min(var(--sl-timings-min-inline-size), 100%);
   max-inline-size: 100%;
   margin: 0;
+}
+
+/* The caption names the table to assistive technology, its native name, but takes no visible
+   box: whoever shows the timings names them where they are shown, as the playground's Timings tab
+   does, so a visible caption would say the name twice. */
+caption {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .time {

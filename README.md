@@ -1379,7 +1379,9 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
   or its container's width, and never wider than its container; where it can't get that narrow,
   as with the text at 200% at a phone's width, it keeps its two columns and scrolls sideways inside
   the element, and the page never does. Nothing moves.
-  - Attributes: `label` (the table's caption and accessible name, "Timings" by default).
+  - Attributes: `label` (the table's caption and accessible name, "Timings" by default; the
+    caption is visually hidden, as the element's owner names the timings where it shows them,
+    as the playground's Timings tab does).
   - Custom properties: `--sl-timings-min-inline-size`, the table's least width, a length, `28ch`
     by default, in the ch of the table's text: room for a build's full table, "Wasm compile"
     beside "12,345 ms". It is stated once, on the element, where an owner laying the timings beside
@@ -1387,8 +1389,8 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
   - Properties: `timings`, the `RunTimings` its owner creates and writes; `null`, the default,
     shows no run yet; and `label`, as its attribute.
   - Events: none. Slots: none.
-  - Accessibility: a table named by its caption, "Phase" and "Time" its column headers, each
-    phase's name and "Total" a row header.
+  - Accessibility: a table named by its caption, visually hidden, "Phase" and "Time" its column
+    headers, each phase's name and "Total" a row header.
   - Keyboard: none; the table holds nothing to operate.
 
 ## Keeping pace with the SDK
