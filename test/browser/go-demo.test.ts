@@ -19,13 +19,13 @@
 // handler demo refuses a set as an authoring error. A demo's accessibility tree: a region named by
 // its label, the toolbar, the tabs and the panel on a program demo, the editor, the log, and the
 // timings, its fences no part of it. The fences: the SDK's Shiki markup read as plain text and run,
-// named by the demo's file attribute while it is set, and without script, every fence shows as the
-// page's code. At a phone's width each demo fits its column, and at 1280px and 1120px, either side
-// of the 44rem at which the console and timings share a row, and a phone's width, every part of
-// every demo lies within it, run or not, the console and timings side by side from the 44rem on.
-// The rest of the runtime's proofs, through the same demos, are go-runs.test.ts's; the page's watch
-// and helpers are go-demos.ts's. Every wait is bounded. Nothing here names the site: its base is
-// package.json's name.
+// named by its code's language class, and by the demo's file attribute while it is set, and
+// without script, every fence shows as the page's code. At a phone's width each demo fits its
+// column, and at 1280px and 1120px, either side of the 44rem at which the console and timings
+// share a row, and a phone's width, every part of every demo lies within it, run or not, the
+// console and timings side by side from the 44rem on. The rest of the runtime's proofs, through
+// the same demos, are go-runs.test.ts's; the page's watch and helpers are go-demos.ts's. Every
+// wait is bounded. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -701,7 +701,7 @@ describe("the fences", () => {
     }
   });
 
-  test("the SDK's Shiki markup reads as its text, a handler demo's input.json, and runs", async () => {
+  test("the SDK's Shiki markup reads as its text, input.json by its code's language-json class, and runs", async () => {
     const { page } = await open();
     try {
       const target = demo("markdown");
@@ -725,7 +725,7 @@ describe("the fences", () => {
     }
   });
 
-  test("the file attribute names the SDK's Shiki fence, which names none: query.sql, SQL's grammar, and removing it names input.json again", async () => {
+  test("the file attribute names the SDK's Shiki fence, which names none: query.sql, SQL's grammar, and removing it names input.json by its language again", async () => {
     const { page } = await open();
     try {
       const target = demo("markdown");

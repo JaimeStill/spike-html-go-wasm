@@ -7,12 +7,12 @@
 // is one file, in order: its text is the pre's text content, so marked's plain
 // `<pre><code class="language-go">` and the SDK's Shiki-rendered `<pre class="shiki">`, its tokens
 // in spans, read alike. A fence's name is its `data-file`, on the pre or its code, else the pre's
-// `title`; else the demo's `file` attribute, which names every fence that names none, since the
-// SDK's highlighted Markdown fences can carry no name, keeping no info string past its language
-// and Shiki's markup dropping even that; else a default from its language, a `data-language` on
-// either, or a `language-<name>` class, as marked writes it: main.go for go, input.json for json,
-// query.sql for sql, input.txt for any other; and, with no language, as Shiki's output carries
-// none, main.go on a program or source demo and input.json on a handler demo.
+// `title`; else the demo's `file` attribute, which names every fence that names none, since a
+// Markdown fence can carry no name, keeping no info string past its language; else a default from
+// its language, a `data-language` on either, or a `language-<name>` class on either, as marked
+// writes it on a plain fence's code and the SDK on a highlighted one's: main.go for go,
+// input.json for json, query.sql for sql, and input.txt for any other or for none, as a fence
+// with no info string has.
 //
 // The naming rules themselves, and each file's grammar by its name, are file-names.ts's, which
 // holds no DOM, so the unit tier reads them under node.
@@ -26,8 +26,8 @@ export interface Fence {
 }
 
 /** The language a fence's markup names: a data-language on the pre or its code, else a
- * language-<name> class on either, as marked writes it; undefined when it names none, as the
- * SDK's Shiki output doesn't. */
+ * language-<name> class on either, as marked and the SDK's highlighter write it; undefined when it
+ * names none, as a fence with no info string doesn't. */
 function fenceLanguage(pre: HTMLPreElement): string | undefined {
   const code = pre.querySelector(":scope > code");
   for (const element of [pre, code]) {
@@ -56,10 +56,10 @@ function fenceMarkup(pre: HTMLPreElement): FenceMarkup {
 const fencesOf = (parent: ParentNode): HTMLPreElement[] =>
   [...parent.children].filter((child): child is HTMLPreElement => child.localName === "pre");
 
-/** The parent's fences as files, in order, each named by fenceName for the mode, program or not,
- * and the demo's file, its text the pre's text content. */
-export const readFences = (parent: ParentNode, program: boolean, file?: string | null): Fence[] =>
+/** The parent's fences as files, in order, each named by fenceName for the demo's file, its text
+ * the pre's text content. */
+export const readFences = (parent: ParentNode, file?: string | null): Fence[] =>
   fencesOf(parent).map((pre) => ({
-    name: fenceName(fenceMarkup(pre), program, file),
+    name: fenceName(fenceMarkup(pre), file),
     text: pre.textContent ?? "",
   }));

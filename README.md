@@ -735,8 +735,9 @@ at build into Shiki's markup:
 </sl-go-demo>
 ````
 
-The blank lines end the HTML block, so the fence between them renders as Markdown. Shiki's markup
-carries no name, so the demo's `file` attribute names the fence. The page passes the SDK's shell
+The blank lines end the HTML block, so the fence between them renders as Markdown. A rendered
+fence carries no name, only its language, which would name it `query.sql`, so the demo's `file`
+attribute names it. The page passes the SDK's shell
 checks, the palette check, and the crawl. The bridge and the runtime serve it, as they serve the
 sqlate page, with no code of sqlate's.
 
@@ -1090,13 +1091,12 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
   `tabSizeProblem(value)` and `wrapProblem(value)` give that reason, or `null`, without setting
   anything, and `defaults` holds the defaults, frozen. Each set that changes a value sends one
   `change` `Event`; a set to the value held sends none. The unit tier tests it under node.
-- `./fences.js`: `readFences(parent, program, file?)`, a Go demo's fences read as files,
+- `./fences.js`: `readFences(parent, file?)`, a Go demo's fences read as files,
   `{ name, text }` each, in order: the rules `sl-go-demo` builds its files by (its "Fences",
   below), stated once so that a page building a `FileSet` for a demo, from a template's content,
-  reads them alike. `parent` is the demo's host or a template's content; `program` picks the
-  default name of a fence that names no language, `main.go` when true, else `input.json`; `file`,
-  the demo's `file` attribute, names every fence that names none. It reads the markup and changes
-  nothing. The naming rules themselves, and a file's grammar by its name (`languageOf`), are
+  reads them alike. `parent` is the demo's host or a template's content; `file`, the demo's `file`
+  attribute, names every fence that names none. It reads the markup and changes nothing. The
+  naming rules themselves, and a file's grammar by its name (`languageOf`), are
   `file-names.ts`'s, which holds no DOM, so the unit tier tests them under node.
 - `./file-set.js`: `FileSet`, a set of source files, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the tabs and the editor, is the only
@@ -1181,8 +1181,8 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     no handler), `editable-files` (a boolean: New file, Rename, and Delete on a program or source
     demo; a handler demo, holding its one input, ignores it), `wrap` (a boolean: long lines
     wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), `fixed` (a boolean: the
-    fixed layout, below), `file` (the name of every fence that names none, as the SDK's
-    highlighted Markdown fences can't; absent or empty, the defaults below), and `label` (the
+    fixed layout, below), `file` (the name of every fence that names none, as a Markdown fence
+    can't; absent or empty, the defaults below), and `label` (the
     demo's accessible name, "<scenario> <handler> demo" by default, "Go source demo" on a source
     demo).
     A change to `handler`, `source`, or `file` rebuilds the files from the fences; `wrap` and
@@ -1201,12 +1201,11 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     `null`; and the attributes'.
   - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
     the pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
-    Shiki-rendered `<pre class="shiki">` read alike. A file's name is the pre's or its code's
-    `data-file`, else the pre's `title`, else the demo's `file`, unless empty, else a default
-    from the fence's language, a `data-language` or a `language-<name>` class on either: `main.go`
-    for go, `input.json` for json, `query.sql` for sql, `input.txt` for any other; with no
-    language, as Shiki's markup carries none, `main.go` on a program or source demo and
-    `input.json` on a handler demo. Each file's grammar follows its name's extension: `.go`,
+    Shiki-rendered `<pre class="shiki"><code class="language-go">` read alike. A file's name is
+    the pre's or its code's `data-file`, else the pre's `title`, else the demo's `file`, unless
+    empty, else a default from the fence's language, a `data-language` or a `language-<name>`
+    class on either: `main.go` for go, `input.json` for json, `query.sql` for sql, and
+    `input.txt` for any other or for none, as a fence with no info string has. Each file's grammar follows its name's extension: `.go`,
     `.json`, or `.sql`, any other plain. The fences are read once the document has parsed them,
     and stay in the light DOM unchanged: before the element upgrades, and without script, they
     render as the page's code; once upgraded they are no part of the flat tree, neither rendered

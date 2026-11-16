@@ -18,7 +18,7 @@
 //
 // The fences: each `pre` that is a child of the host is one file, in order, read and named by
 // fences.ts's rules, which a page building a file set for the demo reads by too. `file` names
-// every fence that names none, as a fence the SDK highlights in Markdown can't: a fence's own name
+// every fence that names none, as a Markdown fence can't: a fence's own name
 // still wins, and without it the defaults hold. Each file's grammar follows its name's extension,
 // .go, .json, or .sql, any other plain. The fences are read once the document has parsed the
 // demo's children, and again when `handler`, `source`, or `file` changes, which rebuilds the
@@ -234,7 +234,7 @@ interface Owned {
  * light DOM's fences (see the module's note), unless `files`, a FileSet the page owns, gives them;
  * giving another set, or none, switches the demo to it in place, stopping its pending run and
  * clearing its console and timings. `file` names each fence that names none, in place of the
- * default from its language or the mode (file-names.ts); a fence's own name wins over it, and a
+ * default from its language (file-names.ts); a fence's own name wins over it, and a
  * page's set ignores it. `editable-files` adds New file, Rename, and Delete on a program or source
  * demo. `wrap` wraps long lines, and `tab-size` sets a tab's width, 1 to 8 columns, 4 by default.
  * `fixed` makes the demo as tall as the box its parent's layout gives it, never below its floor in
@@ -492,7 +492,7 @@ export class GoDemo extends LitElement {
   /** A set of the fences' files, for the mode, program or not; throws the reason when they can't
    * make one. */
   #fenceSet(program: boolean): FileSet {
-    const fences = readFences(this, program, this.file);
+    const fences = readFences(this, this.file);
     if (fences.length === 0) {
       throw new Error("a demo holds its code in at least one fence, a pre among its children");
     }

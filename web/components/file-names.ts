@@ -1,12 +1,12 @@
 // A Go demo's file names: the rules a fence is named by, from what its markup says and the demo's
-// mode and `file` attribute (fences.ts reads the markup, go-demo.ts the attribute), and the grammar
+// `file` attribute (fences.ts reads the markup, go-demo.ts the attribute), and the grammar
 // a file's name gives it in the editor. Plain functions over strings, holding no DOM, so the unit
 // tier reads them under node.
 //
 // A fence's name is the one its markup gives, data-file or title; else the demo's `file`, unless
 // empty, which names every fence that names none; else a default from the language its markup
-// names: main.go for go, input.json for json, query.sql for sql, input.txt for any other; and,
-// with no language, main.go on a program or source demo and input.json on a handler demo. A file's
+// names: main.go for go, input.json for json, query.sql for sql, and input.txt for any other or
+// for none, a fence with no info string being text. A file's
 // grammar follows its name's extension, .go, .json, or .sql, any other plain: the languages the
 // editor's tokenizer highlights (tokenizer.ts).
 
@@ -27,16 +27,13 @@ const DEFAULT_NAMES: Readonly<Record<string, string>> = Object.freeze({
 /** The grammar of a file's name: go, json, or sql by its extension, any other plain. */
 export const languageOf = (name: string): string => /\.(go|json|sql)$/.exec(name)?.[1] ?? "";
 
-/** A fence's file name, by its markup, for the mode, program or not, and the demo's file: the
- * name the markup gives, else the file, unless empty, else a default from its language, or, with
- * none named, the mode's: main.go when program, a program or source demo, else input.json. */
-export function fenceName(
-  { named, language }: FenceMarkup,
-  program: boolean,
-  file?: string | null,
-): string {
+/** A fence's file name, by its markup and the demo's file: the name the markup gives, else the
+ * file, unless empty, else a default from its language, input.txt for a language with none of its
+ * own or for no language. */
+export function fenceName({ named, language }: FenceMarkup, file?: string | null): string {
   if (named !== undefined) return named;
   if (file) return file;
-  if (language === undefined) return program ? DEFAULT_NAMES.go : DEFAULT_NAMES.json;
-  return DEFAULT_NAMES[language] ?? "input.txt";
+  return language !== undefined && Object.hasOwn(DEFAULT_NAMES, language)
+    ? DEFAULT_NAMES[language]
+    : "input.txt";
 }
