@@ -8,7 +8,7 @@
 // held it, returns it to the opener as it closes, by its Close, Escape, or a link: the keys module
 // clicks without focusing. Following a link in it closes it, so the link's navigation lands on the
 // page the drawer covered; the drawer leaves that to the page.
-// Adapted from spike-html-hosting-sdk (v0.6.3): template/index.html, its inline drawer script, for
+// Adapted from spike-html-hosting-sdk (v0.6.4): template/index.html, its inline drawer script, for
 // the one drawer.
 
 import "@jaimestill/spike-html-hosting-components/drawer.js";

@@ -9,9 +9,11 @@
 // the row shows, its links on one line, sharing it with the header's buttons, and the drawer's
 // opener is hidden; a px below the switch and at 390px the row is hidden and the opener shows,
 // named Site, aria-expanded false. Below the switch the opener opens the drawer, a modal, by its
-// click and by N; Escape and the drawer's Close each close it, aria-expanded following, focus back
-// on the opener; a link followed in it closes it, its navigation held by the test so the page stays
-// to be read. With script disabled, at 390px, the row shows, the opener and the drawer don't, and
+// click and by N, its heading taking focus as it opens and nothing else in it, its Close above
+// all, not even in passing, the heading drawing no focus outline, and, opened by N, Close's
+// interest hint closed past the interest delay, as the SDK holds its own drawers; Escape and the
+// drawer's Close each close it, aria-expanded following, focus back on the opener; a link followed
+// in it closes it, its navigation held by the test so the page stays to be read. With script disabled, at 390px, the row shows, the opener and the drawer don't, and
 // nothing scrolls sideways, with the text at its own size and at 200%, nothing in the header
 // passing the viewport on any page; the components page's main, its Go demos unupgraded, is wider
 // than a phone's without script, apart from the nav, so there the header alone is held. The SDK's
@@ -123,6 +125,81 @@ const MODAL = `!!${DRAWER}.shadowRoot?.querySelector("dialog")?.matches(":modal"
 /** Focus is on the opener. */
 const ON_OPENER = `document.activeElement === ${OPENER}`;
 
+/** Starts a record of every focus inside the drawer, in its shadow root and its slotted links,
+ * each by what took it: "heading", the h2 labeling its dialog, "Close", or its tag. Run before the
+ * drawer opens, so a focus that passes through Close on its way to the heading is heard, not only
+ * where focus ends. The SDK's own record, recordDrawerFocus in its browser.js, which it doesn't
+ * export. */
+const RECORD_FOCUS = `(() => {
+  const root = ${DRAWER}.shadowRoot;
+  globalThis.siteFocused = [];
+  if (root.siteFocusRecorded) return;
+  root.siteFocusRecorded = true;
+  root.addEventListener("focusin", ({ target }) =>
+    globalThis.siteFocused.push(
+      target.matches("dialog h2#title")
+        ? "heading"
+        : target.matches('[interestfor="close-hint"]')
+          ? "Close"
+          : target.localName,
+    ));
+})()`;
+
+/** Where focus sits in the open drawer: every focus heard inside it since RECORD_FOCUS; whether
+ * its heading holds it, the drawer the document's focused element and the heading its shadow
+ * root's; whether the heading draws no focus outline; and whether Close's interest hint, the
+ * shadow root's #close-hint, is showing. The SDK's drawerFocus, unexported too. */
+const FOCUS = `(() => {
+  const drawer = ${DRAWER};
+  const root = drawer.shadowRoot;
+  const heading = root.querySelector("dialog h2#title");
+  const { outlineStyle, outlineWidth } = heading ? getComputedStyle(heading) : {};
+  return {
+    focused: globalThis.siteFocused ?? [],
+    heading: !!heading && document.activeElement === drawer && root.activeElement === heading,
+    outline: outlineStyle === "none" || parseFloat(outlineWidth) === 0,
+    hint: !!root.getElementById("close-hint")?.matches(":popover-open"),
+  };
+})()`;
+
+/** Waits well past a focused control's interest delay, Chromium's 0.25 s at "normal", by which
+ * Close's hint, had Close taken keyboard focus as the drawer opened, would show. The SDK's
+ * PAST_INTEREST. */
+const PAST_INTEREST = `new Promise((resolve) => setTimeout(resolve, 1000))`;
+
+/** Asserts the drawer, just opened by how with its focus recorded from before (RECORD_FOCUS),
+ * gave its heading first focus, by the components' tabindex="-1" and autofocus, and nothing else
+ * in it, Close above all, took focus, not even in passing; the heading still holds focus and draws
+ * no focus outline. With `hint`, asked on a key's open alone, since the hint shows on keyboard
+ * focus, it then waits past the interest delay and asserts Close's hint is closed: a hint that
+ * never opens sends no event to wait on, so a slow browser can make this pass early, never fail.
+ * As assertDrawerFocus in the SDK's browser.js holds its Pages and Contents drawers. */
+async function assertHeadingFocus(
+  page: Page,
+  where: string,
+  how: string,
+  hint: boolean,
+): Promise<void> {
+  let focus = (await page.evaluate(FOCUS)) as {
+    focused: string[];
+    heading: boolean;
+    outline: boolean;
+    hint: boolean;
+  };
+  assert.deepEqual(
+    focus.focused,
+    ["heading"],
+    `${where}: the drawer, opened by ${how}, focuses its heading alone, not ` +
+      (focus.focused.join(", then ") || "nothing"),
+  );
+  assert.ok(focus.heading, `${where}: the drawer, opened by ${how}, keeps focus on its heading`);
+  assert.ok(focus.outline, `${where}: the drawer's focused heading draws no focus outline`);
+  if (!hint) return;
+  await page.evaluate(PAST_INTEREST);
+  focus = (await page.evaluate(FOCUS)) as typeof focus;
+  assert.equal(focus.hint, false, `${where}: the drawer opens by ${how} with Close's hint closed`);
+}
+
 /** Presses a key, as a reader types it: a letter with its text, or a named key. */
 async function press(page: Page, key: "n" | "Escape"): Promise<void> {
   const event =
@@ -232,20 +309,24 @@ describe("the site's own nav", () => {
       }
     });
 
-    test(`${where}: below the switch the opener opens the drawer by its click and by N; Escape and Close close it, focus back on the opener; a link followed closes it`, async () => {
+    test(`${where}: below the switch the opener opens the drawer by its click and by N, on its heading, Close's hint closed; Escape and Close close it, focus back on the opener; a link followed closes it`, async () => {
       const page = await browser.open(`${server.origin}${path}`);
       try {
         await viewport(page, PHONE);
+        await page.evaluate(RECORD_FOCUS);
         await clickAt(page, OPENER);
         await opened(page, where, "the opener's click");
+        await assertHeadingFocus(page, where, "the opener's click", false);
         await press(page, "Escape");
         await closed(page, where, "Escape");
 
         // N from the body, focus nowhere in particular: the keys module clicks the opener without
         // focusing it, and the drawer still returns focus to the opener.
         await page.evaluate(`document.activeElement?.blur()`);
+        await page.evaluate(RECORD_FOCUS);
         await press(page, "n");
         await opened(page, where, "N");
+        await assertHeadingFocus(page, where, "N", true);
         await clickAt(page, `${DRAWER}.shadowRoot.querySelector("dialog button")`);
         await closed(page, where, "the drawer's Close");
 

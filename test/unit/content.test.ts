@@ -4,7 +4,7 @@
 // here as one no record names.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/unit/content.test.ts, its check the
 // SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.3): template/test/unit/content.test.ts, its site one
+// Adapted from spike-html-hosting-sdk (v0.6.4): template/test/unit/content.test.ts, its site one
 // with no content.json.
 
 import assert from "node:assert/strict";

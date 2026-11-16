@@ -25,7 +25,7 @@
 // drawer open, a modal, with SITE_NAV's links, the page's own marked current.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
-// From spike-html-hosting-sdk (v0.6.3): template/test/browser/screenshots.test.ts.
+// From spike-html-hosting-sdk (v0.6.4): template/test/browser/screenshots.test.ts.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";

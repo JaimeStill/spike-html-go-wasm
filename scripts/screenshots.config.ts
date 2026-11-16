@@ -42,7 +42,7 @@
 // tier serves it, by the SDK's served(), under the base, are the SDK's: dist/, which the task's
 // build dependency writes, its go/ modules and toolchain the runs fetch included.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
-// description the SDK's. Adapted from spike-html-hosting-sdk (v0.6.3):
+// description the SDK's. Adapted from spike-html-hosting-sdk (v0.6.4):
 // template/scripts/screenshots.config.ts, its pages the hand pages, as the site copies no tree for
 // contentPages to list; the components page split into a page per component, a state per width.
 
