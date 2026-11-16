@@ -171,7 +171,7 @@ describe("the runs", () => {
       assert.equal((await run(page, FORMAT, "Finished format")).result?.ok, true);
       await run(page, HELLO, HELLO_DONE);
       const probe = await run(page, FORMAT5, "Finished format");
-      assert.deepEqual(probe.result, { ok: true, text: "[\n  5\n]\n" });
+      assert.deepEqual(probe.result, { ok: true, text: "[\n  5\n]" });
       // probe's module is fetched again, over the HTTP cache, since the switch to hello replaced
       // it; its instance starts afresh.
       assert.deepEqual(probe.phases, ["Fetch", "Wasm compile", "Instantiate", "Start", "Call"]);
@@ -205,7 +205,7 @@ describe("Stop", () => {
       assert.deepEqual(spun.rows, [{ kind: "line", text: "spin: looping until Stop" }]);
 
       const next = await run(page, FORMAT5, "Finished format");
-      assert.deepEqual(next.result, { ok: true, text: "[\n  5\n]\n" });
+      assert.deepEqual(next.result, { ok: true, text: "[\n  5\n]" });
       // A fresh instance of the kept module: no fetch, no compile.
       assert.deepEqual(next.phases, ["Instantiate", "Start", "Call"]);
       assert.deepEqual(wasmRequests(watched), ["go/probe.wasm"]);
@@ -232,7 +232,7 @@ describe("Stop", () => {
       await run(page, FORMAT, "Finished format");
       await stop();
       const format = await run(page, FORMAT5, "Finished format");
-      assert.deepEqual(format.result, { ok: true, text: "[\n  5\n]\n" });
+      assert.deepEqual(format.result, { ok: true, text: "[\n  5\n]" });
       assert.deepEqual(format.phases, ["Instantiate", "Start", "Call"]);
 
       await run(page, HELLO, HELLO_DONE);
@@ -280,7 +280,7 @@ describe("a Go panic outside any handler", () => {
       assert.match(panic, /\ngoroutine \d+ \[running\]:\n/);
 
       const next = await run(page, FORMAT5, "Finished format");
-      assert.deepEqual(next.result, { ok: true, text: "[\n  5\n]\n" });
+      assert.deepEqual(next.result, { ok: true, text: "[\n  5\n]" });
       assert.deepEqual(next.phases, ["Instantiate", "Start", "Call"]);
       assert.deepEqual(wasmRequests(watched), ["go/probe.wasm"]);
       assert.equal(watched.workers.length, 1, `one worker: ${watched.workers}`);
@@ -355,7 +355,7 @@ describe("one request at a time", () => {
       assert.equal(await page.evaluate(`${FORMAT}.runner.scenario`), "probe");
       // The newer load's module is held: the next call answers on its instance, with no fetch.
       const next = await run(page, FORMAT5, "Finished format");
-      assert.deepEqual(next.result, { ok: true, text: "[\n  5\n]\n" });
+      assert.deepEqual(next.result, { ok: true, text: "[\n  5\n]" });
       assert.deepEqual(next.phases, ["Call"]);
       assert.deepEqual(wasmRequests(watched), ["go/probe.wasm", "go/probe.wasm"]);
       assert.deepEqual((await shown(page, FORMAT)).rows, []);

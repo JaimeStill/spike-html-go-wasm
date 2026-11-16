@@ -89,9 +89,10 @@ const PROGRAMS = [
   ["stdlib", "Standard library"],
 ];
 
-/** A program's file, as playground/ holds it. */
+/** A program's file as its fence gives it to the demo: playground/'s file, its lines, less the
+ * final newline the file ends in and the fence's markup keeps (fences.ts). */
 const source = (program: string, name: string) =>
-  readFileSync(join(root, "playground", program, name), "utf8");
+  readFileSync(join(root, "playground", program, name), "utf8").replace(/\n$/, "");
 
 /** What basics prints, every run, as its own go test holds it: each line on stdout. */
 const BASICS_OUTPUT = [
@@ -272,7 +273,7 @@ async function contents(page: Page): Promise<Record<string, string>> {
   return texts;
 }
 
-/** Each of the program's files as playground/ holds it, by name. */
+/** Each of the program's files as its fence gives it, by name. */
 const shipped = (program: string) =>
   Object.fromEntries(FILES[program].map((name) => [name, source(program, name)]));
 
@@ -585,7 +586,7 @@ describe("the playground's programs", () => {
     }
   });
 
-  test("a reload restores every program as shipped: its files, byte for byte, and no other", async () => {
+  test("a reload restores every program as shipped: its files, line for line, and no other", async () => {
     const watched = await open();
     const { page } = watched;
     try {

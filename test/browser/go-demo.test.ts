@@ -117,6 +117,9 @@ const property = (node: AXNode, name: string) =>
   node.properties?.find((each) => each.name === name)?.value.value;
 
 const helloSource = readFileSync(join(root, "cmd/hello/main.go"), "utf8");
+/** hello's source as a demo's editor holds it: the fence's lines, its text less the final newline
+ * the file ends in and the fence's markup keeps (fences.ts). */
+const helloLines = helloSource.replace(/\n$/, "");
 const helloLine = /^hello from Go go1\.\d+\.\d+ on js\/wasm$/;
 
 describe("loading", () => {
@@ -149,8 +152,8 @@ describe("Run", () => {
       assert.deepEqual(result.rows, [
         {
           kind: "line",
-          // Go's json.Indent keeps the input's trailing newline.
-          text: `format: ${input.length} bytes in, ${answer.length + 1} bytes out`,
+          // The fence's text is its line, no trailing newline for json.Indent to keep.
+          text: `format: ${input.length} bytes in, ${answer.length} bytes out`,
         },
         { kind: "result", text: `Result ${answer.replace(/\s+/g, " ")}` },
       ]);
@@ -436,7 +439,8 @@ describe("attributes after the first render", () => {
           value: window.demos.editor(window.${demo})?.value ?? null,
           given: window.${demo}.owned?.files === window.given,
         }))`);
-      const fence = "package main // fence\n";
+      // The fence's text, its line, less the newline its markup ends in.
+      const fence = "package main // fence";
 
       await page.evaluate(`window.program.files = window.given`);
       assert.deepEqual(await state("program"), {
@@ -505,7 +509,7 @@ describe("Stop and the shared runner", () => {
       ]);
       const format = await shown(page, formatter);
       assert.deepEqual(format.rows, [
-        { kind: "line", text: "format: 4 bytes in, 8 bytes out" },
+        { kind: "line", text: "format: 3 bytes in, 7 bytes out" },
         { kind: "result", text: "Result [ 5 ]" },
       ]);
       // Format's own run: a fresh instance of the module spin held, its timings alone.
@@ -581,7 +585,7 @@ describe("editable files", () => {
       ]);
       assert.equal(
         await page.evaluate(`window.demos.editor(${target}).value`),
-        helloSource,
+        helloLines,
         "the editor shows main.go again",
       );
     } finally {
@@ -690,11 +694,11 @@ describe("the demo in the accessibility tree", () => {
 });
 
 describe("the fences", () => {
-  test("a program demo's editor holds hello's source as cmd/hello/main.go has it", async () => {
+  test("a program demo's editor holds hello's source as cmd/hello/main.go has it, its lines", async () => {
     const { page } = await open();
     try {
       for (const target of [demo("program"), demo("editable-files")]) {
-        assert.equal(await page.evaluate(`window.demos.editor(${target}).value`), helloSource);
+        assert.equal(await page.evaluate(`window.demos.editor(${target}).value`), helloLines);
       }
     } finally {
       await page.close();
@@ -705,7 +709,7 @@ describe("the fences", () => {
     const { page } = await open();
     try {
       const target = demo("markdown");
-      const input = '{ "shiki": true, "list": [3, 1, 2] }\n';
+      const input = '{ "shiki": true, "list": [3, 1, 2] }';
       assert.deepEqual(
         await page.evaluate(`(() => {
           const editor = window.demos.editor(${target});
@@ -739,7 +743,7 @@ describe("the fences", () => {
           await editor.updateComplete;
           return [editor.value, editor.label, editor.language];
         })()`);
-      const input = '{ "shiki": true, "list": [3, 1, 2] }\n';
+      const input = '{ "shiki": true, "list": [3, 1, 2] }';
       assert.deepEqual(await named("query.sql"), [input, "query.sql", "sql"]);
       assert.deepEqual(await named(null), [input, "input.json", "json"]);
     } finally {

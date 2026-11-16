@@ -250,9 +250,9 @@ describe("the playground's prose and About", () => {
       await pressA(page);
       await page.evaluate(SETTLED);
       assert.equal(await page.evaluate(OPEN), false, "About stays closed");
-      // The caret sits where the selection collapsed, before the text's last line break.
+      // The caret sits where the selection collapsed, at the end of the text's last line.
       const typed: string = await page.evaluate(`${editor}.value`);
-      assert.equal(typed, `${before.slice(0, -1)}a\n`, "the editor holds the a");
+      assert.equal(typed, `${before}a`, "the editor holds the a");
     } finally {
       await page.close();
     }

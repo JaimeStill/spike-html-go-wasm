@@ -77,8 +77,9 @@ const HELLO = demo("program");
 /** hello's line, as the prebuilt program demo prints it. */
 const helloLine = /^hello from Go go1\.\d+\.\d+ on js\/wasm$/;
 
-/** The source demo's input.txt, as components.html gives it. */
-const INPUT = "hello from the working directory\n";
+/** The source demo's input.txt, as components.html gives it: its fence's one line, the fence's
+ * text (fences.ts). */
+const INPUT = "hello from the working directory";
 
 /** Opens the components page, watched (go-demos.ts). */
 const open = () => openPage(browser, server.origin);
@@ -138,7 +139,7 @@ describe("a source demo's build", () => {
       const cold = await run(page, DONE);
       t.diagnostic(`cold: ${timed(cold)}`);
       assert.deepEqual(cold.lines, [
-        { stream: "stdout", text: `main read ${INPUT.length} bytes: ${INPUT.trimEnd()}` },
+        { stream: "stdout", text: `main read ${INPUT.length} bytes: ${INPUT}` },
       ]);
       assert.deepEqual(cold.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
       assert.deepEqual(cold.phases, BUILT_PHASES);
@@ -325,7 +326,7 @@ describe("a build runs alone", () => {
       ]);
       const built = await shown(page, SOURCE);
       assert.deepEqual(built.lines, [
-        { stream: "stdout", text: `main read ${INPUT.length} bytes: ${INPUT.trimEnd()}` },
+        { stream: "stdout", text: `main read ${INPUT.length} bytes: ${INPUT}` },
       ]);
       assert.deepEqual(built.rows.at(-1), { kind: "exit", text: "main exited with code 0" });
       assert.deepEqual(built.phases, BUILT_PHASES);

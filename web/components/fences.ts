@@ -4,9 +4,11 @@
 // changes nothing.
 //
 // The fences: each `pre` that is a child of the parent, the demo's host or a template's content,
-// is one file, in order: its text is the pre's text content, so marked's plain
-// `<pre><code class="language-go">` and the SDK's Shiki-rendered `<pre class="shiki">`, its tokens
-// in spans, read alike. A fence's name is its `data-file`, on the pre or its code, else the pre's
+// is one file, in order: its text is its lines, the pre's text content less the one final newline
+// marked's plain `<pre><code class="language-go">` adds, so it and the SDK's Shiki-rendered
+// `<pre class="shiki">`, its tokens in spans and no newline after its last line, read alike: the
+// same fence, either way, is the same file text, the lines between its backticks, and the editor
+// shows no empty line past them (file-names.ts's fenceText). A fence's name is its `data-file`, on the pre or its code, else the pre's
 // `title`; else the demo's `file` attribute, which names every fence that names none, since a
 // Markdown fence can carry no name, keeping no info string past its language; else a default from
 // its language, a `data-language` on either, or a `language-<name>` class on either, as marked
@@ -14,10 +16,10 @@
 // input.json for json, query.sql for sql, and input.txt for any other or for none, as a fence
 // with no info string has.
 //
-// The naming rules themselves, and each file's grammar by its name, are file-names.ts's, which
-// holds no DOM, so the unit tier reads them under node.
+// The naming rules themselves, the text rule, and each file's grammar by its name, are
+// file-names.ts's, which holds no DOM, so the unit tier reads them under node.
 
-import { type FenceMarkup, fenceName } from "./file-names.ts";
+import { type FenceMarkup, fenceName, fenceText } from "./file-names.ts";
 
 /** A fence's file, as read from the markup, before a set holds it: its name and its text. */
 export interface Fence {
@@ -57,9 +59,9 @@ const fencesOf = (parent: ParentNode): HTMLPreElement[] =>
   [...parent.children].filter((child): child is HTMLPreElement => child.localName === "pre");
 
 /** The parent's fences as files, in order, each named by fenceName for the demo's file, its text
- * the pre's text content. */
+ * its lines, by fenceText from the pre's text content. */
 export const readFences = (parent: ParentNode, file?: string | null): Fence[] =>
   fencesOf(parent).map((pre) => ({
     name: fenceName(fenceMarkup(pre), file),
-    text: pre.textContent ?? "",
+    text: fenceText(pre.textContent ?? ""),
   }));
