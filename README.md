@@ -5,7 +5,8 @@
 
 The GitHub Pages site of spike-html-go-wasm, made from the template of
 [spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.3. Its index,
-`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside three more hand pages:
+`index.html`, is a hand page served under `/spike-html-go-wasm/`, opening on a where-to-go list of
+the site's other pages (see "Pages"), beside three more hand pages:
 `components.html`, the components page, which shows each component in `web/components/` in each
 of its states, its Go demos running Go through the runtime in `web/runtime/`; `playground.html`,
 the playground, where the reader edits Go and builds and runs it in the page (see "Playground");
@@ -64,12 +65,14 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
     patterns to the program's pattern files, byte for byte (`test/unit/sqlate-patterns.test.ts`),
     and tests a Go demo's fence naming rules (`web/components/file-names.ts`). It fails if a module
     under `web/components` or `web/pages` registers a page shortcut through the foundation's
-    `keys.js`.
+    `keys.js`, and if the index lacks the where-to-go list's marker, which fails the build
+    (`test/unit/site-nav.test.ts`).
   - The browser tier, in the pinned chrome-headless-shell, each test bounded at 5 minutes so a
     stalled one fails by its name, runs the SDK's shell checks on every hand page and on each
     rendered Markdown page, the crawl, and the SDK's palette check on each rendered page's fences,
     reads each page's cascade layers (the foundation's, then `site`, then `page`) and finds no
-    inline `<style>` in its source, proves the site's own nav on all seven pages (see "Pages"),
+    inline `<style>` in its source, proves the site's own nav on all seven pages and the index's
+    where-to-go list (see "Pages"),
     and proves each component on the components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
       accessibility tree, its gutter, its loading, its editing keys and events, its settings,
@@ -533,6 +536,15 @@ measured in the browser: 863px in the machine's fonts and 925px in DejaVu, round
 with script, the row is hidden and the opener shows; it opens the drawer by its click or N, and
 Escape, the drawer's Close, or a followed link closes it, focus back on the opener. With no script
 the drawer is undefined and hidden and the row shows at every width, wrapping its links.
+
+The index opens its main, after its heading and lede and before the question and the evidence, on
+a where-to-go list: a section headed "Where to go" with an item for each page the Site nav links
+but home, in its order, each the page's link and one line on what the reader finds there, and
+Library demos' item listing the three Markdown pages under it by their titles. The list is written
+from the same `SITE_NAV`, each entry but home's carrying its line, and `siteNav()` writes it into
+the index at the marker the index holds, the comment `site-nav: where-to-go`, failing the build
+when the index lacks it; the Markdown pages' titles are `markdownPages`' own, by its `render`. The
+evidence keeps its own links.
 
 A page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the

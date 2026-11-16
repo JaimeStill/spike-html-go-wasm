@@ -30,7 +30,11 @@
      and shows that name in its interest hint, a glyph-hint popover; a Close's hint is Esc and it
      binds no key. Each glyph is a marker, <svg data-icon="octicon/<name>">, which the SDK's
      markdownPages fills at build with the icons layer's svg: question-16 for Help, gear-16 for
-     Settings, and x-16 for Close. Then its own main content. No Markdown fills it, so the index
+     Settings, and x-16 for Close. Then its own main content: its heading and lede,
+     then the where-to-go list, which the build writes at its marker, the comment "site-nav: where-to-go",
+     from the site nav's one list, a line for each page it links but home, and fails without the
+     marker; then the prose on the components page and the playground, the question, and the
+     evidence. No Markdown fills it, so the index
      loads none of the components' other modules and has no Pages or Contents button or drawer.
      Adapted from spike-html-hosting (421254d): index.html, its title and text this spike's, and
      its header without the site nav.
@@ -93,6 +97,7 @@
         evidence for whether v1.repository-docs and the Pages sites embed live Go demos; the spike
         decides nothing itself.
       </p>
+      <!-- site-nav: where-to-go -->
       <p>
         <a href="components.html">The components page</a> shows the spike's components in each of
         their states, its Go demos running hello and the probe's handlers in a worker, loading Go

@@ -97,6 +97,19 @@
     display: none;
   }
 
+  /* The index's where-to-go list (scripts/site-nav.ts), a section after the lede, set apart by
+     main > section's space: each page's item, its link and its line, --space-xs from the next, and
+     Library demos' Markdown pages, nested under its line, --space-3xs apart. */
+  .where-to-go > ul > li + li {
+    margin-block-start: var(--space-xs);
+  }
+  .where-to-go li > ul {
+    margin-block-start: var(--space-3xs);
+  }
+  .where-to-go li > ul > li + li {
+    margin-block-start: var(--space-3xs);
+  }
+
   /* The components page: a component's states, one figure each, stacked. */
   .states {
     display: grid;

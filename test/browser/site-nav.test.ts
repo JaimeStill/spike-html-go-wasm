@@ -18,6 +18,12 @@
 // shell checks, which run on every page in site.test.ts, hold the header's group, the opener among
 // its buttons, to one line, Help's list to the page's bindings, N's among them below the switch,
 // and every glyph button to its target size. Every wait is bounded.
+//
+// The index opens its main on the where-to-go list after its heading and lede and before the
+// question and the evidence: a section named by its heading, Where to go, whose list has an item
+// for each page SITE_NAV links but home, in its order, each its link, by its text and the URL it
+// resolves to, then its description, Library demos' item listing the three Markdown pages under it
+// by their titles, as markdownPages titles them.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -28,7 +34,7 @@ import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
-import { SITE_NAV } from "../../scripts/site-nav.ts";
+import { MARKDOWN_TITLES, SITE_NAV } from "../../scripts/site-nav.ts";
 import { PHONE, viewport } from "./viewport.ts";
 
 const root = join(import.meta.dirname, "../..");
@@ -291,4 +297,68 @@ describe("the site's own nav", () => {
       }
     });
   }
+
+  test("the index opens its main on the where-to-go list, SITE_NAV's pages but home, in order, each with its line, before the question and the evidence", async () => {
+    const page = await browser.open(server.origin);
+    try {
+      const read = await page.evaluate(`(() => {
+        const section = document.querySelector("main > section.where-to-go");
+        const heading = document.getElementById(section.getAttribute("aria-labelledby"));
+        const items = [...section.querySelectorAll(":scope > ul > li")].map((li) => {
+          const a = li.querySelector(":scope > a");
+          const text = [...li.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE)
+            .map((node) => node.textContent).join("").replace(/\\s+/g, " ").trim();
+          return {
+            text: a.textContent.trim(),
+            href: a.href,
+            line: text,
+            pages: [...li.querySelectorAll(":scope > ul > li > a")].map((page) => ({
+              text: page.textContent.trim(),
+              href: page.href,
+            })),
+          };
+        });
+        const main = [...document.querySelector("main").children];
+        const at = (element) => main.indexOf(element);
+        return {
+          name: heading?.textContent.trim(),
+          inSection: section.contains(heading),
+          items,
+          afterLede: at(section) > at(document.querySelector("main > h1")) &&
+            at(section) > at(document.querySelector("main > h1 + p")),
+          beforeQuestion: at(section) < at(document.getElementById("the-question")) &&
+            at(section) < at(document.getElementById("the-evidence")),
+        };
+      })()`);
+      const expected = SITE_NAV.filter(({ pages }) => !pages.includes("index.html")).map(
+        ({ label, href, pages, description }) => ({
+          text: label,
+          href: new URL(href, server.origin).href,
+          line: `: ${description}`,
+          pages:
+            label === "Library demos"
+              ? pages.map((file) => ({
+                  text: MARKDOWN_TITLES.get(file),
+                  href: new URL(file, server.origin).href,
+                }))
+              : [],
+        }),
+      );
+      assert.equal(expected.length, SITE_NAV.length - 1, "every page but home");
+      assert.ok(
+        expected.every(({ line }) => line.length > ": ".length),
+        "each page but home has its line",
+      );
+      assert.equal(expected.find(({ text }) => text === "Library demos")?.pages.length, 3);
+      assert.deepEqual(read, {
+        name: "Where to go",
+        inSection: true,
+        items: expected,
+        afterLede: true,
+        beforeQuestion: true,
+      });
+    } finally {
+      await page.close();
+    }
+  });
 });
