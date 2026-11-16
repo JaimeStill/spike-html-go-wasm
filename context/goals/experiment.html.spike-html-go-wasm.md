@@ -153,7 +153,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 2/15 committed (1: 17ba124; 2: foundation v0.3.1 released, PR #11, merge 07ba39a, tag 0037b08) · slice 3 committed in spike-html-hosting-sdk review (2aa7e6b upgrade; fixes eab80ae, 863521a, 7c03abc, 4a049ef, a8e469f, 2bc897b; release 6217e1b v0.6.3; 3f5e043 template README) — next its standards review, release brief, merge · slice 4 committed (components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12; unpublished) · slice 6 committed (spike-html-apps 1f6f81c, c9f60ff; unpublished) · editor notes: stale foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record · standards — · spec — · editor —
+slices 7/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, merge 07ba39a) · 3: SDK v0.6.3 released (PR #13, merge 68296b9, tag d0cde51) · 4: components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12 (unpublished) · 5: spike-html-hosting 338681e, -architecture c3a4d9a, -sqlate 0e078ec (unpublished) · 6: spike-html-apps 1f6f81c, c9f60ff (unpublished) · 7: b14324b..2bf3e84 · next: slice 8, the Site nav · editor notes: foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record; the spike's STANDARDS.md v0.3.0 baseline line and context/README.md SDK/foundation versions · standards — · spec — · editor —
 
 ## Decisions
 
@@ -977,6 +977,14 @@ slices 2/15 committed (1: 17ba124; 2: foundation v0.3.1 released, PR #11, merge 
 - review (SDK build): 200% text is modelled by doubling the root font size inside the SDK's
   sideways-scroll check, so media queries keep a 16px rem; the shell check "nothing scrolls
   sideways at 390px" is renamed to name 200% text, which renames it in every site's test output.
+- review (escalation 3): the SDK's checks model 200% text by doubling the root font size.
+  Rejected: Chrome's text-size setting through the experimental CDP Page.setFontSizes.
+- review (spike build): at 390px and 200% text, sl-timings' two-column table needs up to 394px
+  in 279px ("Instantiate", "1,535 ms" don't break), so the host scrolls it inline (WCAG 1.4.10's
+  data-table exception) and the page doesn't scroll sideways; for the components checkpoint.
+- review (spike build): with highlighted fences carrying `language-<label>`, a fence's file name
+  comes from its language; an unlabeled fence is text, input.txt, in either demo mode. The mode
+  default (main.go, input.json) and the spike's empty content.json are gone.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
