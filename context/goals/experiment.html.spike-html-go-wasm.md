@@ -153,7 +153,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 10/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, merge 07ba39a) · 3: SDK v0.6.3 released (PR #13, merge 68296b9, tag d0cde51) · 4: components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12 (unpublished) · 5: spike-html-hosting 338681e, -architecture c3a4d9a, -sqlate 0e078ec (unpublished) · 6: spike-html-apps 1f6f81c, c9f60ff (unpublished) · 7: b14324b..2bf3e84 · 8: e026d28, 3e2f1cf · 9: 46b0f18 · 10: b502751 · next: checkpoint 1 (index, Markdown pages) · findings so far: components page scrolls sideways at 390px without script (go-demo figures before upgrade), for checkpoint 2; the index's two prose paragraphs after the where-to-go list repeat its links, for checkpoint 1 · editor notes: foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record; the spike's STANDARDS.md v0.3.0 baseline line and context/README.md SDK/foundation versions · standards — · spec — · editor —
+slices 10/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, merge 07ba39a) · 3: SDK v0.6.3 released (PR #13, merge 68296b9, tag d0cde51) · 4: components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12 (unpublished) · 5: spike-html-hosting 338681e, -architecture c3a4d9a, -sqlate 0e078ec (unpublished) · 6: spike-html-apps 1f6f81c, c9f60ff (unpublished) · 7: b14324b..2bf3e84 · 8: e026d28, 3e2f1cf · 9: 46b0f18 · 10: b502751 · checkpoint 1 fixes: c95a713 (where-to-go in main's flow), d530aaf (Site drawer captures), fe7b0fc (index paragraphs folded into the list) · in progress: components v0.5.1 and apps-components v0.10.3 drawer focus; then SDK v0.6.4, site moves, spike-html-apps to apps-components v0.10.3; then checkpoint 1 re-review · findings so far: components page scrolls sideways at 390px without script (go-demo figures before upgrade), for checkpoint 2 · editor notes: foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record; the spike's STANDARDS.md v0.3.0 baseline line and context/README.md SDK/foundation versions · standards — · spec — · editor —
 
 ## Decisions
 
@@ -985,6 +985,17 @@ slices 10/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
 - review (spike build): with highlighted fences carrying `language-<label>`, a fence's file name
   comes from its language; an unlabeled fence is text, input.txt, in either demo mode. The mode
   default (main.go, input.json) and the spike's empty content.json are gone.
+- review (checkpoint 1): the where-to-go list sat in a section, which the foundation's flow
+  rule doesn't space, so the paragraph after it had no gap; it is now an h2 and a ul in main's own
+  flow, as the rest of the index. The two paragraphs that repeated the list are gone, their "Go
+  loads only on a Run" folded into the list's lines. Captures gained the Site drawer open at 390px
+  on every page.
+- review (escalation 4): sl-drawer opened with showModal() and no initial focus, so its Close
+  took focus and its hint popped up at once. spike-html-hosting-components v0.5.1 gives the
+  drawer's heading first focus, as the SDK's dialogs have it; SDK v0.6.4 pins it, and the three
+  hosting sites and the spike move to it, each released mid-BUILD after a release brief.
+- review (escalation 5): the same root in spike-html-apps-components' drawer, the upstream of the
+  hosting one, is fixed in apps-components v0.10.3, and spike-html-apps moves to it.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
