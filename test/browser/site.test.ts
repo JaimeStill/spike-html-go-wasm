@@ -11,8 +11,8 @@
 // holdsReadingWidth; a check of the spike's own holds each one's prose, the heading and the lede,
 // to 80ch, centered, instead. The crawl, from the index, reaches exactly the index and, by the
 // index's links, the components page, the playground, the sqlate page, and the rendered pages,
-// loading each hand page it reaches and checking every copied page. content.json records no tree,
-// since the site copies none, so given the repository's root the crawl would count the rendered
+// loading each hand page it reaches and checking every copied page. The site has no content.json,
+// since it copies no tree, so given the repository's root the crawl would count the rendered
 // pages hand pages, which have no pager; but markdownPages gives the tree's pages a site index and
 // pagers, as it does a copied tree's. So the crawl gets a scratch root under TMPDIR whose
 // content.json records markdown/ as one copied tree, each file at its name in markdown/, which
@@ -73,8 +73,8 @@ let browser: Browser;
  * names the page it's served at, with its git blob hash, and a byte copy of each under its
  * content/; answers the root. The repository is package.json's name, its URL the checkout's
  * origin as https, an SSH remote's included, and the commit the working tree's HEAD, so the record
- * is one the SDK's content check accepts. Nothing of it is the site's: content.json at the
- * repository's root stays a record of no tree. */
+ * is one the SDK's content check accepts. Nothing of it is the site's, which has no
+ * content.json. */
 function markdownTreeRoot(): string {
   const dir = mkdtempSync(join(tmpdir(), "site-crawl-"));
   mkdirSync(join(dir, "content"));

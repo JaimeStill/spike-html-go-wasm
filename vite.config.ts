@@ -45,8 +45,8 @@ export default defineConfig({
     // The components' sheets, each one constructed CSSStyleSheet, as the SDK's rewrite pins them.
     standardCssModules({ include: ["**/web/components/**/*.ts"], outputMode: "CSSStyleSheet" }),
     syntaxThemes(),
-    // The spike's own tree, markdown/, rendered into markdown-shell.html, and no copied tree:
-    // content.json records none, so content/ holds nothing. The plugin takes one tree's source
+    // The spike's own tree, markdown/, rendered into markdown-shell.html, and no copied tree: the
+    // site has no content.json and no content/. The plugin takes one tree's source
     // as a copied tree's, and reads its repository and ref only to write a blob URL for a link
     // to a file listed external; the tree lists none and links nothing relative outside itself
     // (the build fails on such a link), so neither is read. The tree is the spike's working

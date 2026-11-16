@@ -15,7 +15,7 @@ spike's own `markdown/` directory: `sqlate-compile.html`, whose demo calls sqlat
 compile handler (see "The Markdown compile page"); `go-core-graph.html`, whose demo builds a
 service wired on go-core's graph in the page (see "go-core graph"); and
 `go-web-sdk-handlers.html`, whose demo sends HTTP/1.1 requests to go-web-sdk's handlers, called
-in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` records none, and
+in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `content.json`, and
 `content/` holds nothing. The spike's question, evidence, and path are in `context/README.md`.
 
 ## Tasks
@@ -40,8 +40,9 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
   `internal/websdk`'s hold each route's status, headers, and body, each rejection with the next
   call served, and writes chained on one instance. It type-checks the configs, the web tiers, and
   the suite with tsc and runs `mise run build`.
-  - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
-    by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
+  - The unit tier checks that `content/` holds nothing, as the site has no `content.json`, both
+    layer directions, go.mod's by-tag rule, the currency and live commands' logic, and the
+    in-memory fs's error codes. It
     checks the playground's toolchain: each file its manifest names exists under its content's
     hash, and the manifest's import closure equals Go's own `go list -deps`, for
     `playground/sqlate` and `playground/graph` through the site's pinned modules, whose packages
@@ -739,8 +740,8 @@ carries no name, so the demo's `file` attribute names the fence. The page passes
 checks, the palette check, and the crawl. The bridge and the runtime serve it, as they serve the
 sqlate page, with no code of sqlate's.
 
-Every Markdown page is crawled as a copied page. `content.json` records no tree, since the site
-copies none, so the crawl would count the rendered pages hand pages, which have no pager; but
+Every Markdown page is crawled as a copied page. The site has no `content.json`, since it copies
+no tree, so the crawl would count the rendered pages hand pages, which have no pager; but
 `markdownPages` gives them a site index and pagers, as it gives a copied tree's. The site test
 (`test/browser/site.test.ts`) crawls from a scratch root under TMPDIR whose `content.json` records
 `markdown/` as one copied tree, a record the SDK's content check accepts, so each rendered page
