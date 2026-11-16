@@ -153,7 +153,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 2/15 committed (1: 17ba124; 2: foundation v0.3.1 released, PR #11, merge 07ba39a, tag 0037b08) · SDK slice 3 in progress · standards — (foundation reviewed) · spec — · editor —
+slices 2/15 committed (1: 17ba124; 2: foundation v0.3.1 released, PR #11, merge 07ba39a, tag 0037b08) · slice 3 part 1 committed in spike-html-hosting-sdk review (2aa7e6b upgrade, rolldown held in CHANGELOG; fixes eab80ae, 863521a, 7c03abc, 4a049ef rewrap, a8e469f, 2bc897b; check green) · next: SDK release commit (0.6.3, foundation v0.3.1 in peer, dev, and template pins; README, STANDARDS, and syntax.ts mentions of v0.3.0; README prose for 200% text, the dialog outline check, no content.json, the language class), its standards review, the architect's release brief, merge, then the template README re-copy commit · standards — · spec — · editor —
 
 ## Decisions
 
@@ -974,6 +974,9 @@ slices 2/15 committed (1: 17ba124; 2: foundation v0.3.1 released, PR #11, merge 
   spike-html-design v0.7.0 is an intake finding, not fixed there.
 - review: foundation v0.3.1 also returns a fullscreen element's backdrop to the browser's black;
   the bare rule's veil on it was never the intent (standards-reviewer).
+- review (SDK build): 200% text is modelled by doubling the root font size inside the SDK's
+  sideways-scroll check, so media queries keep a 16px rem; the shell check "nothing scrolls
+  sideways at 390px" is renamed to name 200% text, which renames it in every site's test output.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
