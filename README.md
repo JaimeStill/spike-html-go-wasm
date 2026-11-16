@@ -69,7 +69,8 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
     stalled one fails by its name, runs the SDK's shell checks on every hand page and on each
     rendered Markdown page, the crawl, and the SDK's palette check on each rendered page's fences,
     reads each page's cascade layers (the foundation's, then `site`, then `page`) and finds no
-    inline `<style>` in its source, and proves each component on the components page:
+    inline `<style>` in its source, proves the site's own nav on all seven pages (see "Pages"),
+    and proves each component on the components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
       accessibility tree, its gutter, its loading, its editing keys and events, its settings,
       paste, and read-only;
@@ -162,9 +163,9 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
       request rejected naming why, the instance outliving it with every write kept; then a report,
       never a gate, of `go/websdk.wasm`'s bytes, raw and gzip, and the cold Run's phase timings;
     - the playground's prose and About: the prose is the heading and the lede alone, and the page
-      holds no disclosure; About leads the header's group, a glyph button showing A; A, a click, or
-      Enter opens the About dialog on its title, Tab reaches its Close, and Close or Escape closes
-      it, focus back where it was; A typed into the editor types; the accessibility tree names the
+      holds no disclosure; About leads the header's group after the Site opener, a glyph button
+      showing A; A, a click, or Enter opens the About dialog on its title, Tab reaches its Close,
+      and Close or Escape closes it, focus back where it was; A typed into the editor types; the accessibility tree names the
       button and the dialog; and the dialog's text is the approved text, in order, its last
       sentence on each program's edits;
     - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
@@ -515,6 +516,24 @@ the space around a rendered Markdown page's Go demo, as around a fence; the comp
 specimens; and the app page, the playground's one screen, which only a body of class `app` takes.
 Its spaces are the foundation's `--space-*` steps.
 
+Every page, the four hand pages and the three rendered Markdown pages, opens its header on the
+site's own nav, a nav landmark named Site: the spike's name linking home, then Playground, sqlate,
+Library demos, linking the first Markdown page and current on each, and Components, the page's own
+link marked `aria-current="page"`. The SDK's `sl-site-nav` links between sites and its Pages
+drawer lists the Markdown pages alone, so the nav between the site's own pages is the spike's. Its
+links are one list, `SITE_NAV` in `scripts/site-nav.ts`, and the build writes them into each page
+through `siteNav()`, a Vite plugin `vite.config.ts` lists, run before Vite's own transform: the
+row, the header's first child; the Site drawer, an `sl-drawer` labeled Site holding the same links,
+modal at every width by a dock no viewport reaches; its opener, a glyph button named Site showing
+`three-bars-16` and the key N, first in the header's group; and the drawer's script,
+`web/pages/site-nav.ts`. N is bound by nothing else on any page, in the shell, the components, or
+the foundation (?, S, P, C, H, L, J, K, T, A). From 58rem the row shows, on one line beside the
+header's buttons; 58rem is the widest header, a Markdown page's under both drawers' docks, as
+measured in the browser: 863px in the machine's fonts and 925px in DejaVu, rounded up. Below it,
+with script, the row is hidden and the opener shows; it opens the drawer by its click or N, and
+Escape, the drawer's Close, or a followed link closes it, focus back on the opener. With no script
+the drawer is undefined and hidden and the row shows at every width, wrapping its links.
+
 A page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
 foundation's and reorders every layer on the page, and an unlayered rule there sits above every
@@ -616,8 +635,8 @@ checks all run on the page but main's reading width, and the spike's own check h
 DejaVu set, and reports how far above its floor the demo stands at each capture size.
 
 The playground's detail is in its About dialog, `dialog#about`, out of the screen's flow, so no
-font costs the demo a line of it. About, the header's first glyph button, before the shell's Help
-and Settings, shows the icons layer's `info-16` and its key, A, which nothing else on the page or
+font costs the demo a line of it. About, the header's first glyph button after the Site opener,
+before the shell's Help and Settings, shows the icons layer's `info-16` and its key, A, which nothing else on the page or
 in the shell binds; it opens the dialog as Help opens its own, a shortcut dialog headed "About the
 playground", its title focused, closed by its Close or by Escape. The dialog says, in the reader's
 terms, what a program can be, where its other files go, how Run and Stop behave, that edits last
@@ -717,7 +736,8 @@ none, and the build fails on any relative link that leaves it, so neither is rea
 names the branch the site publishes from. The page builds to `sqlate-compile.html`, filled into
 the Markdown shell, `markdown-shell.html`, which no build input names: the index's head and
 header, with the Pages and Contents buttons and their drawers, which the plugin writes into each
-page, and no site nav. The shell's script, `web/pages/markdown.ts`, defines `sl-go-demo`, gives
+page, and no `sl-site-nav`; the site's own nav is written into it as into every page (see
+"Pages"). The shell's script, `web/pages/markdown.ts`, defines `sl-go-demo`, gives
 every demo on the page the page's one runner, and wires each drawer to its opener. Go loads only
 on a Run.
 
