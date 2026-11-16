@@ -24,8 +24,9 @@
 // the index's other headings and lists are, the list an item for each page SITE_NAV links but
 // home, in its order, each its link, by its text and the URL it resolves to, then its description,
 // Library demos' item listing the three Markdown pages under it by their titles, as markdownPages
-// titles them. The paragraph after the list stands at least the foundation's --space-s below it,
-// the flow rule's space, at 390px and at 1376px, so a list the flow rule misses fails.
+// titles them. The element after the list, the question's heading, stands at least the
+// foundation's --space-s below it at 390px and at 1376px, so a list whose own margin swallows the
+// heading's fails.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";

@@ -81,7 +81,7 @@ export const SITE_NAV: NavLink[] = [
     href: "playground.html",
     pages: ["playground.html"],
     description:
-      "Write your own Go, or start from a calculator or one of four programs, and compile and run it in the page with Go's own compiler and linker.",
+      "Write your own Go, or start from a calculator or one of four programs, and compile and run it in the page with Go's own compiler and linker, the toolchain fetched only on a Run.",
   },
   {
     label: "sqlate",
@@ -102,7 +102,7 @@ export const SITE_NAV: NavLink[] = [
     href: "components.html",
     pages: ["components.html"],
     description:
-      "The spike's components in each of their states, its Go demos running hello and the probe's handlers in a worker.",
+      "The spike's components in each of their states, its Go demos running hello and the probe's handlers in a worker, their Go loaded only on a Run.",
   },
 ];
 
@@ -155,7 +155,7 @@ export const WHERE_TO_GO = "<!-- site-nav: where-to-go -->";
  * links but home, its link and its line, Library demos' listing its Markdown pages, each by its
  * title. Both are main's children, no section around them, so the foundation's rules space them
  * as they space the index's other headings and lists: the heading by its own margins, and the
- * paragraph after the list by the flow rule, which names no section. */
+ * element after the list, the question's heading, by its own margins too. */
 function whereToGo(indent: string): string {
   const pageList = (pad: string) =>
     [
