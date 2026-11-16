@@ -153,7 +153,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 1/15 committed (1: 17ba124) · standards — · spec — · editor —
+slices 2/15 committed (1: 17ba124; 2: foundation v0.3.1 released, PR #11, merge 07ba39a, tag 0037b08) · SDK slice 3 in progress · standards — (foundation reviewed) · spec — · editor —
 
 ## Decisions
 
@@ -969,6 +969,11 @@ slices 1/15 committed (1: 17ba124) · standards — · spec — · editor —
   through its own pull request so its Release workflow tags it; every consumer then builds against
   the published tags. Rejected: releasing at SHIP with consumers linked to local checkouts until
   then.
+- review (escalation 2): the foundation's STANDARDS.md names the modal-only veil as a second
+  deliberate exception to the spike-html-design v0.7.0 baseline. The same bare `::backdrop` in
+  spike-html-design v0.7.0 is an intake finding, not fixed there.
+- review: foundation v0.3.1 also returns a fullscreen element's backdrop to the browser's black;
+  the bare rule's veil on it was never the intent (standards-reviewer).
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
