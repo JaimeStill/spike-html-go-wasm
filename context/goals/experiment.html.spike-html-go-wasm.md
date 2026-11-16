@@ -153,7 +153,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 12/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, merge 07ba39a) · 3: SDK v0.6.3 released (PR #13, merge 68296b9, tag d0cde51) · 4: components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12 (unpublished) · 5: spike-html-hosting 338681e, -architecture c3a4d9a, -sqlate 0e078ec (unpublished) · 6: spike-html-apps 1f6f81c, c9f60ff (unpublished) · 7: b14324b..2bf3e84 · 8: e026d28, 3e2f1cf · 9: 46b0f18 · 10: b502751 · checkpoint 1 fixes: c95a713 (where-to-go in main's flow), d530aaf (Site drawer captures), fe7b0fc (index paragraphs folded into the list) · released mid-BUILD: components v0.5.1 (PR #13, main 9fa5850), apps-components v0.10.3 (PR #19, main 10dde51), SDK v0.6.4 (PR #14, main f49087e) · moved on review: spike-html-hosting f1c2740, -architecture cc44e0e, -sqlate cd73f4c, spike-html-apps d78eec8, spike 814d911 · 11: checkpoint 1 closed (architect ok) · 12: checkpoint 2 closed (fffed71 no-script column, 0e5444b fence text, b253cf9 built sample) · checkpoint 3: d136e8f (tabbed output in the wide band, editor left/right) · paused for the architect · next: rebuild the checkpoint 3 gallery for re-review, then the by-hand pass (Firefox 158.0.1, iPhone Safari) · more editor notes: sites' components provenance lines at v0.5.0 vs the template's v0.5.1; spike-html-apps conventions proofs could add v0.10.3 · intake finding: the SDK keeps its drawer-focus check helpers private, so the spike's Site drawer test copies them · findings so far: components page scrolls sideways at 390px without script (go-demo figures before upgrade), for checkpoint 2 · editor notes: foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record; the spike's STANDARDS.md v0.3.0 baseline line and context/README.md SDK/foundation versions · standards — · spec — · editor —
+slices 13/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, merge 07ba39a) · 3: SDK v0.6.3 released (PR #13, merge 68296b9, tag d0cde51) · 4: components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12 (unpublished) · 5: spike-html-hosting 338681e, -architecture c3a4d9a, -sqlate 0e078ec (unpublished) · 6: spike-html-apps 1f6f81c, c9f60ff (unpublished) · 7: b14324b..2bf3e84 · 8: e026d28, 3e2f1cf · 9: 46b0f18 · 10: b502751 · checkpoint 1 fixes: c95a713 (where-to-go in main's flow), d530aaf (Site drawer captures), fe7b0fc (index paragraphs folded into the list) · released mid-BUILD: components v0.5.1 (PR #13, main 9fa5850), apps-components v0.10.3 (PR #19, main 10dde51), SDK v0.6.4 (PR #14, main f49087e) · moved on review: spike-html-hosting f1c2740, -architecture cc44e0e, -sqlate cd73f4c, spike-html-apps d78eec8, spike 814d911 · 11: checkpoint 1 closed (architect ok) · 12: checkpoint 2 closed (fffed71 no-script column, 0e5444b fence text, b253cf9 built sample) · checkpoint 3: d136e8f (tabbed output in the wide band, editor left/right) · e156e9b (sl-timings caption visually hidden) · 13: checkpoint 3 closed (architect ok) · next: slice 14, the by-hand pass (Firefox 158.0.1, iPhone Safari) · more editor notes: sites' components provenance lines at v0.5.0 vs the template's v0.5.1; spike-html-apps conventions proofs could add v0.10.3 · intake finding: the SDK keeps its drawer-focus check helpers private, so the spike's Site drawer test copies them · findings so far: components page scrolls sideways at 390px without script (go-demo figures before upgrade), for checkpoint 2 · editor notes: foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record; the spike's STANDARDS.md v0.3.0 baseline line and context/README.md SDK/foundation versions · standards — · spec — · editor —
 
 ## Decisions
 
@@ -1013,6 +1013,8 @@ slices 12/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   only where it spans the demo (the middle band, and editor top at any width); editor left or right
   at 64rem+ uses the phone band's Output/Timings tabs, so the stacked console-over-timings that cut
   the table off is gone. A second custom property, --output (tabs or row), names it beside --band.
+- review (checkpoint 3): sl-timings' caption is visually hidden and still names the table, so
+  the playground's Timings tab doesn't show the word twice; closed without another review.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
@@ -1139,6 +1141,18 @@ slices 12/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   grammars, which matters if the SDK's client-side fences ever highlight http.
 - Intake candidate: the exit race in Go's `wasm_exec.js` (a pending timeout resuming an exited
   program) is upstream Go's.
+
+- For final-review, the architect's lead candidate (2026-11-16): warm the worker before the first
+  Run. The live calc readings show a fresh page's first Run at 1,848 ms cold and 1,426 ms cached
+  against 412 ms in place, and the gap is not only the fetch (616 / 166 / 21 ms) and the wasm
+  compile (33 / 33 / 3.7): it is mostly the compiler's own warm-up inside Go compile and Link
+  (854 / 875 / 198 and 331 / 334 / 185), Chrome compiling a large module lazily. The worker already
+  holds the tools and archives across Runs; it could fetch them, compile the modules, and run one
+  throwaway build ahead of the click, and could also build the shown program speculatively. The
+  trigger is the question: a page-load preload spends 19 to 35 MB per view against Pages' 100 GB
+  monthly soft limit (about 5,000 cold runs) and a second of phone CPU, so preload on intent
+  (editor focus, pointer over Run, arriving on the playground) and never under a data-saver
+  signal.
 
 ## Pending edits
 
