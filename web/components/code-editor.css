@@ -156,9 +156,3 @@
   max-inline-size: anchor-size(inline);
   --kbd-color: var(--bg);
 }
-
-/* A popover in the top layer has a backdrop, which the elements layer veils as a modal dialog's;
-   the hint veils nothing. */
-.hint::backdrop {
-  background-color: transparent;
-}

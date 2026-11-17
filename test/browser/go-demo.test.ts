@@ -18,14 +18,16 @@
 // given a FileSet as its files property renders that set, and its fences again when given none; a
 // handler demo refuses a set as an authoring error. A demo's accessibility tree: a region named by
 // its label, the toolbar, the tabs and the panel on a program demo, the editor, the log, and the
-// timings, its fences no part of it. The fences: the SDK's Shiki markup read as plain text and run,
-// named by the demo's file attribute while it is set, and without script, every fence shows as the
-// page's code. At a phone's width each demo fits its column, and at 1280px and 1120px, either side
-// of the 44rem at which the console and timings share a row, and a phone's width, every part of
-// every demo lies within it, run or not, the console and timings side by side from the 44rem on.
-// The rest of the runtime's proofs, through the same demos, are go-runs.test.ts's; the page's watch
-// and helpers are go-demos.ts's. Every wait is bounded. Nothing here names the site: its base is
-// package.json's name.
+// timings, its fences no part of it. The fences: the SDK's Shiki markup, which the build writes
+// with the SDK's own highlighter (scripts/rendered-fence.ts), one line and no empty line after it,
+// read as plain text and run,
+// named by its code's language class, and by the demo's file attribute while it is set, and
+// without script, every fence shows as the page's code. At a phone's width each demo fits its
+// column, and at 1280px and 1120px, either side of the 44rem at which the console and timings
+// share a row, and a phone's width, every part of every demo lies within it, run or not, the
+// console and timings side by side from the 44rem on. The rest of the runtime's proofs, through
+// the same demos, are go-runs.test.ts's; the page's watch and helpers are go-demos.ts's. Every
+// wait is bounded. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -37,6 +39,7 @@ import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
+import { renderFence } from "../../scripts/rendered-fence.ts";
 import { PHONE, viewport, WIDE } from "./viewport.ts";
 
 import {
@@ -117,6 +120,9 @@ const property = (node: AXNode, name: string) =>
   node.properties?.find((each) => each.name === name)?.value.value;
 
 const helloSource = readFileSync(join(root, "cmd/hello/main.go"), "utf8");
+/** hello's source as a demo's editor holds it: the fence's lines, its text less the final newline
+ * the file ends in and the fence's markup keeps (fences.ts). */
+const helloLines = helloSource.replace(/\n$/, "");
 const helloLine = /^hello from Go go1\.\d+\.\d+ on js\/wasm$/;
 
 describe("loading", () => {
@@ -149,8 +155,8 @@ describe("Run", () => {
       assert.deepEqual(result.rows, [
         {
           kind: "line",
-          // Go's json.Indent keeps the input's trailing newline.
-          text: `format: ${input.length} bytes in, ${answer.length + 1} bytes out`,
+          // The fence's text is its line, no trailing newline for json.Indent to keep.
+          text: `format: ${input.length} bytes in, ${answer.length} bytes out`,
         },
         { kind: "result", text: `Result ${answer.replace(/\s+/g, " ")}` },
       ]);
@@ -436,7 +442,8 @@ describe("attributes after the first render", () => {
           value: window.demos.editor(window.${demo})?.value ?? null,
           given: window.${demo}.owned?.files === window.given,
         }))`);
-      const fence = "package main // fence\n";
+      // The fence's text, its line, less the newline its markup ends in.
+      const fence = "package main // fence";
 
       await page.evaluate(`window.program.files = window.given`);
       assert.deepEqual(await state("program"), {
@@ -505,7 +512,7 @@ describe("Stop and the shared runner", () => {
       ]);
       const format = await shown(page, formatter);
       assert.deepEqual(format.rows, [
-        { kind: "line", text: "format: 4 bytes in, 8 bytes out" },
+        { kind: "line", text: "format: 3 bytes in, 7 bytes out" },
         { kind: "result", text: "Result [ 5 ]" },
       ]);
       // Format's own run: a fresh instance of the module spin held, its timings alone.
@@ -581,7 +588,7 @@ describe("editable files", () => {
       ]);
       assert.equal(
         await page.evaluate(`window.demos.editor(${target}).value`),
-        helloSource,
+        helloLines,
         "the editor shows main.go again",
       );
     } finally {
@@ -690,22 +697,35 @@ describe("the demo in the accessibility tree", () => {
 });
 
 describe("the fences", () => {
-  test("a program demo's editor holds hello's source as cmd/hello/main.go has it", async () => {
+  test("a program demo's editor holds hello's source as cmd/hello/main.go has it, its lines", async () => {
     const { page } = await open();
     try {
       for (const target of [demo("program"), demo("editable-files")]) {
-        assert.equal(await page.evaluate(`window.demos.editor(${target}).value`), helloSource);
+        assert.equal(await page.evaluate(`window.demos.editor(${target}).value`), helloLines);
       }
     } finally {
       await page.close();
     }
   });
 
-  test("the SDK's Shiki markup reads as its text, a handler demo's input.json, and runs", async () => {
+  test("the rendered fence is the SDK's Shiki markup of its Markdown fence, one line", async () => {
+    const { page } = await open();
+    try {
+      const fence = `${demo("markdown")}.querySelector(":scope > pre")`;
+      assert.deepEqual(
+        await page.evaluate(`[${fence}.outerHTML, ${fence}.querySelectorAll(".line").length]`),
+        [await renderFence(), 1],
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the SDK's Shiki markup reads as its text, input.json by its code's language-json class, and runs", async () => {
     const { page } = await open();
     try {
       const target = demo("markdown");
-      const input = '{ "shiki": true, "list": [3, 1, 2] }\n';
+      const input = '{ "shiki": true, "list": [3, 1, 2] }';
       assert.deepEqual(
         await page.evaluate(`(() => {
           const editor = window.demos.editor(${target});
@@ -725,7 +745,7 @@ describe("the fences", () => {
     }
   });
 
-  test("the file attribute names the SDK's Shiki fence, which names none: query.sql, SQL's grammar, and removing it names input.json again", async () => {
+  test("the file attribute names the SDK's Shiki fence, which names none: query.sql, SQL's grammar, and removing it names input.json by its language again", async () => {
     const { page } = await open();
     try {
       const target = demo("markdown");
@@ -739,7 +759,7 @@ describe("the fences", () => {
           await editor.updateComplete;
           return [editor.value, editor.label, editor.language];
         })()`);
-      const input = '{ "shiki": true, "list": [3, 1, 2] }\n';
+      const input = '{ "shiki": true, "list": [3, 1, 2] }';
       assert.deepEqual(await named("query.sql"), [input, "query.sql", "sql"]);
       assert.deepEqual(await named(null), [input, "input.json", "json"]);
     } finally {
@@ -764,7 +784,8 @@ describe("the fences", () => {
         for (const [visible, tall] of demoFences) assert.ok(visible && tall);
       }
       assert.equal(fences[1][0][2], helloSource);
-      assert.equal(fences[5][0][2], '{ "shiki": true, "list": [3, 1, 2] }\n');
+      // The rendered fence, the SDK's Shiki markup: its one line, no newline after it.
+      assert.equal(fences[5][0][2], '{ "shiki": true, "list": [3, 1, 2] }');
     } finally {
       await page.close();
     }

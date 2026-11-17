@@ -1,11 +1,12 @@
-<!-- Adapted from spike-html-hosting-sdk (v0.6.2): template/README.md, its site a hand index with
+<!-- Adapted from spike-html-hosting-sdk (v0.6.4): template/README.md, its site a hand index with
      no copied tree and the spike's own Markdown tree. -->
 
 # spike-html-go-wasm
 
 The GitHub Pages site of spike-html-go-wasm, made from the template of
-[spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.2. Its index,
-`index.html`, is a hand page served under `/spike-html-go-wasm/`, beside three more hand pages:
+[spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.6.4. Its index,
+`index.html`, is a hand page served under `/spike-html-go-wasm/`, opening on a where-to-go list of
+the site's other pages (see "Pages"), beside three more hand pages:
 `components.html`, the components page, which shows each component in `web/components/` in each
 of its states, its Go demos running Go through the runtime in `web/runtime/`; `playground.html`,
 the playground, where the reader edits Go and builds and runs it in the page (see "Playground");
@@ -15,7 +16,7 @@ spike's own `markdown/` directory: `sqlate-compile.html`, whose demo calls sqlat
 compile handler (see "The Markdown compile page"); `go-core-graph.html`, whose demo builds a
 service wired on go-core's graph in the page (see "go-core graph"); and
 `go-web-sdk-handlers.html`, whose demo sends HTTP/1.1 requests to go-web-sdk's handlers, called
-in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` records none, and
+in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `content.json`, and
 `content/` holds nothing. The spike's question, evidence, and path are in `context/README.md`.
 
 ## Tasks
@@ -40,8 +41,9 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
   `internal/websdk`'s hold each route's status, headers, and body, each rejection with the next
   call served, and writes chained on one instance. It type-checks the configs, the web tiers, and
   the suite with tsc and runs `mise run build`.
-  - The unit tier checks `content/` against `content.json`, both layer directions, go.mod's
-    by-tag rule, the currency and live commands' logic, and the in-memory fs's error codes. It
+  - The unit tier checks that `content/` holds nothing, as the site has no `content.json`, both
+    layer directions, go.mod's by-tag rule, the currency and live commands' logic, and the
+    in-memory fs's error codes. It
     checks the playground's toolchain: each file its manifest names exists under its content's
     hash, and the manifest's import closure equals Go's own `go list -deps`, for
     `playground/sqlate` and `playground/graph` through the site's pinned modules, whose packages
@@ -63,12 +65,15 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
     patterns to the program's pattern files, byte for byte (`test/unit/sqlate-patterns.test.ts`),
     and tests a Go demo's fence naming rules (`web/components/file-names.ts`). It fails if a module
     under `web/components` or `web/pages` registers a page shortcut through the foundation's
-    `keys.js`.
+    `keys.js`, and if the index lacks the where-to-go list's marker, which fails the build
+    (`test/unit/site-nav.test.ts`).
   - The browser tier, in the pinned chrome-headless-shell, each test bounded at 5 minutes so a
     stalled one fails by its name, runs the SDK's shell checks on every hand page and on each
     rendered Markdown page, the crawl, and the SDK's palette check on each rendered page's fences,
     reads each page's cascade layers (the foundation's, then `site`, then `page`) and finds no
-    inline `<style>` in its source, and proves each component on the components page:
+    inline `<style>` in its source, proves the site's own nav on all seven pages and the index's
+    where-to-go list (see "Pages"),
+    and proves each component on the components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
       accessibility tree, its gutter, its loading, its editing keys and events, its settings,
       paste, and read-only;
@@ -79,8 +84,9 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
       the dropped count, tail following, Copy and Clear, throughput, focus, motion, and
       subscription;
     - the timings: their table in the accessibility tree, only the run's phases in order with
-      their total, the times' format and alignment, the empty state, a new run replacing the
-      last, and subscription;
+      their total, the times' format and alignment, the empty state, fitting a phone's width and
+      scrolling inside itself with the text at 200% there, a new run replacing the last, and
+      subscription;
     - the controls: their toolbar in the accessibility tree, keyboard, availability following the
       models, requests that change nothing, the New file and Rename forms' validation and focus
       return, each form inside the viewport at 280px, a phone's width, and wide, the status's
@@ -160,11 +166,11 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
       request rejected naming why, the instance outliving it with every write kept; then a report,
       never a gate, of `go/websdk.wasm`'s bytes, raw and gzip, and the cold Run's phase timings;
     - the playground's prose and About: the prose is the heading and the lede alone, and the page
-      holds no disclosure; About leads the header's group, a glyph button showing A; A, a click, or
-      Enter opens the About dialog on its title, Tab reaches its Close, and Close or Escape closes
-      it, focus back where it was; A typed into the editor types; the accessibility tree names the
-      button and the dialog; and the dialog's text is the approved text, in order, its last
-      sentence on each program's edits;
+      holds no disclosure; About leads the header's group after the Site opener, a glyph button
+      showing A; A, a click, or Enter opens the About dialog on its title, Tab reaches its Close,
+      and Close or Escape closes it, focus back where it was; A typed into the editor types; the
+      accessibility tree names the button and the dialog; and the dialog's text is the approved
+      text, in order, its last sentence on each program's edits;
     - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
       at 900px, at 1120x800, and at 900x700: the demo takes every row left and ends a gutter above
       the viewport's bottom edge, the one gutter that holds the page off both sides, every part's
@@ -180,8 +186,11 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
       full timings table change no part's box; the page never scrolls sideways and every part
       stays inside the demo; a Run, a Stop, a failed build, a band change, and an arrangement
       change keep the editor's and the console's content and scroll position and the chosen
-      output tab; the phone's output tablist has the expected accessibility tree and keys, and
-      no tablist or tabpanel shows from 44rem; a demo without `fixed` keeps its flowing layout;
+      output tab; the output tablist, below 44rem and from 64rem with the editor left or right,
+      has the expected accessibility tree and keys, and at 1120px and 1376px after a Run its
+      Timings tab shows the whole table, the Total in view with the page unscrolled; no tablist
+      or tabpanel shows from 44rem to 64rem or with the editor top, where the console and the
+      timings share a row; a demo without `fixed` keeps its flowing layout;
       the timings' track is `sl-timings`' least width, 28ch of its table, and the steady status
       asks for 24ch of its own text, sharing the toolbar's line at 50rem and taking its own at a
       phone's width, each one property that moves every reader when set on its element;
@@ -194,12 +203,12 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
       layout that holds in one font set and not the other fails on any machine;
     - the playground's Layout menu: Layout is a menu button in its own group from 64rem and
       absent below; the menu opens `--space-3xs` below Layout, at its inline start, as wide as its
-      items and inside the viewport, and has the expected accessibility tree and the APG keys;
-      choosing an arrangement applies it in place, with no reload or request, leaving the run's
-      status, output, and timings as they were; the choice is the only write to storage, under
-      the spike's key, and a reload and another page open in it; the page follows another tab's
-      choice and a cleared store; an empty store, text that isn't JSON, a refused value, and
-      blocked storage each open with the editor left and write nothing.
+      items and inside the viewport, veiling nothing behind it, and has the expected
+      accessibility tree and the APG keys; choosing an arrangement applies it in place, with no
+      reload or request, leaving the run's status, output, and timings as they were; the choice is
+      the only write to storage, under the spike's key, and a reload and another page open in it;
+      the page follows another tab's choice and a cleared store; an empty store, text that isn't
+      JSON, a refused value, and blocked storage each open with the editor left and write nothing.
 - `mise run build`: build the site with Vite into `dist/`, the hand pages and the Markdown pages
   the SDK's `markdownPages` renders from `markdown/`, the runtime's worker with
   `web/runtime/wasm_exec.js` bundled in it and the editor's syntax themes merged per palette
@@ -213,15 +222,26 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree: `content.json` 
   omits the wasm.
 - `mise run screenshots`: capture the pages, light and dark. The index and each component on the
   components page, alone, are captured at the SDK's widths, 390px, 1120px, and 1376px; a
-  component's capture is `--page components/<component>`, as `--page components/console`. The
-  playground, `--page playground`, is captured as its viewport alone, the page's one screen, in
-  each band of its fixed demo: 390px with the output panel's Output tab and again with its
-  Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
-  each chosen through the Layout menu, and with the menu open; 1376px with the About dialog
-  open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and Standard
-  library chosen in the Program select. The sqlate page, `--page sqlate`, is captured as its
-  viewport alone at the SDK's widths, and each Markdown page, `--page sqlate-compile`,
-  `--page go-core-graph`, and `--page go-web-sdk-handlers`, whole at each.
+  component's capture is `--page components/<component>`, as `--page components/console`. The Go
+  demo's, `--page components/go-demo`, is captured again at each width after the prebuilt runs a
+  reader starts by Run: the format demo's result, hello's output and exit 0, and the crash demo's
+  stderr and exit 2. The playground, `--page playground`, is captured as its viewport alone, the
+  page's one screen, in each band of its fixed demo: 390px with the output panel's Output tab and
+  again with its Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top,
+  and right, each chosen through the Layout menu, and with the menu open; 1376px with the About
+  dialog open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and
+  Standard library chosen in the Program select; and 390px, 1120px (editor left), and 1376px (editor
+  left) after a Run of the starter, the calculator, built in the page against the build's archives,
+  and 390px and 1376px (editor left) after it with the Timings tab. Each state after a Run waits on
+  the run's end, its status and console, and the Timings tab on its table's phases, never on a
+  timer. The sqlate page, `--page sqlate`, is captured as its viewport alone at the SDK's widths,
+  and each Markdown page, `--page sqlate-compile`, `--page go-core-graph`, and
+  `--page go-web-sdk-handlers`, whole at each. Every page is also captured once at 390px with the
+  Site drawer open, its viewport alone, named `<page>-site-390`, the drawer opened by its opener,
+  which shows where the row doesn't fit beside the header's buttons, as at 390px on every page,
+  and waited on until it is open, a modal, and its slide in has ended; the components page's is
+  on its first component, `--page components/code-editor`, and the playground's comes before its
+  Run states.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as
   `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
   is taken only when no width is given. Any other width is a usage error naming the three.
@@ -322,8 +342,8 @@ where the tree was dirty, and false in the live build.
 | sqlate.wasm | match | 7,805,311 | 7,805,306 | −5 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
 | websdk.wasm | match | 7,772,452 | 7,772,444 | −8 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
 
-The measure command reports the difference and doesn't remove it; dropping the stamp, with
-`-buildvcs=false` or otherwise, is left to final-review.
+The measure command reports the difference and doesn't remove it; building with
+`-buildvcs=false`, or an equivalent, would make the live module match a local build.
 
 ### Desktop timings
 
@@ -451,8 +471,88 @@ The sqlate page's Fetch, Wasm compile, and Go compile, and the calc program's ph
 were not captured. The go-core graph's first run was in a regular tab with its cache state
 unconfirmed; its Fetch suggests the HTTP cache answered. An earlier phone reading, taken during
 the sqlate task, gave 36 s for the sqlate page's cold Run. It did not reproduce: the 2026-11-13
-cold run, in an Incognito tab, took 3.3 s, on par with the desktop. Its cause is unknown, and
-final-review may look into it.
+cold run, in an Incognito tab, took 3.3 s, on par with the desktop. Its cause is unknown.
+
+## Review
+
+The review covered the seven pages: the index, the components page, the playground, the sqlate
+page, and the three Markdown pages, `sqlate-compile.html`, `go-core-graph.html`, and
+`go-web-sdk-handlers.html`. Each finding was fixed at its root, in the layer that owns it, kept as
+designed, or left for experiment.html's intake.
+
+### What was reviewed
+
+- Screenshots, on 2026-11-16: `mise run screenshots` in chrome-headless-shell 157.0.8103.78, at
+  390, 900, 1120, and 1376px, in every state the task captures (see "Tasks"), the Go demos and
+  the playground after a Run and every page with the Site drawer open among them. The architect
+  reviewed them as browser galleries at three checkpoints: the index and the Markdown pages, then
+  the components page, then the playground and the sqlate page. Checkpoint 1's first pass took all
+  six profiles, the four palettes at the defaults and compact and sans at flexoki, each light and
+  dark; from its re-review on, the captures took one profile, flexoki, regular, mono, light, the
+  architect judging the others known to work. Each gallery was deleted as its checkpoint closed,
+  so no capture file remains.
+- By hand, on 2026-11-17: Firefox 158.0.1 and the iPhone's Safari app (its iOS version not
+  recorded), on the `review` branch's build served by `vite preview --host` over the local
+  network: every page light and dark at flexoki; each palette once on the playground's editor; a
+  Run on each demo page; typing, Enter, Tab, and undo in the editor; and the Site nav row and
+  drawer, the Layout menu, About, Help, and Settings. It found nothing.
+- Not covered: desktop Safari, WebKitGTK, and Copy on the iPhone, which has no clipboard over
+  plain http.
+
+### Findings and their fixes
+
+- Every glyph button's hint veiled the page, and inside a dialog washed the dialog out. The
+  foundation veiled every top-layer `::backdrop`, a popover's included. spike-html-apps-foundation
+  v0.3.1 veils a modal dialog's backdrop alone, and the spike's transparent-backdrop rules are gone.
+- Four SDK defects: with no site nav, the header's button group didn't sit at the inline end, and
+  at 390px and 200% text its `flex: none` scrolled the page sideways; the no-outline rule for a
+  script-focused dialog heading covered Help's alone; a site with no `content.json` crashed the
+  crawl and the content check; and a highlighted fence lost its language. spike-html-hosting-sdk
+  v0.6.3 fixes each, and the spike's workarounds for them are gone.
+- Opening an `sl-drawer` focused its Close, whose hint popped up at once: the drawer called
+  `showModal()` with no initial focus. spike-html-hosting-components v0.5.1 gives the drawer's
+  heading first focus, and SDK v0.6.4 pins it; spike-html-apps-components v0.10.3 fixes the same
+  root upstream.
+- A reader reached the pages only through links in the index's evidence, and most pages had no
+  link home: the SDK's nav links between sites, and its Pages drawer lists the Markdown pages
+  alone. The spike added its Site nav and drawer to every page and the where-to-go list to the
+  index (see "Pages"; e026d28, 46b0f18).
+- The paragraph after the where-to-go list had no space above it: the list sat in a section,
+  which the foundation's flow rule doesn't space. It is now a heading and a list in main's own
+  flow (c95a713).
+- Without script, the components page scrolled sideways at 390px: the states' grid column grew to
+  its fences' longest line. The column is `minmax(0, 1fr)`, and each fence scrolls in its own
+  `pre` (fffed71).
+- A plain fence's text ended in a newline a highlighted one didn't, and the components page's
+  hand-copied rendered-fence sample held an empty line the SDK never writes. The fence reader now
+  drops the newline marked's plain rendering adds (0e5444b), and the build renders the sample
+  through the SDK (b253cf9).
+- With the editor left or right, the playground stacked the console over the timings and cut the
+  table off. There the output now takes the phone band's Output and Timings tabs (d136e8f).
+- The playground's Timings tab showed its name twice, as the tab and as the table's caption. The
+  caption is visually hidden and still names the table (e156e9b).
+- At 390px and 200% text, sl-timings' table needs up to 394px in 279px. The table scrolls inline
+  inside sl-timings, WCAG 1.4.10's data-table exception, and the page doesn't (b14324b).
+- The Layout button showed a focus ring after a menu choice. It shows one only after a keyboard
+  choice, so it stays.
+- The Site drawer returned focus to its opener after N, unlike the SDK's Pages and Contents
+  drawers. It now returns focus to wherever it was when the drawer opened (4e4ff4b).
+
+### Left for experiment.html's intake
+
+- spike-html-design v0.7.0, the foundation's baseline, still veils every `::backdrop`.
+- The SDK has no nav for a site's own pages; the spike's Site nav stands in.
+- A Markdown fence can't name its file; sl-go-demo's `file` attribute stands in.
+- The SDK's crawl counts a page missing from `content.json` as a hand page, so the site test
+  crawls the Markdown tree from a scratch root.
+- `sl-drawer` has no modal-only mode; the Site drawer's dock at a width no viewport reaches
+  stands in.
+- `web/pages/site-nav.ts` and `web/pages/markdown.ts` repeat the SDK template's drawer wiring.
+- The SDK keeps its drawer-focus check helpers private, so `test/browser/site-nav.test.ts` copies
+  them.
+- Performance: warming the worker before the first Run, Chrome's lazy compilation of the
+  compiler, the build drift Go's version-control stamp causes, the 36 s cold sqlate Run on a phone
+  that didn't reproduce, and a timings test's stall seen once.
 
 ## Runtime
 
@@ -508,12 +608,48 @@ sheet, `web/pages/page.css`, in that order; the build bundles the four into the 
 page links. The cascade layers are the foundation's (`foundation.tokens.*` through
 `foundation.theme-menu`), then `site`, then `page`, and the browser tier reads that order on each
 page. Every rule a page adds is in `web/pages/page.css`, inside `@layer page`, so it wins over the
-shell's by layer order, at any specificity: the header-actions group at the header's inline end,
-shrinking and wrapping its buttons where the row can't hold them on one line, as the playground's
-three at a phone's width and twice the text size; the space between `main > section`s on every page;
+shell's by layer order, at any specificity: the space between `main > section`s on every page;
 the space around a rendered Markdown page's Go demo, as around a fence; the components page's
 specimens; and the app page, the playground's one screen, which only a body of class `app` takes.
 Its spaces are the foundation's `--space-*` steps.
+
+Every page, the four hand pages and the three rendered Markdown pages, opens its header on the
+site's own nav, a nav landmark named Site: the spike's name linking home, then Playground, sqlate,
+Library demos, linking the first Markdown page and current on each, and Components, the page's own
+link marked `aria-current="page"`. The SDK's `sl-site-nav` links between sites and its Pages drawer
+lists the Markdown pages alone, so the nav between the site's own pages is the spike's. Its links
+are one list, `SITE_NAV` in `scripts/site-nav.ts`, and the build writes them into each page through
+`siteNav()`, a Vite plugin `vite.config.ts` lists, run before Vite's own transform: the row, the
+header's first child; the Site drawer, an `sl-drawer` labeled Site holding the same links, modal at
+every width by a dock no viewport reaches; its opener, a glyph button named Site showing
+`three-bars-16` and the key N, first in the header's group; and the drawer's script,
+`web/pages/site-nav.ts`. N is bound by nothing else on any page, in the shell, the components, or
+the foundation (?, S, P, C, H, L, J, K, T, A). With script, the row shows wherever its links fit on
+one line beside the header's buttons, and is hidden, the opener showing in its place, wherever they
+don't, at any width, text size, or font: the drawer's script measures the row's single-line width
+against the room the header gives it, in a measuring state no frame paints, as the header's width
+changes (a `ResizeObserver` on a zero-tall probe as wide as the header), as fonts load, and as
+Settings or the text's size change, and marks the header `data-site-nav="row"` or `"drawer"` for
+`page.css`. The answer doesn't depend on which state shows, so the switch can't loop. N, which the
+keys module binds only on a shown control, and Help's row for it exist only while the opener shows.
+The opener opens the drawer by its click or N, and Escape, the drawer's Close, or a followed link
+closes it, focus back where it was as the drawer opened, as the SDK's Pages and Contents drawers
+return it: on the opener after its click, and after N, which clicks the opener without focusing it,
+wherever it was before the key. With no script the drawer is undefined and hidden, the header has no
+`data-site-nav`, and the row shows at every width, wrapping its links.
+`test/browser/site-nav-layout-suite.ts` holds the switch on every page at 390, 928, 1120, and
+1376px, with the text at its size and at 200%, in the machine's fonts and in DejaVu.
+
+The index opens its main, after its heading and lede and before the question and the evidence, on
+a where-to-go list: a heading, "Where to go", then a list, both main's own children with no
+section around them, so the foundation's heading and flow rules space them as they space the
+index's other headings and lists, and the list has an item for each page the Site nav links but
+home, in its order, each the page's link and one line on what the reader finds there, and
+Library demos' item listing the three Markdown pages under it by their titles. The list is written
+from the same `SITE_NAV`, each entry but home's carrying its line, and `siteNav()` writes it into
+the index at the marker the index holds, the comment `site-nav: where-to-go`, failing the build
+when the index lacks it; the Markdown pages' titles are `markdownPages`' own, by its `render`. The
+evidence keeps its own links.
 
 A page holds no inline `<style>`. The build writes a page's inline sheet into its head
 before the bundled linked stylesheet, so an `@layer` there declares its layer ahead of the
@@ -615,14 +751,15 @@ checks all run on the page but main's reading width, and the spike's own check h
 80ch, centered. The browser tier proves the one screen in the machine's fonts and in the pinned
 DejaVu set, and reports how far above its floor the demo stands at each capture size.
 
-The playground's detail is in its About dialog, `dialog#about`, out of the screen's flow, so no
-font costs the demo a line of it. About, the header's first glyph button, before the shell's Help
-and Settings, shows the icons layer's `info-16` and its key, A, which nothing else on the page or
-in the shell binds; it opens the dialog as Help opens its own, a shortcut dialog headed "About the
-playground", its title focused, closed by its Close or by Escape. The dialog says, in the reader's
-terms, what a program can be, where its other files go, how Run and Stop behave, that edits last
-only as long as the tab, and what a Run downloads, and links to the spike's question and evidence,
-the index. Its width is the prose's 80ch where the viewport has it (`web/pages/page.css`).
+The playground's detail is in its About dialog, `dialog#about`, out of the screen's flow, so no font
+costs the demo a line of it. About, the header's first glyph button after the Site opener, before
+the shell's Help and Settings, shows the icons layer's `info-16` and its key, A, which nothing else
+on the page or in the shell binds; it opens the dialog as Help opens its own, a shortcut dialog
+headed "About the playground", its title focused, closed by its Close or by Escape. The dialog says,
+in the reader's terms, what a program can be, where its other files go, how Run and Stop behave,
+that edits last only as long as the tab, and what a Run downloads, and links to the spike's question
+and evidence, the index. Its width is the prose's 80ch where the viewport has it
+(`web/pages/page.css`).
 
 ### The Layout menu and the stored arrangement
 
@@ -717,7 +854,8 @@ none, and the build fails on any relative link that leaves it, so neither is rea
 names the branch the site publishes from. The page builds to `sqlate-compile.html`, filled into
 the Markdown shell, `markdown-shell.html`, which no build input names: the index's head and
 header, with the Pages and Contents buttons and their drawers, which the plugin writes into each
-page, and no site nav. The shell's script, `web/pages/markdown.ts`, defines `sl-go-demo`, gives
+page, and no `sl-site-nav`; the site's own nav is written into it as into every page (see
+"Pages"). The shell's script, `web/pages/markdown.ts`, defines `sl-go-demo`, gives
 every demo on the page the page's one runner, and wires each drawer to its opener. Go loads only
 on a Run.
 
@@ -735,13 +873,14 @@ at build into Shiki's markup:
 </sl-go-demo>
 ````
 
-The blank lines end the HTML block, so the fence between them renders as Markdown. Shiki's markup
-carries no name, so the demo's `file` attribute names the fence. The page passes the SDK's shell
+The blank lines end the HTML block, so the fence between them renders as Markdown. A rendered
+fence carries no name, only its language, which would name it `query.sql`, so the demo's `file`
+attribute names it. The page passes the SDK's shell
 checks, the palette check, and the crawl. The bridge and the runtime serve it, as they serve the
 sqlate page, with no code of sqlate's.
 
-Every Markdown page is crawled as a copied page. `content.json` records no tree, since the site
-copies none, so the crawl would count the rendered pages hand pages, which have no pager; but
+Every Markdown page is crawled as a copied page. The site has no `content.json`, since it copies
+no tree, so the crawl would count the rendered pages hand pages, which have no pager; but
 `markdownPages` gives them a site index and pagers, as it gives a copied tree's. The site test
 (`test/browser/site.test.ts`) crawls from a scratch root under TMPDIR whose `content.json` records
 `markdown/` as one copied tree, a record the SDK's content check accepts, so each rendered page
@@ -1090,13 +1229,12 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
   `tabSizeProblem(value)` and `wrapProblem(value)` give that reason, or `null`, without setting
   anything, and `defaults` holds the defaults, frozen. Each set that changes a value sends one
   `change` `Event`; a set to the value held sends none. The unit tier tests it under node.
-- `./fences.js`: `readFences(parent, program, file?)`, a Go demo's fences read as files,
+- `./fences.js`: `readFences(parent, file?)`, a Go demo's fences read as files,
   `{ name, text }` each, in order: the rules `sl-go-demo` builds its files by (its "Fences",
   below), stated once so that a page building a `FileSet` for a demo, from a template's content,
-  reads them alike. `parent` is the demo's host or a template's content; `program` picks the
-  default name of a fence that names no language, `main.go` when true, else `input.json`; `file`,
-  the demo's `file` attribute, names every fence that names none. It reads the markup and changes
-  nothing. The naming rules themselves, and a file's grammar by its name (`languageOf`), are
+  reads them alike. `parent` is the demo's host or a template's content; `file`, the demo's `file`
+  attribute, names every fence that names none. It reads the markup and changes nothing. The
+  naming rules themselves, and a file's grammar by its name (`languageOf`), are
   `file-names.ts`'s, which holds no DOM, so the unit tier tests them under node.
 - `./file-set.js`: `FileSet`, a set of source files, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the tabs and the editor, is the only
@@ -1181,8 +1319,8 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     no handler), `editable-files` (a boolean: New file, Rename, and Delete on a program or source
     demo; a handler demo, holding its one input, ignores it), `wrap` (a boolean: long lines
     wrap), `tab-size` (a tab's width, 1 to 8 columns, 4 by default), `fixed` (a boolean: the
-    fixed layout, below), `file` (the name of every fence that names none, as the SDK's
-    highlighted Markdown fences can't; absent or empty, the defaults below), and `label` (the
+    fixed layout, below), `file` (the name of every fence that names none, as a Markdown fence
+    can't; absent or empty, the defaults below), and `label` (the
     demo's accessible name, "<scenario> <handler> demo" by default, "Go source demo" on a source
     demo).
     A change to `handler`, `source`, or `file` rebuilds the files from the fences; `wrap` and
@@ -1201,16 +1339,16 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     `null`; and the attributes'.
   - Fences (its light DOM, no slot): each `pre` child of the host is one file, in order, its text
     the pre's text content, so marked's plain `<pre><code class="language-go">` and the SDK's
-    Shiki-rendered `<pre class="shiki">` read alike. A file's name is the pre's or its code's
-    `data-file`, else the pre's `title`, else the demo's `file`, unless empty, else a default
-    from the fence's language, a `data-language` or a `language-<name>` class on either: `main.go`
-    for go, `input.json` for json, `query.sql` for sql, `input.txt` for any other; with no
-    language, as Shiki's markup carries none, `main.go` on a program or source demo and
-    `input.json` on a handler demo. Each file's grammar follows its name's extension: `.go`,
-    `.json`, or `.sql`, any other plain. The fences are read once the document has parsed them,
-    and stay in the light DOM unchanged: before the element upgrades, and without script, they
-    render as the page's code; once upgraded they are no part of the flat tree, neither rendered
-    nor in the accessibility tree, and the editor alone shows their text.
+    Shiki-rendered `<pre class="shiki"><code class="language-go">` read alike. A file's name is
+    the pre's or its code's `data-file`, else the pre's `title`, else the demo's `file`, unless
+    empty, else a default from the fence's language, a `data-language` or a `language-<name>`
+    class on either: `main.go` for go, `input.json` for json, `query.sql` for sql, and
+    `input.txt` for any other or for none, as a fence with no info string has. Each file's
+    grammar follows its name's extension: `.go`, `.json`, or `.sql`, any other plain. The fences
+    are read once the document has parsed them, and stay in the light DOM unchanged: before the
+    element upgrades, and without script, they render as the page's code; once upgraded they are
+    no part of the flat tree, neither rendered nor in the accessibility tree, and the editor alone
+    shows their text.
   - Authoring errors: no scenario, a source demo naming a scenario or a handler, no fence, more
     than one fence on a handler demo, a name the file set refuses (two fences both defaulting to
     `main.go` among them), or a tab size the settings refuse. The demo shows "Authoring error:"
@@ -1224,12 +1362,13 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     changes. Its parts' other requests stop at it. Slots: none, but the fences above.
   - Accessibility: a region named by `label`, holding the toolbar, the tabs and their tabpanel on
     a program demo, the editor, named by the active file's name, the log, and the timings. A fixed
-    demo below 44rem also holds the output tablist, "Output panel", its tabs "Output" and
-    "Timings", each controlling its part, a tabpanel named by its tab while the tablist shows.
+    demo below 44rem, or from 64rem with the editor left or right, also holds the output tablist,
+    "Output panel", its tabs "Output" and "Timings", each controlling its part, a tabpanel named by
+    its tab while the tablist shows.
   - Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a
-    program demo, the editor, a fixed demo's output tablist below 44rem, and the console. The output
-    tablist's are the file tabs': Tab reaches the selected tab alone, Left and Right select the
-    previous and the next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter,
+    program demo, the editor, a fixed demo's output tablist where it shows, and the console. The
+    output tablist's are the file tabs': Tab reaches the selected tab alone, Left and Right select
+    the previous and the next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter,
     from anywhere inside the demo, the editor included, runs it, as Run's `aria-keyshortcuts`
     declares; with Alt or Shift also held, Enter runs nothing. From outside every demo the shortcut
     runs none, and the foundation's shortcut registry holds no entry for it.
@@ -1259,23 +1398,28 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     - From 44rem to 64rem: the editor, 3fr, over a row of the console and the timings' track,
       their least width, 2fr.
     - From 64rem: the placement the page's `Arrangement` holds, editor left without one. Editor
-      left puts the editor, under the toolbar, in 3fr of the width, beside a 2fr column of the
-      console, 3fr of the height, over the timings, 2fr; editor right mirrors it, the column
-      first; editor top is the layout from 44rem. In this band alone, and only given an
-      arrangement, the toolbar shows Layout, and the demo sends its choice on as `arrange`.
+      left puts the editor, under the toolbar, in 3fr of the width, beside a 2fr column holding
+      the output panel and its tablist, as below 44rem, since that column is too short to hold
+      the console over the timings' whole table; editor right mirrors it, the column first;
+      editor top is the layout from 44rem. In this band alone, and only given an arrangement, the
+      toolbar shows Layout, and the demo sends its choice on as `arrange`.
+
+    The output shows both its parts only where it spans the demo's width, side by side: from 44rem
+    to 64rem, and from 64rem with the editor top. Everywhere else it is the one tabbed panel.
 
     Every band and arrangement places the same parts, so a run, a Stop, a failed build, a band
     change, or an arrangement change keeps each part's content and scroll position and the chosen
-    output tab. Below 44rem the part not shown is hidden by `visibility`, so it keeps its own
-    scroll position. A demo without `fixed` lays out as "Layout" describes.
+    output tab. Where the output is tabbed the part not shown is hidden by `visibility`, so it
+    keeps its own scroll position. A demo without `fixed` lays out as "Layout" describes.
 
-    The bands are CSS's: each container query places the parts and names its band in `--band`,
-    and the demo's script reads that name, through a `ResizeObserver` on a fixed demo alone, for
-    two things only. Below 44rem the console and the timings are tabpanels of the output tablist,
-    and from 44rem they aren't: a change to the accessibility tree, and CSS can't set a role. From
-    64rem the toolbar shows its Layout group, which `sl-controls` renders only given an
-    arrangement. The read exists because no shipped API reports a container query's state to
-    script; every placement and size stays in the stylesheet.
+    The bands are CSS's: each container query places the parts, names its band in `--band`, and
+    names its output, `tabs` or `row`, in `--output`, and the demo's script reads those names,
+    through a `ResizeObserver` on a fixed demo alone and again as its placement changes, for two
+    things only. Where `--output` is `tabs` the console and the timings are tabpanels of the output
+    tablist, and where it is `row` they aren't: a change to the accessibility tree, and CSS can't
+    set a role. Where `--band` is `wide`, from 64rem, the toolbar shows its Layout group, which
+    `sl-controls` renders only given an arrangement. The read exists because no shipped API reports
+    a container query's state to script; every placement and size stays in the stylesheet.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the
@@ -1324,8 +1468,12 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
   right-aligned in tabular numerals; the total row is set apart by a heavier rule and weight.
   With no run yet the table says "No run yet.", and with a run begun and no phase timed, "No
   phase timed yet.", with no total. The table is as wide as its content, at least its least width
-  or its container's width, and never wider than its container. Nothing moves.
-  - Attributes: `label` (the table's caption and accessible name, "Timings" by default).
+  or its container's width, and never wider than its container; where it can't get that narrow,
+  as with the text at 200% at a phone's width, it keeps its two columns and scrolls sideways inside
+  the element, and the page never does. Nothing moves.
+  - Attributes: `label` (the table's caption and accessible name, "Timings" by default; the
+    caption is visually hidden, as the element's owner names the timings where it shows them,
+    as the playground's Timings tab does).
   - Custom properties: `--sl-timings-min-inline-size`, the table's least width, a length, `28ch`
     by default, in the ch of the table's text: room for a build's full table, "Wasm compile"
     beside "12,345 ms". It is stated once, on the element, where an owner laying the timings beside
@@ -1333,8 +1481,8 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
   - Properties: `timings`, the `RunTimings` its owner creates and writes; `null`, the default,
     shows no run yet; and `label`, as its attribute.
   - Events: none. Slots: none.
-  - Accessibility: a table named by its caption, "Phase" and "Time" its column headers, each
-    phase's name and "Total" a row header.
+  - Accessibility: a table named by its caption, visually hidden, "Phase" and "Time" its column
+    headers, each phase's name and "Total" a row header.
   - Keyboard: none; the table holds nothing to operate.
 
 ## Keeping pace with the SDK

@@ -7,16 +7,18 @@
      The head is the index's: the foundation's full page entry and its registrations, every
      built-in profile, its preferences module, and its keys module, render-blocking; then the
      components' glyph-button.css, the SDK's site.css, and the pages' shared sheet,
-     web/pages/page.css, which places the header-actions group at the header's inline end with no
-     site nav; see index.html for each. Then the components' modules the rendered page uses, each
-     defining its element, render-blocking too: the site index, the section tree, and the drawers
-     that hold them, which markdownPages writes into each page with their light-DOM content, and
-     the shortcuts list and the settings, which the two shortcut dialogs hold. Last the page's
+     web/pages/page.css; see index.html for each. Then the components' modules the rendered page
+     uses, each defining its element, render-blocking too: the site index, the section tree, and the
+     drawers that hold them, which markdownPages writes into each page with their light-DOM content,
+     and the shortcuts list and the settings, which the two shortcut dialogs hold. Last the page's
      script, web/pages/markdown.ts, which defines sl-go-demo, gives every demo on the page its one
      runner, and wires each drawer to its opener; nothing loads Go, or starts the worker, until a
      demo's Run.
      The header is the template's without its site nav, which this site has none of: one group,
-     header-actions, of Pages, Contents, Help, and Settings, in that order. Pages opens the Pages
+     header-actions, of Pages, Contents, Help, and Settings, in that order. The build writes the
+     site's own nav into each page as into the index (see index.html): its row first in the header,
+     its drawer's opener first in the group, its drawer last in the body, and its script last in
+     the head. Pages opens the Pages
      drawer, keys.js clicking it on P, and Contents the Contents drawer, on C; site.css shows each
      only below its drawer's dock, and Contents only on a page with a section tree. Help, on ?, and
      Settings, on S, open the components' shortcut dialogs by the invoker command, each with its
@@ -24,7 +26,7 @@
      dialog's Close, is a glyph button, its glyph a marker markdownPages fills at build:
      list-unordered-16 for Pages, list-ordered-16 for Contents, question-16 for Help, gear-16 for
      Settings, and x-16 for Close.
-     Adapted from spike-html-hosting-sdk (v0.6.2): template/index.html, without its site nav, its
+     Adapted from spike-html-hosting-sdk (v0.6.4): template/index.html, without its site nav, its
      drawer script moved to the page's script, with the pages' shared sheet and the page's script
      that gives its Go demos their runner. -->
 <html lang="en">

@@ -25,12 +25,13 @@
      without script: a handler demo, format's JSON input; a program demo, hello's main.go as
      cmd/hello/main.go holds it; a program demo with editable files; handler demos for files, its
      text input, and for crash, which panics; a handler demo whose fence is the SDK's Shiki markup,
-     as a Markdown page renders it; a handler demo with two fences, an authoring error; two demos,
-     spin and format, sharing the runner; and a source demo, editable files built from source in the
-     page, a main.go reading its input.txt from the working directory. The script gives every demo
-     the page's one runner, which loads Go only on a Run. The shell is the index's, the same header,
-     dialogs, and shared sheet, web/pages/page.css, which also holds the states' layout and sets
-     each section apart; see index.html for each. -->
+     as a Markdown page renders it, written at build by the SDK's own highlighter in place of the
+     rendered-fence marker (scripts/rendered-fence.ts); a handler demo with two fences, an authoring
+     error; two demos, spin and format, sharing the runner; and a source demo, editable files built
+     from source in the page, a main.go reading its input.txt from the working directory. The script
+     gives every demo the page's one runner, which loads Go only on a Run. The shell is the index's,
+     the same header, site nav, dialogs, and shared sheet, web/pages/page.css, which also holds the
+     states' layout and sets each section apart; see index.html for each. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -227,8 +228,7 @@ func main() {
           <figure class="state" data-state="markdown">
             <figcaption>A fence as the SDK's Markdown renders it, highlighted at build</figcaption>
             <sl-go-demo scenario="probe" handler="format" label="format demo, rendered fence">
-<pre class="shiki shiki-themes flexoki primer catppuccin everforest" tabindex="0"><code><span class="line"><span class="__shiki_rhvcs7">{</span><span class="__shiki_y6j4i8"> "</span><span class="__shiki_1cgxug">shiki</span><span class="__shiki_y6j4i8">"</span><span class="__shiki_45ki97">:</span><span class="__shiki_1ahg5l"> true</span><span class="__shiki_45ki97">,</span><span class="__shiki_y6j4i8"> "</span><span class="__shiki_1cgxug">list</span><span class="__shiki_y6j4i8">"</span><span class="__shiki_45ki97">:</span><span class="__shiki_rhvcs7"> [</span><span class="__shiki_swpwtl">3</span><span class="__shiki_45ki97">,</span><span class="__shiki_swpwtl"> 1</span><span class="__shiki_45ki97">,</span><span class="__shiki_swpwtl"> 2</span><span class="__shiki_rhvcs7">]</span><span class="__shiki_rhvcs7"> }</span></span>
-<span class="line"></span></code></pre>
+<!-- rendered-fence -->
             </sl-go-demo>
           </figure>
           <figure class="state" data-state="authoring-error">

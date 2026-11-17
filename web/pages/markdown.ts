@@ -13,7 +13,7 @@
 // the page the drawer covered; the drawer leaves that to the page. Each drawer's button in the
 // header, which names it by aria-controls, opens it and says through aria-expanded whether it is
 // open.
-// Adapted from spike-html-hosting-sdk (v0.6.2): template/index.html, its inline drawer script.
+// Adapted from spike-html-hosting-sdk (v0.6.4): template/index.html, its inline drawer script.
 
 import "../components/go-demo.ts";
 import type { DemoRunner } from "../components/go-demo.ts";

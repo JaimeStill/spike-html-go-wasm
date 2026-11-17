@@ -11,8 +11,9 @@
 // playground/sqlate's files byte for byte: main.go and guard.go, the pattern app.identity.sql, the
 // statements create.sql, edit.sql, and version.sql, and the run's input.json. Each program's fences
 // are every file in its directory but its tests, so a file added there and not to the page fails. A
-// fence is a direct-child pre of the demo or the template, its text the pre's text content, as
-// sl-go-demo reads it (web/components/fences.ts); its file is the fence's name, its data-file, on
+// fence is a direct-child pre of the demo or the template, its text the pre's text content, the
+// file's bytes, its final newline the one marked's plain fence ends in, which sl-go-demo reads past
+// (web/components/fences.ts); its file is the fence's name, its data-file, on
 // the pre or its code, else the pre's title, else main.go, under cmd/<scenario>/, so a one-fence
 // demo's is its entrypoint, cmd/<scenario>/main.go. The written demos and templates are every
 // program's source: the pages' scripts add none. The graph page, markdown/go-core-graph.md, holds

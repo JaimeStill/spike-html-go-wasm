@@ -270,14 +270,32 @@ describe("ConsoleLog's limit", () => {
     assert.deepEqual(log.since(n), []);
   });
 
-  test("a write past the limit stays cheap: 100,000 writes in well under a second", () => {
-    const log = new ConsoleLog();
-    const start = performance.now();
-    for (let i = 0; i < 100_000; i++)
-      log.output({ stream: i % 2 ? "stdout" : "stderr", text: `${i}\n` });
-    const took = performance.now() - start;
-    assert.equal(log.size, LIMIT);
-    assert.ok(took < 1000, `took ${took.toFixed(0)} ms`);
+  // The cost is held by how it scales, not by a time budget, which a slow or shared machine misses
+  // for reasons the log has nothing to do with: past the limit, a write costs the same whatever
+  // the limit, where a trim that copied the kept entries on each write would cost in proportion
+  // to them. The same writes are timed past a limit of 1,000 and of 16,000, each on a log already
+  // at its limit, the fastest of three readings; sixteen times the entries kept must cost well
+  // under four times the time, where a copying trim costs some sixteen.
+  test("a write past the limit stays cheap: its cost doesn't grow with the limit", () => {
+    const timed = (limit: number) => {
+      let fastest = Infinity;
+      for (let reading = 0; reading < 3; reading++) {
+        const log = new ConsoleLog({ limit });
+        for (let i = 0; i < limit; i++) log.output({ stream: "stdout", text: `${i}\n` });
+        const start = performance.now();
+        for (let i = 0; i < 100_000; i++)
+          log.output({ stream: i % 2 ? "stdout" : "stderr", text: `${i}\n` });
+        fastest = Math.min(fastest, performance.now() - start);
+        assert.equal(log.size, limit);
+      }
+      return fastest;
+    };
+    const small = timed(1_000);
+    const large = timed(16_000);
+    assert.ok(
+      large < small * 4,
+      `100,000 writes past a limit of 1,000 took ${small.toFixed(1)} ms, of 16,000 ${large.toFixed(1)}`,
+    );
   });
 
   test("a limit must be a whole number of at least 1", () => {

@@ -63,7 +63,9 @@ const open = () => openPage(browser, server.origin, "playground.html");
 
 /** The starter's files, in the demo's order, as playground/calc holds them. */
 const STARTER = ["main.go", "lexer.go", "parser.go", "eval.go", "input.txt"];
-const mainSource = readFileSync(join(root, "playground/calc/main.go"), "utf8");
+/** The starter's main.go as its fence gives it to the demo: its lines, less the final newline the
+ * file ends in and the fence's markup keeps (fences.ts). */
+const mainSource = readFileSync(join(root, "playground/calc/main.go"), "utf8").replace(/\n$/, "");
 
 /** The standard packages the starter's .go files import, whose closure its first Run fetches. */
 const STARTER_IMPORTS = ["errors", "fmt", "os", "strconv", "strings", "unicode"];

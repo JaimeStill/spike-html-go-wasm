@@ -22,9 +22,13 @@
 // printed, and a full table of a build's timings change no part's box, in each arrangement from
 // 64rem, each placing the parts as it says; the page never scrolls sideways; and every part lies
 // inside the demo. A Run, a Stop, a failed build, a band change, and an arrangement change keep
-// each part's content and scroll position, and the output tab chosen. Below 44rem, the output
-// panel's tablist is the tabs pattern, its keyboard and accessibility tree the file tabs'; from
-// 44rem it isn't there, and the console and the timings are no tabpanels. A demo without `fixed`,
+// each part's content and scroll position, and the output tab chosen. Below 44rem, and from 64rem
+// with the editor left or right, the output is one panel under its tablist, the tabs pattern, its
+// keyboard and accessibility tree the file tabs', and there, at 1120px and 1376px after a Run, the
+// Timings tab shows the build's whole table inside its panel, the Total in view with the page
+// unscrolled, the table still named Timings by its caption, which takes no visible box, as the
+// tab names it; from 44rem to 64rem, and from 64rem with the editor top, the tablist isn't there,
+// the console and the timings share a row, and neither is a tabpanel. A demo without `fixed`,
 // the components page's, has no output tablist and a console that grows. The reservations are
 // one property each, read where they apply: the timings' track is sl-timings' least width, 28ch of
 // its table, and the steady status asks the row for 24ch of its own text, sharing the toolbar's
@@ -71,6 +75,7 @@ import {
   printing,
   property,
   REM,
+  tabbed,
   widthFor,
 } from "./playground-layouts.ts";
 import { PHONE, viewport } from "./viewport.ts";
@@ -373,9 +378,10 @@ describe(`the playground's fixed layout, in ${fonts().name}`, () => {
         const laid = await layout(page);
         assert.equal(laid.band, band, `the band at ${name}`);
         if (band === "wide") placedAs(laid, placement, name);
-        // Below 44rem the timings share the console's cell, hidden behind its tab.
-        assert.equal(laid.parts.outputTabs.shown, band === "phone", `the output tabs at ${name}`);
-        assert.equal(laid.parts.timings.shown, band !== "phone", `the timings at ${name}`);
+        // Where the output is tabbed the timings share the console's cell, hidden behind its tab.
+        const tabs = tabbed(band, placement);
+        assert.equal(laid.parts.outputTabs.shown, tabs, `the output tabs at ${name}`);
+        assert.equal(laid.parts.timings.shown, !tabs, `the timings at ${name}`);
         contained(laid, width);
         before.set(name, laid);
       }
@@ -493,36 +499,83 @@ const tabState = (page: Page) =>
     };
   })()`);
 
-describe(`the phone's output tablist, in ${fonts().name}`, () => {
-  test("is a tablist, Output panel, of Output and Timings, each controlling its tabpanel, the selected one alone shown; from 44rem it isn't there, and neither part is a tabpanel", async () => {
+/** The output panel's tabpanels, by name, in the accessibility tree. */
+const panels = async (page: Page) =>
+  (await axQuery(page, `${PLAYGROUND}.shadowRoot.querySelector(".output")`, "tabpanel")).map(
+    (node) => node.name?.value,
+  );
+
+/** Asserts that the output is one panel under its tablist, the phone's: a tablist, Output panel,
+ * of Output and Timings, Output selected, each controlling its part, the console a tabpanel named
+ * by its tab and alone shown, then, with Timings chosen, the timings alone. */
+async function tablisted(page: Page, where: string): Promise<void> {
+  await page.cdp("DOM.getDocument", {});
+  const lists = await axQuery(page, PLAYGROUND, "tablist");
+  assert.deepEqual(
+    lists.map((node) => node.name?.value),
+    ["Files", "Output panel"],
+    where,
+  );
+  const tabs = await axQuery(page, `${PLAYGROUND}.shadowRoot.querySelector(".output")`, "tab");
+  assert.deepEqual(
+    tabs.map((node) => [node.name?.value, selected(node)]),
+    [
+      ["Output", true],
+      ["Timings", false],
+    ],
+    where,
+  );
+  assert.deepEqual(await panels(page), ["Output"], `${where}: the console, named by its tab`);
+  const controls = await page.evaluate(`[...${PLAYGROUND}.shadowRoot
+    .querySelectorAll('.output-tabs [role="tab"]')].map((tab) => tab.getAttribute("aria-controls"))`);
+  assert.deepEqual(controls, ["console", "timings"], where);
+  let shown = await tabState(page);
+  assert.deepEqual([shown.console, shown.timings], [true, false], `${where}: the console alone`);
+  await choose(page, "timings");
+  await settle(page);
+  assert.deepEqual(await panels(page), ["Timings"], `${where}: the timings, named by its tab`);
+  shown = await tabState(page);
+  assert.deepEqual([shown.console, shown.timings], [false, true], `${where}: the timings alone`);
+}
+
+/** The timings' table as laid out in the timings' box: its row headers, in order, the timings'
+ * bottom edge and whether they scroll, the Total row's bottom edge, each in the viewport, and its
+ * caption's text and box, and how far below the table's top its header row starts. */
+const timingsTable = (page: Page) =>
+  page.evaluate(`(() => {
+    const timings = ${PLAYGROUND}.shadowRoot.querySelector("sl-timings");
+    const table = timings.shadowRoot.querySelector("table");
+    const caption = table.querySelector("caption").getBoundingClientRect();
+    return {
+      rows: [...table.querySelectorAll("tbody th, tfoot th")].map((th) => th.textContent.trim()),
+      bottom: timings.getBoundingClientRect().bottom,
+      scrolls: timings.scrollHeight > timings.clientHeight,
+      total: table.querySelector("tfoot tr").getBoundingClientRect().bottom,
+      viewport: innerHeight,
+      caption: {
+        text: table.querySelector("caption").textContent.trim(),
+        width: caption.width,
+        height: caption.height,
+      },
+      head:
+        table.querySelector("thead").getBoundingClientRect().top - table.getBoundingClientRect().top,
+    };
+  })()`) as Promise<{
+    rows: string[];
+    bottom: number;
+    scrolls: boolean;
+    total: number;
+    viewport: number;
+    caption: { text: string; width: number; height: number };
+    head: number;
+  }>;
+
+describe(`the output tablist, in ${fonts().name}`, () => {
+  test("below 44rem is a tablist, Output panel, of Output and Timings, each controlling its tabpanel, the selected one alone shown; from 44rem to 64rem it isn't there, and neither part is a tabpanel", async () => {
     const page = await open();
     try {
       await viewport(page, PHONE);
-      await page.cdp("DOM.getDocument", {});
-      const lists = await axQuery(page, PLAYGROUND, "tablist");
-      assert.deepEqual(
-        lists.map((node) => node.name?.value),
-        ["Files", "Output panel"],
-      );
-      const tabs = await axQuery(page, `${PLAYGROUND}.shadowRoot.querySelector(".output")`, "tab");
-      assert.deepEqual(
-        tabs.map((node) => [node.name?.value, selected(node)]),
-        [
-          ["Output", true],
-          ["Timings", false],
-        ],
-      );
-      const panels = async () =>
-        (await axQuery(page, `${PLAYGROUND}.shadowRoot.querySelector(".output")`, "tabpanel")).map(
-          (node) => node.name?.value,
-        );
-      assert.deepEqual(await panels(), ["Output"], "the console, named by its tab");
-      const controls = await page.evaluate(`[...${PLAYGROUND}.shadowRoot
-        .querySelectorAll('.output-tabs [role="tab"]')].map((tab) => tab.getAttribute("aria-controls"))`);
-      assert.deepEqual(controls, ["console", "timings"]);
-      await choose(page, "timings");
-      await settle(page);
-      assert.deepEqual(await panels(), ["Timings"], "the timings, named by its tab");
+      await tablisted(page, `${PHONE}px`);
 
       await viewport(page, await widthFor(page, 52));
       await settle(page);
@@ -530,7 +583,7 @@ describe(`the phone's output tablist, in ${fonts().name}`, () => {
         (await axQuery(page, PLAYGROUND, "tablist")).map((node) => node.name?.value),
         ["Files"],
       );
-      assert.deepEqual(await panels(), []);
+      assert.deepEqual(await panels(page), []);
       const shown = await tabState(page);
       assert.deepEqual([shown.console, shown.timings], [true, true]);
     } finally {
@@ -538,13 +591,62 @@ describe(`the phone's output tablist, in ${fonts().name}`, () => {
     }
   });
 
-  test("the selected tab alone is in the tab order; Left and Right select the previous and the next, wrapping, Home and End the first and the last", async () => {
+  test("from 64rem, at 1120px and 1376px, the editor left or right puts the output in the phone's tablist, and after a Run the Timings tab shows the whole table, its Total in view with the page unscrolled; the editor top puts the console and the timings in a row, with no tablist and no tabpanel", async () => {
     const page = await open();
     try {
-      await viewport(page, PHONE);
-      await page.evaluate(
-        `${PLAYGROUND}.shadowRoot.querySelector('.output-tabs [aria-selected="true"]').focus()`,
-      );
+      await viewport(page, 1376);
+      const ran = await build(page, PLAYGROUND, DONE);
+      assert.deepEqual(ran.phases, BUILT_PHASES, "a build's timings");
+      for (const { width, height } of WIDTHS.filter(({ width }) => width > PHONE)) {
+        await viewport(page, width, height);
+        for (const placement of ["left", "right"] as const) {
+          const where = `${width}x${height}, editor ${placement}`;
+          await arrange(page, placement);
+          await choose(page, "console");
+          await settle(page);
+          placedAs(await layout(page), placement, where);
+          await tablisted(page, where);
+          const table = await timingsTable(page);
+          assert.deepEqual(table.rows, [...BUILT_PHASES, "Total"], `${where}: every phase`);
+          assert.equal(table.scrolls, false, `${where}: the whole table in the timings' panel`);
+          assert.ok(
+            table.total <= table.bottom + 0.5 && table.total <= table.viewport,
+            `${where}: the Total, ending at ${table.total}, in the panel and the viewport`,
+          );
+          assert.equal((await screen(page)).down, 0, `${where}: the page unscrolled`);
+          // The table keeps its name, its caption, which the Timings tab says, so no visible box.
+          const timings = `${PLAYGROUND}.shadowRoot.querySelector("sl-timings")`;
+          assert.deepEqual(
+            (await axQuery(page, timings, "table")).map((node) => node.name?.value),
+            ["Timings"],
+            `${where}: the table's name`,
+          );
+          assert.equal(table.caption.text, "Timings", where);
+          assert.ok(
+            table.caption.width <= 1 && table.caption.height <= 1,
+            `${where}: the caption's box, ${table.caption.width}x${table.caption.height}px`,
+          );
+          assert.ok(table.head <= 1, `${where}: the header row ${table.head}px below the top`);
+        }
+        const where = `${width}x${height}, editor top`;
+        await arrange(page, "top");
+        const laid = await layout(page);
+        placedAs(laid, "top", where);
+        assert.equal(laid.parts.outputTabs.shown, false, `${where}: no tablist`);
+        assert.deepEqual(await panels(page), [], `${where}: no tabpanel`);
+        const shown = await tabState(page);
+        assert.deepEqual([shown.console, shown.timings], [true, true], `${where}: both parts`);
+      }
+      // The reader's choice is kept for the origin: the default again for the tests after.
+      await arrange(page, "left");
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the selected tab alone is in the tab order; Left and Right select the previous and the next, wrapping, Home and End the first and the last, below 44rem and from 64rem with the editor left or right", async () => {
+    const page = await open();
+    try {
       const at = (part: "console" | "timings") => ({
         focused: part,
         selected: part,
@@ -552,7 +654,6 @@ describe(`the phone's output tablist, in ${fonts().name}`, () => {
         console: part === "console",
         timings: part === "timings",
       });
-      assert.deepEqual(await tabState(page), at("console"));
       const steps: ["ArrowRight" | "ArrowLeft" | "Home" | "End", "console" | "timings"][] = [
         ["ArrowRight", "timings"],
         ["ArrowRight", "console"],
@@ -561,11 +662,26 @@ describe(`the phone's output tablist, in ${fonts().name}`, () => {
         ["End", "timings"],
         ["Home", "console"],
       ];
-      for (const [key, part] of steps) {
-        await press(page, key);
-        await settle(page);
-        assert.deepEqual(await tabState(page), at(part), `${key} to ${part}`);
+      for (const [width, placement] of [
+        [PHONE, null],
+        [1376, "left"],
+        [1376, "right"],
+      ] as const) {
+        const where = placement ? `${width}px, editor ${placement}` : `${width}px`;
+        await viewport(page, width);
+        if (placement) await arrange(page, placement);
+        await page.evaluate(
+          `${PLAYGROUND}.shadowRoot.querySelector('.output-tabs [aria-selected="true"]').focus()`,
+        );
+        assert.deepEqual(await tabState(page), at("console"), where);
+        for (const [key, part] of steps) {
+          await press(page, key);
+          await settle(page);
+          assert.deepEqual(await tabState(page), at(part), `${where}: ${key} to ${part}`);
+        }
       }
+      // The reader's choice is kept for the origin: the default again for the tests after.
+      await arrange(page, "left");
     } finally {
       await page.close();
     }

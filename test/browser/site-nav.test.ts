@@ -1,0 +1,489 @@
+// The site's own nav (scripts/site-nav.ts), on the build as Pages serves it: dist/ under the base,
+// by the SDK's served(), Vite's preview, in the pinned chrome-headless-shell, on all seven pages,
+// the four hand pages and the three rendered Markdown pages.
+//
+// On each page the header's first child is the row, a nav landmark named Site, whose links are
+// SITE_NAV's, in its order, by their text and the URL each resolves to, the page's own alone marked
+// aria-current="page", every Markdown page marking Library demos; the Site drawer holds the same
+// links. Where the row shows and where the opener shows in its place, by whether the row fits, is
+// site-nav-layout-suite.ts's, in the machine's fonts and in DejaVu; at 390px, where every page
+// shows the opener, the opener opens the drawer, a modal, by its click and by N, its heading taking
+// focus as it opens and nothing else in it, its Close above all, not even in passing, the heading
+// drawing no focus outline, and, opened by N, Close's interest hint closed past the interest delay,
+// as the SDK holds its own drawers; Escape and the drawer's Close each close it, aria-expanded
+// following, focus back where it was as the drawer opened: on the opener after its click, and after
+// N, which clicks the opener without focusing it, on the element focus was on before the key, the
+// header's Settings, or on the body, never the opener; a link followed in it closes it, its
+// navigation held by the test so the page stays to be read. On a Markdown page, at 390px, the Site
+// drawer by N and the SDK's Pages drawer by P return focus alike, to Settings or to the body,
+// whichever held it, by Escape or by Close, so the Site drawer is held to the reference's focus
+// return. With script disabled, at 390px, the row shows, the opener and the drawer don't, and
+// nothing scrolls sideways, with the text at its own size and at 200%, nothing in the header
+// passing the viewport, on every page, the components page's Go demos unupgraded among them. The
+// SDK's shell checks, which run on every page in site.test.ts, hold the header's group, the opener
+// among its buttons, to one line, Help's list to the page's bindings, N's among them where the
+// opener shows, and every glyph button to its target size. Every wait is bounded.
+//
+// The index opens its main on the where-to-go list after its heading and lede and before the
+// question and the evidence: its heading, Where to go, then its list, both main's own children as
+// the index's other headings and lists are, the list an item for each page SITE_NAV links but
+// home, in its order, each its link, by its text and the URL it resolves to, then its description,
+// Library demos' item listing the three Markdown pages under it by their titles, as markdownPages
+// titles them. The element after the list, the question's heading, stands at least the
+// foundation's --space-s below it at 390px and at 1376px, so a list whose own margin swallows the
+// heading's fails.
+// Adapted from spike-html-hosting-sdk (v0.6.4): dist/browser.js, its recordDrawerFocus,
+// drawerFocus, assertDrawerFocus, and PAST_INTEREST, which it doesn't export, for the Site drawer.
+
+import assert from "node:assert/strict";
+import { join } from "node:path";
+import { after, before, describe, test } from "node:test";
+
+import { launch, until } from "@jaimestill/spike-html-apps-tooling/browser.js";
+import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
+import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
+import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
+
+import { MARKDOWN_TITLES, SITE_NAV } from "../../scripts/site-nav.ts";
+import { PHONE, viewport } from "./viewport.ts";
+
+const root = join(import.meta.dirname, "../..");
+
+let server: Server;
+let browser: Browser;
+
+before(async () => {
+  server = await served(root);
+  browser = await launch();
+});
+after(async () => {
+  await browser?.close();
+  await server?.stop();
+});
+
+/** Every page the site builds, by its file under the root, and its path under the base. */
+const PAGES = [
+  ["index.html", ""],
+  ["components.html", "components.html"],
+  ["playground.html", "playground.html"],
+  ["sqlate.html", "sqlate.html"],
+  ["sqlate-compile.html", "sqlate-compile.html"],
+  ["go-core-graph.html", "go-core-graph.html"],
+  ["go-web-sdk-handlers.html", "go-web-sdk-handlers.html"],
+];
+
+/** The row, the drawer, and the opener. */
+const ROW = `document.querySelector('body > header > nav[aria-label="Site"]')`;
+const DRAWER = `document.querySelector("sl-drawer#site")`;
+const OPENER = `document.querySelector('body > header > .header-actions > button[aria-controls="site"]')`;
+
+/** A list's links, each its text, the URL it resolves to, and its aria-current. */
+const links = (list: string) => `[...${list}.querySelectorAll("a")].map((a) => ({
+  text: a.textContent.trim(),
+  href: a.href,
+  current: a.getAttribute("aria-current"),
+}))`;
+
+/** The drawer is open, a modal. */
+const MODAL = `!!${DRAWER}.shadowRoot?.querySelector("dialog")?.matches(":modal")`;
+
+/** Focus is on the opener. */
+const ON_OPENER = `document.activeElement === ${OPENER}`;
+
+/** The header's Settings, a control outside every drawer, on every page, to hold focus before a
+ * key opens one. */
+const SETTINGS = `document.querySelector('body > header > .header-actions > button[data-keys="s"]')`;
+
+/** Focus is on Settings. */
+const ON_SETTINGS = `document.activeElement === ${SETTINGS}`;
+
+/** Focus is on the body, no element holding it. */
+const ON_BODY = `document.activeElement === document.body`;
+
+/** Where focus is, named for a message: "the opener", "Settings", "the body", or its tag. */
+const FOCUSED = `(() => {
+  const active = document.activeElement;
+  return active === ${OPENER} ? "the opener" : active === ${SETTINGS} ? "Settings"
+    : active === document.body ? "the body" : active?.localName ?? "nothing";
+})()`;
+
+/** Starts a record of every focus inside the drawer, in its shadow root and its slotted links,
+ * each by what took it: "heading", the h2 labeling its dialog, "Close", or its tag. Run before the
+ * drawer opens, so a focus that passes through Close on its way to the heading is heard, not only
+ * where focus ends. The SDK's own record, recordDrawerFocus in its browser.js, which it doesn't
+ * export. */
+const RECORD_FOCUS = `(() => {
+  const root = ${DRAWER}.shadowRoot;
+  globalThis.siteFocused = [];
+  if (root.siteFocusRecorded) return;
+  root.siteFocusRecorded = true;
+  root.addEventListener("focusin", ({ target }) =>
+    globalThis.siteFocused.push(
+      target.matches("dialog h2#title")
+        ? "heading"
+        : target.matches('[interestfor="close-hint"]')
+          ? "Close"
+          : target.localName,
+    ));
+})()`;
+
+/** Where focus sits in the open drawer: every focus heard inside it since RECORD_FOCUS; whether
+ * its heading holds it, the drawer the document's focused element and the heading its shadow
+ * root's; whether the heading draws no focus outline; and whether Close's interest hint, the
+ * shadow root's #close-hint, is showing. The SDK's drawerFocus, unexported too. */
+const FOCUS = `(() => {
+  const drawer = ${DRAWER};
+  const root = drawer.shadowRoot;
+  const heading = root.querySelector("dialog h2#title");
+  const { outlineStyle, outlineWidth } = heading ? getComputedStyle(heading) : {};
+  return {
+    focused: globalThis.siteFocused ?? [],
+    heading: !!heading && document.activeElement === drawer && root.activeElement === heading,
+    outline: outlineStyle === "none" || parseFloat(outlineWidth) === 0,
+    hint: !!root.getElementById("close-hint")?.matches(":popover-open"),
+  };
+})()`;
+
+/** Waits well past a focused control's interest delay, Chromium's 0.25 s at "normal", by which
+ * Close's hint, had Close taken keyboard focus as the drawer opened, would show. The SDK's
+ * PAST_INTEREST. */
+const PAST_INTEREST = `new Promise((resolve) => setTimeout(resolve, 1000))`;
+
+/** Asserts the drawer, just opened by how with its focus recorded from before (RECORD_FOCUS),
+ * gave its heading first focus, by the components' tabindex="-1" and autofocus, and nothing else
+ * in it, Close above all, took focus, not even in passing; the heading still holds focus and draws
+ * no focus outline. With `hint`, asked on a key's open alone, since the hint shows on keyboard
+ * focus, it then waits past the interest delay and asserts Close's hint is closed: a hint that
+ * never opens sends no event to wait on, so a slow browser can make this pass early, never fail.
+ * As assertDrawerFocus in the SDK's browser.js holds its Pages and Contents drawers. */
+async function assertHeadingFocus(
+  page: Page,
+  where: string,
+  how: string,
+  hint: boolean,
+): Promise<void> {
+  let focus = (await page.evaluate(FOCUS)) as {
+    focused: string[];
+    heading: boolean;
+    outline: boolean;
+    hint: boolean;
+  };
+  assert.deepEqual(
+    focus.focused,
+    ["heading"],
+    `${where}: the drawer, opened by ${how}, focuses its heading alone, not ` +
+      (focus.focused.join(", then ") || "nothing"),
+  );
+  assert.ok(focus.heading, `${where}: the drawer, opened by ${how}, keeps focus on its heading`);
+  assert.ok(focus.outline, `${where}: the drawer's focused heading draws no focus outline`);
+  if (!hint) return;
+  await page.evaluate(PAST_INTEREST);
+  focus = (await page.evaluate(FOCUS)) as typeof focus;
+  assert.equal(focus.hint, false, `${where}: the drawer opens by ${how} with Close's hint closed`);
+}
+
+/** Presses a key, as a reader types it: a letter with its text, or a named key. */
+async function press(page: Page, key: "n" | "p" | "Escape"): Promise<void> {
+  const event =
+    key === "Escape"
+      ? { key, code: key, windowsVirtualKeyCode: 27 }
+      : {
+          key,
+          code: `Key${key.toUpperCase()}`,
+          windowsVirtualKeyCode: key.toUpperCase().charCodeAt(0),
+        };
+  await page.cdp("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    ...event,
+    ...(key === "Escape" ? {} : { text: key }),
+  });
+  await page.cdp("Input.dispatchKeyEvent", { type: "keyUp", ...event });
+}
+
+/** Clicks the element the expression gives at its center, as a mouse does. */
+async function clickAt(page: Page, element: string): Promise<void> {
+  const { x, y } = await page.evaluate(`(() => {
+    const { left, top, width, height } = ${element}.getBoundingClientRect();
+    return { x: left + width / 2, y: top + height / 2 };
+  })()`);
+  for (const type of ["mousePressed", "mouseReleased"]) {
+    await page.cdp("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 });
+  }
+}
+
+/** Waits for the drawer to open by how, then for aria-expanded to follow and its slide in to
+ * end. */
+async function opened(page: Page, where: string, how: string): Promise<void> {
+  await until(page, MODAL, 5000).catch(() => assert.fail(`${where}: ${how} opens the drawer`));
+  await until(page, `${OPENER}.getAttribute("aria-expanded") === "true"`, 5000).catch(() =>
+    assert.fail(`${where}: aria-expanded is true while the drawer is open`),
+  );
+  // Past its slide in, a transition in the drawer's shadow root, which the document's own
+  // animations leave out, so a click lands where its control comes to rest.
+  await page.evaluate(`Promise.all(${DRAWER}.shadowRoot.querySelector("dialog")
+    .getAnimations({ subtree: true }).map((animation) => animation.finished))`);
+}
+
+/** Waits for the drawer to close by how, aria-expanded to follow, and focus to be back where it
+ * was as the drawer opened: by `back`, an expression true when it is, named by `on`. */
+async function closed(
+  page: Page,
+  where: string,
+  how: string,
+  back = ON_OPENER,
+  on = "the opener",
+): Promise<void> {
+  await until(page, `!${MODAL}`, 5000).catch(() =>
+    assert.fail(`${where}: ${how} closes the drawer`),
+  );
+  await until(page, `${OPENER}.getAttribute("aria-expanded") === "false"`, 5000).catch(() =>
+    assert.fail(`${where}: aria-expanded is false once ${how} closes the drawer`),
+  );
+  await until(page, back, 5000).catch(async () =>
+    assert.fail(
+      `${where}: focus is back on ${on} once ${how} closes the drawer, not on ` +
+        (await page.evaluate(FOCUSED)),
+    ),
+  );
+}
+
+describe("the site's own nav", () => {
+  for (const [file, path] of PAGES) {
+    const where = path || "the index";
+
+    test(`${where}'s header opens on the Site nav, SITE_NAV's links in order, its own marked current, and the drawer holds the same`, async () => {
+      const page = await browser.open(`${server.origin}${path}`);
+      try {
+        const expected = SITE_NAV.map(({ label, href, pages }) => ({
+          text: label,
+          href: new URL(href, server.origin).href,
+          current: pages.includes(file) ? "page" : null,
+        }));
+        assert.equal(expected.filter(({ current }) => current).length, 1, "one link is current");
+        assert.deepEqual(await page.evaluate(links(ROW)), expected, `${where}: the row's links`);
+        assert.deepEqual(
+          await page.evaluate(links(DRAWER)),
+          expected,
+          `${where}: the drawer's links`,
+        );
+        assert.equal(
+          await page.evaluate(
+            `${ROW} === document.querySelector("body > header").firstElementChild`,
+          ),
+          true,
+          `${where}: the row is the header's first child`,
+        );
+      } finally {
+        await page.close();
+      }
+    });
+
+    test(`${where}: at 390px the opener opens the drawer by its click and by N, on its heading, Close's hint closed; Escape and Close close it, focus back where it was as it opened; a link followed closes it`, async () => {
+      const page = await browser.open(`${server.origin}${path}`);
+      try {
+        await viewport(page, PHONE);
+        await page.evaluate(RECORD_FOCUS);
+        await clickAt(page, OPENER);
+        await opened(page, where, "the opener's click");
+        await assertHeadingFocus(page, where, "the opener's click", false);
+        await press(page, "Escape");
+        await closed(page, where, "Escape");
+
+        // N with focus on Settings: the keys module clicks the opener without focusing it, so
+        // the drawer returns focus to Settings, as the SDK's Pages drawer does by P.
+        await page.evaluate(`${SETTINGS}.focus()`);
+        await page.evaluate(RECORD_FOCUS);
+        await press(page, "n");
+        await opened(page, where, "N");
+        await assertHeadingFocus(page, where, "N", true);
+        await press(page, "Escape");
+        await closed(page, where, "Escape", ON_SETTINGS, "Settings");
+
+        // N from the body, focus nowhere in particular: the drawer returns it to the body.
+        await page.evaluate(`document.activeElement?.blur()`);
+        await page.evaluate(RECORD_FOCUS);
+        await press(page, "n");
+        await opened(page, where, "N");
+        await assertHeadingFocus(page, where, "N", true);
+        await clickAt(page, `${DRAWER}.shadowRoot.querySelector("dialog button")`);
+        await closed(page, where, "the drawer's Close", ON_BODY, "the body");
+
+        // A link, its navigation held, so the page stays to be read once the drawer has closed.
+        await page.evaluate(
+          `document.addEventListener("click", (event) => event.preventDefault())`,
+        );
+        await press(page, "n");
+        await opened(page, where, "N");
+        await clickAt(page, `${DRAWER}.querySelector("a")`);
+        await closed(page, where, "following a link", ON_BODY, "the body");
+      } finally {
+        await page.close();
+      }
+    });
+
+    test(`${where} without script, at 390px: the row shows, the opener and the drawer don't, and nothing scrolls sideways at the text's size or 200%`, async () => {
+      const page = await browser.open("about:blank");
+      try {
+        await page.cdp("Emulation.setScriptExecutionDisabled", { value: true });
+        // The width set directly: viewport() waits on the page's frames, by script.
+        await page.cdp("Emulation.setDeviceMetricsOverride", {
+          width: PHONE,
+          height: 844,
+          deviceScaleFactor: 1,
+          mobile: false,
+        });
+        await page.goto(`${server.origin}${path}`);
+        for (const scale of [1, 2]) {
+          const read = await page.evaluate(`(() => {
+            const root = document.documentElement;
+            root.style.fontSize = "";
+            root.style.fontSize = parseFloat(getComputedStyle(root).fontSize) * ${scale} + "px";
+            return {
+              row: ${ROW}.checkVisibility(),
+              opener: ${OPENER}.checkVisibility(),
+              drawer: ${DRAWER}.checkVisibility(),
+              header: [...document.querySelectorAll("body > header *")].filter(
+                (element) => element.getBoundingClientRect().right > root.clientWidth + 0.5,
+              ).length,
+              sideways: root.scrollWidth > root.clientWidth,
+            };
+          })()`);
+          assert.deepEqual(
+            read,
+            { row: true, opener: false, drawer: false, header: 0, sideways: false },
+            `${where} without script, the text at ${scale * 100}%`,
+          );
+        }
+      } finally {
+        await page.close();
+      }
+    });
+  }
+
+  test("on a Markdown page the Site drawer by N returns focus as the SDK's Pages drawer by P does, to Settings or the body, by Escape or Close", async () => {
+    const page = await browser.open(`${server.origin}go-core-graph.html`);
+    try {
+      await viewport(page, PHONE);
+      /** Where focus lands once a drawer, opened by its key from `from`, closes by `how`. */
+      const roundTrip = async (
+        id: string,
+        key: "n" | "p",
+        from: "Settings" | "the body",
+        how: "Escape" | "Close",
+      ): Promise<string> => {
+        const drawer = `document.querySelector("sl-drawer#${id}")`;
+        const modal = `!!${drawer}.shadowRoot?.querySelector("dialog")?.matches(":modal")`;
+        await page.evaluate(
+          from === "Settings" ? `${SETTINGS}.focus()` : `document.activeElement?.blur()`,
+        );
+        await press(page, key);
+        await until(page, modal, 5000).catch(() => assert.fail(`${key} opens #${id}`));
+        await page.evaluate(`Promise.all(${drawer}.shadowRoot.querySelector("dialog")
+          .getAnimations({ subtree: true }).map((animation) => animation.finished))`);
+        if (how === "Escape") await press(page, "Escape");
+        else await clickAt(page, `${drawer}.shadowRoot.querySelector("dialog button")`);
+        await until(page, `!${modal}`, 5000).catch(() => assert.fail(`${how} closes #${id}`));
+        // The drawer's dialog returns focus as its close event fires: a frame settles it.
+        await page.evaluate(`new Promise((resolve) => requestAnimationFrame(resolve))`);
+        return (await page.evaluate(FOCUSED)) as string;
+      };
+      for (const from of ["Settings", "the body"] as const) {
+        for (const how of ["Escape", "Close"] as const) {
+          const pages = await roundTrip("pages", "p", from, how);
+          const site = await roundTrip("site", "n", from, how);
+          assert.equal(pages, from, `the Pages drawer, opened by P from ${from}, closed by ${how}`);
+          assert.equal(site, pages, `the Site drawer, opened by N from ${from}, closed by ${how}`);
+        }
+      }
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the index opens its main on the where-to-go list, SITE_NAV's pages but home, in order, each with its line, before the question and the evidence", async () => {
+    const page = await browser.open(server.origin);
+    try {
+      const read = await page.evaluate(`(() => {
+        const heading = document.getElementById("where-to-go");
+        const list = heading.nextElementSibling;
+        const items = [...list.querySelectorAll(":scope > li")].map((li) => {
+          const a = li.querySelector(":scope > a");
+          const text = [...li.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE)
+            .map((node) => node.textContent).join("").replace(/\\s+/g, " ").trim();
+          return {
+            text: a.textContent.trim(),
+            href: a.href,
+            line: text,
+            pages: [...li.querySelectorAll(":scope > ul > li > a")].map((page) => ({
+              text: page.textContent.trim(),
+              href: page.href,
+            })),
+          };
+        });
+        const main = [...document.querySelector("main").children];
+        const at = (element) => main.indexOf(element);
+        return {
+          name: heading?.textContent.trim(),
+          heading: heading.parentElement.localName + " > " + heading.localName,
+          list: list.parentElement.localName + " > " + list.localName + "." + list.className,
+          items,
+          afterLede: at(heading) > at(document.querySelector("main > h1")) &&
+            at(heading) > at(document.querySelector("main > h1 + p")),
+          beforeQuestion: at(list) < at(document.getElementById("the-question")) &&
+            at(list) < at(document.getElementById("the-evidence")),
+        };
+      })()`);
+      const expected = SITE_NAV.filter(({ pages }) => !pages.includes("index.html")).map(
+        ({ label, href, pages, description }) => ({
+          text: label,
+          href: new URL(href, server.origin).href,
+          line: `: ${description}`,
+          pages:
+            label === "Library demos"
+              ? pages.map((file) => ({
+                  text: MARKDOWN_TITLES.get(file),
+                  href: new URL(file, server.origin).href,
+                }))
+              : [],
+        }),
+      );
+      assert.equal(expected.length, SITE_NAV.length - 1, "every page but home");
+      assert.ok(
+        expected.every(({ line }) => line.length > ": ".length),
+        "each page but home has its line",
+      );
+      assert.equal(expected.find(({ text }) => text === "Library demos")?.pages.length, 3);
+      assert.deepEqual(read, {
+        name: "Where to go",
+        heading: "main > h2",
+        list: "main > ul.where-to-go",
+        items: expected,
+        afterLede: true,
+        beforeQuestion: true,
+      });
+      for (const width of [PHONE, 1376]) {
+        await viewport(page, width);
+        const { gap, step } = (await page.evaluate(`(() => {
+          const list = document.querySelector("main > #where-to-go + ul");
+          const next = list.nextElementSibling;
+          const probe = document.createElement("div");
+          probe.style.marginBlockStart = "var(--space-s)";
+          document.querySelector("main").append(probe);
+          const step = parseFloat(getComputedStyle(probe).marginBlockStart);
+          probe.remove();
+          return {
+            gap: next.getBoundingClientRect().top - list.getBoundingClientRect().bottom,
+            step,
+          };
+        })()`)) as { gap: number; step: number };
+        assert.ok(step > 0, `--space-s resolves at ${width}px`);
+        assert.ok(
+          gap >= step - 0.5,
+          `the element after the list stands ${gap}px below it at ${width}px, want --space-s, ${step}px`,
+        );
+      }
+    } finally {
+      await page.close();
+    }
+  });
+});

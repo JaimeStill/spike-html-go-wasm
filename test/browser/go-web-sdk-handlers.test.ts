@@ -43,10 +43,11 @@ const root = join(import.meta.dirname, "../..");
 /** The page's one demo, as an expression. */
 const DEMO = `document.querySelector("sl-go-demo")`;
 
-/** The request the page's fence holds, as markdown/go-web-sdk-handlers.md writes it, with its
- * final line break, which marked's plain markup keeps. */
+/** The request the page's fence holds, as markdown/go-web-sdk-handlers.md writes it: its lines,
+ * the fence's text as the demo reads it, with no final line break; marked's plain markup adds
+ * one, which the pre's text content keeps. */
 const REQUEST = readFileSync(join(root, "markdown/go-web-sdk-handlers.md"), "utf8").match(
-  /<sl-go-demo [^>]*>\n\n```\n([\s\S]*?\n)```\n\n<\/sl-go-demo>/,
+  /<sl-go-demo [^>]*>\n\n```\n([\s\S]*?)\n```\n\n<\/sl-go-demo>/,
 )?.[1];
 
 /** The Go a first Run fetches: the worker and the scenario's module, alone. */
@@ -143,7 +144,18 @@ describe("the Markdown page's request demo", () => {
           demo.querySelector(":scope > pre").textContent,
         ];
       })()`),
-      [1, "websdk", "request", "request.http", REQUEST, "request.http", "", ["", ""], 0, REQUEST],
+      [
+        1,
+        "websdk",
+        "request",
+        "request.http",
+        REQUEST,
+        "request.http",
+        "",
+        ["", ""],
+        0,
+        `${REQUEST}\n`,
+      ],
     );
   });
 

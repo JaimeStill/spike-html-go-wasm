@@ -25,6 +25,11 @@ The architecture pages that apply, in the architecture repository:
   request events. The state, its rules, and its validation live in a DOM-free model below it,
   unit-tested without a browser and written by one owner, the composing element or the page.
 
+## Defects
+
+- A defect is fixed at its root, in the layer that owns it, never patched to one problem's
+  parameters; a workaround for a root since fixed is deleted.
+
 ## Go
 
 - Workspace Go is consumed by published tag at the latest release when a task plans, never by a
@@ -49,7 +54,7 @@ The architecture pages that apply, in the architecture repository:
 
 ## Design
 
-- spike-html-apps-foundation v0.3.0, through spike-html-hosting-sdk, is the visual baseline.
+- spike-html-apps-foundation v0.3.1, through spike-html-hosting-sdk, is the visual baseline.
 - Focus is always visible, motion honours reduced motion, and spacing comes from the
   foundation's tokens, never a literal.
 - A UI task's session brief carries its screenshots per profile; the architect's acceptance is

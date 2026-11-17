@@ -189,13 +189,6 @@
   max-inline-size: min(var(--popover-max-inline-size, 100%), 100% - 2 * var(--space-s));
 }
 
-/* A non-modal form or menu leaves the page as it is: the foundation veils behind every top-layer
-   element's backdrop, a modal dialog's meant among them. */
-.form-popover::backdrop,
-.menu-popover::backdrop {
-  background-color: transparent;
-}
-
 .menu-popover .item {
   display: flex;
   align-items: center;

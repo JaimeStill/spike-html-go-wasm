@@ -31,7 +31,7 @@ budget.
 6. `wasm_exec.js` copied from the pinned toolchain with provenance; .wasm served as
    application/wasm.
 7. The screenshot review, every palette's editor included, leaving no capture file; Firefox and
-   Safari where available.
+   Safari where available: README.md, "Review".
 8. The verdict for v1.repository-docs and the Pages sites.
 9. A playground where the reader edits and runs arbitrary Go in the page, with load, compile,
    link, and run timings.
@@ -40,7 +40,6 @@ budget.
     rendered Markdown page and in a hand page.
 12. The four programs (basics, generics, concurrency, standard library) edited and run in the
     page.
-13. The performance, optimization, and ergonomics review, with what it changed.
 
 ## Capabilities
 
@@ -138,29 +137,33 @@ for the Go packages.
   holds the fence-reading rules, so a page reads a template's fences as the demo would, and
   `file-names.ts` the naming: a fence's own name wins, then sl-go-demo's `file` attribute, which
   names a fence that names none, as a rendered Markdown fence can't, then a default by language
-  (`query.sql` for sql). sl-code-editor highlights Go, JSON, and SQL. No component imports the
-  runtime. `README.md`, "Components", documents each module.
+  (`query.sql` for sql), and `input.txt` for a fence naming no language. sl-code-editor highlights
+  Go, JSON, and SQL. No component imports the runtime. `README.md`, "Components", documents each
+  module.
 - **Pages** (`web/pages`, the apps tier, for the scripts and the stylesheet the pages load):
   `web/pages/page.css` holds every hand page's and the Markdown shell's own rules in the `page`
   cascade layer, which comes after the foundation's layers and the SDK's `site`; a hand page holds
-  no inline `<style>`. A body of class `app` makes the page an app page: one column, main a grid of
-  named lines with the prose (`.prose`) on an 80ch `content` column and the demo on the `full`
-  column, and one gutter, `--page-gutter`, on the inline sides and the block end. `components.html`
-  is a hand page whose script, `web/pages/components.ts`, shows every component's states once; its
-  Go demos run hello and the probe's handlers over the page's one runner. `playground.html` is a
-  hand page whose script, `web/pages/playground.ts`, gives its one source demo the page's runner,
-  the reader's arrangement, and the chosen program's `FileSet`, and keeps the select and the
-  fragment in step. `web/pages/arrangement.ts` owns that stored preference: its `keep()` reads the
-  placement from localStorage under `spike-html-go-wasm.arrangement`, gives one `Arrangement` to
-  every fixed demo on the page, and stores each Layout menu choice. `sqlate.html` is an app page,
-  laid out as the playground is, whose script, `web/pages/sqlate.ts`, gives its one fixed source
-  demo, on the sqlate program's files, the page's runner and the reader's arrangement; Run builds
-  the program in the page.
+  no inline `<style>`. The build writes the Site nav into every page's header from one list,
+  `SITE_NAV` in `scripts/site-nav.ts`; where its row doesn't fit beside the header's buttons, as
+  `web/pages/site-nav.ts` measures, it collapses into a drawer, which that script opens and
+  closes (`README.md`, "Pages"). A body of class `app` makes the page an app page: one column,
+  main a grid of named lines with the prose (`.prose`) on an 80ch `content` column and the demo
+  on the `full` column, and one gutter, `--page-gutter`, on the inline sides and the block end.
+  `components.html` is a hand page whose script, `web/pages/components.ts`, shows every
+  component's states once; its Go demos run hello and the probe's handlers over the
+  page's one runner. `playground.html` is a hand page whose script, `web/pages/playground.ts`, gives
+  its one source demo the page's runner, the reader's arrangement, and the chosen program's
+  `FileSet`, and keeps the select and the fragment in step. `web/pages/arrangement.ts` owns that
+  stored preference: its `keep()` reads the placement from localStorage under
+  `spike-html-go-wasm.arrangement`, gives one `Arrangement` to every fixed demo on the page, and
+  stores each Layout menu choice. `sqlate.html` is an app page, laid out as the playground is, whose
+  script, `web/pages/sqlate.ts`, gives its one fixed source demo, on the sqlate program's files, the
+  page's runner and the reader's arrangement; Run builds the program in the page.
 - **Markdown pages** (`markdown/`, the spike's own tree, never copied into `content/`):
   `vite.config.ts` gives the SDK's `markdownPages` the directory as one tree's source, its
   repository URL and a ref it reads only for external links, which the tree has none of, so
   each `markdown/<page>.md` builds to `<page>.html`, filled into `markdown-shell.html`, the
-  index's shell with the Pages and Contents drawers and no site nav. The shell's script,
+  index's shell with the Pages and Contents drawers and the Site nav. The shell's script,
   `web/pages/markdown.ts`, gives every `<sl-go-demo>` on the page the page's one runner and wires
   the drawers; Go loads only on a Run. `sqlate-compile.html` embeds the sqlate scenario's compile
   handler around an ordinary sql fence, which the plugin highlights at build, named
@@ -170,8 +173,8 @@ for the Go packages.
   around a fence naming no language, named `request.http`, plain text before and after the demo
   upgrades; its prose's `http` and `json` fences are highlighted at build. A demo's fence isn't
   shown once the demo upgrades, so each page's prose also holds highlighted fences for the palette
-  check. Each page passes the SDK's shell checks, palette check, and crawl. `content.json`
-  records no tree, so the site test (`test/browser/site.test.ts`) crawls from a scratch root under
+  check. Each page passes the SDK's shell checks, palette check, and crawl. The site has no
+  `content.json`, so the site test (`test/browser/site.test.ts`) crawls from a scratch root under
   TMPDIR whose `content.json` records `markdown/` as one copied tree, and the crawl checks each
   rendered page as a copied page, pagers and site index included.
 - **Measurement** (`scripts/measure.ts`, `scripts/measure-timings.ts`, and
@@ -195,20 +198,20 @@ The tasks, in the order they run; each cites the evidence it proves.
 7. `scenarios`: the go-core graph and go-web-sdk demos (evidence 10).
 8. `measure`: sizes and timings on the live site, on desktop and on an iPhone (evidence 4, 5).
 9. `review`: the screenshot review (evidence 7).
-10. `final-review`: the performance, optimization, and ergonomics reviews, landing what's within
-    reach (evidence 13).
-11. `answer`: the verdict (evidence 8).
+10. `answer`: the verdict (evidence 8).
 
 ## References
 
-The spike reads these repositories and never writes to them. Each is a key in the coordinator's
-`references.toml`, with its local checkout in `references.local.toml`:
+The spike reads these repositories and never writes to them, with one exception: the `review`
+task, by the architect's decision, fixed the defects it found in the reference layers at their
+root and released them there. Each is a key in the coordinator's `references.toml`, with its local
+checkout in `references.local.toml`:
 
 - `sqlate`, `go-core`, and `go-web-sdk`: the demos' Go, each at its latest release when a task
   plans; graph-ergonomics is updating the Go stack.
-- `spike-html-hosting-sdk` at v0.6.2, `spike-html-hosting-components` at v0.5.0, and
+- `spike-html-hosting-sdk` at v0.6.4, `spike-html-hosting-components` at v0.5.1, and
   `spike-html-hosting-icons` at v0.1.0: the site scaffold, shell, and Shiki 4.6.0 themes.
-- `spike-html-apps-foundation` at v0.3.0, through the SDK: the visual baseline.
+- `spike-html-apps-foundation` at v0.3.1, through the SDK: the visual baseline.
 - `spike-html-apps-tooling` at v0.3.0: the screenshot review.
 - `spike-html-hosting` at 421254d: the cost command.
 - `spike-html-apps` at dae9a77: the ESLint boundaries table.

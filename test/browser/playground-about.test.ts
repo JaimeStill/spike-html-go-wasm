@@ -3,19 +3,20 @@
 //
 // The prose is the title row, the heading and the Program select's label beside it, and the lede
 // alone, the lede's text as approved, Ctrl+Enter in a kbd, and the page holds no disclosure; the
-// select itself is playground-programs.test.ts's. The header's group is About, Help, and Settings,
-// in that order: About a glyph button in the shell's pattern, its glyph the icons layer's info-16,
-// its key A shown in a kbd, its hint "About". A, a click, or Enter on About opens the dialog, its
-// title heading focused and its Close's hint closed past the interest delay; Tab moves focus to
-// Close; Escape, or Close, closes it, focus back where it was before it opened. A typed into the
-// editor types and opens nothing. In the accessibility tree the button is named About and the
-// dialog "About the playground", modal. The dialog holds, after its header row, the three
-// paragraphs approved with the brief, the third with the programs task's goroutine and deadlock
-// sentences after "Stop to cancel" and its last sentence on each program's edits, then what a Run
-// downloads, then the link to the spike's question and evidence, the index, in that order and in
-// those words. The SDK's shell checks hold the button and the dialog to the components' shortcut
-// dialog pattern, and Help's list to the page's bindings, A's among them (site.test.ts). Every wait
-// is bounded.
+// select itself is playground-programs.test.ts's. The header's group, as it renders at the page's
+// own width, where the site nav's row shows and its drawer's opener doesn't (site-nav.test.ts), is
+// About, Help, and Settings, in that order: About a glyph button in the shell's pattern, its glyph
+// the icons layer's info-16, its key A shown in a kbd, its hint "About". A, a click, or Enter on
+// About opens the dialog, its title heading focused and its Close's hint closed past the interest
+// delay; Tab moves focus to Close; Escape, or Close, closes it, focus back where it was before it
+// opened. A typed into the editor types and opens nothing. In the accessibility tree the button is
+// named About and the dialog "About the playground", modal. The dialog holds, after its header row,
+// the three paragraphs approved with the brief, the third with the programs task's goroutine and
+// deadlock sentences after "Stop to cancel" and its last sentence on each program's edits, then
+// what a Run downloads, then the link to the spike's question and evidence, the index, in that
+// order and in those words. The SDK's shell checks hold the button and the dialog to the
+// components' shortcut dialog pattern, and Help's list to the page's bindings, A's among them
+// (site.test.ts). Every wait is bounded.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -161,6 +162,7 @@ describe("the playground's prose and About", () => {
           glyph.removeAttribute("class");
           return {
             names: [...document.querySelectorAll("body > header .header-actions > button")]
+              .filter((button) => button.checkVisibility())
               .map((button) => button.getAttribute("aria-label")),
             glyph: glyph.outerHTML,
             kbd: [...about.querySelectorAll("kbd")].map((kbd) => kbd.textContent).join(" "),
@@ -248,9 +250,9 @@ describe("the playground's prose and About", () => {
       await pressA(page);
       await page.evaluate(SETTLED);
       assert.equal(await page.evaluate(OPEN), false, "About stays closed");
-      // The caret sits where the selection collapsed, before the text's last line break.
+      // The caret sits where the selection collapsed, at the end of the text's last line.
       const typed: string = await page.evaluate(`${editor}.value`);
-      assert.equal(typed, `${before.slice(0, -1)}a\n`, "the editor holds the a");
+      assert.equal(typed, `${before}a`, "the editor holds the a");
     } finally {
       await page.close();
     }

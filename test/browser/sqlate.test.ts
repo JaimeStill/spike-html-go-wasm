@@ -61,6 +61,9 @@ const FILES = [
   "input.json",
 ];
 const source = (name: string) => readFileSync(join(root, "playground/sqlate", name), "utf8");
+/** A file as its fence gives it to the demo: its lines, less the final newline the file ends in
+ * and the fence's markup keeps (fences.ts). */
+const lines = (name: string) => source(name).replace(/\n$/, "");
 
 /** The packages the Go files import, whose closure the first Run fetches. */
 const IMPORTS = programImports(
@@ -119,7 +122,7 @@ SELECT version FROM project WHERE id = $1
 const OUTPUT = STATEMENTS + SUCCEEDED;
 
 /** input.json as the page opens on it, with no final line break, as the cases paste it. */
-const INPUT = source("input.json").replace(/\n$/, "");
+const INPUT = lines("input.json");
 
 /** The status of a main that exited 1. */
 const FAILED = "Finished main, exit code 1";
@@ -204,7 +207,7 @@ describe("the sqlate page", () => {
     assert.deepEqual(opened, {
       demos: 1,
       files: FILES,
-      value: source("main.go"),
+      value: lines("main.go"),
       tab: "main.go",
       source: true,
     });
@@ -233,7 +236,7 @@ describe("the sqlate page", () => {
         await page.evaluate(
           `({ language: ${editor}.language, value: ${editor}.value, ranges: ${ranges} })`,
         );
-      assert.equal(shown.value, source(name), name);
+      assert.equal(shown.value, lines(name), name);
       assert.equal(shown.language, "sql", name);
       const comment = shown.ranges.filter(({ text }) => text.startsWith("--"));
       assert.ok(comment.length > 0, `${name}: a -- comment is painted`);
@@ -313,7 +316,7 @@ ${EXEC_EDIT}${QUERY_VERSION}
 SELECT version, updated_at FROM project WHERE id = $1
 ${SUCCEEDED}`),
     );
-    await edit("version.sql", source("version.sql").replace(/\n$/, ""));
+    await edit("version.sql", lines("version.sql"));
   });
 
   test("a statement with no tier prints sqlate's message on one stderr line, with exit 1", async () => {
@@ -323,7 +326,7 @@ ${SUCCEEDED}`),
       { stream: "stderr", text: "query: version.sql: no tier declaration" },
     ]);
     assert.deepEqual(shown.rows.at(-1), { kind: "exit", text: "main exited with code 1" });
-    await edit("version.sql", source("version.sql").replace(/\n$/, ""));
+    await edit("version.sql", lines("version.sql"));
   });
 
   test("a pattern file in a new namespace is included by a statement, rerunning with no Go compile or link", async () => {

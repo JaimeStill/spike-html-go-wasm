@@ -4,15 +4,16 @@
 // page, and of each rendered Markdown page, sqlate-compile.html, go-core-graph.html, and
 // go-web-sdk-handlers.html, which the SDK's markdownPages renders from the spike's own markdown/
 // tree into markdown-shell.html, by its URL, its reading width among them. Each page's header has
-// no site nav, which the checks allow, and which a test of its own holds on each: no sl-site-nav in
-// the header, and no site-nav.js loaded, which defines it; the build bundles the module, so the
+// no SDK site nav, which the checks allow, the site's own nav standing in its place
+// (site-nav.test.ts), and a test of its own holds that on each: no sl-site-nav in the header, and
+// no site-nav.js loaded, which defines it; the build bundles the module, so the
 // registry rather than a request names it. The playground and the sqlate page are app pages, each
 // main across the body's content width, so they run every check but main's reading width,
 // holdsReadingWidth; a check of the spike's own holds each one's prose, the heading and the lede,
 // to 80ch, centered, instead. The crawl, from the index, reaches exactly the index and, by the
 // index's links, the components page, the playground, the sqlate page, and the rendered pages,
-// loading each hand page it reaches and checking every copied page. content.json records no tree,
-// since the site copies none, so given the repository's root the crawl would count the rendered
+// loading each hand page it reaches and checking every copied page. The site has no content.json,
+// since it copies no tree, so given the repository's root the crawl would count the rendered
 // pages hand pages, which have no pager; but markdownPages gives the tree's pages a site index and
 // pagers, as it does a copied tree's. So the crawl gets a scratch root under TMPDIR whose
 // content.json records markdown/ as one copied tree, each file at its name in markdown/, which
@@ -29,7 +30,7 @@
 // playground-layout.test.ts. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
-// Adapted from spike-html-hosting-sdk (v0.6.2): template/test/browser/site.test.ts, its checks
+// Adapted from spike-html-hosting-sdk (v0.6.4): template/test/browser/site.test.ts, its checks
 // run on each hand page, as the SDK's README gives a root-style site, its crawl reaching the hand
 // pages and the spike's own rendered pages, crawled as a copied tree, the palette check on the
 // rendered pages alone.
@@ -73,8 +74,8 @@ let browser: Browser;
  * names the page it's served at, with its git blob hash, and a byte copy of each under its
  * content/; answers the root. The repository is package.json's name, its URL the checkout's
  * origin as https, an SSH remote's included, and the commit the working tree's HEAD, so the record
- * is one the SDK's content check accepts. Nothing of it is the site's: content.json at the
- * repository's root stays a record of no tree. */
+ * is one the SDK's content check accepts. Nothing of it is the site's, which has no
+ * content.json. */
 function markdownTreeRoot(): string {
   const dir = mkdtempSync(join(tmpdir(), "site-crawl-"));
   mkdirSync(join(dir, "content"));
@@ -310,7 +311,13 @@ describe("the site under its base", () => {
       t.diagnostic(`${crawled.pages} pages, ${crawled.links} in-site links`);
       assert.deepEqual(
         { pages: crawled.pages, unreachable: crawled.unreachable, hand: crawled.hand },
-        { pages: pages.length, unreachable: [], hand },
+        // The crawl lists the hand pages in the order it first finds them: the index, then each by
+        // the site nav's row, the first links on every page, in its order.
+        {
+          pages: pages.length,
+          unreachable: [],
+          hand: ["", "playground.html", "sqlate.html", "components.html"],
+        },
       );
     } finally {
       await page.close();
