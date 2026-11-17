@@ -152,7 +152,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, merge 07ba39a) · 3: SDK v0.6.3 released (PR #13, merge 68296b9, tag d0cde51) · 4: components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12 (unpublished) · 5: spike-html-hosting 338681e, -architecture c3a4d9a, -sqlate 0e078ec (unpublished) · 6: spike-html-apps 1f6f81c, c9f60ff (unpublished) · 7: b14324b..2bf3e84 · 8: e026d28, 3e2f1cf · 9: 46b0f18 · 10: b502751 · checkpoint 1 fixes: c95a713 (where-to-go in main's flow), d530aaf (Site drawer captures), fe7b0fc (index paragraphs folded into the list) · released mid-BUILD: components v0.5.1 (PR #13, main 9fa5850), apps-components v0.10.3 (PR #19, main 10dde51), SDK v0.6.4 (PR #14, main f49087e) · moved on review: spike-html-hosting f1c2740, -architecture cc44e0e, -sqlate cd73f4c, spike-html-apps d78eec8, spike 814d911 · 11: checkpoint 1 closed (architect ok) · 12: checkpoint 2 closed (fffed71 no-script column, 0e5444b fence text, b253cf9 built sample) · checkpoint 3: d136e8f (tabbed output in the wide band, editor left/right) · e156e9b (sl-timings caption visually hidden) · 13: checkpoint 3 closed (architect ok) · 14: by-hand pass accepted, no findings (2026-11-17) · standards: spike f734d22, 58c8389, d9c97d3; icons 1460e7e; noctis 1a3f2e3; spike-html-hosting 44b3c10; -architecture 9c5afd8; -sqlate f152f74; spike-html-apps dedc5f6 · escalation 6: 4e4ff4b (Site drawer focus as the SDK's) · spec review: 5 gaps, closed in the record and by the dock comment · next: editor with slice 15 (the README Review section) and spike-html-apps' cooldown convention · more editor notes: sites' components provenance lines at v0.5.0 vs the template's v0.5.1; spike-html-apps conventions proofs could add v0.10.3 · intake finding: the SDK keeps its drawer-focus check helpers private, so the spike's Site drawer test copies them · findings so far: components page scrolls sideways at 390px without script (go-demo figures before upgrade), for checkpoint 2 · editor notes: foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record; the spike's STANDARDS.md v0.3.0 baseline line and context/README.md SDK/foundation versions · standards — · spec — · editor —
+slices 15/15 committed · standards ✓ (all repos) · spec ✓ (5 gaps closed) · editor ✓ · next: validate, then the session brief
 
 ## Decisions
 
@@ -1050,14 +1050,13 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
 - wasm_exec.js caps argv and the environment together at 12 KB; `GOOS=js` go test under node
   needs a trimmed environment. The playground's compile and link argv fit, because the build
   passes the archives' paths in importcfg files.
-- SDK v0.6.1's site.css places header-actions at the inline end only beside a site nav; an
-  intake candidate.
 - Vite's preview doesn't gzip, so the live command alone proves the gzip assertion, against the
   deployed site.
 - The SDK's Release workflow tags a release itself, on a release commit above the merge; pushing
   the tag by hand is rejected as already existing.
-- The SDK removes the focus outline on Help's heading, which isn't a control; spike-html-hosting-
-  sqlate's STANDARDS.md says "Focus is always visible", so its next review may raise it.
+- SDK v0.6.3 removes the focus outline on every shortcut dialog's script-focused heading, which
+  isn't a control; spike-html-hosting-sqlate's STANDARDS.md says "Focus is always visible", so its
+  next review may raise it.
 
 - The state-outside-components principle is a native web principle for the intake's web
   standard; the answer section carries it.
@@ -1071,8 +1070,6 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   inside the scroller; otherwise its containing block is the page's, and it grows the page.
 - An element with `contain: inline-size` measures 0 in an auto grid track; give the element a
   `min-inline-size`, which the track takes, or size the track.
-- The foundation's elements layer veils `::backdrop`, which a popover in the top layer has too; a
-  popover that veils nothing sets its backdrop transparent.
 - The foundation's keys.js passes over a keydown whose default is prevented, so a component keeps
   a key from firing a page shortcut by preventing its default.
 - CDP Fetch enabled on the page intercepts the worker's .wasm fetch, which the page's Network
@@ -1126,31 +1123,32 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
 - The local machine's fonts (CaskaydiaMono, Liberation Sans) differ from CI's, so a layout test
   proves little until it also runs in a pinned font set.
 - A pipe in a gating command loses the command's exit code; the merge command runs unpiped.
-- Intake candidate: the SDK's site.css sets `.header-actions { flex: none }`, which fails reflow
-  (WCAG 1.4.10) on a page with no nav at a phone's width and large text. The SDK should let the
-  group shrink and wrap.
 - Intake candidate: the coordinator's architecture or the SDK could offer a browser-test helper
   that runs a suite in a pinned font set.
 
 - `sqltest.Open` requires a `testing.TB`; a constructor that takes no test is a candidate for
   sqlate's next goal.
-- Intake candidates for the SDK: markdownPages has no notion of a tree the site writes itself; its
-  Shiki markup drops a fence's language; a Markdown fence can't name its file. v0.6.2's crawl
-  counts any page not in content.json a hand page, so a site's own multi-page Markdown tree needs
-  the site test's scratch-root workaround; the SDK could take the site's own Markdown trees.
+- Intake candidates for the SDK: markdownPages has no notion of a tree the site writes itself; a
+  Markdown fence can't name its file. The crawl counts any page not in content.json a hand page,
+  so a site's own multi-page Markdown tree needs the site test's scratch-root workaround; the SDK
+  could take the site's own Markdown trees.
+- Intake findings from review (README.md, "Review", lists every finding): spike-html-design
+  v0.7.0's bare `::backdrop` veils every top-layer backdrop; the SDK has no nav for a site's own
+  pages; sl-drawer has no modal-only mode, so the Site drawer docks at 10000rem; site-nav.ts and
+  markdown.ts repeat the SDK template's drawer wiring; the SDK keeps its drawer-focus check helpers
+  private, so site-nav.test.ts copies them.
 - golang.org/x/text and golang.org/x/sync arrive indirectly through pgx and trail their latest;
   `mise run currency` reports direct requirements only.
 
-- sqlate.html's 36 s cold Run on an iPhone 16 Pro Max (2026-11-12) did not reproduce: the
-  2026-11-13 cold run, in an Incognito tab, took 3.3 s. The cause is unknown. An intake candidate (final-review dropped).
+- sqlate.html's 36 s cold Run on an iPhone 16 Pro Max (2026-11-12) did not reproduce: the 2026-11-13
+  cold run, in an Incognito tab, took 3.3 s. The cause is unknown. An intake candidate (final-review
+  dropped).
 - The iPhone readings lack cached reloads, and some phases weren't captured: sqlate's
   Fetch, Wasm compile, and Go compile, and calc's phases before Link (README.md, "Measurements").
 - Build drift is Go's VCS stamping alone: two local builds match byte for byte, and the live
   module differs from them only in `vcs.revision`, `vcs.time`, and `vcs.modified`. Building with
   `-buildvcs=false`, or an equivalent, would make the live module match a local build. For
   the intake (final-review dropped).
-- The review task owns the WebKit and desktop Safari checks; measure considered Playwright's
-  WebKit and left it to review.
 
 - For the answer: Go's js port has an in-memory fake network (`net_fake.go`), so go-web-sdk's
   Service.Run binds and serves inside the wasm under node. In a browser, net/http's client uses
@@ -1158,23 +1156,24 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   qualifies the framing's "a service can't run there": sockets can't, but an in-process service
   can.
 - A `timings.test.ts` stall was seen once under the parallel browser tier's load and isn't
-  reproduced alone; the per-test bound now fails it by name. An intake candidate (final-review dropped).
+  reproduced alone; the per-test bound now fails it by name. An intake candidate (final-review
+  dropped).
 - Intake candidate: Shiki's http grammar statically imports the JavaScript, TypeScript, and Java
   grammars, which matters if the SDK's client-side fences ever highlight http.
 - Intake candidate: the exit race in Go's `wasm_exec.js` (a pending timeout resuming an exited
   program) is upstream Go's.
 
-- An intake candidate, the architect's lead optimization (2026-11-16; final-review dropped): warm the worker before the first
-  Run. The live calc readings show a fresh page's first Run at 1,848 ms cold and 1,426 ms cached
-  against 412 ms in place, and the gap is not only the fetch (616 / 166 / 21 ms) and the wasm
-  compile (33 / 33 / 3.7): it is mostly the compiler's own warm-up inside Go compile and Link
-  (854 / 875 / 198 and 331 / 334 / 185), Chrome compiling a large module lazily. The worker already
-  holds the tools and archives across Runs; it could fetch them, compile the modules, and run one
-  throwaway build ahead of the click, and could also build the shown program speculatively. The
-  trigger is the question: a page-load preload spends 19 to 35 MB per view against Pages' 100 GB
-  monthly soft limit (about 5,000 cold runs) and a second of phone CPU, so preload on intent
-  (editor focus, pointer over Run, arriving on the playground) and never under a data-saver
-  signal.
+- An intake candidate, the architect's lead optimization (2026-11-16; final-review dropped): warm
+  the worker before the first Run. The live calc readings show a fresh page's first Run at 1,848 ms
+  cold and 1,426 ms cached against 412 ms in place, and the gap is not only the fetch (616 / 166 /
+  21 ms) and the wasm compile (33 / 33 / 3.7): it is mostly the compiler's own warm-up inside Go
+  compile and Link (854 / 875 / 198 and 331 / 334 / 185), Chrome compiling a large module lazily.
+  The worker already holds the tools and archives across Runs; it could fetch them, compile the
+  modules, and run one throwaway build ahead of the click, and could also build the shown program
+  speculatively. The trigger is the question: a page-load preload spends 19 to 35 MB per view
+  against Pages' 100 GB monthly soft limit (about 5,000 cold runs) and a second of phone CPU, so
+  preload on intent (editor focus, pointer over Run, arriving on the playground) and never under a
+  data-saver signal.
 
 ## Pending edits
 
@@ -1212,3 +1211,12 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
 - coordinator · roadmap.toml: remove the task `final-review` from
   experiment.html.spike-html-go-wasm (the architect dropped it on 2026-11-17: the experiment's
   question is answered; its optimization candidates go to experiment.html's intake as details).
+- coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", after "The site takes
+  the baseline through spike-html-hosting-sdk's foundation tag.", add "Its review fixed the defects
+  it found in the reference layers at their root, releasing spike-html-apps-foundation v0.3.1,
+  spike-html-hosting-sdk v0.6.3 and v0.6.4, spike-html-hosting-components v0.5.1, and
+  spike-html-apps-components v0.10.3."
+- coordinator · roadmap.toml: the review task's summary becomes "The review of every page in
+  Chromium, its first pass across every palette, the editor included, leaving no capture file;
+  Firefox and the iPhone's Safari by hand; a Site nav on every page; each finding fixed at its
+  root, in the reference layers' releases among them. Evidence 7."

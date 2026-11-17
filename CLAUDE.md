@@ -15,4 +15,5 @@ with the marathon workflow; start from `context/README.md`.
   `standards-lab/context/roadmap.toml`, under `experiment.html.spike-html-go-wasm`. Its goal
   record is `context/goals/experiment.html.spike-html-go-wasm.md`.
 - **References:** the repositories this spike reads are listed in `context/README.md`. The spike
-  reads them and never writes to them.
+  reads them and never writes to them; the `review` task, which fixed defects at their root in the
+  reference layers by the architect's decision, is the one exception.

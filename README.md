@@ -341,8 +341,8 @@ where the tree was dirty, and false in the live build.
 | sqlate.wasm | match | 7,805,311 | 7,805,306 | −5 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
 | websdk.wasm | match | 7,772,452 | 7,772,444 | −8 | `vcs.revision`, `vcs.time`, `vcs.modified` (local true, live false) |
 
-The measure command reports the difference and doesn't remove it; dropping the stamp, with
-`-buildvcs=false` or otherwise, is left to final-review.
+The measure command reports the difference and doesn't remove it; building with
+`-buildvcs=false`, or an equivalent, would make the live module match a local build.
 
 ### Desktop timings
 
@@ -470,8 +470,88 @@ The sqlate page's Fetch, Wasm compile, and Go compile, and the calc program's ph
 were not captured. The go-core graph's first run was in a regular tab with its cache state
 unconfirmed; its Fetch suggests the HTTP cache answered. An earlier phone reading, taken during
 the sqlate task, gave 36 s for the sqlate page's cold Run. It did not reproduce: the 2026-11-13
-cold run, in an Incognito tab, took 3.3 s, on par with the desktop. Its cause is unknown, and
-final-review may look into it.
+cold run, in an Incognito tab, took 3.3 s, on par with the desktop. Its cause is unknown.
+
+## Review
+
+The review covered the seven pages: the index, the components page, the playground, the sqlate
+page, and the three Markdown pages, `sqlate-compile.html`, `go-core-graph.html`, and
+`go-web-sdk-handlers.html`. Each finding was fixed at its root, in the layer that owns it, kept as
+designed, or left for experiment.html's intake.
+
+### What was reviewed
+
+- Screenshots, on 2026-11-16: `mise run screenshots` in chrome-headless-shell 157.0.8103.78, at
+  390, 900, 1120, and 1376px, in every state the task captures (see "Tasks"), the Go demos and
+  the playground after a Run and every page with the Site drawer open among them. The architect
+  reviewed them as browser galleries at three checkpoints: the index and the Markdown pages, then
+  the components page, then the playground and the sqlate page. Checkpoint 1's first pass took all
+  six profiles, the four palettes at the defaults and compact and sans at flexoki, each light and
+  dark; from its re-review on, the captures took one profile, flexoki, regular, mono, light, the
+  architect judging the others known to work. Each gallery was deleted as its checkpoint closed,
+  so no capture file remains.
+- By hand, on 2026-11-17: Firefox 158.0.1 and the iPhone's Safari app (its iOS version not
+  recorded), on the `review` branch's build served by `vite preview --host` over the local
+  network: every page light and dark at flexoki; each palette once on the playground's editor; a
+  Run on each demo page; typing, Enter, Tab, and undo in the editor; and the Site nav row and
+  drawer, the Layout menu, About, Help, and Settings. It found nothing.
+- Not covered: desktop Safari, WebKitGTK, and Copy on the iPhone, which has no clipboard over
+  plain http.
+
+### Findings and their fixes
+
+- Every glyph button's hint veiled the page, and inside a dialog washed the dialog out. The
+  foundation veiled every top-layer `::backdrop`, a popover's included. spike-html-apps-foundation
+  v0.3.1 veils a modal dialog's backdrop alone, and the spike's transparent-backdrop rules are gone.
+- Four SDK defects: with no site nav, the header's button group didn't sit at the inline end, and
+  at 390px and 200% text its `flex: none` scrolled the page sideways; the no-outline rule for a
+  script-focused dialog heading covered Help's alone; a site with no `content.json` crashed the
+  crawl and the content check; and a highlighted fence lost its language. spike-html-hosting-sdk
+  v0.6.3 fixes each, and the spike's workarounds for them are gone.
+- Opening an `sl-drawer` focused its Close, whose hint popped up at once: the drawer called
+  `showModal()` with no initial focus. spike-html-hosting-components v0.5.1 gives the drawer's
+  heading first focus, and SDK v0.6.4 pins it; spike-html-apps-components v0.10.3 fixes the same
+  root upstream.
+- A reader reached the pages only through links in the index's evidence, and most pages had no
+  link home: the SDK's nav links between sites, and its Pages drawer lists the Markdown pages
+  alone. The spike added its Site nav and drawer to every page and the where-to-go list to the
+  index (see "Pages"; e026d28, 46b0f18).
+- The paragraph after the where-to-go list had no space above it: the list sat in a section,
+  which the foundation's flow rule doesn't space. It is now a heading and a list in main's own
+  flow (c95a713).
+- Without script, the components page scrolled sideways at 390px: the states' grid column grew to
+  its fences' longest line. The column is `minmax(0, 1fr)`, and each fence scrolls in its own
+  `pre` (fffed71).
+- A plain fence's text ended in a newline a highlighted one didn't, and the components page's
+  hand-copied rendered-fence sample held an empty line the SDK never writes. The fence reader now
+  drops the newline marked's plain rendering adds (0e5444b), and the build renders the sample
+  through the SDK (b253cf9).
+- With the editor left or right, the playground stacked the console over the timings and cut the
+  table off. There the output now takes the phone band's Output and Timings tabs (d136e8f).
+- The playground's Timings tab showed its name twice, as the tab and as the table's caption. The
+  caption is visually hidden and still names the table (e156e9b).
+- At 390px and 200% text, sl-timings' table needs up to 394px in 279px. The table scrolls inline
+  inside sl-timings, WCAG 1.4.10's data-table exception, and the page doesn't (b14324b).
+- The Layout button showed a focus ring after a menu choice. It shows one only after a keyboard
+  choice, so it stays.
+- The Site drawer returned focus to its opener after N, unlike the SDK's Pages and Contents
+  drawers. It now returns focus to wherever it was when the drawer opened (4e4ff4b).
+
+### Left for experiment.html's intake
+
+- spike-html-design v0.7.0, the foundation's baseline, still veils every `::backdrop`.
+- The SDK has no nav for a site's own pages; the spike's Site nav stands in.
+- A Markdown fence can't name its file; sl-go-demo's `file` attribute stands in.
+- The SDK's crawl counts a page missing from `content.json` as a hand page, so the site test
+  crawls the Markdown tree from a scratch root.
+- `sl-drawer` has no modal-only mode; the Site drawer's dock at a width no viewport reaches
+  stands in.
+- `web/pages/site-nav.ts` and `web/pages/markdown.ts` repeat the SDK template's drawer wiring.
+- The SDK keeps its drawer-focus check helpers private, so `test/browser/site-nav.test.ts` copies
+  them.
+- Performance: warming the worker before the first Run, Chrome's lazy compilation of the
+  compiler, the build drift Go's version-control stamp causes, the 36 s cold sqlate Run on a phone
+  that didn't reproduce, and a timings test's stall seen once.
 
 ## Runtime
 
