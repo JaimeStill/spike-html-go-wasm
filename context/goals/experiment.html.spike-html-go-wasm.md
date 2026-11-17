@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** answer
-- **Branch:** answer
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -15,7 +15,7 @@
 7. [x] scenarios
 8. [x] measure
 9. [x] review
-10. [ ] answer
+10. [x] answer
 
 ## Task brief · answer
 
@@ -87,10 +87,6 @@ Out of scope  Any coordinator or reference-repository edit (the sync lands them)
 Door          two-way: prose, one hand-page edit, a Pages deploy; nothing released.
 ```
 
-
-## Progress
-
-slices 4/4 committed · standards ✓ · spec ✓ · editor ✓ (deploy and `mise run live` after merge)
 
 ## Decisions
 
