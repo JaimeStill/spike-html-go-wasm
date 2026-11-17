@@ -31,11 +31,9 @@
   /* The site's own nav (scripts/site-nav.ts), its row the header's first child, where site.css
      places sl-site-nav, whose rules name that element alone: the row takes the room the
      header-actions group leaves, the group keeping its inline end by its own auto margin, and its
-     links wrap within it rather than widen the page. Below 40rem, where site.css wraps the header,
-     the row, as it shows with no script, takes a line of its own over the group, as sl-site-nav
-     does. Its links never break inside a word, as sl-site-nav's don't: the host's breaking stops at
-     the nav. The current page's link is the strongest text, in the terms' weight, as the site
-     nav's mark is. */
+     links wrap within it rather than widen the page. Its links never break inside a word, as
+     sl-site-nav's don't: the host's breaking stops at the nav. The current page's link is the
+     strongest text, in the terms' weight, as the site nav's mark is. */
   body > header > .site-nav {
     flex: 1;
     overflow-wrap: normal;
@@ -60,25 +58,50 @@
     color: var(--fg);
     font-weight: 600;
   }
+
+  /* The switch, which the drawer's script (web/pages/site-nav.ts) makes by whether the row fits,
+     never by a width: it marks the header data-site-nav="row" where the row's links fit on one
+     line sharing the header's line with its buttons, and "drawer" where they don't, and under
+     "drawer" the row is hidden and the opener shows in its place (below, unlayered). To measure,
+     it marks the header "measure" for a moment no frame paints: the header, the row, its list, and
+     the group laid out unwrapped, each at its natural single-line width, the opener hidden as the
+     row state hides it, so the script reads the line the row state would need. With no script the
+     header has no data-site-nav, the row shows at every width, wrapping its links, and below
+     40rem, where site.css wraps the header, it takes a line of its own over the group, as
+     sl-site-nav does; with script the row shows only where it fits beside the group, so it never
+     needs that line. */
+  body > header[data-site-nav="drawer"] > .site-nav {
+    display: none;
+  }
+  body > header[data-site-nav="measure"] {
+    flex-wrap: nowrap;
+  }
+  body > header[data-site-nav="measure"] > :is(.site-nav, .header-actions) {
+    flex: none;
+  }
+  body > header[data-site-nav="measure"] > .site-nav > ul,
+  body > header[data-site-nav="measure"] > .header-actions {
+    flex-wrap: nowrap;
+  }
   @media (width < 40rem) {
-    body > header > .site-nav {
+    body > header:not([data-site-nav]) > .site-nav {
       flex-basis: 100%;
     }
   }
 
-  /* The switch: below 58rem, with script, the row is hidden and the drawer's opener shows in its
-     place (below, unlayered). 58rem is the widest header's content at the default type, rounded
-     up to the rem: a rendered Markdown page's, under both drawers' docks, the row's links on one
-     line beside Pages, Contents, Help, and Settings, with the gap between them and the body's two
-     gutters. Measured in the browser tier's chrome-headless-shell as the row's list at its
-     max-content width plus those: 863px in the machine's fonts (Liberation Sans) and 925px in
-     the pinned DejaVu set (test/browser/fonts.ts), whose wider Sans sets the switch, so the row
-     fits in either; site-nav.test.ts holds every page's row and buttons to one line from it. With
-     no script the drawer stays undefined and the row shows at every width, wrapping its links. */
-  @media (width < 58rem) {
-    body:has(> #site:defined) > header > .site-nav {
-      display: none;
-    }
+  /* The probe the drawer's script observes for the header's width: as wide as the header, zero
+     tall, out of the flow, so the switch, which changes the header's height, never changes its
+     size. */
+  body > header:has(> .site-nav-probe) {
+    position: relative;
+  }
+  .site-nav-probe {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    block-size: 0;
+    visibility: hidden;
+    pointer-events: none;
   }
 
   /* The drawer, a modal at every width, by its dock: its links a column, each with the
@@ -248,16 +271,14 @@
   }
 }
 
-/* The Site drawer's opener, shown only below the switch and once the drawer is defined, so with no
-   script it is never shown and the row stands in its place. Unlayered, after the components'
-   glyph-button.css, whose unlayered display: inline-flex would otherwise win over any layered
-   rule, as site.css's own openers' rules are. */
+/* The Site drawer's opener, shown only in the drawer state, which the drawer's script marks
+   (data-site-nav="drawer", above), so with no script it is never shown and the row stands in its
+   place. Unlayered, after the components' glyph-button.css, whose unlayered display: inline-flex
+   would otherwise win over any layered rule, as site.css's own openers' rules are. */
 .site-opener {
   display: none;
 }
 
-@media (width < 58rem) {
-  body:has(> #site:defined) .site-opener {
-    display: inline-flex;
-  }
+body > header[data-site-nav="drawer"] .site-opener {
+  display: inline-flex;
 }

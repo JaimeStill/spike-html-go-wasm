@@ -27,20 +27,20 @@
 // sqlate-compile, --page go-core-graph, and --page go-web-sdk-handlers, each its demo as before a
 // Run, whole at each of the SDK's widths, the SDK's own states for a page. Every page the site nav
 // writes into is also captured once with its Site drawer open, at 390px alone, where its opener
-// shows (the nav's switch, 58rem, is page.css's), the viewport alone, as the SDK's Help and
-// Settings states are, named <page>-site-390: the index, the playground before its Run states, the
-// sqlate page, each rendered Markdown page, and the components page once, on its first component,
-// code-editor, with that section alone. Its open step clicks the opener, as a reader does, and
-// waits on the drawer's own open state, its open property and its dialog a modal, then on its slide
-// in's end, no timer. The components page shows each state once and its layout follows the
-// viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width,
-// every page, the index's, each component's, the playground's, and the sqlate and rendered pages',
-// takes only that width's states, so the 900px capture, at no SDK width, is taken only when every
-// width is. The SDK's widths over the whole components page grew with every component, so each
-// component is captured alone. The description's facets, --all's profiles, the registry's profiles,
-// and its server, which serves the site as the browser tier serves it, by the SDK's served(), under
-// the base, are the SDK's: dist/, which the task's build dependency writes, its go/ modules and
-// toolchain the runs fetch included.
+// shows, the row not fitting beside the header's buttons there (web/pages/site-nav.ts), the
+// viewport alone, as the SDK's Help and Settings states are, named <page>-site-390: the index,
+// the playground before its Run states, the sqlate page, each rendered Markdown page, and the
+// components page once, on its first component, code-editor, with that section alone. Its open
+// step clicks the opener, as a reader does, and waits on the drawer's own open state, its open
+// property and its dialog a modal, then on its slide in's end, no timer. The components page
+// shows each state once and its layout follows the viewport, so the narrow layout is the 390px
+// capture's. With SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, the
+// playground's, and the sqlate and rendered pages', takes only that width's states, so the 900px
+// capture, at no SDK width, is taken only when every width is. The SDK's widths over the whole
+// components page grew with every component, so each component is captured alone. The description's
+// facets, --all's profiles, the registry's profiles, and its server, which serves the site as the
+// browser tier serves it, by the SDK's served(), under the base, are the SDK's: dist/, which the
+// task's build dependency writes, its go/ modules and toolchain the runs fetch included.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's. Adapted from spike-html-hosting-sdk (v0.6.4):
 // template/scripts/screenshots.config.ts, its pages the hand pages, as the site copies no tree for
@@ -197,8 +197,9 @@ const SITE_OPENER = `document.querySelector('body > header button[aria-controls=
 
 /** Opens the Site drawer by a click on its opener, as a reader does, resolving once the drawer is
  * open, its open property and its dialog a modal, and its slide in has ended, a transition in the
- * drawer's shadow root, which the document's own animations leave out. The opener shows only below
- * the nav's switch, 58rem (page.css), so the state is the phone's alone. */
+ * drawer's shadow root, which the document's own animations leave out. The opener shows only
+ * where the row doesn't fit beside the header's buttons (web/pages/site-nav.ts), as at the phone's
+ * width on every page, so the state is the phone's alone. */
 export const siteOpen: Step = async (page: Page) => {
   await page.evaluate(`${SITE_OPENER}.click()`);
   await until(

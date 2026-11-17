@@ -238,9 +238,10 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
   and each Markdown page, `--page sqlate-compile`, `--page go-core-graph`, and
   `--page go-web-sdk-handlers`, whole at each. Every page is also captured once at 390px with the
   Site drawer open, its viewport alone, named `<page>-site-390`, the drawer opened by its opener,
-  which shows only below 58rem, and waited on until it is open, a modal, and its slide in has ended;
-  the components page's is on its first component, `--page components/code-editor`, and the
-  playground's comes before its Run states.
+  which shows where the row doesn't fit beside the header's buttons, as at 390px on every page,
+  and waited on until it is open, a modal, and its slide in has ended; the components page's is
+  on its first component, `--page components/code-editor`, and the playground's comes before its
+  Run states.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as
   `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
   is taken only when no width is given. Any other width is a usage error naming the three.
@@ -615,22 +616,29 @@ Its spaces are the foundation's `--space-*` steps.
 Every page, the four hand pages and the three rendered Markdown pages, opens its header on the
 site's own nav, a nav landmark named Site: the spike's name linking home, then Playground, sqlate,
 Library demos, linking the first Markdown page and current on each, and Components, the page's own
-link marked `aria-current="page"`. The SDK's `sl-site-nav` links between sites and its Pages
-drawer lists the Markdown pages alone, so the nav between the site's own pages is the spike's. Its
-links are one list, `SITE_NAV` in `scripts/site-nav.ts`, and the build writes them into each page
-through `siteNav()`, a Vite plugin `vite.config.ts` lists, run before Vite's own transform: the
-row, the header's first child; the Site drawer, an `sl-drawer` labeled Site holding the same links,
-modal at every width by a dock no viewport reaches; its opener, a glyph button named Site showing
+link marked `aria-current="page"`. The SDK's `sl-site-nav` links between sites and its Pages drawer
+lists the Markdown pages alone, so the nav between the site's own pages is the spike's. Its links
+are one list, `SITE_NAV` in `scripts/site-nav.ts`, and the build writes them into each page through
+`siteNav()`, a Vite plugin `vite.config.ts` lists, run before Vite's own transform: the row, the
+header's first child; the Site drawer, an `sl-drawer` labeled Site holding the same links, modal at
+every width by a dock no viewport reaches; its opener, a glyph button named Site showing
 `three-bars-16` and the key N, first in the header's group; and the drawer's script,
 `web/pages/site-nav.ts`. N is bound by nothing else on any page, in the shell, the components, or
-the foundation (?, S, P, C, H, L, J, K, T, A). From 58rem the row shows, on one line beside the
-header's buttons; 58rem is the widest header, a Markdown page's under both drawers' docks, as
-measured in the browser: 863px in the machine's fonts and 925px in DejaVu, rounded up. Below it,
-with script, the row is hidden and the opener shows; it opens the drawer by its click or N, and
-Escape, the drawer's Close, or a followed link closes it, focus back where it was as the drawer
-opened, as the SDK's Pages and Contents drawers return it: on the opener after its click, and after
-N, which clicks the opener without focusing it, wherever it was before the key. With no script the
-drawer is undefined and hidden and the row shows at every width, wrapping its links.
+the foundation (?, S, P, C, H, L, J, K, T, A). With script, the row shows wherever its links fit on
+one line beside the header's buttons, and is hidden, the opener showing in its place, wherever they
+don't, at any width, text size, or font: the drawer's script measures the row's single-line width
+against the room the header gives it, in a measuring state no frame paints, as the header's width
+changes (a `ResizeObserver` on a zero-tall probe as wide as the header), as fonts load, and as
+Settings or the text's size change, and marks the header `data-site-nav="row"` or `"drawer"` for
+`page.css`. The answer doesn't depend on which state shows, so the switch can't loop. N, which the
+keys module binds only on a shown control, and Help's row for it exist only while the opener shows.
+The opener opens the drawer by its click or N, and Escape, the drawer's Close, or a followed link
+closes it, focus back where it was as the drawer opened, as the SDK's Pages and Contents drawers
+return it: on the opener after its click, and after N, which clicks the opener without focusing it,
+wherever it was before the key. With no script the drawer is undefined and hidden, the header has no
+`data-site-nav`, and the row shows at every width, wrapping its links.
+`test/browser/site-nav-layout-suite.ts` holds the switch on every page at 390, 928, 1120, and
+1376px, with the text at its size and at 200%, in the machine's fonts and in DejaVu.
 
 The index opens its main, after its heading and lede and before the question and the evidence, on
 a where-to-go list: a heading, "Where to go", then a list, both main's own children with no

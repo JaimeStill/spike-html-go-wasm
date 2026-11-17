@@ -144,12 +144,13 @@ for the Go packages.
   `web/pages/page.css` holds every hand page's and the Markdown shell's own rules in the `page`
   cascade layer, which comes after the foundation's layers and the SDK's `site`; a hand page holds
   no inline `<style>`. The build writes the Site nav into every page's header from one list,
-  `SITE_NAV` in `scripts/site-nav.ts`; below 58rem it collapses into a drawer, which
-  `web/pages/site-nav.ts` opens and closes (`README.md`, "Pages"). A body of class `app` makes the
-  page an app page: one column, main a grid of named lines with the prose (`.prose`) on an 80ch
-  `content` column and the demo on the `full` column, and one gutter, `--page-gutter`, on the inline
-  sides and the block end. `components.html` is a hand page whose script, `web/pages/components.ts`,
-  shows every component's states once; its Go demos run hello and the probe's handlers over the
+  `SITE_NAV` in `scripts/site-nav.ts`; where its row doesn't fit beside the header's buttons, as
+  `web/pages/site-nav.ts` measures, it collapses into a drawer, which that script opens and
+  closes (`README.md`, "Pages"). A body of class `app` makes the page an app page: one column,
+  main a grid of named lines with the prose (`.prose`) on an 80ch `content` column and the demo
+  on the `full` column, and one gutter, `--page-gutter`, on the inline sides and the block end.
+  `components.html` is a hand page whose script, `web/pages/components.ts`, shows every
+  component's states once; its Go demos run hello and the probe's handlers over the
   page's one runner. `playground.html` is a hand page whose script, `web/pages/playground.ts`, gives
   its one source demo the page's runner, the reader's arrangement, and the chosen program's
   `FileSet`, and keeps the select and the fragment in step. `web/pages/arrangement.ts` owns that

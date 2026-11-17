@@ -5,26 +5,24 @@
 // On each page the header's first child is the row, a nav landmark named Site, whose links are
 // SITE_NAV's, in its order, by their text and the URL each resolves to, the page's own alone marked
 // aria-current="page", every Markdown page marking Library demos; the Site drawer holds the same
-// links. From the switch, 58rem (page.css), at 1120px and at 1376px, the capture widths above it,
-// the row shows, its links on one line, sharing it with the header's buttons, and the drawer's
-// opener is hidden; a px below the switch and at 390px the row is hidden and the opener shows,
-// named Site, aria-expanded false. Below the switch the opener opens the drawer, a modal, by its
-// click and by N, its heading taking focus as it opens and nothing else in it, its Close above all,
-// not even in passing, the heading drawing no focus outline, and, opened by N, Close's interest
-// hint closed past the interest delay, as the SDK holds its own drawers; Escape and the drawer's
-// Close each close it, aria-expanded following, focus back where it was as the drawer opened: on
-// the opener after its click, and after N, which clicks the opener without focusing it, on the
-// element focus was on before the key, the header's Settings, or on the body, never the opener; a
-// link followed in it closes it, its navigation held by the test so the page stays to be read. On a
-// Markdown page, below the switch, the Site drawer by N and the SDK's Pages drawer by P return
-// focus alike, to Settings or to the body, whichever held it, by Escape or by Close, so the Site
-// drawer is held to the reference's focus return. With script disabled, at
-// 390px, the row shows, the opener and the drawer don't, and nothing scrolls sideways, with the
-// text at its own size and at 200%, nothing in the header passing the viewport, on every page, the
-// components page's Go demos unupgraded among them. The SDK's shell checks, which run on every page
-// in site.test.ts, hold the header's group, the opener among its buttons, to one line, Help's list
-// to the page's bindings, N's among them below the switch, and every glyph button to its target
-// size. Every wait is bounded.
+// links. Where the row shows and where the opener shows in its place, by whether the row fits, is
+// site-nav-layout-suite.ts's, in the machine's fonts and in DejaVu; at 390px, where every page
+// shows the opener, the opener opens the drawer, a modal, by its click and by N, its heading taking
+// focus as it opens and nothing else in it, its Close above all, not even in passing, the heading
+// drawing no focus outline, and, opened by N, Close's interest hint closed past the interest delay,
+// as the SDK holds its own drawers; Escape and the drawer's Close each close it, aria-expanded
+// following, focus back where it was as the drawer opened: on the opener after its click, and after
+// N, which clicks the opener without focusing it, on the element focus was on before the key, the
+// header's Settings, or on the body, never the opener; a link followed in it closes it, its
+// navigation held by the test so the page stays to be read. On a Markdown page, at 390px, the Site
+// drawer by N and the SDK's Pages drawer by P return focus alike, to Settings or to the body,
+// whichever held it, by Escape or by Close, so the Site drawer is held to the reference's focus
+// return. With script disabled, at 390px, the row shows, the opener and the drawer don't, and
+// nothing scrolls sideways, with the text at its own size and at 200%, nothing in the header
+// passing the viewport, on every page, the components page's Go demos unupgraded among them. The
+// SDK's shell checks, which run on every page in site.test.ts, hold the header's group, the opener
+// among its buttons, to one line, Help's list to the page's bindings, N's among them where the
+// opener shows, and every glyph button to its target size. Every wait is bounded.
 //
 // The index opens its main on the where-to-go list after its heading and lede and before the
 // question and the evidence: its heading, Where to go, then its list, both main's own children as
@@ -74,15 +72,6 @@ const PAGES = [
   ["go-web-sdk-handlers.html", "go-web-sdk-handlers.html"],
 ];
 
-/** The switch, page.css's 58rem, in px at the initial font size, as a media query reads it. */
-const SWITCH = 58 * 16;
-
-/** The capture widths above the switch, the SDK's two wider. */
-const ROW_WIDTHS = [SWITCH, 1120, 1376];
-
-/** Widths below the switch: a px below it, and a phone's. */
-const DRAWER_WIDTHS = [SWITCH - 1, PHONE];
-
 /** The row, the drawer, and the opener. */
 const ROW = `document.querySelector('body > header > nav[aria-label="Site"]')`;
 const DRAWER = `document.querySelector("sl-drawer#site")`;
@@ -94,32 +83,6 @@ const links = (list: string) => `[...${list}.querySelectorAll("a")].map((a) => (
   href: a.href,
   current: a.getAttribute("aria-current"),
 }))`;
-
-/** The page's nav as laid out: whether the row is the header's first child, whether it shows, the
- * lines its links render on, and whether the header's shown buttons are on its first line; and
- * whether the opener shows, its name, and its aria-expanded. */
-const LAYOUT = `(() => {
-  const row = ${ROW};
-  const opener = ${OPENER};
-  const anchors = [...row.querySelectorAll("a")];
-  const lines = new Set(anchors.flatMap((a) => [...a.getClientRects()])
-    .filter((rect) => rect.width > 0).map((rect) => Math.round(rect.top)));
-  const first = anchors[0].getBoundingClientRect();
-  const buttons = [...document.querySelectorAll("body > header > .header-actions > button")]
-    .filter((button) => button.checkVisibility());
-  return {
-    first: row === document.querySelector("body > header").firstElementChild,
-    row: row.checkVisibility(),
-    lines: lines.size,
-    shared: buttons.length > 0 && buttons.every((button) => {
-      const { top, bottom } = button.getBoundingClientRect();
-      return top < first.bottom && bottom > first.top;
-    }),
-    opener: opener.checkVisibility(),
-    name: opener.getAttribute("aria-label"),
-    expanded: opener.getAttribute("aria-expanded"),
-  };
-})()`;
 
 /** The drawer is open, a modal. */
 const MODAL = `!!${DRAWER}.shadowRoot?.querySelector("dialog")?.matches(":modal")`;
@@ -315,33 +278,7 @@ describe("the site's own nav", () => {
       }
     });
 
-    test(`${where}: from 58rem, at 1120px, and at 1376px the row shows on one line with the header's buttons; below it the opener shows in its place`, async () => {
-      const page = await browser.open(`${server.origin}${path}`);
-      try {
-        for (const width of ROW_WIDTHS) {
-          await viewport(page, width);
-          const read = await page.evaluate(LAYOUT);
-          assert.deepEqual(
-            { row: read.row, lines: read.lines, shared: read.shared, opener: read.opener },
-            { row: true, lines: 1, shared: true, opener: false },
-            `${where} at ${width}px`,
-          );
-        }
-        for (const width of DRAWER_WIDTHS) {
-          await viewport(page, width);
-          const read = await page.evaluate(LAYOUT);
-          assert.deepEqual(
-            { row: read.row, opener: read.opener, name: read.name, expanded: read.expanded },
-            { row: false, opener: true, name: "Site", expanded: "false" },
-            `${where} at ${width}px`,
-          );
-        }
-      } finally {
-        await page.close();
-      }
-    });
-
-    test(`${where}: below the switch the opener opens the drawer by its click and by N, on its heading, Close's hint closed; Escape and Close close it, focus back where it was as it opened; a link followed closes it`, async () => {
+    test(`${where}: at 390px the opener opens the drawer by its click and by N, on its heading, Close's hint closed; Escape and Close close it, focus back where it was as it opened; a link followed closes it`, async () => {
       const page = await browser.open(`${server.origin}${path}`);
       try {
         await viewport(page, PHONE);

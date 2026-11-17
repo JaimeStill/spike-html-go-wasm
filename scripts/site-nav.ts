@@ -107,9 +107,10 @@ export const SITE_NAV: NavLink[] = [
   },
 ];
 
-/** The drawer's dock: a width no viewport reaches, so the drawer is a modal at every width. Below
- * the switch (page.css) its opener shows; above it, the row. A stand-in: sl-drawer has no
- * modal-only mode, an intake finding (goal record, review escalation 6). */
+/** The drawer's dock: a width no viewport reaches, so the drawer is a modal at every width. Where
+ * the row doesn't fit beside the header's buttons its opener shows (web/pages/site-nav.ts); where
+ * it does, the row. A stand-in: sl-drawer has no modal-only mode, an intake finding (goal record,
+ * review escalation 6). */
 export const DOCK = "10000rem";
 
 /** The list of links, the page's own marked current. */
