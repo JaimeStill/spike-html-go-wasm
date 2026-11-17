@@ -237,8 +237,8 @@ says otherwise.
    for `GOOS=js`; no `.wasm` or `.a` is tracked; `wasm_exec.js` is the pinned Go's copy below
    one provenance line. Proven by `mise run check` (`test/unit/go-module.test.ts`, "go.mod";
    `scripts/check-go.sh` for the tracked files and `wasm_exec.js`), by the deploy of
-   `.github/workflows/pages.yml`, and by `mise run live`, which holds `go/hello.wasm` and the compiler as
-   `application/wasm`, gzip-encoded, on the live site (its logic held by
+   `.github/workflows/pages.yml`, and by `mise run live`, which holds `go/hello.wasm` and the
+   compiler as `application/wasm`, gzip-encoded, on the live site (its logic held by
    `test/unit/live.test.ts`). `mise run measure` read the deployed commit from the live
    `go/hello.wasm`'s `vcs.revision`.
 2. sqlate compiled live (evidence 2): edit a statement, see its `$n` SQL or sqlate's error, from
@@ -314,9 +314,8 @@ says otherwise.
 - Deployed weight, measured live on 2026-11-17 from the live manifest: 371 standard-library
   archives, 144.3 MB raw and 34.4 MB gzip; 35 module archives, 31.0 MB raw; with the compiler and
   the linker, 52.6 and 12.3 MB raw by "Sizes", about 240 MB raw for the toolchain and its
-  archives; the four
-  prebuilt modules add 22.7 MB. Pages' published-site limit is 1 GB. Every archive deploys,
-  though a program fetches only its closure.
+  archives; the four prebuilt modules add 22.7 MB. Pages' published-site limit is 1 GB. Every
+  archive deploys, though a program fetches only its closure.
 - Pages' soft bandwidth limit, 100 GB a month, divided by one cold run's transfer: calc
   19.3 MB, about 5,190; graph 21.1 MB, about 4,730; stdlib 22.4 MB, about 4,470; the sqlate
   page's source build 34.6 MB, about 2,890; prebuilt, sqlate-compile 2.24 MB, about 44,700,
