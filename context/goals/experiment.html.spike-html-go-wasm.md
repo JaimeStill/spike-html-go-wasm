@@ -1039,6 +1039,10 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
   Merged at SHIP: this spike, spike-html-hosting, -architecture, -sqlate, spike-html-apps,
   spike-html-hosting-icons, spike-html-apps-noctis; the coordinator's roadmap drops final-review
   through its own pull request, by the architect's authorization.
+- review (escalation 7, SHIP): PR #15's check failed on ConsoleLog's "a write past the limit
+  stays cheap", a 1,000 ms budget that took 1,191 ms on a shared runner; the test predates the
+  task. Its root, a fixed time budget, is replaced by how the cost scales: the same 100,000 writes
+  past a limit of 1,000 and of 16,000 must differ by well under 4x; a copying trim measured ~21x.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
