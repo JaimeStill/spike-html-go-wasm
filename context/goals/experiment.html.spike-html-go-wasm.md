@@ -1043,6 +1043,11 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
   stays cheap", a 1,000 ms budget that took 1,191 ms on a shared runner; the test predates the
   task. Its root, a fixed time budget, is replaced by how the cost scales: the same 100,000 writes
   past a limit of 1,000 and of 16,000 must differ by well under 4x; a copying trim measured ~21x.
+- review (escalation 8, SHIP): the Site nav's 58rem switch guessed at font metrics, and CI's fonts
+  wrapped the Markdown pages' row at 928px. The switch now follows whether the row fits beside the
+  header's buttons, measured by the page's script on resize, font load, and profile change; no
+  script shows the row. Known edge: a page within a classic scrollbar's width of overflowing could
+  flip once per frame, since nothing reserves the scrollbar's space.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
