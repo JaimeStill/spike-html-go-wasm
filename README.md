@@ -168,9 +168,9 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
     - the playground's prose and About: the prose is the heading and the lede alone, and the page
       holds no disclosure; About leads the header's group after the Site opener, a glyph button
       showing A; A, a click, or Enter opens the About dialog on its title, Tab reaches its Close,
-      and Close or Escape closes it, focus back where it was; A typed into the editor types; the accessibility tree names the
-      button and the dialog; and the dialog's text is the approved text, in order, its last
-      sentence on each program's edits;
+      and Close or Escape closes it, focus back where it was; A typed into the editor types; the
+      accessibility tree names the button and the dialog; and the dialog's text is the approved
+      text, in order, its last sentence on each program's edits;
     - the playground's one screen, at 390px, 1120px, and 1376px, each at its capture height and
       at 900px, at 1120x800, and at 900x700: the demo takes every row left and ends a gutter above
       the viewport's bottom edge, the one gutter that holds the page off both sides, every part's
@@ -225,21 +225,22 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
   component's capture is `--page components/<component>`, as `--page components/console`. The Go
   demo's, `--page components/go-demo`, is captured again at each width after the prebuilt runs a
   reader starts by Run: the format demo's result, hello's output and exit 0, and the crash demo's
-  stderr and exit 2. The playground, `--page playground`, is captured as its viewport alone, the page's one screen, in
-  each band of its fixed demo: 390px with the output panel's Output tab and again with its
-  Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top, and right,
-  each chosen through the Layout menu, and with the menu open; 1376px with the About dialog
-  open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and Standard
-  library chosen in the Program select; and 390px, 1120px (editor left), and 1376px (editor left)
-  after a Run of the starter, the calculator, built in the page against the build's archives, and
-  390px and 1376px (editor left) after it with the Timings tab. Each state after a Run waits on the run's end, its status
-  and console, and the Timings tab on its table's phases, never on a timer. The sqlate page, `--page sqlate`, is captured as its
-  viewport alone at the SDK's widths, and each Markdown page, `--page sqlate-compile`,
-  `--page go-core-graph`, and `--page go-web-sdk-handlers`, whole at each. Every page is also
-  captured once at 390px with the Site drawer open, its viewport alone, named `<page>-site-390`,
-  the drawer opened by its opener, which shows only below 58rem, and waited on until it is open,
-  a modal, and its slide in has ended; the components page's is on its first component,
-  `--page components/code-editor`, and the playground's comes before its Run states.
+  stderr and exit 2. The playground, `--page playground`, is captured as its viewport alone, the
+  page's one screen, in each band of its fixed demo: 390px with the output panel's Output tab and
+  again with its Timings tab; 900px, between 44rem and 64rem; 1120px and 1376px in editor left, top,
+  and right, each chosen through the Layout menu, and with the menu open; 1376px with the About
+  dialog open; and 390px, 1120px, and 1376px with each of Basics, Generics, Concurrency, and
+  Standard library chosen in the Program select; and 390px, 1120px (editor left), and 1376px (editor
+  left) after a Run of the starter, the calculator, built in the page against the build's archives,
+  and 390px and 1376px (editor left) after it with the Timings tab. Each state after a Run waits on
+  the run's end, its status and console, and the Timings tab on its table's phases, never on a
+  timer. The sqlate page, `--page sqlate`, is captured as its viewport alone at the SDK's widths,
+  and each Markdown page, `--page sqlate-compile`, `--page go-core-graph`, and
+  `--page go-web-sdk-handlers`, whole at each. Every page is also captured once at 390px with the
+  Site drawer open, its viewport alone, named `<page>-site-390`, the drawer opened by its opener,
+  which shows only below 58rem, and waited on until it is open, a modal, and its slide in has ended;
+  the components page's is on its first component, `--page components/code-editor`, and the
+  playground's comes before its Run states.
   `--width <px>`, one of the SDK's three, captures that width alone on every page, as
   `mise run screenshots --page components/controls --width 390`; the playground's 900px capture
   is taken only when no width is given. Any other width is a usage error naming the three.
@@ -660,14 +661,15 @@ checks all run on the page but main's reading width, and the spike's own check h
 80ch, centered. The browser tier proves the one screen in the machine's fonts and in the pinned
 DejaVu set, and reports how far above its floor the demo stands at each capture size.
 
-The playground's detail is in its About dialog, `dialog#about`, out of the screen's flow, so no
-font costs the demo a line of it. About, the header's first glyph button after the Site opener,
-before the shell's Help and Settings, shows the icons layer's `info-16` and its key, A, which nothing else on the page or
-in the shell binds; it opens the dialog as Help opens its own, a shortcut dialog headed "About the
-playground", its title focused, closed by its Close or by Escape. The dialog says, in the reader's
-terms, what a program can be, where its other files go, how Run and Stop behave, that edits last
-only as long as the tab, and what a Run downloads, and links to the spike's question and evidence,
-the index. Its width is the prose's 80ch where the viewport has it (`web/pages/page.css`).
+The playground's detail is in its About dialog, `dialog#about`, out of the screen's flow, so no font
+costs the demo a line of it. About, the header's first glyph button after the Site opener, before
+the shell's Help and Settings, shows the icons layer's `info-16` and its key, A, which nothing else
+on the page or in the shell binds; it opens the dialog as Help opens its own, a shortcut dialog
+headed "About the playground", its title focused, closed by its Close or by Escape. The dialog says,
+in the reader's terms, what a program can be, where its other files go, how Run and Stop behave,
+that edits last only as long as the tab, and what a Run downloads, and links to the spike's question
+and evidence, the index. Its width is the prose's 80ch where the viewport has it
+(`web/pages/page.css`).
 
 ### The Layout menu and the stored arrangement
 
@@ -1274,9 +1276,9 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     "Output panel", its tabs "Output" and "Timings", each controlling its part, a tabpanel named by
     its tab while the tablist shows.
   - Keyboard: each part's own, in order: the toolbar, its Layout menu's included, the tabs on a
-    program demo, the editor, a fixed demo's output tablist where it shows, and the console. The output
-    tablist's are the file tabs': Tab reaches the selected tab alone, Left and Right select the
-    previous and the next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter,
+    program demo, the editor, a fixed demo's output tablist where it shows, and the console. The
+    output tablist's are the file tabs': Tab reaches the selected tab alone, Left and Right select
+    the previous and the next, wrapping, and Home and End the first and the last. Ctrl or Cmd+Enter,
     from anywhere inside the demo, the editor included, runs it, as Run's `aria-keyshortcuts`
     declares; with Alt or Shift also held, Enter runs nothing. From outside every demo the shortcut
     runs none, and the foundation's shortcut registry holds no entry for it.
@@ -1323,11 +1325,11 @@ internals, each documented in its own comments: `aria.ts`, `file-names.ts`, `hig
     The bands are CSS's: each container query places the parts, names its band in `--band`, and
     names its output, `tabs` or `row`, in `--output`, and the demo's script reads those names,
     through a `ResizeObserver` on a fixed demo alone and again as its placement changes, for two
-    things only. Where `--output` is `tabs` the console and the timings are tabpanels of the
-    output tablist, and where it is `row` they aren't: a change to the accessibility tree, and CSS
-    can't set a role. Where `--band` is `wide`, from 64rem, the toolbar shows its Layout group,
-    which `sl-controls` renders only given an arrangement. The read exists because no shipped API reports a container query's state to
-    script; every placement and size stays in the stylesheet.
+    things only. Where `--output` is `tabs` the console and the timings are tabpanels of the output
+    tablist, and where it is `row` they aren't: a change to the accessibility tree, and CSS can't
+    set a role. Where `--band` is `wide`, from 64rem, the toolbar shows its Layout group, which
+    `sl-controls` renders only given an arrangement. The read exists because no shipped API reports
+    a container query's state to script; every placement and size stays in the stylesheet.
 - `./run-state.js`: `RunState`, a demo's run state, a model with no document or element, an
   `EventTarget` its owner, the page or the element composing the controls over a runner, is the
   only writer of. The owner starts a run as it asks its runner for one and finishes it as the

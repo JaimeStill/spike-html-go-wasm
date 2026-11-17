@@ -3,18 +3,18 @@
 // them by the same rules. A model's helper with no element: it reads the markup it is given and
 // changes nothing.
 //
-// The fences: each `pre` that is a child of the parent, the demo's host or a template's content,
-// is one file, in order: its text is its lines, the pre's text content less the one final newline
+// The fences: each `pre` that is a child of the parent, the demo's host or a template's content, is
+// one file, in order: its text is its lines, the pre's text content less the one final newline
 // marked's plain `<pre><code class="language-go">` adds, so it and the SDK's Shiki-rendered
 // `<pre class="shiki">`, its tokens in spans and no newline after its last line, read alike: the
 // same fence, either way, is the same file text, the lines between its backticks, and the editor
-// shows no empty line past them (file-names.ts's fenceText). A fence's name is its `data-file`, on the pre or its code, else the pre's
-// `title`; else the demo's `file` attribute, which names every fence that names none, since a
-// Markdown fence can carry no name, keeping no info string past its language; else a default from
-// its language, a `data-language` on either, or a `language-<name>` class on either, as marked
-// writes it on a plain fence's code and the SDK on a highlighted one's: main.go for go,
-// input.json for json, query.sql for sql, and input.txt for any other or for none, as a fence
-// with no info string has.
+// shows no empty line past them (file-names.ts's fenceText). A fence's name is its `data-file`, on
+// the pre or its code, else the pre's `title`; else the demo's `file` attribute, which names every
+// fence that names none, since a Markdown fence can carry no name, keeping no info string past its
+// language; else a default from its language, a `data-language` on either, or a `language-<name>`
+// class on either, as marked writes it on a plain fence's code and the SDK on a highlighted one's:
+// main.go for go, input.json for json, query.sql for sql, and input.txt for any other or for none,
+// as a fence with no info string has.
 //
 // The naming rules themselves, the text rule, and each file's grammar by its name, are
 // file-names.ts's, which holds no DOM, so the unit tier reads them under node.

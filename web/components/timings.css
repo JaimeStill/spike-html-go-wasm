@@ -34,7 +34,8 @@
 }
 
 /* The containing block of the visually hidden caption, which is absolutely placed: so it lies in
-   the table, inside the host that scrolls, rather than on the page's own block, growing the page. */
+   the table, inside the host that scrolls, rather than on the page's own block, growing the
+   page. */
 table {
   position: relative;
   inline-size: max-content;

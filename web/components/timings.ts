@@ -8,9 +8,10 @@
 //
 // The table is a table to assistive technology: named by its caption, the phases' names its row
 // headers, under a column header for each. The caption is visually hidden: its owner names the
-// timings where it shows them, as the playground's Timings tab does, so it isn't said twice. The times are right-aligned in tabular numerals, so
-// their digits line up, formatted by Intl.NumberFormat as ms: a tenth of a ms under 10 ms, where a
-// tenth is a tenth of the time, and whole ms from there. Nothing moves.
+// timings where it shows them, as the playground's Timings tab does, so it isn't said twice. The
+// times are right-aligned in tabular numerals, so their digits line up, formatted by
+// Intl.NumberFormat as ms: a tenth of a ms under 10 ms, where a tenth is a tenth of the time, and
+// whole ms from there. Nothing moves.
 
 import { html, LitElement, nothing, type PropertyDeclarations } from "lit";
 

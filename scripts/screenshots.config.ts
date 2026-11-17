@@ -8,39 +8,39 @@
 // after the prebuilt runs a reader starts by Run: the format demo's result, hello's output and its
 // exit 0, and the crash demo's stderr and its exit 2; and the playground, --page playground, its
 // demo as before a Run, on the starter: the viewport alone, the page's one screen, not the page
-// whole, since the page fits its viewport by its demo's row, and a viewport grown to the page
-// would grow the demo with it. It is captured in each of the fixed demo's bands: at 390px, the
-// phone's, with its output panel's Output tab and again with its Timings tab; at 900px, the demo
-// between 44rem and 64rem; and at 1120px and 1376px, the wide band in each arrangement, editor
-// left, top, and right, and with the Layout menu open, each chosen by the menu as a reader
-// chooses, so no state depends on what an earlier one stored; and at 1376px with the About dialog
-// open, opened by its button in the header; and at each of the SDK's widths with each of Basics,
-// Generics, Concurrency, and Standard library chosen in the Program select, as a reader chooses
-// it; and at each of the SDK's widths after a Run of the starter, the calculator, built in the
-// page, its compiler and linker in the worker, against the served build's archives, and at 390px
-// and at 1376px, editor left, after that Run with its Timings tab. Each state after a Run waits on the run's own completion,
-// as the browser tier's tests and mise run measure do: the timings' runs counted past the last,
-// the status's end, the one the run should end with, and the console's row or block it shows, and
-// a Timings tab also waits on its table's phases; no state waits on a timer. And the sqlate page,
-// --page sqlate, an app page as the playground is, its demo as before a Run, the viewport alone at
-// each of the SDK's widths; and the rendered Markdown pages, --page sqlate-compile, --page
-// go-core-graph, and --page go-web-sdk-handlers, each its demo as before a Run, whole at each of
-// the SDK's widths, the SDK's own states for a page. Every page the site nav writes into is also
-// captured once with its Site drawer open, at 390px alone, where its opener shows (the nav's
-// switch, 58rem, is page.css's), the viewport alone, as the SDK's Help and Settings states are,
-// named <page>-site-390: the index, the playground before its Run states, the sqlate page, each
-// rendered Markdown page, and the components page once, on its first component, code-editor,
-// with that section alone. Its open step clicks the opener, as a reader does, and waits on the
-// drawer's own open state, its open property and its dialog a modal, then on its slide in's end,
-// no timer. The components page shows each state once and its layout follows the viewport, so
-// the narrow layout is the 390px capture's. With
-// SCREENSHOTS_WIDTH set, by --width, every page, the index's, each component's, the playground's,
-// and the sqlate and rendered pages', takes only that width's states, so the 900px capture, at no
-// SDK width, is taken only when every width is. The SDK's widths over the whole components page
-// grew with every component, so each component is captured alone. The description's facets,
-// --all's profiles, the registry's profiles, and its server, which serves the site as the browser
-// tier serves it, by the SDK's served(), under the base, are the SDK's: dist/, which the task's
-// build dependency writes, its go/ modules and toolchain the runs fetch included.
+// whole, since the page fits its viewport by its demo's row, and a viewport grown to the page would
+// grow the demo with it. It is captured in each of the fixed demo's bands: at 390px, the phone's,
+// with its output panel's Output tab and again with its Timings tab; at 900px, the demo between
+// 44rem and 64rem; and at 1120px and 1376px, the wide band in each arrangement, editor left, top,
+// and right, and with the Layout menu open, each chosen by the menu as a reader chooses, so no
+// state depends on what an earlier one stored; and at 1376px with the About dialog open, opened by
+// its button in the header; and at each of the SDK's widths with each of Basics, Generics,
+// Concurrency, and Standard library chosen in the Program select, as a reader chooses it; and at
+// each of the SDK's widths after a Run of the starter, the calculator, built in the page, its
+// compiler and linker in the worker, against the served build's archives, and at 390px and at
+// 1376px, editor left, after that Run with its Timings tab. Each state after a Run waits on the
+// run's own completion, as the browser tier's tests and mise run measure do: the timings' runs
+// counted past the last, the status's end, the one the run should end with, and the console's row
+// or block it shows, and a Timings tab also waits on its table's phases; no state waits on a timer.
+// And the sqlate page, --page sqlate, an app page as the playground is, its demo as before a Run,
+// the viewport alone at each of the SDK's widths; and the rendered Markdown pages, --page
+// sqlate-compile, --page go-core-graph, and --page go-web-sdk-handlers, each its demo as before a
+// Run, whole at each of the SDK's widths, the SDK's own states for a page. Every page the site nav
+// writes into is also captured once with its Site drawer open, at 390px alone, where its opener
+// shows (the nav's switch, 58rem, is page.css's), the viewport alone, as the SDK's Help and
+// Settings states are, named <page>-site-390: the index, the playground before its Run states, the
+// sqlate page, each rendered Markdown page, and the components page once, on its first component,
+// code-editor, with that section alone. Its open step clicks the opener, as a reader does, and
+// waits on the drawer's own open state, its open property and its dialog a modal, then on its slide
+// in's end, no timer. The components page shows each state once and its layout follows the
+// viewport, so the narrow layout is the 390px capture's. With SCREENSHOTS_WIDTH set, by --width,
+// every page, the index's, each component's, the playground's, and the sqlate and rendered pages',
+// takes only that width's states, so the 900px capture, at no SDK width, is taken only when every
+// width is. The SDK's widths over the whole components page grew with every component, so each
+// component is captured alone. The description's facets, --all's profiles, the registry's profiles,
+// and its server, which serves the site as the browser tier serves it, by the SDK's served(), under
+// the base, are the SDK's: dist/, which the task's build dependency writes, its go/ modules and
+// toolchain the runs fetch included.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's. Adapted from spike-html-hosting-sdk (v0.6.4):
 // template/scripts/screenshots.config.ts, its pages the hand pages, as the site copies no tree for
@@ -125,7 +125,8 @@ const opened =
 const RUN = 20_000;
 
 /** How long a build in the page and its run may take to settle, a cold fetch and compile of the
- * compiler and linker included, as the browser tier bounds it (test/browser/go-builds.ts's BUILD). */
+ * compiler and linker included, as the browser tier bounds it (test/browser/go-builds.ts's
+ * BUILD). */
 const BUILD = 120_000;
 
 /** A Run's ending in the demo, what it should show once it has: its status's text, and a selector
@@ -340,11 +341,11 @@ const leftRanTimings: Step = async (page: Page) => {
 /** The playground's states: the viewport alone, the page's one screen, in each band of its fixed
  * demo, the phone's with its Timings tab, and the wide band's in each arrangement and with the
  * Layout menu open; the widest with the About dialog open; the phone's with the Site drawer open;
- * each of the SDK's widths with each
- * program but the calculator chosen in the Program select, Basics, Generics, Concurrency, and
- * Standard library; and each of the SDK's widths after a Run of the starter, the wide band's in
- * editor left, and the phone's and the widest's again with its Timings tab; each named as the SDK names a page's,
- * the width last. The Run states come last, after every state that runs nothing. */
+ * each of the SDK's widths with each program but the calculator chosen in the Program select,
+ * Basics, Generics, Concurrency, and Standard library; and each of the SDK's widths after a Run of
+ * the starter, the wide band's in editor left, and the phone's and the widest's again with its
+ * Timings tab; each named as the SDK names a page's, the width last. The Run states come last,
+ * after every state that runs nothing. */
 const playgroundStates = ({ path }: DescribedPage): DescribedState[] => {
   const [phone, ...wide] = WIDTHS;
   const state = (

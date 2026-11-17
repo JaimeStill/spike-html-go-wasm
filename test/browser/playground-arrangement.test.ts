@@ -6,12 +6,12 @@
 // the group isn't there. Its menu is the APG menu button's: its accessibility tree, a menu of three
 // radio items, the placement checked, and its keyboard, each key in turn. It opens --space-3xs
 // below Layout, at its inline start, as wide as its items, inside the viewport, veiling nothing
-// behind it, at the band's edge and at 1376px. Choosing an item places the parts again in place, with no reload and no change to
-// the run state. The choice is kept in localStorage under the spike's key and nothing else is
-// written: a reload, and another page on the origin, open in it; another tab's choice moves this
-// one; and blocked storage, an empty store, a value that isn't JSON, and one the model refuses all
-// open with the editor left, writing nothing.
-// The helpers are go-demos.ts's, go-builds.ts's, and playground-layouts.ts's. Every wait is bounded.
+// behind it, at the band's edge and at 1376px. Choosing an item places the parts again in place,
+// with no reload and no change to the run state. The choice is kept in localStorage under the
+// spike's key and nothing else is written: a reload, and another page on the origin, open in it;
+// another tab's choice moves this one; and blocked storage, an empty store, a value that isn't
+// JSON, and one the model refuses all open with the editor left, writing nothing. The helpers are
+// go-demos.ts's, go-builds.ts's, and playground-layouts.ts's. Every wait is bounded.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";

@@ -3,27 +3,27 @@
 // capture run, the index, light, to the terminal, under a scratch TMPDIR, it leaves nothing there,
 // and with --keep leaves what it printed, so the first run's empty TMPDIR is the output's cleanup,
 // not a capture that never wrote. A component's capture, --page components/<component>, takes its
-// section alone: the capture file names a page for every section of the components page, a state
-// at each of the SDK's widths, its open step hides every other section and leaves the component's
+// section alone: the capture file names a page for every section of the components page, a state at
+// each of the SDK's widths, its open step hides every other section and leaves the component's
 // focus-start mark the page's first, or none for a component with no focus state, and a run of one
-// at one --width prints that component's few tiles at that width alone and leaves nothing under
-// its TMPDIR; the Go demo's is captured again at each width after its runs. A --width not among the SDK's, or with no value, is a usage error naming the widths,
-// capturing nothing. The playground's capture, --page playground, is the viewport alone in each
-// band of its fixed demo, the phone's also with its Timings tab, and the wide band's in each
-// arrangement and with the Layout menu open, each chosen by the menu, the widest with the About
-// dialog open, and each of the SDK's widths with each of Basics, Generics, Concurrency, and
-// Standard library chosen in the Program select, and again after a Run of the starter, the phone's
-// and the widest's, editor left, also with its Timings tab. The states after a Run reach their
-// endings when their open steps run on a served page, no capture taken: the Go demo's format
-// result, hello's line and exit 0, and crash's panic on stderr and exit 2, from their prebuilt
-// modules; and the playground's starter built in the page and run to exit 0, every phase of a
-// build timed, in editor left at 1376px, and on the Timings tab at 390px and at 1376px in editor
-// left. The sqlate page's, --page sqlate, is the viewport alone at each of the SDK's widths, and
-// each rendered Markdown page's, --page sqlate-compile, --page go-core-graph, and --page
-// go-web-sdk-handlers, the page whole at each. Every page, the components page once on
-// its first component, is also captured at 390px with the Site drawer open, the viewport alone,
-// and each such state's open step, run on a served page at 390px, no capture taken, leaves the
-// drawer open, a modal, with SITE_NAV's links, the page's own marked current.
+// at one --width prints that component's few tiles at that width alone and leaves nothing under its
+// TMPDIR; the Go demo's is captured again at each width after its runs. A --width not among the
+// SDK's, or with no value, is a usage error naming the widths, capturing nothing. The playground's
+// capture, --page playground, is the viewport alone in each band of its fixed demo, the phone's
+// also with its Timings tab, and the wide band's in each arrangement and with the Layout menu open,
+// each chosen by the menu, the widest with the About dialog open, and each of the SDK's widths with
+// each of Basics, Generics, Concurrency, and Standard library chosen in the Program select, and
+// again after a Run of the starter, the phone's and the widest's, editor left, also with its
+// Timings tab. The states after a Run reach their endings when their open steps run on a served
+// page, no capture taken: the Go demo's format result, hello's line and exit 0, and crash's panic
+// on stderr and exit 2, from their prebuilt modules; and the playground's starter built in the page
+// and run to exit 0, every phase of a build timed, in editor left at 1376px, and on the Timings tab
+// at 390px and at 1376px in editor left. The sqlate page's, --page sqlate, is the viewport alone at
+// each of the SDK's widths, and each rendered Markdown page's, --page sqlate-compile, --page
+// go-core-graph, and --page go-web-sdk-handlers, the page whole at each. Every page, the components
+// page once on its first component, is also captured at 390px with the Site drawer open, the
+// viewport alone, and each such state's open step, run on a served page at 390px, no capture taken,
+// leaves the drawer open, a modal, with SITE_NAV's links, the page's own marked current.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/screenshots.test.ts, its
 // run and assertions the SDK's.
 // From spike-html-hosting-sdk (v0.6.4): template/test/browser/screenshots.test.ts.
