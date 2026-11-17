@@ -15,140 +15,78 @@
 7. [x] scenarios
 8. [x] measure
 9. [x] review
-10. [ ] answer
+10. [x] answer
 
-## Task brief · review
+## Task brief · answer
 
 ```
-Problem       Evidence 7 is unwritten: no review covers every page, palette, and
-              engine. A reader reaches the site's pages only through links buried
-              in the index's evidence prose, and only components and the
-              playground's About link back home. Every glyph-button hint veils the
-              page, and inside a dialog it washes the dialog out: the foundation
-              gives every top-layer ::backdrop a modal dialog's veil. The spike
-              carries workarounds for that and four SDK defects (the header group's
-              placement and reflow, a heading outline rule written for Help alone,
-              a crash on a missing content.json, highlighted fences losing their
-              language) instead of fixes at the root.
-Behaviors     1. Every touched repository's currency prints nothing but the items
-                 this goal holds: rolldown at 1.2.18 where vite 8.3.8 pins ~1.2.18
-                 (the SDK, spike-html-apps), and spike-html-apps' go-core 0.10.0,
-                 go-messaging 0.2.0, go-web-sdk 0.15.2 (the emulator's port is the
-                 intake's); each recorded as a Decision; each check passes.
-              2. Foundation v0.3.1: only a modal dialog's backdrop is veiled. A
-                 hint, auto, or manual popover's backdrop is transparent, in every
-                 palette and scheme; CHANGELOG [0.3.1].
-              3. SDK v0.6.3:
-                 - with no site nav, the header's button group sits at the inline
-                   end at every width;
-                 - the group shrinks and wraps, so at 390px and 200% text nothing
-                   scrolls sideways, with or without a nav;
-                 - every shortcut dialog's script-focused heading, not only
-                   Help's, draws no outline;
-                 - a site with no content.json is read as one with no tree, by the
-                   crawl and by the content check alike;
-                 - a highlighted fence names its language in its markup, as
-                   marked's plain fence does.
-                 Its peer and its template pin foundation v0.3.1; CHANGELOG
-                 [0.6.3].
-              4. Hosting components, icons, apps-components, and noctis pin
-                 foundation v0.3.1 and release nothing. The three hosting sites
-                 pin SDK v0.6.3 and foundation v0.3.1, and each Pages deploy is
-                 green. spike-html-apps pins foundation v0.3.1.
-              5. The spike pins SDK v0.6.3 and foundation v0.3.1 and carries no
-                 rule that compensated for behaviors 2-3: the header-group rules,
-                 the editor's and the controls' backdrop cancellations, the About
-                 heading's outline rule, the absence-guard content.json, and the
-                 fence reader's "no language" fallback for highlighted fences. Its
-                 checks pass unchanged in what they assert.
-              6. Every page, the Markdown shell's included, has a Site nav: the
-                 spike's name linking home, then Playground, sqlate, Library demos
-                 (the first Markdown page; the three Markdown pages are its
-                 current), and Components. The current page carries
-                 aria-current="page".
-              7. The nav comes from one list the spike owns, in each page's markup
-                 as built. Where the nav and the header's buttons share one line
-                 at the default type, it is a row. Below that width, a header
-                 glyph button (N, which no binding takes) opens an sl-drawer,
-                 modal at every width, holding the same links; a link closes it.
-                 With no script the row shows at every width. At every capture
-                 size the playground still holds its one screen above its floor.
-              8. The index opens with a where-to-go list, one line per page,
-                 ahead of the question and the evidence.
-              9. The captures add the components page's Go demos after their
-                 runs (hello's output, crash's stderr and exit 2, format's result)
-                 and the playground after a calc Run at each of the SDK's widths,
-                 with the Timings tab also at 390px. The no-capture test still
-                 holds.
-              10. The architect reviews every page, every state, all six profiles,
-                 light and dark, in Chromium, at three checkpoints. Each batch is
-                 a browser gallery under TMPDIR that the session deletes as the
-                 checkpoint closes. Every finding is traced to its root and fixed
-                 in the layer that owns it, and any workaround it replaces is
-                 deleted. Opinionated changes become intake findings.
-              11. The architect checks by hand, on the live site, in Firefox
-                 158.0.1 and in the iPhone's Safari app, from a checklist: every
-                 page light and dark at flexoki; each palette once on the
-                 playground's editor; a Run on each demo page; typing, Enter,
-                 Tab, and undo in the editor; the nav row and drawer, the Layout
-                 menu, About, Help, and Settings. Desktop Safari and WebKitGTK are
-                 recorded as gaps.
-              12. The README's "Review" section, which evidence 7 points to,
-                 names what was reviewed (pages, profiles, schemes, widths,
-                 engines and versions, dates) and each finding: its root, its
-                 owner, and its fix or its intake note. The spike's "reads its
-                 references and never writes to them" rule records this task's
-                 root fixes as its exception.
-Test seams    The spike's browser tier: one list's rendering of the nav row and
-              drawer (landmark, current marking, the width switch, the opener's
-              keys and focus return, no script). The foundation's and the SDK's
-              own browser tiers for behaviors 2-3: a popover's computed backdrop,
-              the header row with no nav at 390px and 200% text, any dialog
-              heading's focus outline, a nav-less site's crawl, and a fence's
-              language in the markup.
-Slices        1. Spike upgrade: pnpm 12.21.0, eslint 10.15.0, eslint-plugin-
-                 boundaries 7.4.4. Demo: currency empty, check green.
-              2. Foundation: upgrade, then the backdrop fix, then v0.3.1
-                 released. Demo: a hint over Help's dialog leaves it unveiled.
-              3. SDK: upgrade (rolldown held), then behavior 3's five fixes, then
-                 v0.6.3 released on foundation v0.3.1. Demo: its fixture site
-                 with no nav at 390px and 200% text.
-              4. Pin moves with no release: hosting components, icons, apps-
-                 components, noctis (each upgraded first). Demo: each check green.
-              5. The three hosting sites, upgraded and on v0.6.3. Demo: live
-                 pages, a hint unveiled.
-              6. spike-html-apps: web upgrades and foundation v0.3.1; its Go
-                 requirements held. Demo: its check green.
-              7. The spike on v0.6.3 and v0.3.1, every workaround deleted
-                 (behavior 5). Demo: check green; no header, backdrop, or outline
-                 override left.
-              8. The Site nav and its drawer (behaviors 6-7). Demo: 390, 1120,
-                 and 1376px, and with no script.
-              9. The index's where-to-go list (behavior 8).
-              10. Post-Run captures (behavior 9).
-              11. Checkpoint 1: index and the three Markdown pages; fix slices
-                  follow. Confirms the foundation fix in captures.
-              12. Checkpoint 2: the six components; fix slices.
-              13. Checkpoint 3: playground and sqlate; fix slices.
-              14. By-hand pass (behavior 11): the session stops and prints the
-                  checklist; the architect replies with findings, each traced
-                  and fixed as in slices 11-13.
-              15. The record (behavior 12): README section, findings as goal-
-                  record Notes, Pending edits for the coordinator.
-Out of scope  Performance, optimization, and ergonomics (final-review); the
-              answer; navigation for a site's own pages and Markdown file names
-              as SDK features (findings); the crawl's scratch-root workaround (a
-              finding); desktop Safari; Playwright in any form; new captures
-              beyond behavior 9; any reference defect needing a release not
-              named below, which escalates.
-Door          One-way: the foundation v0.3.1 and SDK v0.6.3 tags, once
-              published and consumed by tag. Two-way: everything else. Pin moves
-              and Pages deploys revert by commit, the nav and captures are the
-              spike's own, and the review deletes its galleries.
-Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
-              v0.6.3 (pinning it), each cut by its Release workflow from a version
-              bump on main. No other repository releases.
+Problem       The architect ruled on 2026-11-17 that workspace Go runs live in the browser,
+              but the verdict is written nowhere the intake reads. The spike's "The answer"
+              reads Pending; the live index lists evidence 8 as a bare promise and still lists
+              a 13th item dropped with final-review. The record has no answer section; its
+              Pending edits carry seven roadmap edits the sync would delete and a framing edit
+              now moved into the answer; the intake notes sit in Notes, which the sync deletes.
+Behaviors     1. The context README's "The answer" states the sub-goal's question verbatim and
+                 a one-line answer: yes — live Go demos are viable on v1.repository-docs'
+                 guides and every Pages site, in both proven kinds (a prebuilt handler module;
+                 source built in the page by Go's own compiler and linker); both stay options,
+                 each goal chooses its demos and kinds as it plans; no site is pre-selected.
+              2. Numbered evidence covering the twelve items (grouped where one proof serves
+                 several), each naming where proven: a named test or suite, a mise task, the
+                 architect's review, or a live demo by URL; "proven only by tests" where so.
+                 Every number matches README "Measurements" (2026-11-13).
+              3. Cost as facts and arithmetic, no budget: gzip and brotli sizes; cold, cached,
+                 in-place times on desktop and the iPhone readings; no .wasm before Run; the
+                 deployed toolchain and archives (~240 MB raw, 144 MB stdlib) against Pages'
+                 1 GB; the 100 GB/month arithmetic per cold run (~5,000 calc, ~2,900 sqlate
+                 source build, ~45,000 per prebuilt demo); max-age 600 and revalidation cost.
+              4. The playground recorded as proven, recommended to no site.
+              5. Two framing corrections in the answer, framing untouched: sqlate's prebuilt
+                 module is 2.24 MB gzip, not 1.2; "a service can't run there" holds only for
+                 sockets — Service.Run serves over Go's js fake network under node, unproven
+                 in a browser; the demos call handlers through the Router.
+              6. The principle: a component holds no authoritative state; a DOM-free model
+                 below it, written by one owner, holds state, rules, validation (FileSet,
+                 EditorSettings, Arrangement).
+              7. A "For the intake:" list gathering every candidate from README "Left for
+                 experiment.html's intake" and the record's Notes, one short item each, the
+                 two sqlate notes (sqltest.Open; sqlate's trailing currency) naming the goal
+                 that next locks sqlate.
+              8. The record's Pending edits: add the answer section for html-artifacts.md under
+                 "## Answers · experiment.html" in briefs.md's form, linking
+                 context/README.md#the-answer and the remote; remove the seven roadmap edits
+                 and the framing-principle edit; keep the review's html-artifacts.md edit;
+                 no other coordinator edit.
+              9. The live index, after its evidence, holds an answer heading and one paragraph
+                 with the one-line answer linking "The answer"; the browser tier holds both;
+                 crawl, shell, and palette checks pass.
+             10. The index's evidence list matches the context README's twelve; the dropped
+                 13th item and any "thirteen" count are gone; the browser tier holds twelve.
+             11. No prose speaks of the answer as future or pending: index lede, context
+                 README intro, evidence 8 in both point to the verdict; the editor's pass
+                 over README.md, the context README, and the index finds nothing pending,
+                 pre-final-review, or contradicted.
+             12. The check passes; the merged build deploys to Pages and `mise run live`
+                 passes, so the live index shows the answer.
+Test seams    The built index in the browser tier (answer heading and link, twelve evidence
+              items, crawl and shell checks). The prose (answer, Pending edits, editor's pass)
+              is held by the spec review against behaviors 1-8 and 11, every number traced to
+              README "Measurements".
+Slices        1. The answer in the context README (behaviors 1-7). Demo: the section, each
+                 figure checked against "Measurements".
+              2. The index's answer and twelve-item evidence, with browser tests (9, 10).
+                 Demo: preview build, crawl green.
+              3. The answer section in the record's Pending edits (8). Demo: Pending edits
+                 read as the sync will apply them.
+              4. The end-of-spike pass; check green; after merge, deploy and `mise run live`
+                 (11, 12). Demo: the live index showing the answer.
+Out of scope  Any coordinator or reference-repository edit (the sync lands them); the framing
+              paragraph and roadmap summaries; new measurements; proving Service.Run in a
+              browser; the warm-up and other listed optimizations; choosing demos or kinds for
+              any goal; the sqlate currency and sqltest.Open work.
+Door          two-way: prose, one hand-page edit, a Pages deploy; nothing released.
 ```
+
 
 ## Decisions
 
@@ -1050,6 +988,33 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
   flip once per frame, since nothing reserves the scrollbar's space.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
+- answer: v1.repository-docs may embed live Go demos in both proven kinds, a prebuilt handler
+  module and source built in the page; each stays an option, and that goal chooses each demo and
+  its kind as it plans. The answer pre-selects nothing (round 1, 2026-11-17).
+- answer: every other Pages site likewise may embed them; none is pre-selected, and each goal
+  plans its own.
+- answer: the playground is recorded as proven and recommended to no site.
+- answer: cost is stated as measured facts and Pages arithmetic, with no budget; the intake sets
+  any budget.
+- answer: the spike's intake candidates are collected into the answer section's "For the
+  intake:" list, since the sync deletes this record's Notes.
+- answer: the state-outside-components principle goes in the answer section, not the framing
+  paragraph; its pending edit is removed.
+- answer: the seven roadmap.toml pending edits to this spike's task summaries are dropped; the
+  sync deletes the spike's table.
+- answer: the framing's stale facts (the sqlate demo's 1.2 MB gzip; "a service can't run there")
+  are corrected in the answer; the framing stays as posed.
+- answer: the live index gains a short answer after its evidence, linking "The answer", and
+  drops the 13th evidence item that went with final-review.
+- answer: the context README's answer groups the twelve evidence items into ten numbered items,
+  each labelled with the evidence it covers, where one proof serves several.
+- answer: the coordinator's answer section in Pending edits drops the README's "(evidence N)"
+  labels and condenses the cost and intake detail, linking the README's "The answer" for the whole.
+- answer: the index's browser test reads the evidence count and the whole one-line answer from
+  context/README.md, and the remote from the checkout's git origin, so the index restates no
+  markup the test must track.
+- answer: the index lede and the context README's intro link the answer, and evidence 8 in both
+  links it as the verdict; the intake decides, the spike decides nothing itself.
 
 ## Notes
 
@@ -1188,43 +1153,170 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Pending edits
 
-- coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", a candidate principle
-  for the web standard experiment.html's intake may found: a component holds no authoritative
-  state; a DOM-free model below it, written by one owner (the composing element or the page),
-  holds the state, its rules, and its validation. Evidence: this spike's FileSet and
-  EditorSettings, written by sl-go-demo, and its Arrangement, a reader's stored preference the
-  page owns and gives to every fixed demo.
-- coordinator · roadmap.toml: in the components task's summary, "sl-run-controls" becomes
-  "sl-controls", and "with a specimen page" becomes "with a components page".
-- coordinator · roadmap.toml: in the playground task's summary, "per-package standard-library
-  and workspace archives" becomes "per-package standard-library archives", since the sqlate and
-  scenarios tasks add their modules' archives; and "the playground page" becomes "the playground
-  page, an app page around sl-go-demo's fixed layout with a Layout menu whose choice the page
-  stores, opening on a calculator-language starter program, its detail in an About dialog", since
-  the summary otherwise omits the redirect's, the layout foundation's, the starter's, and the
-  fix's work.
-- coordinator · roadmap.toml: the programs task's summary becomes "Basics, generics,
-  concurrency, and standard-library programs of the spike's own, edited and run from source in the
-  playground, chosen by a Program select and a URL fragment, each keeping its edits within the tab,
-  with a report of each one's cold and warm timings and closure. Evidence 12."
-- coordinator · roadmap.toml: the sqlate task's summary becomes "sqlate's compile demo: a program
-  the reader composes from sqlate's PostgreSQL patterns and their own, compiled in the page over
-  the pinned modules' archives, with a guarded run over sqltest's scripted driver; and a prebuilt
-  compile handler on a rendered Markdown page. Evidence 2, 3, 11."
-- coordinator · roadmap.toml: the scenarios task's summary becomes "go-core's graph, built
-  from source in the page, and go-web-sdk handlers called in-process, live on two rendered Markdown
-  pages, with the modules'
-  js/wasm archives added to the playground's manifest. Evidence 10."
-- coordinator · roadmap.toml: in the measure task's summary, "the TinyGo comparison, " goes, so
-  it reads "Each module's raw, gzip, and brotli sizes, and cold, cached, and in-place timings on
-  the live site, a playground build's Go compile and link among them, on desktop and on an iPhone
-  over Wi-Fi. Evidence 4, 5."
 - coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", after "The site takes
   the baseline through spike-html-hosting-sdk's foundation tag.", add "Its review fixed the defects
   it found in the reference layers at their root, releasing spike-html-apps-foundation v0.3.1,
   spike-html-hosting-sdk v0.6.3 and v0.6.4, spike-html-hosting-components v0.5.1, and
   spike-html-apps-components v0.10.3."
-- coordinator · roadmap.toml: the review task's summary becomes "The review of every page in
-  Chromium, its first pass across every palette, the editor included, leaving no capture file;
-  Firefox and the iPhone's Safari by hand; a Site nav on every page; each finding fixed at its
-  root, in the reference layers' releases among them. Evidence 7."
+- coordinator · html-artifacts.md: under "## Answers · experiment.html", after the last answer
+  section, add:
+
+  ```markdown
+  ### Answer · experiment.html.spike-html-go-wasm
+
+  **Question:** Can a page run workspace Go live in the browser through GOOS=js WebAssembly
+  (library demos, service handlers called in-process, and a Go playground that compiles arbitrary
+  Go in the page with Go's own compiler and linker) with acceptable capability and performance?
+  Sizes are measured, not gated.
+
+  **Answer:** Yes: live Go demos are viable on v1.repository-docs' guides and on every Pages site,
+  in both proven kinds, a prebuilt handler module and source built in the page by Go's own
+  compiler and linker; both stay options, each goal chooses its demos and their kinds as it plans,
+  and no site is pre-selected.
+
+  The live demo is <https://jaimestill.github.io/spike-html-go-wasm/>. Every figure is the
+  README's
+  [Measurements](https://github.com/JaimeStill/spike-html-go-wasm/blob/main/README.md#measurements),
+  taken on 2026-11-13 against the deployed commit 13d8348, unless it says otherwise.
+
+  1. Built from published tags, served as wasm: go.mod requires each module by its tag, with no
+     replace directive or local path; no `.wasm` or `.a` is tracked; `wasm_exec.js` is the pinned
+     Go's copy. Proven by `mise run check` (`test/unit/go-module.test.ts`,
+     `scripts/check-go.sh`), the Pages workflow's deploy, and `mise run live`, which holds
+     `go/hello.wasm` and the compiler as `application/wasm`, gzip-encoded, on the live site.
+  2. sqlate compiled live: edit a statement, see its `$n` SQL or sqlate's error, from the prebuilt
+     `go/sqlate.wasm` and from source built in the page. Proven by
+     `test/browser/sqlate-compile.test.ts`, `test/browser/sqlate.test.ts`, and `internal/sqlate`'s
+     and `playground/sqlate`'s Go tests, and by running demos:
+     [sqlate-compile.html](https://jaimestill.github.io/spike-html-go-wasm/sqlate-compile.html)
+     and [sqlate.html](https://jaimestill.github.io/spike-html-go-wasm/sqlate.html).
+  3. A statement run in-process over sqltest's scripted driver: the sqlate page's guarded edit.
+     Proven by `playground/sqlate`'s Go tests, run as wasm under node in the check, and
+     `test/browser/sqlate.test.ts`, and live on the sqlate page; that it opens no socket is proven
+     only by tests.
+  4. Sizes and cold-load cost: each module's raw, gzip-as-served, and brotli-11 bytes; each page
+     readable before any module, no `.wasm` requested before Run, and the first result cold,
+     cached, and in place. Proven by `mise run measure` on 2026-11-13 and on the iPhone by hand;
+     "no Go before a Run" also by `test/browser/go-demo.test.ts` and each demo page's browser
+     test. The figures are under Cost, below.
+  5. The review: every page in chrome-headless-shell at 390, 900, 1120, and 1376px, the first pass
+     across every palette and scheme, the editor included; Firefox 158.0.1 and the iPhone's Safari
+     by hand, with no findings. Proven by the architect's review over `mise run screenshots`, with
+     `test/browser/screenshots.test.ts` holding that it leaves no capture file. Desktop Safari and
+     WebKitGTK are gaps.
+  6. The verdict: this section, the architect's ruling of 2026-11-17.
+  7. The playground: arbitrary Go edited, compiled, linked, and run in the page, with load,
+     compile, link, and run timings. Proven by `test/browser/playground.test.ts`,
+     `test/browser/go-build.test.ts`, and `test/unit/toolchain.test.ts`, which holds each
+     program's closure to Go's own `go list -deps` and runs the compiler and linker on the
+     in-memory fs, and by a running demo:
+     [playground.html](https://jaimestill.github.io/spike-html-go-wasm/playground.html).
+  8. go-core's graph built from source in the page, and go-web-sdk's handlers called in-process
+     through its Router in the prebuilt `go/websdk.wasm`. Proven by
+     `test/browser/go-core-graph.test.ts`, `test/browser/go-web-sdk-handlers.test.ts`, and
+     `playground/graph`'s and `internal/websdk`'s Go tests, and by running demos:
+     [go-core-graph.html](https://jaimestill.github.io/spike-html-go-wasm/go-core-graph.html) and
+     [go-web-sdk-handlers.html](https://jaimestill.github.io/spike-html-go-wasm/go-web-sdk-handlers.html).
+  9. One bridge, runtime, and sl-go-demo for every scenario, on three rendered Markdown pages and
+     three hand pages. That they are used unchanged is proven only by tests:
+     `test/browser/go-demo.test.ts`, `test/browser/go-runs.test.ts`, each demo page's browser
+     test, the layer direction (`eslint.config.js`, `test/unit/go-module.test.ts`), and
+     `test/unit/go-demo-fences.test.ts`, which holds each page's fences to its program's files.
+  10. Four programs, basics, generics, concurrency, and the standard library, edited and run in
+      the page. Proven by `test/browser/playground-programs.test.ts` and each program's Go tests,
+      which hold its exact output, and by a running demo:
+      [playground.html#basics](https://jaimestill.github.io/spike-html-go-wasm/playground.html#basics)
+      and its siblings; `mise run report:programs` reports each one's cost.
+
+  **Cost,** as measured facts and Pages arithmetic, with no budget; the intake sets any:
+
+  - Prebuilt modules, gzip as Pages serves them (brotli 11): hello 0.74 MB (0.55), probe 1.31 MB
+    (0.94), sqlate 2.24 MB (1.59), websdk 2.22 MB (1.58).
+  - The toolchain: the compiler 10.76 MB (6.90), the linker 3.33 MB (2.31). A program's closure of
+    archives: calc 5.14 MB (3.81) in 58 files, stdlib 8.26 MB (6.12) in 85, graph 6.99 MB (5.19)
+    in 77, sqlate 20.38 MB (14.89) in 219.
+  - Pages serves gzip alone, with a max-age of 600 s; after it, a building page's worker
+    revalidates the manifest, some 100 to 200 B a build, and every module and archive comes from
+    the HTTP cache.
+  - Desktop pages are readable (first-contentful-paint) in 192 to 364 ms cold, medians.
+  - Desktop, first result after Run's click, median ms, cold / cached / in place: the components
+    page 151 / 52 / 68; sqlate-compile 199 / 84 / 15; go-web-sdk-handlers 197 / 67 / 17; calc
+    1,893 / 1,461 / 433; stdlib 2,565 / 2,029 / 733; graph 2,137 / 1,688 / 573; the sqlate page
+    3,338 / 2,592 / 1,158. A rerun with no rebuild is 15 to 17 ms.
+  - iPhone 16 Pro Max, one reading each, total ms: the sqlate page 3,301 cold; the graph page's
+    first run 1,429; the components page's 183; calc's 1,357; a rerun 5 to 21.
+  - Deployed weight, read live on 2026-11-17: about 240 MB raw for the toolchain and its 371
+    standard-library and 35 module archives, and 22.7 MB for the four prebuilt modules, against
+    Pages' 1 GB site limit. Every archive deploys, though a program fetches only its closure.
+  - Pages' soft 100 GB a month, divided by one cold run's transfer: calc 19.3 MB, about 5,190;
+    graph 21.1 MB, about 4,730; stdlib 22.4 MB, about 4,470; the sqlate page 34.6 MB, about
+    2,890; prebuilt, sqlate-compile 2.24 MB, about 44,700, go-web-sdk-handlers 2.22 MB, about
+    45,100, and the components page 1.31 MB, about 76,500.
+
+  **The playground** is proven: arbitrary Go against the standard library and the site's pinned
+  modules, compiled, linked, and run in the page. It is recommended to no site.
+
+  **Two corrections to the framing** under "Experiment: spike-html-go-wasm", which stays as posed:
+
+  - The sqlate prebuilt module serves at 2.24 MB gzip, not 1.2 MB. The minimal build (0.74 MB
+    gzip) and the playground's 19 MB on demand (calc's 19.3 MB cold) hold.
+  - "A service can't run there" holds only for sockets. Go's js port fakes the network
+    in-process, so go-web-sdk's Service.Run binds and serves under node in the library's own wasm
+    tests; that is unproven in a browser. The spike's demos call handlers through the Router.
+
+  **A candidate principle** for the web standard experiment.html's intake may found: a component
+  holds no authoritative state; a DOM-free model below it, written by one owner (the composing
+  element or the page), holds the state, its rules, and its validation. Evidence: this spike's
+  FileSet and EditorSettings, written by sl-go-demo, and its Arrangement, a reader's stored
+  preference the page owns and gives to every fixed demo.
+
+  For the intake:
+
+  - Warm the worker on intent, the architect's lead optimization: calc's first Run is mostly the
+    compiler's warm-up inside Go compile (854 / 875 / 198 ms cold / cached / in place) and Link
+    (331 / 334 / 185). A page-load preload spends 19 to 35 MB a view against the 100 GB month,
+    so preload on intent (editor focus, pointer over Run), never under a data-saver signal.
+  - Chrome compiles the 52 MB compiler lazily: its cold WebAssembly.compile reads about 74 to
+    123 ms locally and 33 to 38 ms live, so its real cost may sit inside Go compile.
+  - Build drift: the live module differs from a local build only in Go's `vcs.*` stamps;
+    `-buildvcs=false` would remove it.
+  - The sqlate page's 36 s cold Run on the iPhone (2026-11-12) didn't reproduce; its cause is
+    unknown.
+  - A `timings.test.ts` stall seen once under the parallel browser tier's load; the per-test
+    bound now fails it by name.
+  - spike-html-design v0.7.0's bare `::backdrop` veils every top-layer backdrop, a popover's
+    included; spike-html-apps-foundation v0.3.1 fixes it there.
+  - spike-html-hosting-sdk gaps:
+    - no nav for a site's own pages; the spike's Site nav stands in;
+    - a Markdown fence can't name its file; sl-go-demo's `file` attribute stands in;
+    - the crawl counts a page missing from `content.json` as a hand page, so a site's own
+      Markdown tree needs a scratch-root crawl;
+    - markdownPages has no hook for marked extensions;
+    - its drawer-focus check helpers are private, and the template's drawer wiring is repeated;
+    - no page mode for tools; holdsReadingWidth assumes a reading page.
+  - `sl-drawer` has no modal-only mode; the Site drawer's unreachable dock stands in.
+  - A page-layout sheet (gutter, section spacing, content and full named lines) in the SDK or the
+    foundation, so no page sets its own section spacing.
+  - The foundation has no token for `outline-offset`, and `@custom-media` isn't shipped, so
+    complementary container queries repeat their breakpoint.
+  - A browser-test helper that runs a suite in a pinned font set, in the architecture or the SDK.
+  - Go's `wasm_exec.js` exit race, a pending timeout resuming an exited program, is upstream Go's;
+    the worker guards it.
+  - Shiki's http grammar statically imports the JavaScript, TypeScript, and Java grammars, which
+    matters if the SDK's client-side fences highlight http.
+  - A browser running a wasm build is another runtime layer; this answer bears on the
+    `elemental-runtime-layers` backlog goal.
+  - Deploy the toolchain once and share it across one owner's project sites, which share an
+    origin and so its HTTP cache (unproven), and ship only the closures of a site's demos.
+  - SDK v0.6.3 draws no focus outline on a shortcut dialog's script-focused heading, which isn't
+    a control; spike-html-hosting-sqlate's STANDARDS.md says "Focus is always visible".
+  - sl-code-editor's paste stores an extra trailing newline in an empty file, and doubles a final
+    newline pasted over the content; likely an editor bug.
+  - The SDK's Release workflow tags a release itself, above the merge, so a hand-pushed tag is
+    rejected as existing; marathon's release steps assume a hand-pushed tag.
+  - For the goal that next locks sqlate, today v1.ai.processing's `providers` task:
+    `sqltest.Open` requires a `testing.TB`, where a constructor that takes none would serve a
+    demo; and sqlate's own currency trails pgx 5.12.0, golangci-lint 2.15.0, and go 1.27.4.
+
+  [The answer](https://github.com/JaimeStill/spike-html-go-wasm/blob/main/context/README.md#the-answer) · [spike-html-go-wasm](https://github.com/JaimeStill/spike-html-go-wasm)
+  ```

@@ -1,13 +1,13 @@
 <!doctype html>
-<!-- The spike's GitHub Pages site, its index, a hand page: the spike's question and the thirteen
-     items of evidence its answer rests on, as context/README.md gives them. The foundation's full
-     page entry and its registrations, every built-in profile, so the settings offer each, its
-     preferences module, and its keys module, render-blocking, as the build makes every module
-     script one entry; then the components' glyph-button.css and the SDK's site.css, each by its
-     package's name, and the pages' shared sheet, web/pages/page.css, in that order after the
-     entry, so the page's own rules sit in its page layer, after the SDK's site layer, with no
-     inline sheet: the build writes an inline sheet before the linked ones, which would put its
-     layer ahead of the foundation's. The components' shortcuts list and settings,
+<!-- The spike's GitHub Pages site, its index, a hand page: the spike's question, the twelve items
+     of evidence its answer rests on, and its answer, as context/README.md gives them. The
+     foundation's full page entry and its registrations, every built-in profile, so the settings
+     offer each, its preferences module, and its keys module, render-blocking, as the build makes
+     every module script one entry; then the components' glyph-button.css and the SDK's site.css,
+     each by its package's name, and the pages' shared sheet, web/pages/page.css, in that order
+     after the entry, so the page's own rules sit in its page layer, after the SDK's site layer,
+     with no inline sheet: the build writes an inline sheet before the linked ones, which would put
+     its layer ahead of the foundation's. The components' shortcuts list and settings,
      their modules render-blocking too, which the two shortcut dialogs hold. The header is one group
      of buttons, header-actions: Help and Settings, in that order, which site.css holds at the
      header's inline end at every width, as it does a header with no site nav; the site has no
@@ -34,8 +34,10 @@
      content: its heading and lede, then the where-to-go list, which the build writes at its marker,
      the comment "site-nav: where-to-go", from the site nav's one list, a line for each page it
      links but home, and fails without the marker; then the prose on the components page and the
-     playground, the question, and the evidence. No Markdown fills it, so the index loads none of
-     the components' other modules and has no Pages or Contents button or drawer.
+     playground, the question, the evidence, and the answer, which evidence 8 links: its one line
+     and a link to context/README.md's "The answer" on the remote. No Markdown fills it, so the
+     index loads none of the components' other modules and has no Pages or Contents button or
+     drawer.
      Adapted from spike-html-hosting (421254d): index.html, its title and text this spike's, and
      its header without the site nav.
      Adapted from spike-html-hosting-sdk (v0.6.4): template/index.html, its main element the
@@ -93,9 +95,10 @@
       <h1>spike-html-go-wasm</h1>
       <p>
         A spike for the Standards Lab reference architecture: workspace Go run live in the browser
-        through <code>GOOS=js</code> WebAssembly, on this GitHub Pages project site. Its answer is
-        evidence for whether v1.repository-docs and the Pages sites embed live Go demos; the spike
-        decides nothing itself.
+        through <code>GOOS=js</code> WebAssembly, on this GitHub Pages project site.
+        <a href="#the-answer">Its answer</a> gives the evidence and the architect's verdict on
+        whether v1.repository-docs and the Pages sites embed live Go demos; experiment.html's
+        intake decides, and the spike decides nothing itself.
       </p>
       <!-- site-nav: where-to-go -->
       <h2 id="the-question">The question</h2>
@@ -136,7 +139,7 @@
           The screenshot review, every palette's editor included, leaving no capture file; Firefox
           and Safari where available.
         </li>
-        <li>The verdict for v1.repository-docs and the Pages sites.</li>
+        <li><a href="#the-answer">The verdict</a> for v1.repository-docs and the Pages sites.</li>
         <li>
           A playground where the reader edits and runs arbitrary Go in the page, with load, compile,
           link, and run timings.
@@ -157,8 +160,16 @@
           <a href="playground.html#concurrency">concurrency</a>,
           <a href="playground.html#stdlib">standard library</a>) edited and run in the page.
         </li>
-        <li>The performance, optimization, and ergonomics review, with what it changed.</li>
       </ol>
+      <h2 id="the-answer">The answer</h2>
+      <p>
+        Yes: live Go demos are viable on v1.repository-docs' guides and on every Pages site, in both
+        proven kinds, a prebuilt handler module and source built in the page by Go's own compiler
+        and linker; both stay options, each goal chooses its demos and their kinds as it plans, and
+        no site is pre-selected. The evidence, its costs, and the leads for the intake are the
+        context README's
+        <a href="https://github.com/JaimeStill/spike-html-go-wasm/blob/main/context/README.md#the-answer">The answer</a>.
+      </p>
     </main>
     <dialog id="help" aria-labelledby="help-title">
       <header class="dialog-header">
