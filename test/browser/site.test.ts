@@ -27,10 +27,11 @@
 // (web/pages/page.css), last, and its source holds no inline <style>, which the build would write
 // ahead of the linked sheets. The components page sets every section apart, its heading --space-xl
 // below what came before; the playground has no section, its one screen proved by
-// playground-layout.test.ts. The index's evidence is context/README.md's twelve items, its eighth,
-// the verdict, linking the answer, which follows the list as main's last two children: its
-// heading, The answer, and one paragraph, the one-line answer, linking context/README.md's "The
-// answer" on the remote; the crawl holds the eighth item's fragment to an element. Nothing here names the site: its base is package.json's name.
+// playground-layout.test.ts. The index's evidence is as many items as context/README.md's, its
+// eighth, the verdict, linking the answer, which follows the list as main's last two children: its
+// heading, The answer, and one paragraph opening with README's one-line answer and linking README's
+// "The answer" on the checkout's origin; the crawl holds the eighth item's fragment to an element.
+// Nothing here names the site: its base is package.json's name, its remote the checkout's origin.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.4): template/test/browser/site.test.ts, its checks
@@ -72,6 +73,32 @@ const root = join(import.meta.dirname, "../..");
 let server: Server;
 let browser: Browser;
 
+/** Runs git in the checkout; answers its trimmed output. */
+function git(...args: string[]): string {
+  return execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
+}
+
+/** The checkout's origin as https, an SSH remote's included. */
+function origin(): string {
+  return git("remote", "get-url", "origin")
+    .replace(/^git@github\.com:/, "https://github.com/")
+    .replace(/\.git$/, "");
+}
+
+/** context/README.md's section under the level-two heading named, to the next. */
+function readmeSection(name: string): string {
+  const readme = readFileSync(join(root, "context/README.md"), "utf8");
+  const start = readme.indexOf(`\n## ${name}\n`);
+  assert.notEqual(start, -1, `context/README.md has no "## ${name}"`);
+  const end = readme.indexOf("\n## ", start + 1);
+  return readme.slice(start, end === -1 ? undefined : end);
+}
+
+/** Text with its whitespace runs collapsed to one space, as a page renders Markdown's wrapping. */
+function normalized(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
 /** Writes a scratch root under TMPDIR whose content.json records the spike's own Markdown tree,
  * markdown/, as one copied tree at content/'s root, each file by its name in markdown/, which
  * names the page it's served at, with its git blob hash, and a byte copy of each under its
@@ -88,13 +115,9 @@ function markdownTreeRoot(): string {
     copyFileSync(from, join(dir, "content", name));
     files[name] = blob(readFileSync(from));
   }
-  const git = (...args: string[]) =>
-    execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
   const record = {
     repository: JSON.parse(readFileSync(join(root, "package.json"), "utf8")).name as string,
-    url: git("remote", "get-url", "origin")
-      .replace(/^git@github\.com:/, "https://github.com/")
-      .replace(/\.git$/, ""),
+    url: origin(),
     commit: git("rev-parse", "HEAD"),
     files,
   };
@@ -247,48 +270,37 @@ describe("the site under its base", () => {
     }
   });
 
-  test("the index lists the twelve items of evidence, then answers: its heading and one paragraph linking context/README.md's The answer, which evidence 8 links", async () => {
+  test("the index lists context/README.md's evidence, its eighth linking the answer, then answers as main's last two children: its heading and README's one-line answer, linking README's The answer on the remote", async () => {
+    const evidence = readmeSection("The evidence").match(/^\d+\. /gm)?.length;
+    const answer = /\*\*Answer:\*\* ([^;]*);/.exec(readmeSection("The answer"))?.[1];
+    assert.ok(evidence && answer, "context/README.md holds its evidence list and its answer");
     const page = await browser.open(server.origin);
     try {
       const read = await page.evaluate(`(() => {
-        const evidence = document.getElementById("the-evidence");
-        const list = evidence.nextElementSibling;
+        const list = document.getElementById("the-evidence").nextElementSibling;
         const items = [...list.querySelectorAll(":scope > li")];
-        const answer = document.getElementById("the-answer");
-        const paragraph = answer?.nextElementSibling;
-        const main = [...document.querySelector("main").children];
+        const [heading, paragraph] = [...document.querySelector("main").children].slice(-2);
+        const text = (node) => node.textContent.replace(/\\s+/g, " ").trim();
         return {
           list: list.localName,
           items: items.length,
           eighth: [...items[7].querySelectorAll("a")].map((a) => a.getAttribute("href")),
-          heading: answer?.parentElement.localName + " > " + answer?.localName,
-          name: answer?.textContent.trim(),
-          afterEvidence: main.indexOf(answer) === main.indexOf(list) + 1,
-          paragraph: paragraph?.localName,
-          last: paragraph === document.querySelector("main").lastElementChild,
-          opens: paragraph?.textContent.trim().startsWith("Yes: live Go demos are viable"),
-          links: [...(paragraph?.querySelectorAll("a") ?? [])].map((a) => ({
-            text: a.textContent.trim(),
-            href: a.href,
-          })),
+          heading: heading.localName + "#" + heading.id + " " + text(heading),
+          afterEvidence: list.nextElementSibling === heading,
+          paragraph: paragraph.localName,
+          opening: text(paragraph).slice(0, ${JSON.stringify(normalized(answer))}.length),
+          links: [...paragraph.querySelectorAll("a")].map((a) => ({ text: text(a), href: a.href })),
         };
       })()`);
       assert.deepEqual(read, {
         list: "ol",
-        items: 12,
+        items: evidence,
         eighth: ["#the-answer"],
-        heading: "main > h2",
-        name: "The answer",
+        heading: "h2#the-answer The answer",
         afterEvidence: true,
         paragraph: "p",
-        last: true,
-        opens: true,
-        links: [
-          {
-            text: "The answer",
-            href: "https://github.com/JaimeStill/spike-html-go-wasm/blob/main/context/README.md#the-answer",
-          },
-        ],
+        opening: normalized(answer),
+        links: [{ text: "The answer", href: `${origin()}/blob/main/context/README.md#the-answer` }],
       });
     } finally {
       await page.close();
