@@ -17,7 +17,8 @@ compile handler (see "The Markdown compile page"); `go-core-graph.html`, whose d
 service wired on go-core's graph in the page (see "go-core graph"); and
 `go-web-sdk-handlers.html`, whose demo sends HTTP/1.1 requests to go-web-sdk's handlers, called
 in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `content.json`, and
-`content/` holds nothing. The spike's question, evidence, and path are in `context/README.md`.
+`content/` holds nothing. The spike's question, evidence, path, and answer are in
+`context/README.md`.
 
 ## Tasks
 
@@ -72,7 +73,8 @@ in-process (see "go-web-sdk"). The site copies no Markdown tree, so it has no `c
     rendered Markdown page, the crawl, and the SDK's palette check on each rendered page's fences,
     reads each page's cascade layers (the foundation's, then `site`, then `page`) and finds no
     inline `<style>` in its source, proves the site's own nav on all seven pages and the index's
-    where-to-go list (see "Pages"),
+    where-to-go list (see "Pages"), holds the index's evidence count and its answer to
+    `context/README.md`'s,
     and proves each component on the components page:
     - the code editor: its colors against the SDK's fences in every palette and scheme, its
       accessibility tree, its gutter, its loading, its editing keys and events, its settings,
@@ -750,6 +752,9 @@ or at a larger type or text zoom, the page grows and scrolls down, never sideway
 checks all run on the page but main's reading width, and the spike's own check holds the prose to
 80ch, centered. The browser tier proves the one screen in the machine's fonts and in the pinned
 DejaVu set, and reports how far above its floor the demo stands at each capture size.
+
+In Chrome, an element with `min-block-size` on a size container in a grid row laid out 0px tall,
+so the page uses no size container; any page that does should expect it.
 
 The playground's detail is in its About dialog, `dialog#about`, out of the screen's flow, so no font
 costs the demo a line of it. About, the header's first glyph button after the Site opener, before

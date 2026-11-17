@@ -3,9 +3,10 @@
 spike-html-go-wasm runs workspace Go live in the browser through `GOOS=js` WebAssembly, on a
 GitHub Pages project site over experiment.html's stack: four Go programs of our own and the
 sqlate, go-core, and go-web-sdk demos, all editable in the page, and a playground that compiles
-arbitrary Go in the page with Go's own compiler and linker. Its answer is evidence for
-experiment.html's intake on whether v1.repository-docs and the Pages sites embed live Go demos.
-The spike decides nothing itself.
+arbitrary Go in the page with Go's own compiler and linker. Its answer, under
+[The answer](#the-answer), gives experiment.html's intake the evidence and the architect's verdict
+on whether v1.repository-docs and the Pages sites embed live Go demos. The intake decides; the
+spike decides nothing itself.
 
 The spike is the sub-goal `experiment.html.spike-html-go-wasm` in the coordinator's roadmap,
 `standards-lab/context/roadmap.toml`, where its tasks live. Its question is framed in
@@ -32,7 +33,7 @@ budget.
    application/wasm.
 7. The screenshot review, every palette's editor included, leaving no capture file; Firefox and
    Safari where available: README.md, "Review".
-8. The verdict for v1.repository-docs and the Pages sites.
+8. [The verdict](#the-answer) for v1.repository-docs and the Pages sites.
 9. A playground where the reader edits and runs arbitrary Go in the page, with load, compile,
    link, and run timings.
 10. The go-core graph and go-web-sdk demos live, their sizes reported.
@@ -383,6 +384,13 @@ For the intake:
 - Deploy the toolchain once and share it across one owner's project sites, which share an origin
   and so its HTTP cache; unproven.
 - Ship only the closures of a site's demos, not every standard-library archive.
+- SDK v0.6.3 draws no focus outline on a shortcut dialog's script-focused heading, which isn't a
+  control; spike-html-hosting-sqlate's STANDARDS.md says "Focus is always visible", so its next
+  review may raise it.
+- sl-code-editor's paste: pasting into an empty file stores an extra trailing newline, and
+  pasting a whole file that ends in a newline over the content doubles it; likely an editor bug.
+- The SDK's Release workflow tags a release itself, on a release commit above the merge, so a
+  tag pushed by hand is rejected as existing; marathon's release steps assume a hand-pushed tag.
 - For the goal that next locks sqlate, today v1.ai.processing's `providers` task:
   - `sqltest.Open` requires a `testing.TB`; a constructor that takes none would serve a demo;
   - sqlate's own currency trails its latest pins: pgx 5.12.0, golangci-lint 2.15.0, and go

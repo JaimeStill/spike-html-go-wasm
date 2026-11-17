@@ -90,7 +90,7 @@ Door          two-way: prose, one hand-page edit, a Pages deploy; nothing releas
 
 ## Progress
 
-slices 3/4 committed (slice 4: editor pass, then deploy after merge) · standards — · spec — · editor —
+slices 4/4 committed · standards ✓ · spec ✓ · editor ✓ (deploy and `mise run live` after merge)
 
 ## Decisions
 
@@ -1010,6 +1010,15 @@ slices 3/4 committed (slice 4: editor pass, then deploy after merge) · standard
   are corrected in the answer; the framing stays as posed.
 - answer: the live index gains a short answer after its evidence, linking "The answer", and
   drops the 13th evidence item that went with final-review.
+- answer: the context README's answer groups the twelve evidence items into ten numbered items,
+  each labelled with the evidence it covers, where one proof serves several.
+- answer: the coordinator's answer section in Pending edits drops the README's "(evidence N)"
+  labels and condenses the cost and intake detail, linking the README's "The answer" for the whole.
+- answer: the index's browser test reads the evidence count and the whole one-line answer from
+  context/README.md, and the remote from the checkout's git origin, so the index restates no
+  markup the test must track.
+- answer: the index lede and the context README's intro link the answer, and evidence 8 in both
+  links it as the verdict; the intake decides, the spike decides nothing itself.
 
 ## Notes
 
@@ -1303,6 +1312,12 @@ slices 3/4 committed (slice 4: editor pass, then deploy after merge) · standard
     `elemental-runtime-layers` backlog goal.
   - Deploy the toolchain once and share it across one owner's project sites, which share an
     origin and so its HTTP cache (unproven), and ship only the closures of a site's demos.
+  - SDK v0.6.3 draws no focus outline on a shortcut dialog's script-focused heading, which isn't
+    a control; spike-html-hosting-sqlate's STANDARDS.md says "Focus is always visible".
+  - sl-code-editor's paste stores an extra trailing newline in an empty file, and doubles a final
+    newline pasted over the content; likely an editor bug.
+  - The SDK's Release workflow tags a release itself, above the merge, so a hand-pushed tag is
+    rejected as existing; marathon's release steps assume a hand-pushed tag.
   - For the goal that next locks sqlate, today v1.ai.processing's `providers` task:
     `sqltest.Open` requires a `testing.TB`, where a constructor that takes none would serve a
     demo; and sqlate's own currency trails pgx 5.12.0, golangci-lint 2.15.0, and go 1.27.4.
