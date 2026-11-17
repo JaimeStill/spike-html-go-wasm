@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** building
+- **State:** brief ready
 - **Task:** review
 - **Branch:** review
 
@@ -152,7 +152,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 15/15 committed · standards ✓ (all repos) · spec ✓ (5 gaps closed) · editor ✓ · next: validate, then the session brief
+slices 15/15 committed · standards ✓ (all repos) · spec ✓ (5 gaps closed) · editor ✓ · validated: every check exit 0 · brief ready
 
 ## Decisions
 
@@ -1029,7 +1029,8 @@ slices 15/15 committed · standards ✓ (all repos) · spec ✓ (5 gaps closed) 
   stays, commented as the stand-in; the mode is an intake finding. The Site drawer returns focus
   as the SDK's Pages and Contents drawers do (to wherever focus was when a key opened it), and the
   drawer wiring the two scripts duplicate is an intake finding. typescript-eslint 8.73.0,
-  @nats-io 3.5.0, and marked 18.2.1 (the SDK and apps-components), released mid-session, wait for
+  @nats-io 3.5.0, nats.go v1.56.0 (spike-html-apps), and marked 18.2.1 (the SDK and
+  apps-components), released mid-session, wait for
   the next currency pass (rolling currency).
   spike-html-apps' "Respect supply-chain cooldowns" convention, which contradicts its
   minimumReleaseAge: 0 and the rolling-currency page, is rewritten to match.
