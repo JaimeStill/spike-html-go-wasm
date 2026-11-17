@@ -90,7 +90,7 @@ Door          two-way: prose, one hand-page edit, a Pages deploy; nothing releas
 
 ## Progress
 
-slices 0/4 committed · standards — · spec — · editor —
+slices 1/4 committed · standards — · spec — · editor —
 
 ## Decisions
 
