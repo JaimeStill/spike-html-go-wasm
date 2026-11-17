@@ -547,8 +547,10 @@ the foundation (?, S, P, C, H, L, J, K, T, A). From 58rem the row shows, on one 
 header's buttons; 58rem is the widest header, a Markdown page's under both drawers' docks, as
 measured in the browser: 863px in the machine's fonts and 925px in DejaVu, rounded up. Below it,
 with script, the row is hidden and the opener shows; it opens the drawer by its click or N, and
-Escape, the drawer's Close, or a followed link closes it, focus back on the opener. With no script
-the drawer is undefined and hidden and the row shows at every width, wrapping its links.
+Escape, the drawer's Close, or a followed link closes it, focus back where it was as the drawer
+opened, as the SDK's Pages and Contents drawers return it: on the opener after its click, and after
+N, which clicks the opener without focusing it, wherever it was before the key. With no script the
+drawer is undefined and hidden and the row shows at every width, wrapping its links.
 
 The index opens its main, after its heading and lede and before the question and the evidence, on
 a where-to-go list: a heading, "Where to go", then a list, both main's own children with no

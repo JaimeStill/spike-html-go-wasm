@@ -12,8 +12,13 @@
 // click and by N, its heading taking focus as it opens and nothing else in it, its Close above all,
 // not even in passing, the heading drawing no focus outline, and, opened by N, Close's interest
 // hint closed past the interest delay, as the SDK holds its own drawers; Escape and the drawer's
-// Close each close it, aria-expanded following, focus back on the opener; a link followed in it
-// closes it, its navigation held by the test so the page stays to be read. With script disabled, at
+// Close each close it, aria-expanded following, focus back where it was as the drawer opened: on
+// the opener after its click, and after N, which clicks the opener without focusing it, on the
+// element focus was on before the key, the header's Settings, or on the body, never the opener; a
+// link followed in it closes it, its navigation held by the test so the page stays to be read. On a
+// Markdown page, below the switch, the Site drawer by N and the SDK's Pages drawer by P return
+// focus alike, to Settings or to the body, whichever held it, by Escape or by Close, so the Site
+// drawer is held to the reference's focus return. With script disabled, at
 // 390px, the row shows, the opener and the drawer don't, and nothing scrolls sideways, with the
 // text at its own size and at 200%, nothing in the header passing the viewport, on every page, the
 // components page's Go demos unupgraded among them. The SDK's shell checks, which run on every page
@@ -122,6 +127,23 @@ const MODAL = `!!${DRAWER}.shadowRoot?.querySelector("dialog")?.matches(":modal"
 /** Focus is on the opener. */
 const ON_OPENER = `document.activeElement === ${OPENER}`;
 
+/** The header's Settings, a control outside every drawer, on every page, to hold focus before a
+ * key opens one. */
+const SETTINGS = `document.querySelector('body > header > .header-actions > button[data-keys="s"]')`;
+
+/** Focus is on Settings. */
+const ON_SETTINGS = `document.activeElement === ${SETTINGS}`;
+
+/** Focus is on the body, no element holding it. */
+const ON_BODY = `document.activeElement === document.body`;
+
+/** Where focus is, named for a message: "the opener", "Settings", "the body", or its tag. */
+const FOCUSED = `(() => {
+  const active = document.activeElement;
+  return active === ${OPENER} ? "the opener" : active === ${SETTINGS} ? "Settings"
+    : active === document.body ? "the body" : active?.localName ?? "nothing";
+})()`;
+
 /** Starts a record of every focus inside the drawer, in its shadow root and its slotted links,
  * each by what took it: "heading", the h2 labeling its dialog, "Close", or its tag. Run before the
  * drawer opens, so a focus that passes through Close on its way to the heading is heard, not only
@@ -198,15 +220,19 @@ async function assertHeadingFocus(
 }
 
 /** Presses a key, as a reader types it: a letter with its text, or a named key. */
-async function press(page: Page, key: "n" | "Escape"): Promise<void> {
+async function press(page: Page, key: "n" | "p" | "Escape"): Promise<void> {
   const event =
-    key === "n"
-      ? { key, code: "KeyN", windowsVirtualKeyCode: 78 }
-      : { key, code: key, windowsVirtualKeyCode: 27 };
+    key === "Escape"
+      ? { key, code: key, windowsVirtualKeyCode: 27 }
+      : {
+          key,
+          code: `Key${key.toUpperCase()}`,
+          windowsVirtualKeyCode: key.toUpperCase().charCodeAt(0),
+        };
   await page.cdp("Input.dispatchKeyEvent", {
     type: "keyDown",
     ...event,
-    ...(key === "n" ? { text: key } : {}),
+    ...(key === "Escape" ? {} : { text: key }),
   });
   await page.cdp("Input.dispatchKeyEvent", { type: "keyUp", ...event });
 }
@@ -235,17 +261,26 @@ async function opened(page: Page, where: string, how: string): Promise<void> {
     .getAnimations({ subtree: true }).map((animation) => animation.finished))`);
 }
 
-/** Waits for the drawer to close by how, aria-expanded to follow, and focus to be on the
- * opener. */
-async function closed(page: Page, where: string, how: string): Promise<void> {
+/** Waits for the drawer to close by how, aria-expanded to follow, and focus to be back where it
+ * was as the drawer opened: by `back`, an expression true when it is, named by `on`. */
+async function closed(
+  page: Page,
+  where: string,
+  how: string,
+  back = ON_OPENER,
+  on = "the opener",
+): Promise<void> {
   await until(page, `!${MODAL}`, 5000).catch(() =>
     assert.fail(`${where}: ${how} closes the drawer`),
   );
   await until(page, `${OPENER}.getAttribute("aria-expanded") === "false"`, 5000).catch(() =>
     assert.fail(`${where}: aria-expanded is false once ${how} closes the drawer`),
   );
-  await until(page, ON_OPENER, 5000).catch(() =>
-    assert.fail(`${where}: focus is back on the opener once ${how} closes the drawer`),
+  await until(page, back, 5000).catch(async () =>
+    assert.fail(
+      `${where}: focus is back on ${on} once ${how} closes the drawer, not on ` +
+        (await page.evaluate(FOCUSED)),
+    ),
   );
 }
 
@@ -306,7 +341,7 @@ describe("the site's own nav", () => {
       }
     });
 
-    test(`${where}: below the switch the opener opens the drawer by its click and by N, on its heading, Close's hint closed; Escape and Close close it, focus back on the opener; a link followed closes it`, async () => {
+    test(`${where}: below the switch the opener opens the drawer by its click and by N, on its heading, Close's hint closed; Escape and Close close it, focus back where it was as it opened; a link followed closes it`, async () => {
       const page = await browser.open(`${server.origin}${path}`);
       try {
         await viewport(page, PHONE);
@@ -317,15 +352,24 @@ describe("the site's own nav", () => {
         await press(page, "Escape");
         await closed(page, where, "Escape");
 
-        // N from the body, focus nowhere in particular: the keys module clicks the opener without
-        // focusing it, and the drawer still returns focus to the opener.
+        // N with focus on Settings: the keys module clicks the opener without focusing it, so
+        // the drawer returns focus to Settings, as the SDK's Pages drawer does by P.
+        await page.evaluate(`${SETTINGS}.focus()`);
+        await page.evaluate(RECORD_FOCUS);
+        await press(page, "n");
+        await opened(page, where, "N");
+        await assertHeadingFocus(page, where, "N", true);
+        await press(page, "Escape");
+        await closed(page, where, "Escape", ON_SETTINGS, "Settings");
+
+        // N from the body, focus nowhere in particular: the drawer returns it to the body.
         await page.evaluate(`document.activeElement?.blur()`);
         await page.evaluate(RECORD_FOCUS);
         await press(page, "n");
         await opened(page, where, "N");
         await assertHeadingFocus(page, where, "N", true);
         await clickAt(page, `${DRAWER}.shadowRoot.querySelector("dialog button")`);
-        await closed(page, where, "the drawer's Close");
+        await closed(page, where, "the drawer's Close", ON_BODY, "the body");
 
         // A link, its navigation held, so the page stays to be read once the drawer has closed.
         await page.evaluate(
@@ -334,7 +378,7 @@ describe("the site's own nav", () => {
         await press(page, "n");
         await opened(page, where, "N");
         await clickAt(page, `${DRAWER}.querySelector("a")`);
-        await closed(page, where, "following a link");
+        await closed(page, where, "following a link", ON_BODY, "the body");
       } finally {
         await page.close();
       }
@@ -378,6 +422,46 @@ describe("the site's own nav", () => {
       }
     });
   }
+
+  test("on a Markdown page the Site drawer by N returns focus as the SDK's Pages drawer by P does, to Settings or the body, by Escape or Close", async () => {
+    const page = await browser.open(`${server.origin}go-core-graph.html`);
+    try {
+      await viewport(page, PHONE);
+      /** Where focus lands once a drawer, opened by its key from `from`, closes by `how`. */
+      const roundTrip = async (
+        id: string,
+        key: "n" | "p",
+        from: "Settings" | "the body",
+        how: "Escape" | "Close",
+      ): Promise<string> => {
+        const drawer = `document.querySelector("sl-drawer#${id}")`;
+        const modal = `!!${drawer}.shadowRoot?.querySelector("dialog")?.matches(":modal")`;
+        await page.evaluate(
+          from === "Settings" ? `${SETTINGS}.focus()` : `document.activeElement?.blur()`,
+        );
+        await press(page, key);
+        await until(page, modal, 5000).catch(() => assert.fail(`${key} opens #${id}`));
+        await page.evaluate(`Promise.all(${drawer}.shadowRoot.querySelector("dialog")
+          .getAnimations({ subtree: true }).map((animation) => animation.finished))`);
+        if (how === "Escape") await press(page, "Escape");
+        else await clickAt(page, `${drawer}.shadowRoot.querySelector("dialog button")`);
+        await until(page, `!${modal}`, 5000).catch(() => assert.fail(`${how} closes #${id}`));
+        // The drawer's dialog returns focus as its close event fires: a frame settles it.
+        await page.evaluate(`new Promise((resolve) => requestAnimationFrame(resolve))`);
+        return (await page.evaluate(FOCUSED)) as string;
+      };
+      for (const from of ["Settings", "the body"] as const) {
+        for (const how of ["Escape", "Close"] as const) {
+          const pages = await roundTrip("pages", "p", from, how);
+          const site = await roundTrip("site", "n", from, how);
+          assert.equal(pages, from, `the Pages drawer, opened by P from ${from}, closed by ${how}`);
+          assert.equal(site, pages, `the Site drawer, opened by N from ${from}, closed by ${how}`);
+        }
+      }
+    } finally {
+      await page.close();
+    }
+  });
 
   test("the index opens its main on the where-to-go list, SITE_NAV's pages but home, in order, each with its line, before the question and the evidence", async () => {
     const page = await browser.open(server.origin);
