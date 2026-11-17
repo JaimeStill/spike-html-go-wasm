@@ -272,7 +272,11 @@ describe("the site under its base", () => {
 
   test("the index lists context/README.md's evidence, its eighth linking the answer, then answers as main's last two children: its heading and README's one-line answer, linking README's The answer on the remote", async () => {
     const evidence = readmeSection("The evidence").match(/^\d+\. /gm)?.length;
-    const answer = /\*\*Answer:\*\* ([^;]*);/.exec(readmeSection("The answer"))?.[1];
+    // The whole one-line answer, its paragraph to the blank line, without Markdown's emphasis or
+    // code markers, so drift in any of its clauses fails.
+    const answer = /\*\*Answer:\*\* ([\s\S]*?)\n\n/
+      .exec(readmeSection("The answer"))?.[1]
+      ?.replace(/[*_`]/g, "");
     assert.ok(evidence && answer, "context/README.md holds its evidence list and its answer");
     const page = await browser.open(server.origin);
     try {
@@ -288,7 +292,7 @@ describe("the site under its base", () => {
           heading: heading.localName + "#" + heading.id + " " + text(heading),
           afterEvidence: list.nextElementSibling === heading,
           paragraph: paragraph.localName,
-          opening: text(paragraph).slice(0, ${JSON.stringify(normalized(answer))}.length),
+          answer: text(paragraph).slice(0, ${JSON.stringify(normalized(answer))}.length),
           links: [...paragraph.querySelectorAll("a")].map((a) => ({ text: text(a), href: a.href })),
         };
       })()`);
@@ -299,7 +303,7 @@ describe("the site under its base", () => {
         heading: "h2#the-answer The answer",
         afterEvidence: true,
         paragraph: "p",
-        opening: normalized(answer),
+        answer: normalized(answer),
         links: [{ text: "The answer", href: `${origin()}/blob/main/context/README.md#the-answer` }],
       });
     } finally {
