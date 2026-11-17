@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-go-wasm
 
-- **State:** brief ready
-- **Task:** review
-- **Branch:** review
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -14,7 +14,7 @@
 6. [x] sqlate
 7. [x] scenarios
 8. [x] measure
-9. [ ] review
+9. [x] review
 10. [ ] answer
 
 ## Task brief · review
@@ -149,10 +149,6 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
               v0.6.3 (pinning it), each cut by its Release workflow from a version
               bump on main. No other repository releases.
 ```
-
-## Progress
-
-slices 15/15 committed · standards ✓ (all repos) · spec ✓ (5 gaps closed) · editor ✓ · validated: every check exit 0 · brief ready
 
 ## Decisions
 
@@ -1038,6 +1034,11 @@ slices 15/15 committed · standards ✓ (all repos) · spec ✓ (5 gaps closed) 
   their review branches merge; behaviour 4's green deploys are confirmed there. The capture of
   the playground's Timings tab at 1376px after a Run came with question 31's tabbed output and is
   the one capture of it at that width, so it stays.
+- review: shipped. Released mid-BUILD: spike-html-apps-foundation v0.3.1, spike-html-hosting-sdk
+  v0.6.3 and v0.6.4, spike-html-hosting-components v0.5.1, spike-html-apps-components v0.10.3.
+  Merged at SHIP: this spike, spike-html-hosting, -architecture, -sqlate, spike-html-apps,
+  spike-html-hosting-icons, spike-html-apps-noctis; the coordinator's roadmap drops final-review
+  through its own pull request, by the architect's authorization.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
@@ -1209,9 +1210,6 @@ slices 15/15 committed · standards ✓ (all repos) · spec ✓ (5 gaps closed) 
   it reads "Each module's raw, gzip, and brotli sizes, and cold, cached, and in-place timings on
   the live site, a playground build's Go compile and link among them, on desktop and on an iPhone
   over Wi-Fi. Evidence 4, 5."
-- coordinator · roadmap.toml: remove the task `final-review` from
-  experiment.html.spike-html-go-wasm (the architect dropped it on 2026-11-17: the experiment's
-  question is answered; its optimization candidates go to experiment.html's intake as details).
 - coordinator · html-artifacts.md: under "Experiment: spike-html-go-wasm", after "The site takes
   the baseline through spike-html-hosting-sdk's foundation tag.", add "Its review fixed the defects
   it found in the reference layers at their root, releasing spike-html-apps-foundation v0.3.1,
