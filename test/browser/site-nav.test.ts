@@ -9,16 +9,17 @@
 // the row shows, its links on one line, sharing it with the header's buttons, and the drawer's
 // opener is hidden; a px below the switch and at 390px the row is hidden and the opener shows,
 // named Site, aria-expanded false. Below the switch the opener opens the drawer, a modal, by its
-// click and by N, its heading taking focus as it opens and nothing else in it, its Close above
-// all, not even in passing, the heading drawing no focus outline, and, opened by N, Close's
-// interest hint closed past the interest delay, as the SDK holds its own drawers; Escape and the
-// drawer's Close each close it, aria-expanded following, focus back on the opener; a link followed
-// in it closes it, its navigation held by the test so the page stays to be read. With script disabled, at 390px, the row shows, the opener and the drawer don't, and
-// nothing scrolls sideways, with the text at its own size and at 200%, nothing in the header
-// passing the viewport, on every page, the components page's Go demos unupgraded among them. The
-// SDK's shell checks, which run on every page in site.test.ts, hold the header's group, the opener among
-// its buttons, to one line, Help's list to the page's bindings, N's among them below the switch,
-// and every glyph button to its target size. Every wait is bounded.
+// click and by N, its heading taking focus as it opens and nothing else in it, its Close above all,
+// not even in passing, the heading drawing no focus outline, and, opened by N, Close's interest
+// hint closed past the interest delay, as the SDK holds its own drawers; Escape and the drawer's
+// Close each close it, aria-expanded following, focus back on the opener; a link followed in it
+// closes it, its navigation held by the test so the page stays to be read. With script disabled, at
+// 390px, the row shows, the opener and the drawer don't, and nothing scrolls sideways, with the
+// text at its own size and at 200%, nothing in the header passing the viewport, on every page, the
+// components page's Go demos unupgraded among them. The SDK's shell checks, which run on every page
+// in site.test.ts, hold the header's group, the opener among its buttons, to one line, Help's list
+// to the page's bindings, N's among them below the switch, and every glyph button to its target
+// size. Every wait is bounded.
 //
 // The index opens its main on the where-to-go list after its heading and lede and before the
 // question and the evidence: its heading, Where to go, then its list, both main's own children as
@@ -28,6 +29,8 @@
 // titles them. The element after the list, the question's heading, stands at least the
 // foundation's --space-s below it at 390px and at 1376px, so a list whose own margin swallows the
 // heading's fails.
+// Adapted from spike-html-hosting-sdk (v0.6.4): dist/browser.js, its recordDrawerFocus,
+// drawerFocus, assertDrawerFocus, and PAST_INTEREST, which it doesn't export, for the Site drawer.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";

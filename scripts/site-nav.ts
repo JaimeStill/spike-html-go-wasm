@@ -18,12 +18,13 @@
 //   opener, the last script of the head.
 // Into the index alone it writes, from SITE_NAV too, the where-to-go list in main's own flow, as
 // the index's other headings and lists stand: a heading "Where to go", its id where-to-go, then a
-// list of class where-to-go of every page SITE_NAV links but home, in its order, each item the page's link and its line, Library demos' item listing its Markdown pages
-// under it, each by its title, as markdownPages titles it, in markdownPages' order. The index marks
-// its place with the comment WHERE_TO_GO names, and the list replaces the marker.
-// Each is written once per page and failed on when the page lacks its place, so a page whose
-// header changes can't build without its nav, and an index can't build without its list. web/pages/page.css shows the row where it fits and
-// the opener where it doesn't.
+// list of class where-to-go of every page SITE_NAV links but home, in its order, each item the
+// page's link and its line, Library demos' item listing its Markdown pages under it, each by its
+// title, as markdownPages titles it, in markdownPages' order. The index marks its place with the
+// comment WHERE_TO_GO names, and the list replaces the marker.
+// Each is written once per page and failed on when the page lacks its place, so a page whose header
+// changes can't build without its nav, and an index can't build without its list.
+// web/pages/page.css shows the row where it fits and the opener where it doesn't.
 
 import { readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -191,7 +192,7 @@ export function writeNav(html: string, page: string): string {
   ];
   if (page === "index.html") {
     places.push([
-      /( *)<!-- site-nav: where-to-go -->/,
+      new RegExp(`( *)${WHERE_TO_GO}`),
       (match) => match.replace(WHERE_TO_GO, whereToGo(match.slice(0, match.indexOf("<")))),
     ]);
   }
