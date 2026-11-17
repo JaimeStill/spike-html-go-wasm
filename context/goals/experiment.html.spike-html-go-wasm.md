@@ -15,8 +15,7 @@
 7. [x] scenarios
 8. [x] measure
 9. [ ] review
-10. [ ] final-review
-11. [ ] answer
+10. [ ] answer
 
 ## Task brief · review
 
@@ -887,7 +886,7 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
 - measure: "cached" means within Pages' 10-minute max-age; an expired cache is reported only as
   the number of files its revalidation requests.
 - measure: build drift (builds that aren't byte-reproducible) is reported, never failed on; its
-  cause goes to final-review.
+  cause goes to the intake (final-review dropped).
 - measure: sizes cover the four prebuilt modules, the compiler, the linker, and the seven program
   closures; no measured number fails the command.
 - measure: TinyGo comparison rejected; the spike's question is native Go. TinyGo can't build the
@@ -1020,6 +1019,11 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   Wi-Fi, not on the live site, which held none of this task's changes. The architect accepted it
   with no findings (2026-11-17). Over plain http the iPhone has no clipboard, so Copy there was
   out of the pass. Desktop Safari and WebKitGTK are gaps.
+- review (2026-11-17, the architect): the experiment's question is answered: workspace Go runs
+  live in the browser. The final-review task is dropped; its candidates (the worker warm-up, the
+  lazy compilation of the compiler, the build drift, the unexplained 36 s cold run on a phone, the
+  timings stall seen once) are intake material, and the answer task follows this one. Evidence 13
+  goes with it.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
@@ -1073,7 +1077,7 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   closure.
 - Chrome's cold WebAssembly.compile of the 52 MB compiler reads ~74–123 ms locally and 33–38 ms
   live, which suggests lazy compilation, so its real cost may fall inside the Go compile phase.
-  For final-review.
+  An intake candidate (final-review dropped).
 - sqlate v0.7.0 and its dependencies build archives for js/wasm. go-core v0.12.0 and go-web-sdk
   v0.17.0, both on their remotes and proxy.golang.org, build and vet for js/wasm and pass their
   own tests as wasm under node, Server.Start and Service.Run included.
@@ -1125,13 +1129,13 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   `mise run currency` reports direct requirements only.
 
 - sqlate.html's 36 s cold Run on an iPhone 16 Pro Max (2026-11-12) did not reproduce: the
-  2026-11-13 cold run, in an Incognito tab, took 3.3 s. The cause is unknown. For final-review.
+  2026-11-13 cold run, in an Incognito tab, took 3.3 s. The cause is unknown. An intake candidate (final-review dropped).
 - The iPhone readings lack cached reloads, and some phases weren't captured: sqlate's
   Fetch, Wasm compile, and Go compile, and calc's phases before Link (README.md, "Measurements").
 - Build drift is Go's VCS stamping alone: two local builds match byte for byte, and the live
   module differs from them only in `vcs.revision`, `vcs.time`, and `vcs.modified`. Building with
   `-buildvcs=false`, or an equivalent, would make the live module match a local build. For
-  final-review.
+  the intake (final-review dropped).
 - The review task owns the WebKit and desktop Safari checks; measure considered Playwright's
   WebKit and left it to review.
 
@@ -1141,13 +1145,13 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   qualifies the framing's "a service can't run there": sockets can't, but an in-process service
   can.
 - A `timings.test.ts` stall was seen once under the parallel browser tier's load and isn't
-  reproduced alone; the per-test bound now fails it by name. For final-review.
+  reproduced alone; the per-test bound now fails it by name. An intake candidate (final-review dropped).
 - Intake candidate: Shiki's http grammar statically imports the JavaScript, TypeScript, and Java
   grammars, which matters if the SDK's client-side fences ever highlight http.
 - Intake candidate: the exit race in Go's `wasm_exec.js` (a pending timeout resuming an exited
   program) is upstream Go's.
 
-- For final-review, the architect's lead candidate (2026-11-16): warm the worker before the first
+- An intake candidate, the architect's lead optimization (2026-11-16; final-review dropped): warm the worker before the first
   Run. The live calc readings show a fresh page's first Run at 1,848 ms cold and 1,426 ms cached
   against 412 ms in place, and the gap is not only the fetch (616 / 166 / 21 ms) and the wasm
   compile (33 / 33 / 3.7): it is mostly the compiler's own warm-up inside Go compile and Link
@@ -1192,3 +1196,6 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
   it reads "Each module's raw, gzip, and brotli sizes, and cold, cached, and in-place timings on
   the live site, a playground build's Go compile and link among them, on desktop and on an iPhone
   over Wi-Fi. Evidence 4, 5."
+- coordinator · roadmap.toml: remove the task `final-review` from
+  experiment.html.spike-html-go-wasm (the architect dropped it on 2026-11-17: the experiment's
+  question is answered; its optimization candidates go to experiment.html's intake as details).
