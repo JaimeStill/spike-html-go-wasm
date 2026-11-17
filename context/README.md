@@ -218,4 +218,173 @@ checkout in `references.local.toml`:
 
 ## The answer
 
-Pending: the `answer` task writes it.
+**Question:** Can a page run workspace Go live in the browser through GOOS=js WebAssembly (library
+demos, service handlers called in-process, and a Go playground that compiles arbitrary Go in the
+page with Go's own compiler and linker) with acceptable capability and performance? Sizes are
+measured, not gated.
+
+**Answer:** Yes: live Go demos are viable on v1.repository-docs' guides and on every Pages site,
+in both proven kinds, a prebuilt handler module and source built in the page by Go's own compiler
+and linker; both stay options, each goal chooses its demos and their kinds as it plans, and no
+site is pre-selected.
+
+The live demo is <https://jaimestill.github.io/spike-html-go-wasm/>. Every figure below is
+README.md, "Measurements", measured on 2026-11-13 against the deployed commit 13d8348, unless it
+says otherwise.
+
+1. Built from published tags, served as wasm (evidence 1, 6): go.mod requires each module by its
+   tag, with no replace directive or local path; the check and the Pages workflow build the Go
+   for `GOOS=js`; no `.wasm` or `.a` is tracked; `wasm_exec.js` is the pinned Go's copy below
+   one provenance line. Proven by `mise run check` (`test/unit/go-module.test.ts`, "go.mod";
+   `scripts/check-go.sh` for the tracked files and `wasm_exec.js`), by the deploy of
+   `.github/workflows/pages.yml`, and by `mise run live`, which holds `go/hello.wasm` and the compiler as
+   `application/wasm`, gzip-encoded, on the live site (its logic held by
+   `test/unit/live.test.ts`). `mise run measure` read the deployed commit from the live
+   `go/hello.wasm`'s `vcs.revision`.
+2. sqlate compiled live (evidence 2): edit a statement, see its `$n` SQL or sqlate's error, from
+   the prebuilt `go/sqlate.wasm` on
+   [sqlate-compile.html](https://jaimestill.github.io/spike-html-go-wasm/sqlate-compile.html) and
+   from source built in the page on
+   [sqlate.html](https://jaimestill.github.io/spike-html-go-wasm/sqlate.html). Proven by
+   `test/browser/sqlate-compile.test.ts`, `test/browser/sqlate.test.ts`, and `internal/sqlate`'s
+   and `playground/sqlate`'s Go tests, and by the live pages.
+3. A statement run in-process over sqltest's scripted driver, no socket (evidence 3): the sqlate
+   page's guarded edit. Proven by `playground/sqlate`'s Go tests, run as wasm under node in the
+   check, and `test/browser/sqlate.test.ts`, and by
+   [sqlate.html](https://jaimestill.github.io/spike-html-go-wasm/sqlate.html); that it opens no
+   socket is proven only by tests.
+4. Sizes and cold-load cost (evidence 4, 5): each module's raw, gzip-as-served, and brotli-11
+   bytes; each page readable before any module, no `.wasm` requested before Run on any page,
+   and first result, cold, cached, and in place. Proven by `mise run measure` on 2026-11-13, and
+   on the iPhone by hand; "no Go before a Run" also by `test/browser/go-demo.test.ts` and each
+   demo page's browser test. The figures are under Cost, below.
+5. The review (evidence 7): every page in chrome-headless-shell at 390, 900, 1120, and 1376px,
+   the first pass across every palette and scheme, the editor included, leaving no capture file;
+   Firefox 158.0.1 and the iPhone's Safari by hand, on the review branch's build over the local
+   network, with no findings. Proven by the architect's
+   review (README.md, "Review") over `mise run screenshots`, with
+   `test/browser/screenshots.test.ts` holding that the command leaves nothing. Desktop Safari and
+   WebKitGTK are gaps.
+6. The verdict (evidence 8): this section, the architect's ruling of 2026-11-17.
+7. The playground (evidence 9): arbitrary Go edited, compiled, linked, and run in the page, with
+   load, compile, link, and run timings. Proven by `test/browser/playground.test.ts` and
+   `test/browser/go-build.test.ts`, by `test/unit/toolchain.test.ts`, which holds each program's
+   closure to Go's own `go list -deps` and runs the compiler and linker on the in-memory fs, and
+   live on [playground.html](https://jaimestill.github.io/spike-html-go-wasm/playground.html).
+8. go-core's graph and go-web-sdk's handlers (evidence 10): the graph built from source in the
+   page; the handlers called in-process through go-web-sdk's Router in the prebuilt
+   `go/websdk.wasm`; sizes under Cost. Proven by `test/browser/go-core-graph.test.ts`,
+   `test/browser/go-web-sdk-handlers.test.ts`, and `playground/graph`'s and `internal/websdk`'s
+   Go tests, and live on
+   [go-core-graph.html](https://jaimestill.github.io/spike-html-go-wasm/go-core-graph.html) and
+   [go-web-sdk-handlers.html](https://jaimestill.github.io/spike-html-go-wasm/go-web-sdk-handlers.html).
+9. One bridge, runtime, and sl-go-demo for every scenario (evidence 11), on three rendered
+   Markdown pages and three hand pages, the components page, the playground, and the sqlate page.
+   That they are used unchanged is proven only by tests: `test/browser/go-demo.test.ts`,
+   `test/browser/go-runs.test.ts`, each demo page's browser test, the layer direction
+   (`eslint.config.js`, `test/unit/go-module.test.ts`), and `test/unit/go-demo-fences.test.ts`,
+   which holds each page's fences to its program's files byte for byte.
+10. The four programs (evidence 12): basics, generics, concurrency, and the standard library,
+    edited and run in the page. Proven by `test/browser/playground-programs.test.ts` and each
+    `playground/<program>`'s Go tests, which hold its exact output, and live on
+    [playground.html#basics](https://jaimestill.github.io/spike-html-go-wasm/playground.html#basics)
+    and its siblings `#generics`, `#concurrency`, and `#stdlib`; `mise run report:programs`
+    reports each one's cost.
+
+**Cost,** as measured facts and Pages arithmetic, with no budget; the intake sets any:
+
+- Prebuilt modules, gzip as Pages serves them (brotli 11): hello 0.74 MB (0.55), probe 1.31 MB
+  (0.94), sqlate 2.24 MB (1.59), websdk 2.22 MB (1.58).
+- The toolchain: the compiler 10.76 MB (6.90), the linker 3.33 MB (2.31). A program's closure of
+  archives: calc 5.14 MB (3.81) in 58 files, stdlib 8.26 MB (6.12) in 85, graph 6.99 MB (5.19) in
+  77, sqlate 20.38 MB (14.89) in 219.
+- Pages serves gzip alone, even when br is accepted, with a max-age of 600 s. After it expires, a
+  building page's worker revalidates the manifest, some 100 to 200 B a build, and every module
+  and archive comes from the HTTP cache.
+- No page requests a `.wasm` before Run; desktop pages are readable (first-contentful-paint) in
+  192 to 364 ms cold, medians.
+- Desktop, first result after Run's click, median ms, cold / cached / in place: the components
+  page 151 / 52 / 68 (a scenario switch); sqlate-compile 199 / 84 / 15; go-web-sdk-handlers
+  197 / 67 / 17; calc 1,893 / 1,461 / 433 (main.go edited and rebuilt); stdlib 2,565 / 2,029 /
+  733; graph 2,137 / 1,688 / 573; the sqlate page 3,338 / 2,592 / 1,158. A rerun with no rebuild
+  is 15 to 17 ms.
+- iPhone 16 Pro Max, one reading each, total ms: the sqlate page 3,301 cold in an Incognito tab;
+  the graph page's first run 1,429; the components page's first run 183; calc's first run 1,357;
+  a rerun 5 to 21. Cached reloads weren't taken.
+- Deployed weight, measured live on 2026-11-17 from the live manifest: 371 standard-library
+  archives, 144.3 MB raw and 34.4 MB gzip; 35 module archives, 31.0 MB raw; with the compiler and
+  the linker, 52.6 and 12.3 MB raw by "Sizes", about 240 MB raw for the toolchain and its
+  archives; the four
+  prebuilt modules add 22.7 MB. Pages' published-site limit is 1 GB. Every archive deploys,
+  though a program fetches only its closure.
+- Pages' soft bandwidth limit, 100 GB a month, divided by one cold run's transfer: calc
+  19.3 MB, about 5,190; graph 21.1 MB, about 4,730; stdlib 22.4 MB, about 4,470; the sqlate
+  page's source build 34.6 MB, about 2,890; prebuilt, sqlate-compile 2.24 MB, about 44,700,
+  go-web-sdk-handlers 2.22 MB, about 45,100, and the components page 1.31 MB, about 76,500. A
+  cached run transfers about 100 to 200 B.
+
+**The playground** is proven: arbitrary Go against the standard library and the site's pinned
+modules, compiled, linked, and run in the page. It is recommended to no site.
+
+**Two corrections to the framing** (`html-artifacts.md`, "Experiment: spike-html-go-wasm"), which
+stays as posed:
+
+- The sqlate prebuilt module serves at 2.24 MB gzip, not 1.2 MB. The framing's minimal build
+  (0.74 MB gzip) and the playground's 19 MB on demand (calc's 19.3 MB cold) hold.
+- "A service can't run there" holds only for sockets. Go's js port fakes the network in-process,
+  so go-web-sdk's Service.Run binds and serves under node in the library's own wasm tests;
+  that is unproven in a browser. The spike's demos call handlers through the Router instead.
+
+**A candidate principle** for the web standard experiment.html's intake may found: a component
+holds no authoritative state; a DOM-free model below it, written by one owner (the composing
+element or the page), holds the state, its rules, and its validation. Evidence: this spike's
+FileSet and EditorSettings, written by sl-go-demo, and its Arrangement, a reader's stored
+preference the page owns and gives to every fixed demo.
+
+For the intake:
+
+- Warm the worker on intent, the architect's lead optimization: calc's first Run totals
+  1,848 ms cold and 1,426 cached against 412 in place, mostly the compiler's own warm-up inside
+  Go compile (854 / 875 / 198) and Link (331 / 334 / 185). The worker could fetch, compile, and
+  run a throwaway build before the click; a page-load preload spends 19 to 35 MB a view against
+  the 100 GB month, so preload on intent (editor focus, pointer over Run) and never under a
+  data-saver signal.
+- Chrome's lazy compilation of the compiler: its cold WebAssembly.compile of the 52 MB module
+  reads about 74 to 123 ms locally and 33 to 38 ms live, so its real cost may sit inside Go
+  compile.
+- Build drift: the live module differs from a local build only in Go's `vcs.revision`,
+  `vcs.time`, and `vcs.modified` stamps; `-buildvcs=false` would remove it.
+- The sqlate page's 36 s cold Run on the iPhone (2026-11-12) didn't reproduce (3.3 s on
+  2026-11-13); its cause is unknown.
+- A `timings.test.ts` stall seen once under the parallel browser tier's load; the per-test bound
+  now fails it by name.
+- spike-html-design v0.7.0's bare `::backdrop` still veils every top-layer backdrop, a popover's
+  included; spike-html-apps-foundation v0.3.1 fixes it there.
+- spike-html-hosting-sdk gaps:
+  - no nav for a site's own pages; the spike's Site nav stands in;
+  - a Markdown fence can't name its file; sl-go-demo's `file` attribute stands in;
+  - the crawl counts a page missing from `content.json` as a hand page, so a site's own Markdown
+    tree needs a scratch-root crawl; the SDK could take a site's own Markdown trees;
+  - markdownPages has no hook for marked extensions;
+  - its drawer-focus check helpers are private, so `test/browser/site-nav.test.ts` copies them;
+  - `web/pages/site-nav.ts` and `web/pages/markdown.ts` repeat the template's drawer wiring;
+  - no page mode for tools; holdsReadingWidth assumes a reading page.
+- `sl-drawer` has no modal-only mode; the Site drawer's unreachable dock stands in.
+- A page-layout sheet (gutter, section spacing, content and full named lines) in the SDK or the
+  foundation, so no page sets its own section spacing.
+- The foundation has no token for `outline-offset`.
+- `@custom-media` isn't shipped, so complementary container queries repeat their breakpoint.
+- A browser-test helper that runs a suite in a pinned font set, in the architecture or the SDK.
+- Go's `wasm_exec.js` exit race, a pending timeout resuming an exited program, is upstream Go's;
+  the worker guards it.
+- Shiki's http grammar statically imports the JavaScript, TypeScript, and Java grammars, which
+  matters if the SDK's client-side fences highlight http.
+- A browser running a wasm build is another runtime layer; this answer bears on the
+  `elemental-runtime-layers` backlog goal.
+- Deploy the toolchain once and share it across one owner's project sites, which share an origin
+  and so its HTTP cache; unproven.
+- Ship only the closures of a site's demos, not every standard-library archive.
+- For the goal that next locks sqlate, today v1.ai.processing's `providers` task:
+  - `sqltest.Open` requires a `testing.TB`; a constructor that takes none would serve a demo;
+  - sqlate's own currency trails its latest pins: pgx 5.12.0, golangci-lint 2.15.0, and go
+    1.27.4.
