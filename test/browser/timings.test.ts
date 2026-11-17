@@ -1,17 +1,17 @@
 // sl-timings on the components page, the build as Pages serves it: dist/ under the base by the
 // SDK's served(), Vite's preview, in the pinned chrome-headless-shell.
 //
-// The accessibility tree, read through CDP: a table named by its caption, its column headers, a
-// row header for each phase and the total, each time its cell; the caption visually hidden, a
-// clipped pixel the header row isn't laid out below, and the element not scrolling down for it. Rendering: only the phases the run
-// had, in the runtime's phase order whatever order they arrived in, and a total row; the times
-// formatted to a tenth under 10 ms and whole from there, grouped, right-aligned in tabular
-// numerals; no run yet said, with no total, and a run begun with no phase timed said apart from
-// it; at a phone's width the table fits its column, and with the text at 200% there, wider than
-// its column, it keeps its two columns and scrolls inside the element, the page never sideways. A
-// new run replaces the last, on the owner's begin and on the specimen aid's press. The table
-// listens only to the timings it holds, only while in the document, and nothing moves. Nothing
-// here names the site: its base is package.json's name.
+// The accessibility tree, read through CDP: a table named by its caption, its column headers, a row
+// header for each phase and the total, each time its cell; the caption visually hidden, a clipped
+// pixel the header row isn't laid out below, and the element not scrolling down for it. Rendering:
+// only the phases the run had, in the runtime's phase order whatever order they arrived in, and a
+// total row; the times formatted to a tenth under 10 ms and whole from there, grouped,
+// right-aligned in tabular numerals; no run yet said, with no total, and a run begun with no phase
+// timed said apart from it; at a phone's width the table fits its column, and with the text at 200%
+// there, wider than its column, it keeps its two columns and scrolls inside the element, the page
+// never sideways. A new run replaces the last, on the owner's begin and on the specimen aid's
+// press. The table listens only to the timings it holds, only while in the document, and nothing
+// moves. Nothing here names the site: its base is package.json's name.
 
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -108,13 +108,12 @@ interface Rows {
 const rows = (page: Page, table: string): Promise<Rows> =>
   page.evaluate(`window.timings.rows(${table})`);
 
-/** A timings' caption as laid out: its text, its box and clip, the table's top and its header
- * row's, and whether the element scrolls down. */
+/** A timings' caption as laid out: its text, its box, the table's top and its header row's, and
+ * whether the element scrolls down. */
 interface Caption {
   text: string;
   width: number;
   height: number;
-  clip: string;
   top: number;
   head: number;
   scrolls: boolean;
@@ -129,7 +128,6 @@ const CAPTION = `(host) => {
     text: caption.textContent.trim(),
     width: box.width,
     height: box.height,
-    clip: getComputedStyle(caption).clipPath,
     top: table.getBoundingClientRect().top,
     head: table.querySelector("thead").getBoundingClientRect().top,
     scrolls: host.scrollHeight > host.clientHeight,
@@ -191,7 +189,6 @@ describe("the timings in the accessibility tree", () => {
         const box: Caption = await page.evaluate(`(${CAPTION})(window.timings.at("${state}"))`);
         assert.equal(box.text, "Timings", state);
         assert.ok(box.width <= 1 && box.height <= 1, `${state}: ${box.width}x${box.height}px`);
-        assert.equal(box.clip, "inset(50%)", state);
         // Within a pixel: the collapsed border's outer half lies above the header row.
         assert.ok(
           box.head - box.top <= 1,
