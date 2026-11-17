@@ -27,7 +27,10 @@
 // (web/pages/page.css), last, and its source holds no inline <style>, which the build would write
 // ahead of the linked sheets. The components page sets every section apart, its heading --space-xl
 // below what came before; the playground has no section, its one screen proved by
-// playground-layout.test.ts. Nothing here names the site: its base is package.json's name.
+// playground-layout.test.ts. The index's evidence is context/README.md's twelve items, its eighth,
+// the verdict, linking the answer, which follows the list as main's last two children: its
+// heading, The answer, and one paragraph, the one-line answer, linking context/README.md's "The
+// answer" on the remote; the crawl holds the eighth item's fragment to an element. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // Adapted from spike-html-hosting-sdk (v0.6.4): template/test/browser/site.test.ts, its checks
@@ -239,6 +242,54 @@ describe("the site under its base", () => {
           `#${id}'s heading sits ${gap}px below what came before, under ${xl}px`,
         );
       }
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the index lists the twelve items of evidence, then answers: its heading and one paragraph linking context/README.md's The answer, which evidence 8 links", async () => {
+    const page = await browser.open(server.origin);
+    try {
+      const read = await page.evaluate(`(() => {
+        const evidence = document.getElementById("the-evidence");
+        const list = evidence.nextElementSibling;
+        const items = [...list.querySelectorAll(":scope > li")];
+        const answer = document.getElementById("the-answer");
+        const paragraph = answer?.nextElementSibling;
+        const main = [...document.querySelector("main").children];
+        return {
+          list: list.localName,
+          items: items.length,
+          eighth: [...items[7].querySelectorAll("a")].map((a) => a.getAttribute("href")),
+          heading: answer?.parentElement.localName + " > " + answer?.localName,
+          name: answer?.textContent.trim(),
+          afterEvidence: main.indexOf(answer) === main.indexOf(list) + 1,
+          paragraph: paragraph?.localName,
+          last: paragraph === document.querySelector("main").lastElementChild,
+          opens: paragraph?.textContent.trim().startsWith("Yes: live Go demos are viable"),
+          links: [...(paragraph?.querySelectorAll("a") ?? [])].map((a) => ({
+            text: a.textContent.trim(),
+            href: a.href,
+          })),
+        };
+      })()`);
+      assert.deepEqual(read, {
+        list: "ol",
+        items: 12,
+        eighth: ["#the-answer"],
+        heading: "main > h2",
+        name: "The answer",
+        afterEvidence: true,
+        paragraph: "p",
+        last: true,
+        opens: true,
+        links: [
+          {
+            text: "The answer",
+            href: "https://github.com/JaimeStill/spike-html-go-wasm/blob/main/context/README.md#the-answer",
+          },
+        ],
+      });
     } finally {
       await page.close();
     }
