@@ -152,7 +152,7 @@ Release       spike-html-apps-foundation v0.3.1, then spike-html-hosting-sdk
 
 ## Progress
 
-slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, merge 07ba39a) · 3: SDK v0.6.3 released (PR #13, merge 68296b9, tag d0cde51) · 4: components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12 (unpublished) · 5: spike-html-hosting 338681e, -architecture c3a4d9a, -sqlate 0e078ec (unpublished) · 6: spike-html-apps 1f6f81c, c9f60ff (unpublished) · 7: b14324b..2bf3e84 · 8: e026d28, 3e2f1cf · 9: 46b0f18 · 10: b502751 · checkpoint 1 fixes: c95a713 (where-to-go in main's flow), d530aaf (Site drawer captures), fe7b0fc (index paragraphs folded into the list) · released mid-BUILD: components v0.5.1 (PR #13, main 9fa5850), apps-components v0.10.3 (PR #19, main 10dde51), SDK v0.6.4 (PR #14, main f49087e) · moved on review: spike-html-hosting f1c2740, -architecture cc44e0e, -sqlate cd73f4c, spike-html-apps d78eec8, spike 814d911 · 11: checkpoint 1 closed (architect ok) · 12: checkpoint 2 closed (fffed71 no-script column, 0e5444b fence text, b253cf9 built sample) · checkpoint 3: d136e8f (tabbed output in the wide band, editor left/right) · e156e9b (sl-timings caption visually hidden) · 13: checkpoint 3 closed (architect ok) · 14: by-hand pass accepted, no findings (2026-11-17) · standards: spike f734d22, 58c8389, d9c97d3; icons 1460e7e; noctis 1a3f2e3; spike-html-hosting 44b3c10; -architecture 9c5afd8; -sqlate f152f74; spike-html-apps dedc5f6 · escalation 6: 4e4ff4b (Site drawer focus as the SDK's) · next: spec review, then editor with slice 15 (the README Review section) and spike-html-apps' cooldown convention · more editor notes: sites' components provenance lines at v0.5.0 vs the template's v0.5.1; spike-html-apps conventions proofs could add v0.10.3 · intake finding: the SDK keeps its drawer-focus check helpers private, so the spike's Site drawer test copies them · findings so far: components page scrolls sideways at 390px without script (go-demo figures before upgrade), for checkpoint 2 · editor notes: foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record; the spike's STANDARDS.md v0.3.0 baseline line and context/README.md SDK/foundation versions · standards — · spec — · editor —
+slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, merge 07ba39a) · 3: SDK v0.6.3 released (PR #13, merge 68296b9, tag d0cde51) · 4: components c2fec75, icons d2e72e1, apps-components a7462fc, noctis f8a4a12 (unpublished) · 5: spike-html-hosting 338681e, -architecture c3a4d9a, -sqlate 0e078ec (unpublished) · 6: spike-html-apps 1f6f81c, c9f60ff (unpublished) · 7: b14324b..2bf3e84 · 8: e026d28, 3e2f1cf · 9: 46b0f18 · 10: b502751 · checkpoint 1 fixes: c95a713 (where-to-go in main's flow), d530aaf (Site drawer captures), fe7b0fc (index paragraphs folded into the list) · released mid-BUILD: components v0.5.1 (PR #13, main 9fa5850), apps-components v0.10.3 (PR #19, main 10dde51), SDK v0.6.4 (PR #14, main f49087e) · moved on review: spike-html-hosting f1c2740, -architecture cc44e0e, -sqlate cd73f4c, spike-html-apps d78eec8, spike 814d911 · 11: checkpoint 1 closed (architect ok) · 12: checkpoint 2 closed (fffed71 no-script column, 0e5444b fence text, b253cf9 built sample) · checkpoint 3: d136e8f (tabbed output in the wide band, editor left/right) · e156e9b (sl-timings caption visually hidden) · 13: checkpoint 3 closed (architect ok) · 14: by-hand pass accepted, no findings (2026-11-17) · standards: spike f734d22, 58c8389, d9c97d3; icons 1460e7e; noctis 1a3f2e3; spike-html-hosting 44b3c10; -architecture 9c5afd8; -sqlate f152f74; spike-html-apps dedc5f6 · escalation 6: 4e4ff4b (Site drawer focus as the SDK's) · spec review: 5 gaps, closed in the record and by the dock comment · next: editor with slice 15 (the README Review section) and spike-html-apps' cooldown convention · more editor notes: sites' components provenance lines at v0.5.0 vs the template's v0.5.1; spike-html-apps conventions proofs could add v0.10.3 · intake finding: the SDK keeps its drawer-focus check helpers private, so the spike's Site drawer test copies them · findings so far: components page scrolls sideways at 390px without script (go-demo figures before upgrade), for checkpoint 2 · editor notes: foundation v0.3.0 install lines in components, apps-components, noctis READMEs; spike-html-apps currency task description and dated consumers record; the spike's STANDARDS.md v0.3.0 baseline line and context/README.md SDK/foundation versions · standards — · spec — · editor —
 
 ## Decisions
 
@@ -961,8 +961,9 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
 - review: the nav lands before the first checkpoint, so the review sees the site as it ships.
 - review: held go-core v0.10.0, go-messaging v0.2.0, and go-web-sdk v0.15.2 in spike-html-apps:
   porting its emulator to the converted APIs is the intake's.
-- review: held rolldown at 1.2.18 in the SDK and spike-html-apps: vite 8.3.8, the latest, pins
-  `~1.2.18`.
+- review: held rolldown to vite 8.3.8's `~1.2.18`, the latest vite's range: spike-html-apps
+  takes 1.2.19, the newest the range accepts, by its currency.sh; the released SDK v0.6.4 stays at
+  1.2.18 until its next release (spec review).
 - review (escalation 1): foundation v0.3.1 and SDK v0.6.3 release mid-BUILD, each once its slice
   passes its check and a standards review and the architect reads a short release brief, merged
   through its own pull request so its Release workflow tags it; every consumer then builds against
@@ -1027,10 +1028,15 @@ slices 14/15 committed · 1: 17ba124 · 2: foundation v0.3.1 released (PR #11, m
 - review (escalation 6): sl-drawer has no modal-only mode, so the Site drawer's 10000rem dock
   stays, commented as the stand-in; the mode is an intake finding. The Site drawer returns focus
   as the SDK's Pages and Contents drawers do (to wherever focus was when a key opened it), and the
-  drawer wiring the two scripts duplicate is an intake finding. typescript-eslint 8.73.0 and
-  @nats-io 3.5.0, released mid-session, wait for the next currency pass (rolling currency).
+  drawer wiring the two scripts duplicate is an intake finding. typescript-eslint 8.73.0,
+  @nats-io 3.5.0, and marked 18.2.1 (the SDK and apps-components), released mid-session, wait for
+  the next currency pass (rolling currency).
   spike-html-apps' "Respect supply-chain cooldowns" convention, which contradicts its
   minimumReleaseAge: 0 and the rolling-currency page, is rewritten to match.
+- review (spec review): the three hosting sites' Pages deploys on SDK v0.6.4 are SHIP's, when
+  their review branches merge; behaviour 4's green deploys are confirmed there. The capture of
+  the playground's Timings tab at 1376px after a Run came with question 31's tabbed output and is
+  the one capture of it at that width, so it stays.
 - review: the task's branch is `review` in all eleven repositories; the merged `origin/review`
   branches the planner saw were stale tracking refs, already gone from the remotes.
 
